@@ -1,0 +1,110 @@
+# Name of my executable
+emu
+
+# Ignore object files and static libraries
+*.o
+*.a
+*.lib
+
+# Ignore dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Ignore executable files
+*.exe
+*.out
+*.app
+
+# Ignore debugging and profiling files
+*.dSYM/
+*.stackdump
+*.core
+
+# Ignore CMake build directory
+/build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Ignore Code::Blocks workspace files
+*.depend
+*.layout
+*.cbp
+*.workspace
+
+# Ignore Visual Studio files
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+*.ncb
+*.suo
+*.vcproj
+*.idb
+*.pdb
+*.opensdf
+*.sdf
+*.ipch
+*.tlog/
+*.obj
+*.ipdb
+*.iobj
+
+# Ignore Xcode files
+*.xcworkspace/
+*.xcuserdata/
+*.xcodeproj/
+*.mode1v3
+*.pbxuser
+
+# Ignore other IDE-specific files
+.idea/
+*.swp
+*.swo
+*.DS_Store
+*.directory
+
+# Ignore Qt Creator files
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.creator.user
+*.creator.user.*
+*.autosave
+
+# Ignore cache and temporary files
+.cache/
+*.tmp
+*.temp
+*.log
+
+# Ignore backup files
+*~
+*.bak
+*.old
+
+# Ignore generated documentation
+/docs/
+
+# Ignore coverage files
+*.gcda
+*.gcno
+*.gcov
+
+# Ignore CTest-related files
+Testing/
+LastTest.log
+CTestTestfile.cmake
+CTestCostData.txt
+
+# Ignore binary folders or output directories
+bin/
+obj/
+lib/
+fceux/
+
+# Ignore any other common or custom build directories
+/build/
