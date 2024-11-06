@@ -1,0 +1,73 @@
+IndentWidth: 4
+UseTab: Never
+ColumnLimit: 100 # Maximimum line length
+SortIncludes: true
+
+SpacesInParentheses: true # ( a + b ) instead of (a + b)
+SpacesInContainerLiterals: true
+# Example:
+# std::vector<int> values = { 1, 2, 3, 4 };
+
+SpaceBeforeSquareBrackets: false
+# Example:
+# int array[10];
+
+PointerAlignment: Right # int *ptr
+
+AlignTrailingComments: true
+# Example:
+# int   a = 5;      // Variable a
+# float b = 10.0;   // Variable b
+# char  c = 'c';    // Variable c
+
+BreakBeforeBraces: Allman
+# Example:
+# void Function()
+# {
+#     if (condition)
+#     {
+#         // Do something
+#     }
+# }
+
+AlignConsecutiveDeclarations: true
+# Example:
+# int    a   = 5;
+# float  b   = 10.0;
+# char   c   = 'c';
+# double pi  = 3.14159;
+
+AllowShortFunctionsOnASingleLine: All
+# Allows all short functions to be on a single line.
+# Example:
+# int getValue() { return 42; }
+# void setFlag(bool flag) { this->flag = flag; }
+
+SpaceAfterCStyleCast: true
+# Adds a space after C-style casts
+# int value = (int) someFloat instaed of (int)someFloat
+
+ReflowComments: true
+# Example:
+# // This is a very long comment that exceeds the line limit, so it will be wrapped
+# // automatically like this
+
+IndentCaseLabels: true
+# Example:
+# switch (value) {
+#     case 1:
+#         break;
+# }
+# versus
+# switch (value) {
+# case1:
+#   break;
+
+AlignAfterOpenBracket: Align
+# Aligns arguments if using line break
+# Example:
+# int sum = calculateSum(a, b,
+#                        c, d);
+# versus
+# int sum = calculateSum(a, b,
+# c, d);
