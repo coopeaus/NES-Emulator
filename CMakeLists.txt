@@ -13,6 +13,7 @@ set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
 # Include directories
 include_directories( include )
+include_directories( tests/include ) # for tests only
 # Add additional includes here
 # include_directories(/path/to/other/includes)
 
