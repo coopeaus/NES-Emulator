@@ -2,7 +2,7 @@ Checks: >
   -*,                                     
   bugprone-*,                             
   cppcoreguidelines-*,                    
-  modernize-*,-modernize-use-auto,        
+  modernize-*,-modernize-use-auto,-modernize-use-trailing-return-type,        
   performance-*,                          
   readability-*,                          
   misc-*,                                 
