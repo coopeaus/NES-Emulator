@@ -18,4 +18,15 @@ cd "$BUILD_DIR" || {
 	exit 1
 }
 
-ctest
+# Run specific test if provided, otherwise run all tests
+if [ -n "$1" ]; then
+	echo "Running specific test: $1"
+	ctest -R "$1" -V # Matches test names against provided pattern
+else
+	echo "Running all tests"
+	ctest -V
+fi
+
+# Isolating a specific test
+# ./test.sh "CPUTest.IMM" # Immediate addressing test
+# ./test.sh "CPUTest.xEA" # Test for opcode 0xEA (JMP)

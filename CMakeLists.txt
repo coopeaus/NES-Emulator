@@ -57,6 +57,7 @@ add_executable(emu
 add_executable(sample_test
   tests/sample.cpp
   # Add related cpp files here
+)
 add_executable(cpu_test
   tests/cpu_test.cpp
   src/cpu.cpp
@@ -80,6 +81,9 @@ enable_testing()
 # --- set only once ---
 include(GoogleTest)
 # ---
+gtest_discover_tests(sample_test
+    PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
 gtest_discover_tests(cpu_test
     PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
