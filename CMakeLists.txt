@@ -9,6 +9,7 @@ set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 # C++ 17 standard
 set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
+add_compile_options( -Wall -Wextra )
 
 
 # Include directories
@@ -34,6 +35,8 @@ FetchContent_MakeAvailable(googletest)
 # ----------------------- MAIN EXECUTABLES -----------------------
 add_executable(emu
   src/main.cpp
+  src/cpu.cpp
+  src/bus.cpp
 )
 
 # ----------------------- LIBRARIES -----------------------
