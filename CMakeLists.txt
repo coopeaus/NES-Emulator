@@ -9,10 +9,12 @@ set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 # C++ 17 standard
 set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
+add_compile_options( -Wall -Wextra -Wpedantic -Werror )
 
 
 # Include directories
 include_directories( include )
+include_directories( tests/include ) # for tests only
 # Add additional includes here
 # include_directories(/path/to/other/includes)
 
@@ -33,6 +35,8 @@ FetchContent_MakeAvailable(googletest)
 # ----------------------- MAIN EXECUTABLES -----------------------
 add_executable(emu
   src/main.cpp
+  src/cpu.cpp
+  src/bus.cpp
 )
 
 # ----------------------- LIBRARIES -----------------------
@@ -54,23 +58,36 @@ add_executable(sample_test
   tests/sample.cpp
   # Add related cpp files here
 )
+add_executable(cpu_test
+  tests/cpu_test.cpp
+  src/cpu.cpp
+  src/bus.cpp
+)
 # add other test executables here
 
 # ----------------------- TEST LIBRARIES -----------------------
 target_link_libraries(sample_test PRIVATE gtest_main)
+target_link_libraries(cpu_test PRIVATE gtest_main)
 # Link all other test executables to gtest_main
 
 # --- enable testing, do not touch, set only once ---
 enable_testing()
 
 # ----------------------- TEST CONFIGURATION -----------------------
-# Add the test executable to ctest. Inform ctest that the root directory of the test
-# is the source directory of CMakeLists.txt (not the build folder). We have to do this
-# because the final executable will be in the build folder, which can mess with relative
-# paths in the tests. Do this for each test executable.
-add_test(NAME sample_test COMMAND sample_test)
-set_tests_properties(sample_test PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-# Add other tests and properties here
+# We need to add the below to make tests discoverable. The PROPERTIES WORKING_DIRECTORY
+# sets the working directory of the test to the root folder instead of the build folder,
+# which resolves any issues with relative paths in the tests.
+
+# --- set only once ---
+include(GoogleTest)
+# ---
+gtest_discover_tests(sample_test
+    PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+gtest_discover_tests(cpu_test
+    PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+# Add other tests here
 
 # ----------------------- MAC BUNDLE -----------------------
 # Uncomment to build emu as a standalone MacOS .app bundle (optional)

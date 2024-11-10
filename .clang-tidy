@@ -1,35 +1,40 @@
-Checks: >
-  -*,                                     
-  bugprone-*,                             
-  cppcoreguidelines-*,                    
-  modernize-*,-modernize-use-auto,        
-  performance-*,                          
-  readability-*,                          
-  misc-*,                                 
-  -cppcoreguidelines-avoid-magic-numbers, 
-  -readability-magic-numbers,             
-  -cppcoreguidelines-pro-bounds-array-to-pointer-decay, 
-  -cppcoreguidelines-pro-bounds-constant-array-index
+Checks:
+  - "-*"
+  - "bugprone-*"
+  - "-bugprone-easily-swappable-parameters"
+  - "cppcoreguidelines-*"
+  - "modernize-*"
+  - "-modernize-use-auto"
+  - "-modernize-use-trailing-return-type"
+  - "performance-*"
+  - "readability-*"
+  - "misc-*"
+  - "-cppcoreguidelines-avoid-magic-numbers"
+  - "-readability-magic-numbers"
+  - "-cppcoreguidelines-pro-bounds-array-to-pointer-decay"
+  - "-cppcoreguidelines-pro-bounds-constant-array-index"
+  - "readability-identifier-naming"
 
 CheckOptions:
   # Standardized naming conventions:
+
   - key: readability-identifier-naming.ClassCase
-    value: PascalCase # Class names (e.g., MyClass)
+    value: CamelCase # Class names (e.g., MyClass)
 
   - key: readability-identifier-naming.StructCase
-    value: PascalCase # Struct names(e.g., MyStruct)
+    value: CamelCase # Struct names (e.g., MyStruct)
 
   - key: readability-identifier-naming.FunctionCase
-    value: camelCase # Function names (e.g., myFunction)
+    value: camelBack # Function names (e.g., myFunction)
 
   - key: readability-identifier-naming.MethodCase
-    value: camelCase # Method names (e.g., myMethod)
+    value: CamelCase # Method names (e.g., myMethod)
 
   - key: readability-identifier-naming.VariableCase
-    value: snake_case # Variable names (e.g., my_variable)
+    value: lower_case # Variable names (e.g., my_variable)
 
   - key: readability-identifier-naming.PrivateMemberPrefix
-    value: _ # Private member variables should have underscores (e.g., _my_variable)
+    value: "_" # Private member variables should have underscores (e.g., _my_variable)
 
   # Enforce initialization of all member variables in constructors
   - key: cppcoreguidelines-pro-type-member-init.HaltOnMissingMemberInit
