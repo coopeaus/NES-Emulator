@@ -64,13 +64,17 @@ target_link_libraries(sample_test PRIVATE gtest_main)
 enable_testing()
 
 # ----------------------- TEST CONFIGURATION -----------------------
-# Add the test executable to ctest. Inform ctest that the root directory of the test
-# is the source directory of CMakeLists.txt (not the build folder). We have to do this
-# because the final executable will be in the build folder, which can mess with relative
-# paths in the tests. Do this for each test executable.
-add_test(NAME sample_test COMMAND sample_test)
-set_tests_properties(sample_test PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-# Add other tests and properties here
+# We need to add the below to make tests discoverable. The PROPERTIES WORKING_DIRECTORY
+# sets the working directory of the test to the root folder instead of the build folder,
+# which resolves any issues with relative paths in the tests.
+
+# --- set only once ---
+include(GoogleTest)
+# ---
+gtest_discover_tests(cpu_test
+    PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+# Add other tests here
 
 # ----------------------- MAC BUNDLE -----------------------
 # Uncomment to build emu as a standalone MacOS .app bundle (optional)
