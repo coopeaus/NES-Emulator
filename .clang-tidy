@@ -1,6 +1,7 @@
 Checks:
   - "-*"
   - "bugprone-*"
+  - "-bugprone-easily-swappable-parameters"
   - "cppcoreguidelines-*"
   - "modernize-*"
   - "-modernize-use-auto"
@@ -27,7 +28,7 @@ CheckOptions:
     value: camelBack # Function names (e.g., myFunction)
 
   - key: readability-identifier-naming.MethodCase
-    value: camelBack # Method names (e.g., myMethod)
+    value: CamelCase # Method names (e.g., myMethod)
 
   - key: readability-identifier-naming.VariableCase
     value: lower_case # Variable names (e.g., my_variable)
