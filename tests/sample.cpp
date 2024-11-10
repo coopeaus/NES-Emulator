@@ -1,13 +1,17 @@
 // Google Test Basics: TEST and TEST_F
 //
 // - `TEST`: Defines a standalone test case.
-// - `TEST_F`: Defines a test case that uses a fixture (a shared setup/teardown environment).
+// - `TEST_F`: Defines a test case that uses a fixture (a shared setup/teardown
+// environment).
 //
 // Common Assertions:
-// - EXPECT_EQ(val1, val2): Checks if val1 == val2 (non-fatal, continues test on failure).
-// - ASSERT_EQ(val1, val2): Checks if val1 == val2 (fatal, stops test on failure).
+// - EXPECT_EQ(val1, val2): Checks if val1 == val2 (non-fatal, continues test on
+// failure).
+// - ASSERT_EQ(val1, val2): Checks if val1 == val2 (fatal, stops test on
+// failure).
 // - EXPECT_NE, EXPECT_LT, EXPECT_GT, EXPECT_LE, EXPECT_GE: Comparison macros.
-// - EXPECT_TRUE(condition) / EXPECT_FALSE(condition): Checks a boolean condition.
+// - EXPECT_TRUE(condition) / EXPECT_FALSE(condition): Checks a boolean
+// condition.
 //
 // Basic Usage:
 // 1. Include <gtest/gtest.h>.
@@ -21,15 +25,15 @@
 class Counter
 {
   public:
-    Counter() : count( 0 ) {}
+    Counter() = default;
 
-    void increment() { ++count; }
-    void decrement() { --count; }
-    void reset() { count = 0; }
-    int  getCount() const { return count; }
+    void              increment() { ++_count; }
+    void              decrement() { --_count; }
+    void              reset() { _count = 0; }
+    [[nodiscard]] int getCount() const { return _count; }
 
   private:
-    int count;
+    int _count{};
 };
 
 // === TEST ===
@@ -97,3 +101,5 @@ int main( int argc, char **argv )
     ::testing::InitGoogleTest( &argc, argv );
     return RUN_ALL_TESTS();
 }
+
+int test_function() { return 0; }
