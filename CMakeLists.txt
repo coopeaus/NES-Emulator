@@ -57,11 +57,16 @@ add_executable(emu
 add_executable(sample_test
   tests/sample.cpp
   # Add related cpp files here
+add_executable(cpu_test
+  tests/cpu_test.cpp
+  src/cpu.cpp
+  src/bus.cpp
 )
 # add other test executables here
 
 # ----------------------- TEST LIBRARIES -----------------------
 target_link_libraries(sample_test PRIVATE gtest_main)
+target_link_libraries(cpu_test PRIVATE gtest_main)
 # Link all other test executables to gtest_main
 
 # --- enable testing, do not touch, set only once ---
