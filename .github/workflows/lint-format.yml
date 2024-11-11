@@ -4,7 +4,6 @@ on: [push, pull_request]
 
 permissions:
     contents: write
-    metadata: read
     pull-requests: write
 
 jobs:
