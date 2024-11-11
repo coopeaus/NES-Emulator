@@ -1,0 +1,24 @@
+name: lint-format
+
+on: [push, pull_request]
+
+permissions:
+    contents: write
+    metadata: read
+    pull-requests: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cpp-linter/cpp-linter-action@v2
+      id: linter
+
+      with:
+        style: 'file'
+        tidy-checks: ''
+        no-lgtm: false
+        thread-comments: true
+        step-summary: true
