@@ -23,3 +23,5 @@ jobs:
         no-lgtm: false
         thread-comments: true
         step-summary: true
+        tidy-review: true
+        format-review: true
