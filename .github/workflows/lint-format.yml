@@ -12,12 +12,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Create build directory # needed for linting
+      run: mkdir -p build
     - uses: cpp-linter/cpp-linter-action@v2
       id: linter
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       with:
+        version: '18'
         style: 'file'
         tidy-checks: ''
         no-lgtm: false
