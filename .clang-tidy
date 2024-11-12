@@ -17,21 +17,20 @@ Checks: >
 
 CheckOptions:
   # Standardized naming conventions:
-
   - key: readability-identifier-naming.ClassCase
-    value: CamelCase # Class names (e.g., MyClass)
+    value: "CamelCase" # Class names (e.g., MyClass)
 
   - key: readability-identifier-naming.StructCase
-    value: CamelCase # Struct names (e.g., MyStruct)
+    value: "CamelCase" # Struct names (e.g., MyStruct)
 
   - key: readability-identifier-naming.FunctionCase
-    value: camelBack # Function names (e.g., myFunction)
+    value: "camelBack" # Function names (e.g., myFunction)
 
   - key: readability-identifier-naming.MethodCase
-    value: CamelCase # Method names (e.g., myMethod)
+    value: "CamelCase" # Method names (e.g., myMethod)
 
   - key: readability-identifier-naming.VariableCase
-    value: lower_case # Variable names (e.g., my_variable)
+    value: "lower_case" # Variable names (e.g., my_variable)
 
   - key: readability-identifier-naming.PrivateMemberPrefix
     value: "_" # Private member variables should have underscores (e.g., _my_variable)
