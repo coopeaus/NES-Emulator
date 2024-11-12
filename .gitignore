@@ -108,3 +108,4 @@ fceux/
 
 # Ignore any other common or custom build directories
 /build/
+.vscode/
