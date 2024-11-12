@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# build.sh
+# scripts/build.sh
 # An optional script to create a build with CMake
-# To run, provide permissions first: chmod +x build.sh
-# Then, run the script: ./build.sh
+# To run, provide permissions first: chmod +x scripts/build.sh
+# Then, run the script: ./scripts/build.sh
 
 # Set the build directory (adjust if your build directory is in a different location)
 BUILD_DIR="build"
+cd "$(dirname "$0")/.." || exit 1 # run from the project root directory
 
 echo "Starting build process..."
 

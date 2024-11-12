@@ -21,11 +21,12 @@ ctest    # Run unit tests
 Make scripts executable and use them to build, clean, run, or test:
 
 ```bash
-chmod +x build.sh clean.sh run.sh test.sh
-./build.sh          # Build project
-./clean.sh          # Clean build cache/executables
-./run.sh <name>     # Run specified executable in build folder
-./test.sh           # Run unit tests
+# From the root directory:
+chmod +x scripts/build.sh scripts/clean.sh scripts/run.sh scripts/test.sh
+./scripts/build.sh          # Build project
+./scripts/clean.sh          # Clean build cache/executables
+./scripts/run.sh <name>     # Run specified executable in build folder
+./scripts/test.sh           # Run unit tests
 ```
 
 ## Contribution Guidelines
