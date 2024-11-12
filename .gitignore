@@ -1,6 +1,9 @@
 # Name of my executable
 emu
 
+# Env files
+.env
+
 # Ignore object files and static libraries
 *.o
 *.a
@@ -109,3 +112,6 @@ fceux/
 # Ignore any other common or custom build directories
 /build/
 .vscode/
+
+# Local tooling
+lint.sh

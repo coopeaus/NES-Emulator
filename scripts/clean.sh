@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# clean.sh
+# scripts/clean.sh
 # Optional script to clean CMake build files and executables.
-# To use, set proper permissions: chmod +x clean.sh
-# Usage: ./clean.sh
+# To use, set proper permissions: chmod +x scripts/clean.sh
+# Usage: ./scripts/clean.sh
 
 # Set the build directory (adjust if your build directory is in a different location)
 BUILD_DIR="build"
+cd "$(dirname "$0")/.." || exit 1 # run from the project root directory
 
 echo "Cleaning CMake build files..."
 

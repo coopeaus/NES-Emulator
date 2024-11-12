@@ -1,14 +1,15 @@
 #!/bin/bash
-# test.sh
+# scripts/test.sh
 # Optional test script to run CTest in the build directory
-# Give file permission to execute: chmod +x test.sh
-# run script: ./test.sh
+# Give file permission to execute: chmod +x scripts/test.sh
+# Run script: ./scripts/test.sh
 
 BUILD_DIR="build"
+cd "$(dirname "$0")/.." || exit 1 # run from the project root directory
 
 # Check if the build directory exists
 if [ ! -d "$BUILD_DIR" ]; then
-	echo "Error: Build directory '$BUILD_DIR' does not exist. Please run ./build.sh first."
+	echo "Error: Build directory '$BUILD_DIR' does not exist. Please run ./scripts/build.sh first."
 	exit 1
 fi
 
@@ -28,5 +29,5 @@ else
 fi
 
 # Isolating a specific test
-# ./test.sh "CPUTest.IMM" # Immediate addressing test
-# ./test.sh "CPUTest.xEA" # Test for opcode 0xEA (JMP)
+# ./scripts/test.sh "CPUTest.IMM" # Immediate addressing test
+# ./scripts/test.sh "CPUTest.xEA" # Test for opcode 0xEA (JMP)

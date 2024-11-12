@@ -3,32 +3,37 @@ name: lint-format
 on: [pull_request]
 
 permissions:
-    contents: write
-    pull-requests: write
+  contents: write
+  pull-requests: write
 
 jobs:
   lint:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Create build directory # needed for linting
-      run: mkdir -p build
-    - uses: cpp-linter/cpp-linter-action@v2
-      id: linter
-      env:
+      - uses: actions/checkout@v4
+      - name: Create build directory # needed for linting
+        run: |
+          rm -rf build
+          mkdir -p build
+          cd build
+          cmake ..
+      - uses: cpp-linter/cpp-linter-action@v2
+        id: linter
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      with:
-        version: '18'
-        style: 'file'
-        tidy-checks: ''
-        no-lgtm: false
-        thread-comments: true
-        step-summary: true
-        tidy-review: true
-        format-review: true
+        with:
+          version: "18"
+          style: "file"
+          tidy-checks: ""
+          no-lgtm: false
+          thread-comments: true
+          step-summary: true
+          tidy-review: true
+          format-review: true
+          database: "./build/compile_commands.json"
 
-    - name: Report failure
-      if: steps.linter.outputs.checks-failed != 0
-      run: exit 1
+      - name: Report failure
+        if: steps.linter.outputs.checks-failed != 0
+        run: exit 1

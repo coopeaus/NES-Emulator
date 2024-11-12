@@ -1,5 +1,6 @@
 // cpu.cpp
 
+#include "cpu.h"
 #include "bus.h"
 CPU::CPU( Bus *bus ) : _bus( bus ) {} // initialize CPU with pointer to bus
 

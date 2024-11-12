@@ -9,8 +9,14 @@ set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 # C++ 17 standard
 set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
-add_compile_options( -Wall -Wextra -Wpedantic -Werror )
 
+if(MSVC)
+  # If in visual studio
+  add_compile_options(/W4 /WX) # /W4 for high warning level, /WX to treat warnings as errors
+else()
+  # GCC/Clang warning flags
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+endif()
 
 # Include directories
 include_directories( include )
