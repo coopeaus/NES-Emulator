@@ -25,3 +25,7 @@ jobs:
         step-summary: true
         tidy-review: true
         format-review: true
+
+    - name: Report failure
+      if: steps.linter.outputs.checks-failed != 0
+      run: exit 1
