@@ -9,8 +9,9 @@ class APU;
 class SaveRAM;
 class Cartridge;
 
-class Bus {
-public:
+class Bus
+{
+  public:
     // Constructor to initialize the bus with all components (stubbing components here)
     Bus();
 
