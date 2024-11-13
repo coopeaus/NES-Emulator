@@ -3,7 +3,6 @@
 
 #include "cpu.h"
 #include <array>
-#include <memory>
 #include <cstdint>
 
 using u8 = uint8_t;
