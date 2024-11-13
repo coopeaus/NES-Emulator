@@ -24,8 +24,8 @@ class Bus
     std::array<u8, 65536> _flat_memory;
 
     // Stubbed out components
-    PPU       *_ppu = nullptr;
-    APU       *_apu = nullptr;
-    SaveRAM   *_save_ram = nullptr;
-    Cartridge *_cartridge = nullptr;
+    PPU* _ppu = nullptr;
+    APU* _apu = nullptr;
+    SaveRAM* _save_ram = nullptr;
+    Cartridge* _cartridge = nullptr;
 };
