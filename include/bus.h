@@ -19,7 +19,7 @@ class Bus
     [[nodiscard]] u8 Read( uint16_t address ) const;
     void             Write( u16 address, u8 data );
 
-private:
+  private:
     // Flat memory (64KB for early testing)
     std::array<u8, 65536> _flat_memory;
 
