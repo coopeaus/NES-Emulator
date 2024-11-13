@@ -4,10 +4,11 @@
 #include <cstdint>
 
 // Temporary placeholder definitions for PPU, APU, SaveRAM, and Cartridge classes
-class PPU {
-public:
-  [[nodiscard]] static uint8_t Read( uint16_t /*address*/ ) { return 0; } // Placeholder read method
-  void Write( uint16_t /*address*/, uint8_t /*data*/ ) {} // Placeholder write method
+class PPU
+{
+  public:
+    uint8_t Read( uint16_t /*address*/ ) const { return 0; }   // Placeholder read method
+    void    Write( uint16_t /*address*/, uint8_t /*data*/ ) {} // Placeholder write method
 };
 
 class APU {
