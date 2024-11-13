@@ -24,8 +24,8 @@ public:
 
 class Cartridge {
 public:
-    uint8_t Read(uint16_t /*address*/) const { return 0; }
-    void Write(uint16_t /*address*/, uint8_t /*data*/) {}
+  [[nodiscard]] static uint8_t Read( uint16_t /*address*/ ) { return 0; }
+  void                         Write( uint16_t /*address*/, uint8_t /*data*/ ) {}
 };
 
 
