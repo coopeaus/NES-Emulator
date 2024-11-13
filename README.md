@@ -51,8 +51,21 @@ docker run --rm -v "$(pwd)/src":/usr/src/app/src project-linter
 
 ## Contribution Guidelines
 
-- Start early; don’t wait until the due date to contribute. Respect teammates’ time by submitting quality contributions.
-- Lint and format the codebase locally before submitting a PR.
-- Research each component thoroughly before working on it.
-- Stay updated with the codebase, even if you didn't write it.
-- If something is confusing, ask your teammates.
+- Fetch the latest changes and create a new branch for your feature/fix
+
+```bash
+git checkout main
+git pull
+git checkout -b your-branch-name
+```
+
+- Make the appropriate changes and commits
+- Make sure the project builds and tests pass
+- Run linting on the codebase locally before pushing
+- Push your branch and create a pull request against `main`
+
+```bash
+git push origin your-branch-name
+```
+
+- Follow through with CI checks and code reviews
