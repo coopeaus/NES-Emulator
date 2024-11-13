@@ -16,8 +16,8 @@ class Bus
     Bus();
 
     // Memory read/write interface
-    [[nodiscard]] u8 Read(uint16_t address) const;
-    void Write(u16 address, u8 data);
+    [[nodiscard]] u8 Read( uint16_t address ) const;
+    void             Write( u16 address, u8 data );
 
 private:
     // Flat memory (64KB for early testing)
