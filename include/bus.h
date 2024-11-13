@@ -1,6 +1,5 @@
 // bus.h
 #pragma once
-
 #include "cpu.h"
 #include <array>
 #include <memory>
