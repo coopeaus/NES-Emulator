@@ -5,6 +5,7 @@
 // Aliases for integer types
 using u8 = uint8_t;
 using u16 = uint16_t;
+using u64 = uint64_t;
 
 // Forward declaration for reads and writes
 class Bus;
@@ -25,6 +26,7 @@ class CPU
     [[nodiscard]] u8  GetStatusRegister() const;
     [[nodiscard]] u8  GetStackPointer() const;
     [[nodiscard]] u16 GetProgramCounter() const;
+    [[nodiscard]] u64 GetCycles() const;
 
     // Setters for registers
     void SetAccumulator( u8 value );
@@ -33,6 +35,7 @@ class CPU
     void SetStatusRegister( u8 value );
     void SetStackPointer( u8 value );
     void SetProgramCounter( u16 value );
+    void SetCycles( u64 value );
 
   private:
     Bus *_bus; // Pointer to the Bus class
@@ -44,4 +47,5 @@ class CPU
     u8  _y = 0x00;    // Y register
     u8  _s = 0xFD;    // Stack pointer (SP)
     u8  _p = 0x00;    // Status register (P)
+    u64 _cycles = 0;  // Number of cycles
 };

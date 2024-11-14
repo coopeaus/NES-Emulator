@@ -15,6 +15,7 @@ void CPU::Write( u16 address, u8 data ) { _bus->Write( address, data ); }
 [[nodiscard]] u8  CPU::GetStatusRegister() const { return _p; }
 [[nodiscard]] u16 CPU::GetProgramCounter() const { return _pc; }
 [[nodiscard]] u8  CPU::GetStackPointer() const { return _s; }
+[[nodiscard]] u64 CPU::GetCycles() const { return _cycles; }
 
 // Setters
 void CPU::SetAccumulator( u8 value ) { _a = value; }
@@ -23,3 +24,4 @@ void CPU::SetYRegister( u8 value ) { _y = value; }
 void CPU::SetStatusRegister( u8 value ) { _p = value; }
 void CPU::SetProgramCounter( u16 value ) { _pc = value; }
 void CPU::SetStackPointer( u8 value ) { _s = value; }
+void CPU::SetCycles( u64 value ) { _cycles = value; }
