@@ -42,6 +42,6 @@ class CPU
     u8  _a = 0x00;    // Accumulator register (A)
     u8  _x = 0x00;    // X register
     u8  _y = 0x00;    // Y register
-    u8  _s = 0xFF;    // Stack pointer (SP)
+    u8  _s = 0xFD;    // Stack pointer (SP)
     u8  _p = 0x00;    // Status register (P)
 };
