@@ -32,6 +32,7 @@ jobs:
           step-summary: true
           tidy-review: true
           format-review: true
+          database: "./build/compile_commands.json"
 
       - name: Report failure
         if: steps.linter.outputs.checks-failed != 0
