@@ -21,7 +21,8 @@ class CPUTestFixture : public ::testing::Test
     // All tests assume flat memory model, which is why true is passed to Bus constructor
     CPUTestFixture() : cpu( &bus ), bus( true ) {}
 
-    void RunTestCase( const json &testCase );
+    void        RunTestCase( const json &testCase );
+    void        LoadStateFromJson( const json &jsonData, const std::string &state );
 };
 
 // -----------------------------------------------------------------------------
@@ -48,6 +49,30 @@ TEST_F( CPUTestFixture, SanityCheck )
 // -----------------------------------------------------------------------------
 // -------------------------TEST CLASS METHODS ---------------------------------
 // -----------------------------------------------------------------------------
+void CPUTestFixture::LoadStateFromJson( const json &jsonData, const std::string &state )
+{
+    /*
+     This function loads the CPU state from json data.
+     args:
+      jsonData: JSON data returned by extractTestsFromJson
+      state: "initial" or "final"
+    */
+    cpu.SetProgramCounter( jsonData[state]["pc"] );
+    cpu.SetAccumulator( jsonData[state]["a"] );
+    cpu.SetXRegister( jsonData[state]["x"] );
+    cpu.SetYRegister( jsonData[state]["y"] );
+    cpu.SetStackPointer( jsonData[state]["s"] );
+    cpu.SetStatusRegister( jsonData[state]["p"] );
+
+    // Load memory state from JSON
+    for ( const auto &ram_entry : jsonData[state]["ram"] )
+    {
+        uint16_t address = ram_entry[0];
+        uint8_t  value = ram_entry[1];
+        cpu.Write( address, value );
+    }
+}
+
 // -----------------------------------------------------------------------------
 // --------------------------- GENERAL HELPERS ---------------------------------
 //               Helpers that don't depend on the CPU class
