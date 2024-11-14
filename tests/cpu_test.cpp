@@ -2,9 +2,16 @@
 #include "bus.h"
 #include "cpu.h"
 #include "json.hpp"
+#include <cstdint>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <iomanip>
+#include <ios>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+
 using json = nlohmann::json;
 
 // forward declarations
@@ -34,7 +41,7 @@ class CPUTestFixture : public ::testing::Test
 TEST_F( CPUTestFixture, SanityCheck )
 {
     // cpu.read and cpu.write shouldn't throw any errors
-    u8 test_val = cpu.Read( 0x0000 );
+    u8 const test_val = cpu.Read( 0x0000 );
     cpu.Write( 0x0000, test_val );
 }
 
@@ -57,9 +64,9 @@ TEST_F( CPUTestFixture, SanityCheck )
 #define CPU_TEST( opcode_hex, mnemonic, addr_mode, filename )                                      \
     TEST_F( CPUTestFixture, x##opcode_hex##_##mnemonic##_##addr_mode )                             \
     {                                                                                              \
-        std::string testName = #opcode_hex " " #mnemonic " " #addr_mode;                           \
+        std::string const testName = #opcode_hex " " #mnemonic " " #addr_mode;                     \
         printTestStartMsg( testName );                                                             \
-        json testCases = extractTestsFromJson( "tests/json/" filename );                           \
+        json const testCases = extractTestsFromJson( "tests/json/" filename );                     \
         for ( const auto &testCase : testCases )                                                   \
         {                                                                                          \
             RunTestCase( testCase );                                                               \
@@ -251,7 +258,7 @@ void CPUTestFixture::RunTestCase( const json &testCase ) // NOLINT
     // TODO: Reset CPU state
 
     LoadStateFromJson( testCase, "initial" );
-    std::string initial_state = GetCPUStateString( testCase, "initial" );
+    std::string const initial_state = GetCPUStateString( testCase, "initial" );
     // Ensure loaded values match JSON values
     EXPECT_EQ( cpu.GetProgramCounter(), u16( testCase["initial"]["pc"] ) );
     EXPECT_EQ( cpu.GetAccumulator(), testCase["initial"]["a"] );
@@ -262,8 +269,8 @@ void CPUTestFixture::RunTestCase( const json &testCase ) // NOLINT
 
     for ( const auto &ram_entry : testCase["initial"]["ram"] )
     {
-        uint16_t address = ram_entry[0];
-        uint8_t  value = ram_entry[1];
+        uint16_t const address = ram_entry[0];
+        uint8_t const  value = ram_entry[1];
         EXPECT_EQ( cpu.Read( address ), value );
     }
 
@@ -296,8 +303,8 @@ void CPUTestFixture::LoadStateFromJson( const json &jsonData, const std::string 
     // Load memory state from JSON
     for ( const auto &ram_entry : jsonData[state]["ram"] )
     {
-        uint16_t address = ram_entry[0];
-        uint8_t  value = ram_entry[1];
+        uint16_t const address = ram_entry[0];
+        uint8_t const  value = ram_entry[1];
         cpu.Write( address, value );
     }
 }
@@ -313,22 +320,22 @@ std::string CPUTestFixture::GetCPUStateString( const json &jsonData, const std::
     */
 
     // Expected values
-    u16 expected_pc = u16( jsonData[state]["pc"] );
-    u8  expected_a = jsonData[state]["a"];
-    u8  expected_x = jsonData[state]["x"];
-    u8  expected_y = jsonData[state]["y"];
-    u8  expected_s = jsonData[state]["s"];
-    u8  expected_p = jsonData[state]["p"];
-    u64 expected_cycles = jsonData["cycles"].size();
+    u16 const expected_pc = u16( jsonData[state]["pc"] );
+    u8 const  expected_a = jsonData[state]["a"];
+    u8 const  expected_x = jsonData[state]["x"];
+    u8 const  expected_y = jsonData[state]["y"];
+    u8 const  expected_s = jsonData[state]["s"];
+    u8 const  expected_p = jsonData[state]["p"];
+    u64 const expected_cycles = jsonData["cycles"].size();
 
     // Actual values
-    u16 actual_pc = cpu.GetProgramCounter();
-    u8  actual_a = cpu.GetAccumulator();
-    u8  actual_x = cpu.GetXRegister();
-    u8  actual_y = cpu.GetYRegister();
-    u8  actual_s = cpu.GetStackPointer();
-    u8  actual_p = cpu.GetStatusRegister();
-    u64 actual_cycles = cpu.GetCycles();
+    u16 const actual_pc = cpu.GetProgramCounter();
+    u8 const  actual_a = cpu.GetAccumulator();
+    u8 const  actual_x = cpu.GetXRegister();
+    u8 const  actual_y = cpu.GetYRegister();
+    u8 const  actual_s = cpu.GetStackPointer();
+    u8 const  actual_p = cpu.GetStatusRegister();
+    u64 const actual_cycles = cpu.GetCycles();
 
     // Column Widths
     const int label_width = 8;
@@ -353,10 +360,19 @@ std::string CPUTestFixture::GetCPUStateString( const json &jsonData, const std::
             return str_stream.str();
         };
 
-        // Determine hex width based on value
-        int width = ( expected > 0xFFFF || actual > 0xFFFF ) ? 8
-                    : ( expected > 0xFF || actual > 0xFF )   ? 4
-                                                             : 2;
+        int width = 4;
+        if ( expected > 0xFFFF || actual > 0xFFFF )
+        {
+            width = 8;
+        }
+        else if ( expected > 0xFF || actual > 0xFF )
+        {
+            width = 4;
+        }
+        else
+        {
+            width = 2;
+        }
 
         output << std::left << std::setw( label_width ) << label;
         output << std::setw( value_width ) << to_hex_decimal_string( expected, width );
@@ -384,9 +400,9 @@ std::string CPUTestFixture::GetCPUStateString( const json &jsonData, const std::
     // Print RAM entries
     for ( const auto &ram_entry : jsonData[state]["ram"] )
     {
-        uint16_t address = ram_entry[0];
-        uint8_t  expected_value = ram_entry[1];
-        uint8_t  actual_value = cpu.Read( address );
+        uint16_t const address = ram_entry[0];
+        uint8_t const  expected_value = ram_entry[1];
+        uint8_t const  actual_value = cpu.Read( address );
 
         // Helper lambda to format values as "HEX (DECIMAL)"
         auto format_value = []( uint8_t value )
