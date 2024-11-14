@@ -59,7 +59,12 @@ git pull
 git checkout -b your-branch-name
 ```
 
-- Make the appropriate changes and commits
+- As you're working, regularly fetch and merge other people's changes:
+```bash
+git fetch origin
+git merge origin/main
+```
+
 - Make sure the project builds and tests pass
 - Run linting on the codebase locally before pushing
 - Push your branch and create a pull request against `main`
