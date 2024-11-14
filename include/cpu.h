@@ -15,8 +15,8 @@ class CPU
     explicit CPU( Bus *bus ); // Must pass a pointer to a Bus class on initialization
 
     // Read/write methods
-    [[nodiscard]] auto read( u16 address ) const -> u8;
-    void               write( u16 address, u8 data );
+    [[nodiscard]] auto Read( u16 address ) const -> u8;
+    void               Write( u16 address, u8 data );
 
     // Getters for registers
     [[nodiscard]] u8  GetAccumulator() const;
