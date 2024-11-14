@@ -5,11 +5,11 @@
 #include <fstream>
 #include <gtest/gtest.h>
 using json = nlohmann::json;
-using u8 = uint8_t;
-using u16 = uint16_t;
-using u64 = uint64_t;
 
+// forward declarations
 auto extractTestsFromJson( const std::string &path ) -> json;
+void printTestStartMsg( const std::string &testName );
+void printTestEndMsg( const std::string &testName );
 
 class CPUTestFixture : public ::testing::Test
 // This class is a test fixture that provides shared setup and teardown for all tests
@@ -18,23 +18,40 @@ class CPUTestFixture : public ::testing::Test
     CPU cpu; // NOLINT
     Bus bus; // NOLINT
 
-    CPUTestFixture() : cpu( &bus ), bus() {}
+    // All tests assume flat memory model, which is why true is passed to Bus constructor
+    CPUTestFixture() : cpu( &bus ), bus( true ) {}
 
     void RunTestCase( const json &testCase );
 };
 
-auto main( int argc, char **argv ) -> int
-{
-    testing::InitGoogleTest( &argc, argv );
-    return RUN_ALL_TESTS();
-}
-
+// -----------------------------------------------------------------------------
+// --------------------------- GENERAL TESTS CASES -----------------------------
+//           Put anything here that doesn't neatly fit into a category
+// -----------------------------------------------------------------------------
 TEST_F( CPUTestFixture, SanityCheck )
 {
     // cpu.read and cpu.write shouldn't throw any errors
     u8 test_val = cpu.Read( 0x0000 );
     cpu.Write( 0x0000, test_val );
 }
+
+// -----------------------------------------------------------------------------
+// --------------------------- ADDRESSING MODE TESTS ---------------------------
+// -----------------------------------------------------------------------------
+// TODO: Add addressing mode tests here
+
+/* -----------------------------------------------------------------------------
+   --------------------------- OPCODE JSON TESTS -------------------------------
+                            Tom Harte's json tests.
+   -----------------------------------------------------------------------------
+*/
+// -----------------------------------------------------------------------------
+// -------------------------TEST CLASS METHODS ---------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// --------------------------- GENERAL HELPERS ---------------------------------
+//               Helpers that don't depend on the CPU class
+// -----------------------------------------------------------------------------
 
 auto extractTestsFromJson( const std::string &path ) -> json
 // Extracts test cases from a JSON file and returns them as a JSON object, with the
@@ -53,4 +70,24 @@ auto extractTestsFromJson( const std::string &path ) -> json
         throw std::runtime_error( "Expected an array of test cases in JSON file" );
     }
     return test_cases;
+}
+
+void printTestStartMsg( const std::string &testName )
+{
+    std::cout << '\n';
+    std::cout << "---------- " << testName << " Tests ---------" << '\n';
+}
+void printTestEndMsg( const std::string &testName )
+{
+    std::cout << "---------- " << testName << " Tests Complete ---------" << '\n';
+    std::cout << '\n';
+}
+
+// -----------------------------------------------------------------------------
+// -------------------------------- MAIN ---------------------------------------
+// -----------------------------------------------------------------------------
+auto main( int argc, char **argv ) -> int
+{
+    testing::InitGoogleTest( &argc, argv );
+    return RUN_ALL_TESTS();
 }
