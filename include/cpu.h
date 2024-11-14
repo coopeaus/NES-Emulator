@@ -12,7 +12,7 @@ class Bus;
 class CPU
 {
   public:
-    explicit CPU(Bus* bus); // Must pass a pointer to a Bus class on initialization
+    explicit CPU( Bus *bus ); // Must pass a pointer to a Bus class on initialization
 
     // Read/write methods
     [[nodiscard]] auto read(u16 address) const -> u8;
