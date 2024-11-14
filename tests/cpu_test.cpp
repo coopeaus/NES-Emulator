@@ -4,6 +4,7 @@
 #include "json.hpp"
 #include <fstream>
 #include <gtest/gtest.h>
+#include <iomanip>
 using json = nlohmann::json;
 
 // forward declarations
@@ -50,6 +51,39 @@ TEST_F( CPUTestFixture, SanityCheck )
 // -----------------------------------------------------------------------------
 // -------------------------TEST CLASS METHODS ---------------------------------
 // -----------------------------------------------------------------------------
+void CPUTestFixture::RunTestCase( const json &testCase ) // NOLINT
+{
+    // Initialize CPU
+    // TODO: Reset CPU state
+
+    LoadStateFromJson( testCase, "initial" );
+    std::string initial_state = GetCPUStateString( testCase, "initial" );
+    // Ensure loaded values match JSON values
+    EXPECT_EQ( cpu.GetProgramCounter(), u16( testCase["initial"]["pc"] ) );
+    EXPECT_EQ( cpu.GetAccumulator(), testCase["initial"]["a"] );
+    EXPECT_EQ( cpu.GetXRegister(), testCase["initial"]["x"] );
+    EXPECT_EQ( cpu.GetYRegister(), testCase["initial"]["y"] );
+    EXPECT_EQ( cpu.GetStackPointer(), testCase["initial"]["s"] );
+    EXPECT_EQ( cpu.GetStatusRegister(), testCase["initial"]["p"] );
+
+    for ( const auto &ram_entry : testCase["initial"]["ram"] )
+    {
+        uint16_t address = ram_entry[0];
+        uint8_t  value = ram_entry[1];
+        EXPECT_EQ( cpu.Read( address ), value );
+    }
+
+    // Temp: print initial state
+    std::cout << '\n';
+    std::cout << "Loading state from tests/json/small.json" << '\n';
+    std::cout << "Test name: " << testCase["name"] << '\n';
+    std::cout << initial_state << '\n';
+
+    // TODO: Run CPU fetch-decode-execute method(s) once
+
+    // TODO: Compare the actual final state with the expected final state
+}
+
 void CPUTestFixture::LoadStateFromJson( const json &jsonData, const std::string &state )
 {
     /*
