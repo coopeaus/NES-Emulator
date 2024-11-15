@@ -37,7 +37,6 @@ jobs:
         id: linter
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
         with:
           version: "18"
           style: "file"
