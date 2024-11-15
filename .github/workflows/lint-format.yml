@@ -16,6 +16,7 @@ jobs:
       - name: Check for changes in C++ files
         id: check_changes
         run: |
+          git fetch origin main
           if git diff --name-only origin/main ${{ github.sha }} | grep -E '\.(cpp|hpp|c|h)$' -q; then
             echo "files_modified=true" >> $GITHUB_ENV
           else
