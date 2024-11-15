@@ -12,6 +12,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check for changes in C++ files
+        id: check_changes
+        run: |
+          git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E '\.(cpp|h|hpp|c)$' || echo "No C++ file changes"
+        continue-on-error: true
+
+      - name: Skip linting if no C++ files changed
+        if: steps.check_changes.outputs.result == 'No C++ file changes'
+        run: |
+          echo "No C++ file changes, skipping linting."
+          exit 0
+  
       - name: Create build directory # needed for linting
         run: |
           rm -rf build
