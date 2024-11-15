@@ -16,17 +16,24 @@ jobs:
       - name: Check for changes in C++ files
         id: check_changes
         run: |
-          CHANGES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E '\.(cpp|h|hpp|c)$' || echo "No C++ file changes")
-          echo "changes=$CHANGES" >> $GITHUB_ENV
+          git fetch origin main
+            CHANGED_FILES=$(git diff --name-only origin/main)
+            echo "Changed files: $CHANGED_FILES"
+            if echo "$CHANGED_FILES" | grep -E '\.(cpp|h|hpp)$'; then
+              echo "C++ files were modified."
+              echo "files_modified=true" >> $GITHUB_ENV
+            else
+              echo "No C++ files were modified."
+              echo "files_modified=false" >> $GITHUB_ENV
         continue-on-error: true
           
       - name: Skip linting if no C++ files changed
-        if: env.changes == 'No C++ file changes'
+        if: ! env.files_modified
         run: |
           echo "No C++ file changes, skipping linting."
 
       - name: Create build directory # needed for linting
-        if: env.changes != 'No C++ file changes'
+        if: env.files_modified
         run: |
           rm -rf build
           mkdir -p build
@@ -34,7 +41,7 @@ jobs:
           cmake ..
 
       - name: Run linter
-        if: env.changes != 'No C++ file changes'
+        if: env.files_modified
         uses: cpp-linter/cpp-linter-action@v2
         id: linter
         env:
@@ -51,9 +58,9 @@ jobs:
           database: "./build/compile_commands.json"
 
       - name: Report failure
-        if: steps.linter.outputs.checks-failed != 0 && env.changes != 'No C++ file changes'
+        if: steps.linter.outputs.checks-failed != 0 && env.files_modified
         run: exit 1
 
       - name: Report Success
-        if: env.changes == 'No C++ file changes'
+        if: ! env.files_modified
         run: exit 0
