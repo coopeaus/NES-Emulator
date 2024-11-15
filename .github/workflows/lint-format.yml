@@ -1,6 +1,6 @@
 name: lint-format
 
-on: [push, pull_request]
+on: [pull_request]
 
 permissions:
   contents: write
@@ -22,11 +22,6 @@ jobs:
           else
             echo "files_modified=false" >> $GITHUB_ENV
           fi
-
-      - name: Skip linting if no C++ files changed
-        if: env.files_modified == 'false'
-        run: |
-          echo "No C++ file changes, skipping linting."
 
       - name: Create build directory # needed for linting
         if: env.files_modified == 'true'
