@@ -1,7 +1,7 @@
 // cpu.cpp
-
 #include "cpu.h"
 #include "bus.h"
+
 CPU::CPU( Bus *bus ) : _bus( bus ) {} // initialize CPU with pointer to bus
 
 // Pass off reads and writes to the bus
@@ -25,3 +25,8 @@ void CPU::SetStatusRegister( u8 value ) { _p = value; }
 void CPU::SetProgramCounter( u16 value ) { _pc = value; }
 void CPU::SetStackPointer( u8 value ) { _s = value; }
 void CPU::SetCycles( u64 value ) { _cycles = value; }
+
+//  Flag methods for status register 
+void CPU::SetFlag( u8 flag) { _p |= _flag}
+void CPU::ClearFlag(u8 flag) { _p &= _flag}
+boolean CPU::isFlagSet(u8 flag) {return flag}
