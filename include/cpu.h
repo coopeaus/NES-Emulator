@@ -1,5 +1,4 @@
 #pragma once
-
 #include <cstdint>
 
 // Aliases for integer types
@@ -10,15 +9,17 @@ using u64 = uint64_t;
 // enums
 
 // enum for the status registers set to 0 by default
-enum Status {
-  Carry = 0b0,
-  Zero = 0b0,
-  Interrupt_Disable = 0b0,
-  Decimal = 0b0,
-  Overflow = 0b0,
-  Negative = 0b0,
-  B_Flag = 0b0
+enum Status : u8 {
+  Carry = 1 << 0,
+  Zero = 1 << 1,
+  Interrupt_Disable = 1 << 2,
+  Decimal = 1 << 3,
+  Overflow = 1 << 4,
+  Negative = 1 << 5,
+  B_Flag = 1 << 6
 }
+
+enum Status Status_Registry; 
 
 // Forward declaration for reads and writes
 class Bus;
@@ -64,15 +65,4 @@ class CPU
 
     // private methods 
 
-    void setFlag(Status flag) {
-      flag = 0b1;
-    }
-
-    void clearFlag(Status flag) {
-      flag = 0b0;
-    }
-
-    void isFlagSet(Status flag) {
-      return flag == 1? 1: 0;
-    }
 };
