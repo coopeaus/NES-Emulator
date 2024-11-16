@@ -7,6 +7,19 @@ using u8 = uint8_t;
 using u16 = uint16_t;
 using u64 = uint64_t;
 
+// enums
+
+// enum for the status registers set to 0 by default
+enum Status {
+  Carry = 0b0,
+  Zero = 0b0,
+  Interrupt_Disable = 0b0,
+  Decimal = 0b0,
+  Overflow = 0b0,
+  Negative = 0b0,
+  B_Flag = 0b0
+}
+
 // Forward declaration for reads and writes
 class Bus;
 
@@ -48,4 +61,18 @@ class CPU
     u8  _s = 0xFD;    // Stack pointer (SP)
     u8  _p = 0x00;    // Status register (P)
     u64 _cycles = 0;  // Number of cycles
+
+    // private methods 
+
+    void setFlag(Status flag) {
+      flag = 0b1;
+    }
+
+    void clearFlag(Status flag) {
+      flag = 0b0;
+    }
+
+    void isFlagSet(Status flag) {
+      return flag == 1? 1: 0;
+    }
 };
