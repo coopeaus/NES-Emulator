@@ -10,7 +10,7 @@ using u64 = uint64_t;
 // Enum for Status Register
 
 enum Status : u8
-  {
+{
     Carry = 1 << 0, // 0b 00000001
     Zero = 1 << 1,  // 0b 00000010
     Interrupt_Disable = 1 << 2,
