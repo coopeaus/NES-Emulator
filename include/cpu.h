@@ -50,7 +50,7 @@ class CPU
     void SetProgramCounter( u16 value );
     void SetCycles( u64 value );
 
-  //Flag methods
+    // Flag methods
 
     void SetFlag( u8 flag );
     void ClearFlag( u8 flag );
