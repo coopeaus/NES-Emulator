@@ -30,6 +30,7 @@ CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
 Makefile
+cmake-build-*
 
 # Ignore Code::Blocks workspace files
 *.depend
