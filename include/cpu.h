@@ -18,7 +18,7 @@ enum Status : u8
     Overflow = 1 << 4,
     Negative = 1 << 5,
     B_Flag = 1 << 6
-  };
+};
 
 // Forward declaration for reads and writes
 class Bus;
