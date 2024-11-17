@@ -25,3 +25,9 @@ void CPU::SetStatusRegister( u8 value ) { _p = value; }
 void CPU::SetProgramCounter( u16 value ) { _pc = value; }
 void CPU::SetStackPointer( u8 value ) { _s = value; }
 void CPU::SetCycles( u64 value ) { _cycles = value; }
+
+// flag methods
+void CPU::SetFlag( const u8 flag ) { _p |= flag; }
+void CPU::ClearFlag( const u8 flag ) { _p &= ~flag; }
+
+u8 CPU::IsFlagSet( const u8 flag ) const { return static_cast<u8>( ( _p & flag ) != 0 ); }

@@ -7,6 +7,19 @@ using u8 = uint8_t;
 using u16 = uint16_t;
 using u64 = uint64_t;
 
+// Enum for Status Register
+
+enum Status : u8
+{
+    Carry = 1 << 0, // 0b 00000001
+    Zero = 1 << 1,  // 0b 00000010
+    Interrupt_Disable = 1 << 2,
+    Decimal = 1 << 3,
+    Overflow = 1 << 4,
+    Negative = 1 << 5,
+    B_Flag = 1 << 6
+};
+
 // Forward declaration for reads and writes
 class Bus;
 
@@ -36,6 +49,12 @@ class CPU
     void SetStackPointer( u8 value );
     void SetProgramCounter( u16 value );
     void SetCycles( u64 value );
+
+    // Flag methods
+
+    void             SetFlag( u8 flag );
+    void             ClearFlag( u8 flag );
+    [[nodiscard]] u8 IsFlagSet( u8 flag ) const;
 
   private:
     Bus *_bus; // Pointer to the Bus class
