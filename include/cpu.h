@@ -52,9 +52,9 @@ class CPU
 
     // Flag methods
 
-    void SetFlag( u8 flag );
-    void ClearFlag( u8 flag );
-    [[nodiscard]] u8   IsFlagSet( u8 flag ) const;
+    void             SetFlag( u8 flag );
+    void             ClearFlag( u8 flag );
+    [[nodiscard]] u8 IsFlagSet( u8 flag ) const;
 
   private:
     Bus *_bus; // Pointer to the Bus class
