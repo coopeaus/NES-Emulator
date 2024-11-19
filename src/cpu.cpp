@@ -1,6 +1,6 @@
 // cpu.cpp
 
-#include "bus.h"
+#include "cpu.h"
 #include "bus.h"
 CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
 {
