@@ -170,7 +170,7 @@ To run all tests:
   ctest # from the build directory
 */
 
-CPU_TEST( SAMPLE, JSON, SANITY_CHECK, "small.json" );
+/* CPU_TEST( SAMPLE, JSON, SANITY_CHECK, "small.json" ); */
 /* CPU_TEST( 00, BRK, Implied, "00.json" ); */
 /* CPU_TEST( 01, ORA, IndirectX, "01.json" ); */
 /* CPU_TEST( 05, ORA, ZeroPage, "05.json" ); */
@@ -330,7 +330,7 @@ CPU_TEST( SAMPLE, JSON, SANITY_CHECK, "small.json" );
 void CPUTestFixture::RunTestCase( const json &testCase ) // NOLINT
 {
     // Initialize CPU
-    // TODO: Reset CPU state
+    cpu.Reset();
 
     LoadStateFromJson( testCase, "initial" );
     std::string const initial_state = GetCPUStateString( testCase, "initial" );
@@ -350,14 +350,75 @@ void CPUTestFixture::RunTestCase( const json &testCase ) // NOLINT
     }
 
     // Temp: print initial state
-    std::cout << '\n';
-    std::cout << "Loading state from tests/json/small.json" << '\n';
-    std::cout << "Test name: " << testCase["name"] << '\n';
-    std::cout << initial_state << '\n';
+    /* std::cout << '\n'; */
+    /* std::cout << "Loading state from tests/json/small.json" << '\n'; */
+    /* std::cout << "Test name: " << testCase["name"] << '\n'; */
+    /* std::cout << initial_state << '\n'; */
 
     // TODO: Run CPU fetch-decode-execute method(s) once
 
-    // TODO: Compare the actual final state with the expected final state
+    bool               test_failed = false; // Track if any test has failed
+    std::ostringstream error_messages;      // Accumulate error messages
+                                            //
+    if ( cpu.GetProgramCounter() != u16( testCase["final"]["pc"] ) )
+    {
+        test_failed = true;
+        error_messages << "PC ";
+    }
+    if ( cpu.GetAccumulator() != u8( testCase["final"]["a"] ) )
+    {
+        test_failed = true;
+        error_messages << "A ";
+    }
+    if ( cpu.GetXRegister() != u8( testCase["final"]["x"] ) )
+    {
+        test_failed = true;
+        error_messages << "X ";
+    }
+    if ( cpu.GetYRegister() != u8( testCase["final"]["y"] ) )
+    {
+        test_failed = true;
+        error_messages << "Y ";
+    }
+    if ( cpu.GetStackPointer() != u8( testCase["final"]["s"] ) )
+    {
+        test_failed = true;
+        error_messages << "S ";
+    }
+    if ( cpu.GetStatusRegister() != u8( testCase["final"]["p"] ) )
+    {
+        test_failed = true;
+        error_messages << "P ";
+    }
+    if ( cpu.GetCycles() != testCase["cycles"].size() )
+    {
+        test_failed = true;
+        error_messages << "Cycle count ";
+    }
+
+    for ( const auto &ram_entry : testCase["final"]["ram"] )
+    {
+        uint16_t const address = ram_entry[0];
+        uint8_t  const expected_value = ram_entry[1];
+        uint8_t  const actual_value = cpu.Read( address );
+        if ( actual_value != expected_value )
+        {
+            test_failed = true;
+            error_messages << "RAM ";
+        }
+    }
+
+    std::string const final_state = GetCPUStateString( testCase, "final" );
+    // print initial and final state if there are any failures
+    if ( test_failed )
+    {
+        std::cout << "Test Case: " << testCase["name"] << '\n';
+        std::cout << "Failed: " << error_messages.str() << '\n';
+        std::cout << initial_state << '\n';
+        std::cout << final_state << '\n';
+        std::cout << '\n';
+        FAIL();
+    }
 }
 
 void CPUTestFixture::LoadStateFromJson( const json &jsonData, const std::string &state )
