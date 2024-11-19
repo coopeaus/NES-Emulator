@@ -1,7 +1,7 @@
 // cpu.cpp
 
-#include "cpu.h"
 #include "bus.h"
+#include "cpu.h"
 CPU::CPU( Bus *bus ) : _bus( bus ) {} // initialize CPU with pointer to bus
 
 // Pass off reads and writes to the bus
@@ -26,8 +26,44 @@ void CPU::SetProgramCounter( u16 value ) { _pc = value; }
 void CPU::SetStackPointer( u8 value ) { _s = value; }
 void CPU::SetCycles( u64 value ) { _cycles = value; }
 
-// flag methods
-void CPU::SetFlag( const u8 flag ) { _p |= flag; }
-void CPU::ClearFlag( const u8 flag ) { _p &= ~flag; }
+// Flag Methods
+void CPU::SetFlags( const u8 flag )
+{
+    /* Set Flags
+      Used by the SEC, SED, and SEI instructions to set one or more flag bits through
+      bitwise OR with the status register.
 
-u8 CPU::IsFlagSet( const u8 flag ) const { return static_cast<u8>( ( _p & flag ) != 0 ); }
+      Usage:
+      SetFlags( Status::Carry ); // Set one flag
+      SetFlags( Status::Carry | Status::Zero ); // Set multiple flags
+    */
+    _p |= flag;
+}
+void CPU::ClearFlags( const u8 flag )
+{
+    /* Clear Flags
+      Used by the CLC, CLD, and CLI instructions to clear one or more flag bits through
+      bitwise AND of the complement (inverted) flag with the status register.
+
+      Usage:
+      ClearFlags( Status::Carry ); // Clear one flag
+      ClearFlags( Status::Carry | Status::Zero ); // Clear multiple flags
+    */
+    _p &= ~flag;
+}
+bool CPU::IsFlagSet( const u8 flag ) const
+{
+    /* Utility function to check if a given status is set in the status register
+
+      Usage:
+      if ( IsFlagSet( Status::Carry ) )
+      {
+        // Do something
+      }
+      if ( IsFlagSet( Status::Carry | Status::Zero ) )
+      {
+        // Do something
+      }
+     */
+    return ( _p & flag ) == flag;
+}
