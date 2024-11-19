@@ -183,8 +183,8 @@ void CPU::LDA()
       Loads a byte of memory into the accumulator setting the zero and negative flags as
       appropriate.
     */
-    auto addressing_mode = _opcodeTable[0xA9].addressingModeMethod;
-    u16  const address = ( this->*addressing_mode )();
+    auto      addressing_mode = _opcodeTable[0xA9].addressingModeMethod;
+    u16 const address = ( this->*addressing_mode )();
     LoadRegister( address, _a );
     _cycles += _opcodeTable[0xA9].cycles;
 }
