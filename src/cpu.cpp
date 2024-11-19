@@ -211,8 +211,8 @@ void CPU::LDY()
       Loads a byte of memory into the Y register setting the zero and negative flags as
       appropriate.
     */
-    auto addressing_mode = _opcodeTable[0xA0].addressingModeMethod;
-    u16  const address = ( this->*addressing_mode )();
+    auto      addressing_mode = _opcodeTable[0xA0].addressingModeMethod;
+    u16 const address = ( this->*addressing_mode )();
     LoadRegister( address, _y );
     _cycles += _opcodeTable[0xA0].cycles;
 }
