@@ -46,6 +46,21 @@ void CPU::SetCycles( u64 value ) { _cycles = value; }
 auto CPU::Read( u16 address ) const -> u8 { return _bus->Read( address ); }
 void CPU::Write( u16 address, u8 data ) { _bus->Write( address, data ); }
 
+void CPU::Reset()
+{
+    _a = 0x00;
+    _x = 0x00;
+    _y = 0x00;
+    _s = 0xFD;
+    _p = 0x00 | Unused;
+    _cycles = 0;
+
+    // The program counter is usually read from the reset vector of a game, which is
+    // located at 0xFFFC and 0xFFFD. If no cartridge, we'll assume these values are
+    // initialized to 0x00
+    _pc = Read( 0xFFFD ) << 8 | Read( 0xFFFC );
+}
+
 /*
 ################################################################
 ||                                                            ||
