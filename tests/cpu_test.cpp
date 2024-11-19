@@ -399,8 +399,8 @@ void CPUTestFixture::RunTestCase( const json &testCase ) // NOLINT
     for ( const auto &ram_entry : testCase["final"]["ram"] )
     {
         uint16_t const address = ram_entry[0];
-        uint8_t  const expected_value = ram_entry[1];
-        uint8_t  const actual_value = cpu.Read( address );
+        uint8_t const  expected_value = ram_entry[1];
+        uint8_t const  actual_value = cpu.Read( address );
         if ( actual_value != expected_value )
         {
             test_failed = true;
