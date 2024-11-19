@@ -122,6 +122,31 @@ bool CPU::IsFlagSet( const u8 flag ) const
      */
     return ( _p & flag ) == flag;
 }
+
+void CPU::SetZeroAndNegativeFlags( u8 value )
+{
+    /*
+    Sets zero flag if value == 0, or negative flag if value is negative (bit 7 is set)
+    Used by a lot of instructions
+    */
+
+    // Clear zero and negative flags
+    ClearFlags( Status::Zero | Status::Negative );
+
+    // Set zero flag if value is zero
+    if ( value == 0 )
+    {
+        SetFlags( Status::Zero );
+    }
+
+    // Set negative flag if bit 7 is set
+    if ( ( value & 0b10000000 ) != 0 )
+    {
+        SetFlags( Status::Negative );
+    }
+}
+
+/*
 ################################################################
 ||                                                            ||
 ||                      Addressing Modes                      ||
