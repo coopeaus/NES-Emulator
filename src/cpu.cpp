@@ -2,11 +2,17 @@
 
 #include "bus.h"
 #include "cpu.h"
-CPU::CPU( Bus *bus ) : _bus( bus ) {} // initialize CPU with pointer to bus
-
-// Pass off reads and writes to the bus
-auto CPU::Read( u16 address ) const -> u8 { return _bus->Read( address ); }
-void CPU::Write( u16 address, u8 data ) { _bus->Write( address, data ); }
+CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
+{
+    /*
+    ################################################################
+    ||                                                            ||
+    ||                      Set Opcodes here                      ||
+    ||                                                            ||
+    ################################################################
+    */
+    _opcodeTable[0xA9] = InstructionData{ "LDA", &CPU::LDA, &CPU::IMM, 2 };
+};
 
 // Getters
 [[nodiscard]] u8  CPU::GetAccumulator() const { return _a; }
@@ -26,7 +32,27 @@ void CPU::SetProgramCounter( u16 value ) { _pc = value; }
 void CPU::SetStackPointer( u8 value ) { _s = value; }
 void CPU::SetCycles( u64 value ) { _cycles = value; }
 
-// Flag Methods
+/*
+################################################################
+||                                                            ||
+||                        CPU Methods                         ||
+||                                                            ||
+################################################################
+*/
+
+// TODO: Fetch, Decode, Execute
+
+// Pass off reads and writes to the bus
+auto CPU::Read( u16 address ) const -> u8 { return _bus->Read( address ); }
+void CPU::Write( u16 address, u8 data ) { _bus->Write( address, data ); }
+
+/*
+################################################################
+||                                                            ||
+||                    Instruction Helpers                     ||
+||                                                            ||
+################################################################
+*/
 void CPU::SetFlags( const u8 flag )
 {
     /* Set Flags
@@ -67,3 +93,19 @@ bool CPU::IsFlagSet( const u8 flag ) const
      */
     return ( _p & flag ) == flag;
 }
+################################################################
+||                                                            ||
+||                      Addressing Modes                      ||
+||                                                            ||
+################################################################
+*/
+/*
+################################################################
+||                                                            ||
+||                        Instructions                        ||
+||                                                            ||
+################################################################
+* These functions should take no arguments and return no values.
+* All complicated or reusable logic should be defined in the helper
+* methods.
+*/

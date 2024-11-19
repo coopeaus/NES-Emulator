@@ -1,6 +1,8 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
+#include <string>
 
 // Aliases for integer types
 using u8 = uint8_t;
@@ -14,10 +16,6 @@ class CPU
 {
   public:
     explicit CPU( Bus *bus ); // Must pass a pointer to a Bus class on initialization
-
-    // Read/write methods
-    [[nodiscard]] auto Read( u16 address ) const -> u8;
-    void               Write( u16 address, u8 data );
 
     // Getters for registers
     [[nodiscard]] u8  GetAccumulator() const;
@@ -42,8 +40,38 @@ class CPU
 
     Bus *_bus; // Pointer to the Bus class
 
-    // Enum for Status Register
+    // Registers
+    u16 _pc = 0x0000; // Program counter (PC)
+    u8  _a = 0x00;    // Accumulator register (A)
+    u8  _x = 0x00;    // X register
+    u8  _y = 0x00;    // Y register
+    u8  _s = 0xFD;    // Stack pointer (SP)
+    u8  _p =
+        0x00 | Unused; // Status register (P), per the specs, the unused flag should always be set
+    u64 _cycles = 0;   // Number of cycles
+    /*
+    ################################################################
+    ||                                                            ||
+    ||                        CPU Methods                         ||
+    ||                                                            ||
+    ################################################################
+    */
+    void Reset();
+    // TODO: Fetch, Decode, Execute
 
+    // Read/write methods
+    [[nodiscard]] auto Read( u16 address ) const -> u8;
+    void               Write( u16 address, u8 data );
+
+    /*
+    ################################################################
+    ||                                                            ||
+    ||                    Instruction Helpers                     ||
+    ||                                                            ||
+    ################################################################
+    */
+
+    // Enum for Status Register
     enum Status : u8
     {
         Carry = 1 << 0,            // 0b00000001
@@ -60,14 +88,20 @@ class CPU
     void               SetFlags( u8 flag );
     void               ClearFlags( u8 flag );
     [[nodiscard]] auto IsFlagSet( u8 flag ) const -> bool;
+    void               SetZeroAndNegativeFlags( u8 value );
 
-    // Registers
-    u16 _pc = 0x0000; // Program counter (PC)
-    u8  _a = 0x00;    // Accumulator register (A)
-    u8  _x = 0x00;    // X register
-    u8  _y = 0x00;    // Y register
-    u8  _s = 0xFD;    // Stack pointer (SP)
-    u8  _p =
-        0x00 | Unused; // Status register (P), per the specs, the unused flag should always be set
-    u64 _cycles = 0;   // Number of cycles
+    /*
+    ################################################################
+    ||                                                            ||
+    ||                      Addressing Modes                      ||
+    ||                                                            ||
+    ################################################################
+    */
+    /*
+    ################################################################
+    ||                                                            ||
+    ||                        Instructions                        ||
+    ||                                                            ||
+    ################################################################
+      */
 };
