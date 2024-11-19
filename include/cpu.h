@@ -67,6 +67,7 @@ class CPU
     u8  _x = 0x00;    // X register
     u8  _y = 0x00;    // Y register
     u8  _s = 0xFD;    // Stack pointer (SP)
-    u8  _p = 0x00;    // Status register (P)
-    u64 _cycles = 0;  // Number of cycles
+    u8  _p =
+        0x00 | Unused; // Status register (P), per the specs, the unused flag should always be set
+    u64 _cycles = 0;   // Number of cycles
 };
