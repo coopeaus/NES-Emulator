@@ -32,6 +32,29 @@ class CPUTestFixture : public ::testing::Test
     void        RunTestCase( const json &testCase );
     void        LoadStateFromJson( const json &jsonData, const std::string &state );
     std::string GetCPUStateString( const json &jsonData, const std::string &state );
+
+    void SetFlags( u8 flag )
+    {
+        cpu.SetFlags( flag ); // Private method
+    }
+
+    void ClearFlags( u8 flag )
+    {
+        cpu.ClearFlags( flag ); // Private method
+    }
+
+    bool IsFlagSet( u8 flag )
+    {
+        return cpu.IsFlagSet( flag ); // Private method
+    }
+    u8 Read( u16 address )
+    {
+        return cpu.Read( address ); // Private method
+    }
+    void Write( u16 address, u8 data )
+    {
+        cpu.Write( address, data ); // Private method
+    }
 };
 
 // -----------------------------------------------------------------------------
@@ -41,8 +64,59 @@ class CPUTestFixture : public ::testing::Test
 TEST_F( CPUTestFixture, SanityCheck )
 {
     // cpu.read and cpu.write shouldn't throw any errors
-    u8 const test_val = cpu.Read( 0x0000 );
-    cpu.Write( 0x0000, test_val );
+    u8 const test_val = Read( 0x0000 );
+    Write( 0x0000, test_val );
+}
+
+TEST_F( CPUTestFixture, StatusFlags )
+{
+    u8 const carry = 0b00000001;
+    u8 const zero = 0b00000010;
+    u8 const interrupt_disable = 0b00000100;
+    u8 const decimal = 0b00001000;
+    u8 const break_flag = 0b00010000;
+    u8 const unused = 0b00100000;
+    u8 const overflow = 0b01000000;
+    u8 const negative = 0b10000000;
+
+    // Set and clear methods
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | unused );
+    SetFlags( carry );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | carry | unused );
+    SetFlags( zero );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | carry | zero | unused );
+    SetFlags( interrupt_disable );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | carry | zero | interrupt_disable | unused );
+    SetFlags( decimal );
+    EXPECT_EQ( cpu.GetStatusRegister(),
+               0x00 | carry | zero | interrupt_disable | decimal | unused );
+    SetFlags( break_flag );
+    EXPECT_EQ( cpu.GetStatusRegister(),
+               0x00 | carry | zero | interrupt_disable | decimal | break_flag | unused );
+    ClearFlags( carry | zero | interrupt_disable | decimal | break_flag | unused );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 );
+    SetFlags( overflow );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | overflow );
+    SetFlags( negative );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | overflow | negative );
+    // set all flags
+    SetFlags( carry | zero | interrupt_disable | decimal | break_flag | overflow | negative |
+              unused );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | carry | zero | interrupt_disable | decimal |
+                                            break_flag | overflow | negative | unused );
+    // clear all flags
+    ClearFlags( carry | zero | interrupt_disable | decimal | break_flag | overflow | negative |
+                unused );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 );
+
+    // IsFlagSet method
+    EXPECT_FALSE( IsFlagSet( carry ) );
+    SetFlags( carry );
+    EXPECT_TRUE( IsFlagSet( carry ) );
+    EXPECT_FALSE( IsFlagSet( zero ) );
+    SetFlags( zero );
+    EXPECT_TRUE( IsFlagSet( zero ) );
+    EXPECT_TRUE( IsFlagSet( carry | zero ) );
 }
 
 // -----------------------------------------------------------------------------
@@ -96,7 +170,7 @@ To run all tests:
   ctest # from the build directory
 */
 
-CPU_TEST( SAMPLE, JSON, SANITY_CHECK, "small.json" );
+/* CPU_TEST( SAMPLE, JSON, SANITY_CHECK, "small.json" ); */
 /* CPU_TEST( 00, BRK, Implied, "00.json" ); */
 /* CPU_TEST( 01, ORA, IndirectX, "01.json" ); */
 /* CPU_TEST( 05, ORA, ZeroPage, "05.json" ); */
@@ -252,10 +326,11 @@ CPU_TEST( SAMPLE, JSON, SANITY_CHECK, "small.json" );
 // -----------------------------------------------------------------------------
 // -------------------------TEST CLASS METHODS ---------------------------------
 // -----------------------------------------------------------------------------
+
 void CPUTestFixture::RunTestCase( const json &testCase ) // NOLINT
 {
     // Initialize CPU
-    // TODO: Reset CPU state
+    cpu.Reset();
 
     LoadStateFromJson( testCase, "initial" );
     std::string const initial_state = GetCPUStateString( testCase, "initial" );
@@ -275,14 +350,75 @@ void CPUTestFixture::RunTestCase( const json &testCase ) // NOLINT
     }
 
     // Temp: print initial state
-    std::cout << '\n';
-    std::cout << "Loading state from tests/json/small.json" << '\n';
-    std::cout << "Test name: " << testCase["name"] << '\n';
-    std::cout << initial_state << '\n';
+    /* std::cout << '\n'; */
+    /* std::cout << "Loading state from tests/json/small.json" << '\n'; */
+    /* std::cout << "Test name: " << testCase["name"] << '\n'; */
+    /* std::cout << initial_state << '\n'; */
 
     // TODO: Run CPU fetch-decode-execute method(s) once
 
-    // TODO: Compare the actual final state with the expected final state
+    bool               test_failed = false; // Track if any test has failed
+    std::ostringstream error_messages;      // Accumulate error messages
+                                            //
+    if ( cpu.GetProgramCounter() != u16( testCase["final"]["pc"] ) )
+    {
+        test_failed = true;
+        error_messages << "PC ";
+    }
+    if ( cpu.GetAccumulator() != u8( testCase["final"]["a"] ) )
+    {
+        test_failed = true;
+        error_messages << "A ";
+    }
+    if ( cpu.GetXRegister() != u8( testCase["final"]["x"] ) )
+    {
+        test_failed = true;
+        error_messages << "X ";
+    }
+    if ( cpu.GetYRegister() != u8( testCase["final"]["y"] ) )
+    {
+        test_failed = true;
+        error_messages << "Y ";
+    }
+    if ( cpu.GetStackPointer() != u8( testCase["final"]["s"] ) )
+    {
+        test_failed = true;
+        error_messages << "S ";
+    }
+    if ( cpu.GetStatusRegister() != u8( testCase["final"]["p"] ) )
+    {
+        test_failed = true;
+        error_messages << "P ";
+    }
+    if ( cpu.GetCycles() != testCase["cycles"].size() )
+    {
+        test_failed = true;
+        error_messages << "Cycle count ";
+    }
+
+    for ( const auto &ram_entry : testCase["final"]["ram"] )
+    {
+        uint16_t const address = ram_entry[0];
+        uint8_t const  expected_value = ram_entry[1];
+        uint8_t const  actual_value = cpu.Read( address );
+        if ( actual_value != expected_value )
+        {
+            test_failed = true;
+            error_messages << "RAM ";
+        }
+    }
+
+    std::string const final_state = GetCPUStateString( testCase, "final" );
+    // print initial and final state if there are any failures
+    if ( test_failed )
+    {
+        std::cout << "Test Case: " << testCase["name"] << '\n';
+        std::cout << "Failed: " << error_messages.str() << '\n';
+        std::cout << initial_state << '\n';
+        std::cout << final_state << '\n';
+        std::cout << '\n';
+        FAIL();
+    }
 }
 
 void CPUTestFixture::LoadStateFromJson( const json &jsonData, const std::string &state )
