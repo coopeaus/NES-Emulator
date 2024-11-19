@@ -47,6 +47,14 @@ class CPUTestFixture : public ::testing::Test
     {
         return cpu.IsFlagSet( flag ); // Private method
     }
+    u8 Read( u16 address )
+    {
+        return cpu.Read( address ); // Private method
+    }
+    void Write( u16 address, u8 data )
+    {
+        cpu.Write( address, data ); // Private method
+    }
 };
 
 // -----------------------------------------------------------------------------
@@ -56,8 +64,8 @@ class CPUTestFixture : public ::testing::Test
 TEST_F( CPUTestFixture, SanityCheck )
 {
     // cpu.read and cpu.write shouldn't throw any errors
-    u8 const test_val = cpu.Read( 0x0000 );
-    cpu.Write( 0x0000, test_val );
+    u8 const test_val = Read( 0x0000 );
+    Write( 0x0000, test_val );
 }
 
 TEST_F( CPUTestFixture, StatusFlags )
