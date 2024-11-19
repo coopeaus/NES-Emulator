@@ -153,6 +153,17 @@ void CPU::SetZeroAndNegativeFlags( u8 value )
 ||                                                            ||
 ################################################################
 */
+u16 CPU::IMM()
+{
+    /*
+      Immediate
+      Returns address of the next byte in memory (the operand itself)
+      The operand is a part of the instruction
+      The program counter is incremented to point to the operand
+    */
+    return _pc++;
+}
+
 /*
 ################################################################
 ||                                                            ||
