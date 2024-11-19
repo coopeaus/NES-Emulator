@@ -68,6 +68,20 @@ void CPU::Reset()
 ||                                                            ||
 ################################################################
 */
+
+void CPU::LoadRegister( u16 address, u8 &reg )
+{
+    /*
+      Used by all loading instructions (LDA, LDX, LDY)
+      It loads a register with a value from memory
+    */
+    u8 const value = Read( address );
+    reg = value;
+
+    // Set zero and negative flags
+    SetZeroAndNegativeFlags( value );
+};
+
 void CPU::SetFlags( const u8 flag )
 {
     /* Set Flags
