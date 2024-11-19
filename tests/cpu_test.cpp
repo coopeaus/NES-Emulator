@@ -32,6 +32,21 @@ class CPUTestFixture : public ::testing::Test
     void        RunTestCase( const json &testCase );
     void        LoadStateFromJson( const json &jsonData, const std::string &state );
     std::string GetCPUStateString( const json &jsonData, const std::string &state );
+
+    void SetFlags( u8 flag )
+    {
+        cpu.SetFlags( flag ); // Private method
+    }
+
+    void ClearFlags( u8 flag )
+    {
+        cpu.ClearFlags( flag ); // Private method
+    }
+
+    bool IsFlagSet( u8 flag )
+    {
+        return cpu.IsFlagSet( flag ); // Private method
+    }
 };
 
 // -----------------------------------------------------------------------------
@@ -43,6 +58,57 @@ TEST_F( CPUTestFixture, SanityCheck )
     // cpu.read and cpu.write shouldn't throw any errors
     u8 const test_val = cpu.Read( 0x0000 );
     cpu.Write( 0x0000, test_val );
+}
+
+TEST_F( CPUTestFixture, StatusFlags )
+{
+    u8 const carry = 0b00000001;
+    u8 const zero = 0b00000010;
+    u8 const interrupt_disable = 0b00000100;
+    u8 const decimal = 0b00001000;
+    u8 const break_flag = 0b00010000;
+    u8 const unused = 0b00100000;
+    u8 const overflow = 0b01000000;
+    u8 const negative = 0b10000000;
+
+    // Set and clear methods
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | unused );
+    SetFlags( carry );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | carry | unused );
+    SetFlags( zero );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | carry | zero | unused );
+    SetFlags( interrupt_disable );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | carry | zero | interrupt_disable | unused );
+    SetFlags( decimal );
+    EXPECT_EQ( cpu.GetStatusRegister(),
+               0x00 | carry | zero | interrupt_disable | decimal | unused );
+    SetFlags( break_flag );
+    EXPECT_EQ( cpu.GetStatusRegister(),
+               0x00 | carry | zero | interrupt_disable | decimal | break_flag | unused );
+    ClearFlags( carry | zero | interrupt_disable | decimal | break_flag | unused );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 );
+    SetFlags( overflow );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | overflow );
+    SetFlags( negative );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | overflow | negative );
+    // set all flags
+    SetFlags( carry | zero | interrupt_disable | decimal | break_flag | overflow | negative |
+              unused );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | carry | zero | interrupt_disable | decimal |
+                                            break_flag | overflow | negative | unused );
+    // clear all flags
+    ClearFlags( carry | zero | interrupt_disable | decimal | break_flag | overflow | negative |
+                unused );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 );
+
+    // IsFlagSet method
+    EXPECT_FALSE( IsFlagSet( carry ) );
+    SetFlags( carry );
+    EXPECT_TRUE( IsFlagSet( carry ) );
+    EXPECT_FALSE( IsFlagSet( zero ) );
+    SetFlags( zero );
+    EXPECT_TRUE( IsFlagSet( zero ) );
+    EXPECT_TRUE( IsFlagSet( carry | zero ) );
 }
 
 // -----------------------------------------------------------------------------
@@ -252,6 +318,7 @@ CPU_TEST( SAMPLE, JSON, SANITY_CHECK, "small.json" );
 // -----------------------------------------------------------------------------
 // -------------------------TEST CLASS METHODS ---------------------------------
 // -----------------------------------------------------------------------------
+
 void CPUTestFixture::RunTestCase( const json &testCase ) // NOLINT
 {
     // Initialize CPU
