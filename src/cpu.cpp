@@ -197,8 +197,8 @@ void CPU::LDX()
       Loads a byte of memory into the X register setting the zero and negative flags as
       appropriate.
     */
-    auto addressing_mode = _opcodeTable[0xA2].addressingModeMethod;
-    u16  const address = ( this->*addressing_mode )();
+    auto      addressing_mode = _opcodeTable[0xA2].addressingModeMethod;
+    u16 const address = ( this->*addressing_mode )();
     LoadRegister( address, _x );
     _cycles += _opcodeTable[0xA2].cycles;
 }
