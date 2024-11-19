@@ -107,6 +107,9 @@ class CPU
     [[nodiscard]] auto IsFlagSet( u8 flag ) const -> bool;
     void               SetZeroAndNegativeFlags( u8 value );
 
+    // LDA, LDX, and LDY helper
+    void LoadRegister( u16 address, u8 &reg );
+
     /*
     ################################################################
     ||                                                            ||
@@ -121,4 +124,7 @@ class CPU
     ||                                                            ||
     ################################################################
       */
+    void LDA();
+    void LDX();
+    void LDY();
 };
