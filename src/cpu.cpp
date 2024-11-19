@@ -174,3 +174,45 @@ u16 CPU::IMM()
 * All complicated or reusable logic should be defined in the helper
 * methods.
 */
+
+void CPU::LDA()
+{
+    /*
+      Load Accumulator
+      This covers LDA with all addressing modes
+      Loads a byte of memory into the accumulator setting the zero and negative flags as
+      appropriate.
+    */
+    auto addressing_mode = _opcodeTable[0xA9].addressingModeMethod;
+    u16  const address = ( this->*addressing_mode )();
+    LoadRegister( address, _a );
+    _cycles += _opcodeTable[0xA9].cycles;
+}
+
+void CPU::LDX()
+{
+    /*
+      Load X Register
+      This covers LDX with all addressing modes
+      Loads a byte of memory into the X register setting the zero and negative flags as
+      appropriate.
+    */
+    auto addressing_mode = _opcodeTable[0xA2].addressingModeMethod;
+    u16  const address = ( this->*addressing_mode )();
+    LoadRegister( address, _x );
+    _cycles += _opcodeTable[0xA2].cycles;
+}
+
+void CPU::LDY()
+{
+    /*
+      Load Y Register
+      This covers LDY with all addressing modes
+      Loads a byte of memory into the Y register setting the zero and negative flags as
+      appropriate.
+    */
+    auto addressing_mode = _opcodeTable[0xA0].addressingModeMethod;
+    u16  const address = ( this->*addressing_mode )();
+    LoadRegister( address, _y );
+    _cycles += _opcodeTable[0xA0].cycles;
+}
