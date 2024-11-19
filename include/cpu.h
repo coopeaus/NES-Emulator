@@ -49,6 +49,23 @@ class CPU
     u8  _p =
         0x00 | Unused; // Status register (P), per the specs, the unused flag should always be set
     u64 _cycles = 0;   // Number of cycles
+
+    // Instruction data
+    struct InstructionData
+    {
+        std::string name;                     // Instruction mnemonic (e.g. LDA, STA)
+        void ( CPU::*instructionMethod )();   // Pointer to the instruction helper method
+        u16 ( CPU::*addressingModeMethod )(); // Pointer to the address mode helper method
+        u8 cycles;                            // Number of cycles the instruction takes
+        // Some instructions take an extra cycle if a page boundary is crossed. However, in some
+        // cases the extra cycle is not taken if the operation is a read. This will be set
+        // selectively for a handful of opcodes, but otherwise will be set to true by default
+        bool pageCrossPenalty = true;
+    };
+
+    // Opcode table
+    std::array<InstructionData, 256> _opcodeTable;
+
     /*
     ################################################################
     ||                                                            ||
