@@ -170,7 +170,7 @@ To run all tests:
   ctest # from the build directory
 */
 
-/* CPU_TEST( SAMPLE, JSON, SANITY_CHECK, "small.json" ); */
+/* CPU_TEST( SAMPLE, JSON, SANITY_CHECK, "temp.json" ); */
 /* CPU_TEST( 00, BRK, Implied, "00.json" ); */
 /* CPU_TEST( 01, ORA, IndirectX, "01.json" ); */
 /* CPU_TEST( 05, ORA, ZeroPage, "05.json" ); */
@@ -268,7 +268,7 @@ To run all tests:
 /* CPU_TEST( A5, LDA, ZeroPage, "a5.json" ); */
 /* CPU_TEST( A6, LDX, ZeroPage, "a6.json" ); */
 /* CPU_TEST( A8, TAY, Implied, "a8.json" ); */
-/* CPU_TEST( A9, LDA, Immediate, "a9.json" ); */
+CPU_TEST( A9, LDA, Immediate, "a9.json" );
 /* CPU_TEST( AA, TAX, Implied, "aa.json" ); */
 /* CPU_TEST( AC, LDY, Absolute, "ac.json" ); */
 /* CPU_TEST( AD, LDA, Absolute, "ad.json" ); */
