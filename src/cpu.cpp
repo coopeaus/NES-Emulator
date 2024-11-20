@@ -352,7 +352,7 @@ auto CPU::INDX() -> u16
      * X register is added to the zero-page address to get the pointer address
      * Final address is the value stored at the POINTER address
      */
-    u8  const zero_page_address = ( Read( _pc++ ) + _x ) & 0x00FF;
+    u8 const  zero_page_address = ( Read( _pc++ ) + _x ) & 0x00FF;
     u16 const ptr_low = Read( zero_page_address );
     u16 const ptr_high = Read( ( zero_page_address + 1 ) & 0x00FF );
     return ( ptr_high << 8 ) | ptr_low;
