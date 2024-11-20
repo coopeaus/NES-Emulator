@@ -53,15 +53,17 @@ class CPU
     // Instruction data
     struct InstructionData
     {
-        std::string name;                     // Instruction mnemonic (e.g. LDA, STA)
-        void ( CPU::*instructionMethod )();   // Pointer to the instruction helper method
-        u16 ( CPU::*addressingModeMethod )(); // Pointer to the address mode helper method
-        u8 cycles;                            // Number of cycles the instruction takes
+        std::string name;                        // Instruction mnemonic (e.g. LDA, STA)
+        void ( CPU::*instructionMethod )( u16 ); // Pointer to the instruction helper method
+        u16 ( CPU::*addressingModeMethod )();    // Pointer to the address mode helper method
+        u8 cycles;                               // Number of cycles the instruction takes
         // Some instructions take an extra cycle if a page boundary is crossed. However, in some
         // cases the extra cycle is not taken if the operation is a read. This will be set
         // selectively for a handful of opcodes, but otherwise will be set to true by default
         bool pageCrossPenalty = true;
     };
+
+    bool _currentPageCrossPenalty = true;
 
     // Opcode table
     std::array<InstructionData, 256> _opcodeTable;
@@ -81,7 +83,7 @@ class CPU
 
     // Read/write methods
     [[nodiscard]] auto Read( u16 address ) const -> u8;
-    void               Write( u16 address, u8 data );
+    void               Write( u16 address, u8 data ) const;
 
     /*
     ################################################################
@@ -120,7 +122,8 @@ class CPU
     ||                                                            ||
     ################################################################
     */
-    auto IMP() -> u16;  // Implied
+    static auto IMP() -> u16; // Implied
+
     auto IMM() -> u16;  // Immediate
     auto ZPG() -> u16;  // Zero Page
     auto ZPGX() -> u16; // Zero Page X
@@ -140,7 +143,7 @@ class CPU
     ||                                                            ||
     ################################################################
       */
-    void LDA();
-    void LDX();
-    void LDY();
+    void LDA( u16 address );
+    void LDX( u16 address );
+    void LDY( u16 address );
 };

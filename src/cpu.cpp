@@ -2,6 +2,7 @@
 
 #include "cpu.h"
 #include "bus.h"
+#include <cstdint>
 #include <iostream>
 
 CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
@@ -13,7 +14,7 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     ||                                                            ||
     ################################################################
     */
-    _opcodeTable[0xA9] = InstructionData{ "LDA", &CPU::LDA, &CPU::IMM, 2 };
+    _opcodeTable[0xA9] = InstructionData{ "LDA_Immediate", &CPU::LDA, &CPU::IMM, 2 };
 };
 
 // Getters
@@ -44,7 +45,7 @@ void CPU::SetCycles( u64 value ) { _cycles = value; }
 
 // Pass off reads and writes to the bus
 auto CPU::Read( u16 address ) const -> u8 { return _bus->Read( address ); }
-void CPU::Write( u16 address, u8 data ) { _bus->Write( address, data ); }
+void CPU::Write( u16 address, u8 data ) const { _bus->Write( address, data ); }
 
 u8 CPU::Fetch()
 {
@@ -74,8 +75,15 @@ void CPU::Tick()
 
     if ( instruction_handler != nullptr && addressing_mode_handler != nullptr )
     {
+        // Set the page cross penalty for the current instruction
+        // Used in addressing modes: ABSX, ABSY, INDY
+        _currentPageCrossPenalty = instruction.pageCrossPenalty;
+
+        // Calculate the address using the addressing mode
+        u16 const address = ( this->*addressing_mode_handler )();
+
         // Execute the instruction fetched from the opcode table
-        ( this->*instruction_handler )();
+        ( this->*instruction_handler )( address );
 
         // Add the number of cycles the instruction takes
         _cycles += instruction.cycles;
@@ -125,41 +133,46 @@ void CPU::LoadRegister( u16 address, u8 &reg )
 
 void CPU::SetFlags( const u8 flag )
 {
-    /* Set Flags
-      Used by the SEC, SED, and SEI instructions to set one or more flag bits through
-      bitwise OR with the status register.
-
-      Usage:
-      SetFlags( Status::Carry ); // Set one flag
-      SetFlags( Status::Carry | Status::Zero ); // Set multiple flags
-    */
+    /*
+     * @brief set one or more flag bits through bitwise OR with the status register
+     *
+     * Used by the SEC, SED, and SEI instructions to set one or more flag bits through
+     * bitwise OR with the status register.
+     *
+     * Usage:
+     * SetFlags( Status::Carry ); // Set one flag
+     * SetFlags( Status::Carry | Status::Zero ); // Set multiple flags
+     */
     _p |= flag;
 }
 void CPU::ClearFlags( const u8 flag )
 {
     /* Clear Flags
-      Used by the CLC, CLD, and CLI instructions to clear one or more flag bits through
-      bitwise AND of the complement (inverted) flag with the status register.
-
-      Usage:
-      ClearFlags( Status::Carry ); // Clear one flag
-      ClearFlags( Status::Carry | Status::Zero ); // Clear multiple flags
-    */
+     * @brief clear one or more flag bits through bitwise AND of the complement (inverted) flag with
+     * the status register
+     *
+     * Used by the CLC, CLD, and CLI instructions to clear one or more flag bits through
+     * bitwise AND of the complement (inverted) flag with the status register.
+     *
+     * Usage:
+     * ClearFlags( Status::Carry ); // Clear one flag
+     * ClearFlags( Status::Carry | Status::Zero ); // Clear multiple flags
+     */
     _p &= ~flag;
 }
 bool CPU::IsFlagSet( const u8 flag ) const
 {
-    /* Utility function to check if a given status is set in the status register
-
-      Usage:
-      if ( IsFlagSet( Status::Carry ) )
-      {
-        // Do something
-      }
-      if ( IsFlagSet( Status::Carry | Status::Zero ) )
-      {
-        // Do something
-      }
+    /* @brief Utility function to check if a given status is set in the status register
+     *
+     * Usage:
+     * if ( IsFlagSet( Status::Carry ) )
+     * {
+     *   // Do something
+     * }
+     * if ( IsFlagSet( Status::Carry | Status::Zero ) )
+     * {
+     *   // Do something
+     * }
      */
     return ( _p & flag ) == flag;
 }
@@ -167,9 +180,8 @@ bool CPU::IsFlagSet( const u8 flag ) const
 void CPU::SetZeroAndNegativeFlags( u8 value )
 {
     /*
-    Sets zero flag if value == 0, or negative flag if value is negative (bit 7 is set)
-    Used by a lot of instructions
-    */
+     * @brief Sets zero flag if value == 0, or negative flag if value is negative (bit 7 is set)
+     */
 
     // Clear zero and negative flags
     ClearFlags( Status::Zero | Status::Negative );
@@ -194,14 +206,23 @@ void CPU::SetZeroAndNegativeFlags( u8 value )
 ||                                                            ||
 ################################################################
 */
-u16 CPU::IMM()
+
+auto CPU::IMP() -> u16
 {
     /*
-      Immediate
-      Returns address of the next byte in memory (the operand itself)
-      The operand is a part of the instruction
-      The program counter is incremented to point to the operand
-    */
+     * @brief Implied addressing mode
+     * This addressing mode does not require an operand
+     */
+    return 0;
+}
+
+auto CPU::IMM() -> u16
+{
+    /*
+     * @brief Returns address of the next byte in memory (the operand itself)
+     * The operand is a part of the instruction
+     * The program counter is incremented to point to the operand
+     */
     return _pc++;
 }
 
@@ -216,41 +237,54 @@ u16 CPU::IMM()
 * methods.
 */
 
-void CPU::LDA()
+void CPU::LDA( u16 address )
 {
     /*
-      Load Accumulator
-      This covers LDA with all addressing modes
-      Loads a byte of memory into the accumulator setting the zero and negative flags as
-      appropriate.
-    */
-    auto      addressing_mode = _opcodeTable[0xA9].addressingModeMethod;
-    u16 const address = ( this->*addressing_mode )();
+     * @brief Load Accumulator with Memory
+     * N Z C I D V
+     * + + - - - -
+     * Usage and cycles:
+     * LDA Immediate: A9(2)
+     * LDA Zero Page: A5(3)
+     * LDA Zero Page X: B5(4)
+     * LDA Absolute: AD(4)
+     * LDA Absolute X: BD(4+)
+     * LDA Absolute Y: B9(4+)
+     * LDA Indirect X: A1(6)
+     * LDA Indirect Y: B1(5+)
+     */
+
     LoadRegister( address, _a );
 }
 
-void CPU::LDX()
+void CPU::LDX( u16 address )
 {
     /*
-      Load X Register
-      This covers LDX with all addressing modes
-      Loads a byte of memory into the X register setting the zero and negative flags as
-      appropriate.
-    */
-    auto      addressing_mode = _opcodeTable[0xA2].addressingModeMethod;
-    u16 const address = ( this->*addressing_mode )();
+     * @brief Load X Register with Memory
+     * N Z C I D V
+     * + + - - - -
+     * Usage and cycles:
+     * LDX Immediate: A2(2)
+     * LDX Zero Page: A6(3)
+     * LDX Zero Page Y: B6(4)
+     * LDX Absolute: AE(4)
+     * LDX Absolute Y: BE(4+)
+     */
     LoadRegister( address, _x );
 }
 
-void CPU::LDY()
+void CPU::LDY( u16 address )
 {
     /*
-      Load Y Register
-      This covers LDY with all addressing modes
-      Loads a byte of memory into the Y register setting the zero and negative flags as
-      appropriate.
-    */
-    auto      addressing_mode = _opcodeTable[0xA0].addressingModeMethod;
-    u16 const address = ( this->*addressing_mode )();
+     * @brief Load Y Register with Memory
+     * N Z C I D V
+     * + + - - - -
+     * Usage and cycles:
+     * LDY Immediate: A0(2)
+     * LDY Zero Page: A4(3)
+     * LDY Zero Page X: B4(4)
+     * LDY Absolute: AC(4)
+     * LDY Absolute X: BC(4+)
+     */
     LoadRegister( address, _y );
 }
