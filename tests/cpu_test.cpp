@@ -525,7 +525,7 @@ To run all tests:
 CPU_TEST( A9, LDA, Immediate, "a9.json" );
 /* CPU_TEST( AA, TAX, Implied, "aa.json" ); */
 /* CPU_TEST( AC, LDY, Absolute, "ac.json" ); */
-/* CPU_TEST( AD, LDA, Absolute, "ad.json" ); */
+CPU_TEST( AD, LDA, Absolute, "ad.json" );
 /* CPU_TEST( AE, LDX, Absolute, "ae.json" ); */
 /* CPU_TEST( B0, BCS, Relative, "b0.json" ); */
 /* CPU_TEST( B1, LDA, IndirectY, "b1.json" ); */

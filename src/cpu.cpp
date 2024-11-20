@@ -15,6 +15,7 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     ################################################################
     */
     _opcodeTable[0xA9] = InstructionData{ "LDA_Immediate", &CPU::LDA, &CPU::IMM, 2 };
+    _opcodeTable[0xAD] = InstructionData{ "LDA_Absolute", &CPU::LDA, &CPU::ABS, 4 };
 };
 
 // Getters
