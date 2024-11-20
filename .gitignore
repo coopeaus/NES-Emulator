@@ -4,6 +4,9 @@ emu
 # Env files
 .env
 
+# Google Test files
+_deps/
+
 # Ignore object files and static libraries
 *.o
 *.a

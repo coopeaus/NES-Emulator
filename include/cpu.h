@@ -74,7 +74,10 @@ class CPU
     ################################################################
     */
     void Reset();
-    // TODO: Fetch, Decode, Execute
+
+    // Fetch/decode/execute cycle
+    [[nodiscard]] u8 Fetch();
+    void             Tick();
 
     // Read/write methods
     [[nodiscard]] auto Read( u16 address ) const -> u8;

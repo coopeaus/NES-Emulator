@@ -2,6 +2,8 @@
 
 #include "cpu.h"
 #include "bus.h"
+#include <iostream>
+
 CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
 {
     /*
@@ -40,11 +42,50 @@ void CPU::SetCycles( u64 value ) { _cycles = value; }
 ################################################################
 */
 
-// TODO: Fetch, Decode, Execute
-
 // Pass off reads and writes to the bus
 auto CPU::Read( u16 address ) const -> u8 { return _bus->Read( address ); }
 void CPU::Write( u16 address, u8 data ) { _bus->Write( address, data ); }
+
+u8 CPU::Fetch()
+{
+    // Read the current PC location and increment it
+    return Read( _pc++ );
+}
+
+/**
+ * @brief Executes a single CPU cycle.
+ *
+ * This function fetches the next opcode from memory, decodes it using the opcode table,
+ * and executes that instruction. It also adds the number of cycles the instruction
+ * takes to the total cycle count.
+ *
+ * If the opcode is invalid, an error message is printed to stderr.
+ */
+void CPU::Tick()
+{
+
+    // Fetch the next opcode and increment the program counter
+    u8 const opcode = Fetch();
+
+    // Decode the opcode
+    auto const &instruction = _opcodeTable[opcode];
+    auto        instruction_handler = instruction.instructionMethod;
+    auto        addressing_mode_handler = instruction.addressingModeMethod;
+
+    if ( instruction_handler != nullptr && addressing_mode_handler != nullptr )
+    {
+        // Execute the instruction fetched from the opcode table
+        ( this->*instruction_handler )();
+
+        // Add the number of cycles the instruction takes
+        _cycles += instruction.cycles;
+    }
+    else
+    {
+        // Houston, we have a problem. No opcode was found.
+        std::cerr << "Bad opcode: " << std::hex << static_cast<int>( opcode ) << '\n';
+    }
+}
 
 void CPU::Reset()
 {
