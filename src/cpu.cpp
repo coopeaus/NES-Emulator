@@ -226,6 +226,174 @@ auto CPU::IMM() -> u16
     return _pc++;
 }
 
+auto CPU::ZPG() -> u16
+{
+    /*
+     * @brief Zero Page addressing mode
+     * Returns the address from the zero page (0x0000 - 0x00FF).
+     * The value of the next byte is the address in the zero page.
+     */
+    return Read( _pc++ ) & 0x00FF;
+}
+
+auto CPU::ZPGX() -> u16
+{
+    /*
+     * @brief Zero Page X addressing mode
+     * Returns the address from the zero page (0x0000 - 0x00FF) + X register
+     * The value of the next byte is the address in the zero page.
+     */
+    return ( Read( _pc++ ) + _x ) & 0x00FF;
+}
+
+auto CPU::ZPGY() -> u16
+{
+    /*
+     * @brief Zero Page Y addressing mode
+     * Returns the address from the zero page (0x0000 - 0x00FF) + Y register
+     * The value of the next byte is the address in the zero page.
+     */
+    return ( Read( _pc++ ) + _y ) & 0x00FF;
+}
+
+auto CPU::ABS() -> u16
+{
+    /*
+     * @brief Absolute addressing mode
+     * Constructs a 16-bit address from the next two bytes
+     */
+    u16 const low = Read( _pc++ );
+    u16 const high = Read( _pc++ );
+    return ( high << 8 ) | low;
+}
+
+auto CPU::ABSX() -> u16
+{
+    /*
+     * @brief Absolute X addressing mode
+     * Constructs a 16-bit address from the next two bytes and adds the X register to the final
+     * address
+     */
+    u16 const low = Read( _pc++ );
+    u16 const high = Read( _pc++ );
+    u16 const address = ( high << 8 ) | low;
+    u16 const final_address = address + _x;
+
+    // If the final address crosses a page boundary, an additional cycle is required
+    // Instructions that should ignore this: ASL, ROL, LSR, ROR, STA, DEC, INC
+    if ( _currentPageCrossPenalty && ( final_address & 0xFF00 ) != ( address & 0xFF00 ) )
+    {
+        _cycles++;
+    }
+
+    return final_address;
+}
+
+auto CPU::ABSY() -> u16
+{
+    /*
+     * @brief Absolute Y addressing mode
+     * Constructs a 16-bit address from the next two bytes and adds the Y register to the final
+     * address
+     */
+    u16 const low = Read( _pc++ );
+    u16 const high = Read( _pc++ );
+    u16 const address = ( high << 8 ) | low;
+    u16 const final_address = address + _y;
+
+    // If the final address crosses a page boundary, an additional cycle is required
+    // Instructions that should ignore this: STA
+    if ( _currentPageCrossPenalty && ( final_address & 0xFF00 ) != ( address & 0xFF00 ) )
+    {
+        _cycles++;
+    }
+
+    return final_address;
+}
+
+auto CPU::IND() -> u16
+{
+    /*
+     * @brief Indirect addressing mode
+     * This mode implements pointers.
+     * The pointer address will be read from the next two bytes
+     * The returning value is the address stored at the pointer address
+     * There's a hardware bug that prevents the address from crossing a page boundary
+     */
+
+    u16 const ptr_low = Read( _pc++ );
+    u16 const ptr_high = Read( _pc++ );
+    u16 const ptr = ( ptr_high << 8 ) | ptr_low;
+
+    u8 const address_low = Read( ptr );
+    u8 address_high; // NOLINT
+
+    // 6502 Bug: If the pointer address wraps around a page boundary (e.g. 0x01FF),
+    // the CPU reads the low byte from 0x01FF and the high byte from the start of
+    // the same page (0x0100) instead of the start of the next page (0x0200).
+    if ( ptr_low == 0xFF )
+    {
+        address_high = Read( ptr & 0xFF00 );
+    }
+    else
+    {
+        address_high = Read( ptr + 1 );
+    }
+
+    return ( address_high << 8 ) | address_low;
+}
+
+auto CPU::INDX() -> u16
+{
+    /*
+     * @brief Indirect X addressing mode
+     * The next two bytes are a zero-page address
+     * X register is added to the zero-page address to get the pointer address
+     * Final address is the value stored at the POINTER address
+     */
+    u8  const zero_page_address = ( Read( _pc++ ) + _x ) & 0x00FF;
+    u16 const ptr_low = Read( zero_page_address );
+    u16 const ptr_high = Read( ( zero_page_address + 1 ) & 0x00FF );
+    return ( ptr_high << 8 ) | ptr_low;
+}
+
+auto CPU::INDY() -> u16
+{
+    /*
+     * @brief Indirect Y addressing mode
+     * The next byte is a zero-page address
+     * The value stored at the zero-page address is the pointer address
+     * The value in the Y register is added to the FINAL address
+     */
+    u16 const zero_page_address = Read( _pc++ );
+    u16 const ptr_low = Read( zero_page_address );
+    u16 const ptr_high = Read( ( zero_page_address + 1 ) & 0x00FF );
+
+    u16 const address = ( ( ptr_high << 8 ) | ptr_low ) + _y;
+
+    // If the final address crosses a page boundary, an additional cycle is required
+    // Instructions that should ignore this: STA
+    if ( _currentPageCrossPenalty && ( address & 0xFF00 ) != ( ptr_high << 8 ) )
+    {
+        _cycles++;
+    }
+    return address;
+}
+
+auto CPU::REL() -> u16
+{
+    /*
+     * @brief Relative addressing mode
+     * The next byte is a signed offset
+     * Sets the program counter between -128 and +127 bytes from the current location
+     */
+    using s8 = std::int8_t;
+    s8  const offset = static_cast<s8>( Read( _pc ) );
+    u16 const address = _pc + offset;
+    _pc++;
+    return address;
+}
+
 /*
 ################################################################
 ||                                                            ||
