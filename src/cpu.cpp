@@ -327,7 +327,7 @@ auto CPU::IND() -> u16
     u16 const ptr = ( ptr_high << 8 ) | ptr_low;
 
     u8 const address_low = Read( ptr );
-    u8 address_high; // NOLINT
+    u8       address_high; // NOLINT
 
     // 6502 Bug: If the pointer address wraps around a page boundary (e.g. 0x01FF),
     // the CPU reads the low byte from 0x01FF and the high byte from the start of
