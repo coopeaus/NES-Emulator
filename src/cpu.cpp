@@ -227,7 +227,6 @@ void CPU::LDA()
     auto      addressing_mode = _opcodeTable[0xA9].addressingModeMethod;
     u16 const address = ( this->*addressing_mode )();
     LoadRegister( address, _a );
-    _cycles += _opcodeTable[0xA9].cycles;
 }
 
 void CPU::LDX()
@@ -241,7 +240,6 @@ void CPU::LDX()
     auto      addressing_mode = _opcodeTable[0xA2].addressingModeMethod;
     u16 const address = ( this->*addressing_mode )();
     LoadRegister( address, _x );
-    _cycles += _opcodeTable[0xA2].cycles;
 }
 
 void CPU::LDY()
@@ -255,5 +253,4 @@ void CPU::LDY()
     auto      addressing_mode = _opcodeTable[0xA0].addressingModeMethod;
     u16 const address = ( this->*addressing_mode )();
     LoadRegister( address, _y );
-    _cycles += _opcodeTable[0xA0].cycles;
 }
