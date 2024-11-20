@@ -2,7 +2,6 @@
 
 #include "cpu.h"
 #include "bus.h"
-#include <iomanip>
 #include <iostream>
 
 CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
@@ -66,7 +65,7 @@ void CPU::Tick()
 {
 
     // Fetch the next opcode and increment the program counter
-    u8 opcode = Fetch();
+    u8 const opcode = Fetch();
 
     // Decode the opcode
     auto const &instruction = _opcodeTable[opcode];
@@ -84,7 +83,7 @@ void CPU::Tick()
     else
     {
         // Houston, we have a problem. No opcode was found.
-        std::cerr << "Bad opcode: " << std::hex << static_cast<int>( opcode ) << std::endl;
+        std::cerr << "Bad opcode: " << std::hex << static_cast<int>( opcode ) << '\n';
     }
 }
 

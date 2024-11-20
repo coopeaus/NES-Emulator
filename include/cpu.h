@@ -74,7 +74,7 @@ class CPU
     ################################################################
     */
     void Reset();
-    
+
     // Fetch/decode/execute cycle
     [[nodiscard]] u8 Fetch();
     void             Tick();
