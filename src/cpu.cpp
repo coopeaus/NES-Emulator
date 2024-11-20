@@ -389,7 +389,7 @@ auto CPU::REL() -> u16
      * Sets the program counter between -128 and +127 bytes from the current location
      */
     using s8 = std::int8_t;
-    s8  const offset = static_cast<s8>( Read( _pc ) );
+    s8 const  offset = static_cast<s8>( Read( _pc ) );
     u16 const address = _pc + offset;
     _pc++;
     return address;
