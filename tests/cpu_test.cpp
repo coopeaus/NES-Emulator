@@ -349,14 +349,10 @@ void CPUTestFixture::RunTestCase( const json &testCase ) // NOLINT
         EXPECT_EQ( cpu.Read( address ), value );
     }
 
-    // Temp: print initial state
-    /* std::cout << '\n'; */
-    /* std::cout << "Loading state from tests/json/small.json" << '\n'; */
-    /* std::cout << "Test name: " << testCase["name"] << '\n'; */
-    /* std::cout << initial_state << '\n'; */
+    // Fetch, decode, execute
+    cpu.Tick();
 
-    // TODO: Run CPU fetch-decode-execute method(s) once
-
+    // Check final state
     bool               test_failed = false; // Track if any test has failed
     std::ostringstream error_messages;      // Accumulate error messages
                                             //
