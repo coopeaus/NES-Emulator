@@ -2,7 +2,7 @@
 #include <iostream>
 
 // Constructor to initialize the bus with a flat memory model
-Bus::Bus( bool use_flat_memory ) : _use_flat_memory( use_flat_memory )
+Bus::Bus( const bool use_flat_memory ) : _use_flat_memory( use_flat_memory )
 {
     _ram.fill( 0 );
     _ppu_memory.fill( 0 );
@@ -12,7 +12,7 @@ Bus::Bus( bool use_flat_memory ) : _use_flat_memory( use_flat_memory )
     _prg_rom_memory.fill( 0 );
 }
 
-u8 Bus::Read( u16 address ) const
+u8 Bus::Read( const u16 address ) const
 {
     if ( _use_flat_memory )
     {
@@ -72,7 +72,7 @@ u8 Bus::Read( u16 address ) const
     return 0xFF;
 }
 
-void Bus::Write( u16 address, u8 data )
+void Bus::Write( const u16 address, const u8 data )
 {
     if ( _use_flat_memory )
     {

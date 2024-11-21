@@ -15,9 +15,9 @@
 using json = nlohmann::json;
 
 // forward declarations
-auto extractTestsFromJson( const std::string &path ) -> json;
 void printTestStartMsg( const std::string &testName );
 void printTestEndMsg( const std::string &testName );
+json extractTestsFromJson( const std::string &path );
 
 class CPUTestFixture : public ::testing::Test
 // This class is a test fixture that provides shared setup and teardown for all tests
@@ -29,38 +29,39 @@ class CPUTestFixture : public ::testing::Test
     // All tests assume flat memory model, which is why true is passed to Bus constructor
     CPUTestFixture() : cpu( &bus ), bus( true ) {}
 
-    void        RunTestCase( const json &testCase );
-    void        LoadStateFromJson( const json &jsonData, const std::string &state );
-    std::string GetCPUStateString( const json &jsonData, const std::string &state );
+    void                      RunTestCase( const json &testCase );
+    void                      LoadStateFromJson( const json &jsonData, const std::string &state );
+    [[nodiscard]] std::string GetCPUStateString( const json        &jsonData,
+                                                 const std::string &state ) const;
 
-    void SetFlags( u8 flag )
-    {
-        cpu.SetFlags( flag ); // Private method
-    }
-
-    void ClearFlags( u8 flag )
-    {
-        cpu.ClearFlags( flag ); // Private method
-    }
-
-    bool IsFlagSet( u8 flag )
-    {
-        return cpu.IsFlagSet( flag ); // Private method
-    }
-    u8 Read( u16 address )
-    {
-        return cpu.Read( address ); // Private method
-    }
-    void Write( u16 address, u8 data )
-    {
-        cpu.Write( address, data ); // Private method
-    }
+    // Expose private methods
+    // CPUTestFixture is a friend class of CPU. To use cpu private methods, we need to create
+    // wrappers.
+    void               SetFlags( u8 flag );
+    void               ClearFlags( u8 flag );
+    [[nodiscard]] bool IsFlagSet( u8 flag ) const;
+    [[nodiscard]] u8   Read( u16 address ) const;
+    void               Write( u16 address, u8 data ) const;
+    u16                IMM();
+    u16                ZPG();
+    u16                ZPGX();
+    u16                ZPGY();
+    u16                ABS();
+    u16                ABSX();
+    u16                ABSY();
+    u16                IND();
+    u16                INDX();
+    u16                INDY();
+    u16                REL();
 };
 
-// -----------------------------------------------------------------------------
-// --------------------------- GENERAL TESTS CASES -----------------------------
-//           Put anything here that doesn't neatly fit into a category
-// -----------------------------------------------------------------------------
+/*
+################################################################
+||                                                            ||
+||                     General Test Cases                     ||
+||                                                            ||
+################################################################
+ */
 TEST_F( CPUTestFixture, SanityCheck )
 {
     // cpu.read and cpu.write shouldn't throw any errors
@@ -70,14 +71,14 @@ TEST_F( CPUTestFixture, SanityCheck )
 
 TEST_F( CPUTestFixture, StatusFlags )
 {
-    u8 const carry = 0b00000001;
-    u8 const zero = 0b00000010;
-    u8 const interrupt_disable = 0b00000100;
-    u8 const decimal = 0b00001000;
-    u8 const break_flag = 0b00010000;
-    u8 const unused = 0b00100000;
-    u8 const overflow = 0b01000000;
-    u8 const negative = 0b10000000;
+    constexpr u8 carry = 0b00000001;
+    constexpr u8 zero = 0b00000010;
+    constexpr u8 interrupt_disable = 0b00000100;
+    constexpr u8 decimal = 0b00001000;
+    constexpr u8 break_flag = 0b00010000;
+    constexpr u8 unused = 0b00100000;
+    constexpr u8 overflow = 0b01000000;
+    constexpr u8 negative = 0b10000000;
 
     // Set and clear methods
     EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | unused );
@@ -119,15 +120,268 @@ TEST_F( CPUTestFixture, StatusFlags )
     EXPECT_TRUE( IsFlagSet( carry | zero ) );
 }
 
-// -----------------------------------------------------------------------------
-// --------------------------- ADDRESSING MODE TESTS ---------------------------
-// -----------------------------------------------------------------------------
-// TODO: Add addressing mode tests here
+/*
+################################################################
+||                                                            ||
+||                   Addressing Mode Tests                    ||
+||                                                            ||
+################################################################
+*/
+TEST_F( CPUTestFixture, IMM )
+{
+    std::string const test_name = "Immediate Addressing Mode";
+    printTestStartMsg( test_name );
+    cpu.SetProgramCounter( 0x8000 );
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x8000 );
+    u16 const addr = IMM();
+    EXPECT_EQ( addr, 0x8000 );
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x8001 );
+    printTestEndMsg( test_name );
+}
 
-/* -----------------------------------------------------------------------------
-   --------------------------- OPCODE JSON TESTS -------------------------------
-                            Tom Harte's json tests.
-   -----------------------------------------------------------------------------
+TEST_F( CPUTestFixture, ZPG )
+{
+    std::string const test_name = "Zero Page Addressing Mode";
+    printTestStartMsg( test_name );
+    cpu.SetProgramCounter( 0x0000 );
+    Write( 0x0000, 0x42 );
+    u16 const addr = ZPG();
+    EXPECT_EQ( addr, 0x42 );
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x0001 );
+    printTestEndMsg( test_name );
+}
+
+TEST_F( CPUTestFixture, ZPGX )
+{
+    std::string const test_name = "Zero Page X Addressing Mode";
+    printTestStartMsg( test_name );
+    cpu.SetProgramCounter( 0x0000 );
+    cpu.SetXRegister( 0x1 );
+
+    // Write zero-page address to the pc location
+    Write( cpu.GetProgramCounter(), 0x80 );
+    u8 const zero_page_address = Read( cpu.GetProgramCounter() );
+    u8 const expected_address = ( zero_page_address + 0x1 ) & 0xFF;
+
+    Write( expected_address, 0x42 ); // Write a test value at the expected address
+    u16 const addr = ZPGX();
+    EXPECT_EQ( addr, expected_address );
+    EXPECT_EQ( Read( addr ), 0x42 );
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x0001 );
+    printTestEndMsg( test_name );
+}
+
+TEST_F( CPUTestFixture, ZPGY )
+{
+    std::string const test_name = "Zero Page Y Addressing Mode";
+    printTestStartMsg( test_name );
+    cpu.SetProgramCounter( 0x0000 );
+    cpu.SetYRegister( 0x1 );
+    // Write zero-page address to the pc location
+    Write( cpu.GetProgramCounter(), 0x80 );
+    u8 const zero_page_address = Read( cpu.GetProgramCounter() );
+    u8 const expected_address = ( zero_page_address + 0x1 ) & 0xFF;
+    Write( expected_address, 0x42 ); // Write a test value at the expected address
+    u16 const addr = ZPGY();
+    EXPECT_EQ( addr, expected_address );
+    EXPECT_EQ( Read( addr ), 0x42 );
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x0001 );
+    printTestEndMsg( test_name );
+}
+
+TEST_F( CPUTestFixture, ABS )
+{
+    std::string const test_name = "Absolute Addressing Mode";
+    printTestStartMsg( test_name );
+    cpu.SetProgramCounter( 0x0000 );
+    Write( 0x0000, 0x42 );
+    Write( 0x0001, 0x24 );
+    u16 const addr = ABS();
+    EXPECT_EQ( addr, 0x2442 );
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x0002 );
+    printTestEndMsg( test_name );
+}
+
+TEST_F( CPUTestFixture, ABSX )
+{
+    std::string const test_name = "Absolute X Addressing Mode";
+    printTestStartMsg( test_name );
+    cpu.SetProgramCounter( 0x0000 );
+    cpu.SetXRegister( 0x10 );
+    // Write absolute address to the pc location
+    Write( 0x0000, 0x80 );
+    Write( 0x0001, 0x24 );
+
+    // expected is absolute address + X register
+    constexpr u16 expected_address = 0x2480 + 0x10;
+
+    u16 const addr = ABSX();
+    EXPECT_EQ( addr, expected_address );
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x0002 );
+    printTestEndMsg( test_name );
+}
+
+TEST_F( CPUTestFixture, ABSY )
+{
+    std::string const test_name = "Absolute Y Addressing Mode";
+    printTestStartMsg( test_name );
+    cpu.SetProgramCounter( 0x0000 );
+    cpu.SetYRegister( 0x10 );
+    // Write absolute address to the pc location
+    Write( 0x0000, 0x80 );
+    Write( 0x0001, 0x24 );
+    // expected is absolute address + Y register
+    constexpr u16 expected_address = 0x2480 + 0x10;
+    u16 const     addr = ABSY();
+    EXPECT_EQ( addr, expected_address );
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x0002 );
+    printTestEndMsg( test_name );
+}
+
+TEST_F( CPUTestFixture, IND )
+{
+    std::string const test_name = "Indirect Addressing Mode";
+    printTestStartMsg( test_name );
+    cpu.SetProgramCounter( 0x0000 );
+
+    // Write the low and high byte of the pointer to the pc location
+    Write( 0x0000, 0xCD );
+    Write( 0x0001, 0xAB );
+
+    // Write the effective address to the pointer location
+    constexpr u16 ptr = 0xABCD;
+    Write( ptr, 0x34 );
+    Write( ptr + 1, 0x12 );
+
+    // Get the effective address
+    u16 const addr = IND();
+
+    // Ensure the address is 0xABCD
+    EXPECT_EQ( addr, 0x1234 ) << "Expected 0x1234, but got " << std::hex << addr;
+
+    // Write a value at the effective address
+    Write( addr, 0xEF );
+    EXPECT_EQ( Read( addr ), 0xEF )
+        << "Expected 0xEF, but got " << static_cast<int>( Read( addr ) );
+
+    // Ensure the pc is incremented by 2
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x0002 );
+
+    printTestEndMsg( test_name );
+}
+
+TEST_F( CPUTestFixture, IND_Bug )
+{
+    std::string const test_name = "Indirect Addressing Mode Bug";
+    printTestStartMsg( test_name );
+    cpu.SetProgramCounter( 0x0000 );
+    Write( 0x0000, 0xFF );
+    Write( 0x0001, 0x02 );
+    constexpr u16 ptr = 0x02FF;
+
+    // Write the low byte of the effective address to the pointer location
+    Write( ptr, 0x34 );
+    // Place where the high byte will be read from due to bug
+    Write( 0x0200, 0x12 );
+    // Place where the high byte will not be read from, but would have been without the bug
+    Write( 0x0300, 0x56 );
+
+    constexpr u16 bug_addr = 0x1234;
+    Write( bug_addr, 0xEF );
+
+    constexpr u16 no_bug_addr = 0x5634;
+    Write( no_bug_addr, 0xAB );
+
+    u16 const effective_addr = IND();
+    EXPECT_EQ( effective_addr, bug_addr )
+        << "Expected 0x1234, but got " << std::hex << effective_addr;
+    EXPECT_EQ( Read( effective_addr ), 0xEF )
+        << "Expected 0xEF, but got " << static_cast<int>( Read( effective_addr ) );
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x0002 );
+    printTestEndMsg( test_name );
+}
+
+TEST_F( CPUTestFixture, INDX )
+{
+    std::string const test_name = "Indirect X Addressing Mode";
+    printTestStartMsg( test_name );
+    cpu.SetProgramCounter( 0x0000 );
+    cpu.SetXRegister( 0x10 );
+
+    // Write the operand at the pc location
+    constexpr u8 operand = 0x23;
+    Write( 0x0000, operand );
+    u8 const      ptr = ( operand + cpu.GetXRegister() ) & 0xFF;
+    constexpr u16 effective_addr = 0xABCD;
+
+    // Write the effective address to zero-page memory
+    Write( ptr, effective_addr & 0xFF );
+    Write( ( ptr + 1 ) & 0xFF, effective_addr >> 8 );
+
+    // Write a test value at the effective address
+    Write( effective_addr, 0x42 );
+
+    u16 const addr = INDX();
+    EXPECT_EQ( addr, effective_addr )
+        << "Expected " << std::hex << effective_addr << ", but got " << addr;
+    EXPECT_EQ( Read( addr ), 0x42 ) << "Expected 0x42, but got " << int( Read( addr ) ); // NOLINT
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x0001 );
+
+    printTestEndMsg( test_name );
+}
+
+TEST_F( CPUTestFixture, INDY )
+{
+    std::string const test_name = "Indirect Y Addressing Mode";
+    printTestStartMsg( test_name );
+    cpu.SetProgramCounter( 0x0000 );
+    cpu.SetYRegister( 0x10 );
+
+    constexpr u8 operand = 0x23;
+    Write( 0x0000, operand );
+    constexpr u8  ptr = operand;
+    constexpr u16 effective_addr = 0xAB00;
+
+    // Write the effective address to zero-page memory
+    Write( ptr, effective_addr & 0xFF );
+    Write( ptr + 1, effective_addr >> 8 );
+
+    u16 const final_addr = effective_addr + cpu.GetYRegister();
+    Write( final_addr, 0x42 ); // Write a test value at the final address
+    u16 const addr = INDY();
+    EXPECT_EQ( addr, final_addr ) << "Expected " << std::hex << final_addr << ", but got " << addr;
+    EXPECT_EQ( Read( addr ), 0x42 );
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x0001 );
+    printTestEndMsg( test_name );
+}
+
+TEST_F( CPUTestFixture, REL )
+{
+    std::string const test_name = "Relative Addressing Mode";
+    cpu.SetProgramCounter( 0x1000 );
+
+    // Write a relative address of -5 at the pc location
+    Write( 0x1000, 0xFB );
+    u16 const back_branch = REL();
+    EXPECT_EQ( back_branch, 0x0FFB ) << "Expected 0x0FFB, but got " << std::hex << back_branch;
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x1001 );
+
+    // Write a relative address of +5 at the pc location
+    cpu.SetProgramCounter( 0x1000 );
+    Write( 0x1000, 0x05 );
+    u16 const forward_branch = REL();
+    EXPECT_EQ( forward_branch, 0x1005 )
+        << "Expected 0x1005, but got " << std::hex << forward_branch;
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x1001 );
+    printTestStartMsg( test_name );
+}
+
+/*
+################################################################
+||                                                            ||
+||                        Opcode Tests                        ||
+||                                                            ||
+################################################################
 */
 
 /* This is a macro to simplify test creation for json tests
@@ -170,7 +424,7 @@ To run all tests:
   ctest # from the build directory
 */
 
-/* CPU_TEST( SAMPLE, JSON, SANITY_CHECK, "small.json" ); */
+/* CPU_TEST( SAMPLE, JSON, SANITY_CHECK, "temp.json" ); */
 /* CPU_TEST( 00, BRK, Implied, "00.json" ); */
 /* CPU_TEST( 01, ORA, IndirectX, "01.json" ); */
 /* CPU_TEST( 05, ORA, ZeroPage, "05.json" ); */
@@ -268,10 +522,10 @@ To run all tests:
 /* CPU_TEST( A5, LDA, ZeroPage, "a5.json" ); */
 /* CPU_TEST( A6, LDX, ZeroPage, "a6.json" ); */
 /* CPU_TEST( A8, TAY, Implied, "a8.json" ); */
-/* CPU_TEST( A9, LDA, Immediate, "a9.json" ); */
+CPU_TEST( A9, LDA, Immediate, "a9.json" );
 /* CPU_TEST( AA, TAX, Implied, "aa.json" ); */
 /* CPU_TEST( AC, LDY, Absolute, "ac.json" ); */
-/* CPU_TEST( AD, LDA, Absolute, "ad.json" ); */
+CPU_TEST( AD, LDA, Absolute, "ad.json" );
 /* CPU_TEST( AE, LDX, Absolute, "ae.json" ); */
 /* CPU_TEST( B0, BCS, Relative, "b0.json" ); */
 /* CPU_TEST( B1, LDA, IndirectY, "b1.json" ); */
@@ -323,9 +577,13 @@ To run all tests:
 /* CPU_TEST( FD, SBC, AbsoluteX, "fd.json" ); */
 /* CPU_TEST( FE, INC, AbsoluteX, "fe.json" ); */
 
-// -----------------------------------------------------------------------------
-// -------------------------TEST CLASS METHODS ---------------------------------
-// -----------------------------------------------------------------------------
+/*
+################################################################
+||                                                            ||
+||                    Test Fixture Methods                    ||
+||                                                            ||
+################################################################
+*/
 
 void CPUTestFixture::RunTestCase( const json &testCase ) // NOLINT
 {
@@ -335,7 +593,7 @@ void CPUTestFixture::RunTestCase( const json &testCase ) // NOLINT
     LoadStateFromJson( testCase, "initial" );
     std::string const initial_state = GetCPUStateString( testCase, "initial" );
     // Ensure loaded values match JSON values
-    EXPECT_EQ( cpu.GetProgramCounter(), u16( testCase["initial"]["pc"] ) );
+    EXPECT_EQ( cpu.GetProgramCounter(), static_cast<u16>( testCase["initial"]["pc"] ) );
     EXPECT_EQ( cpu.GetAccumulator(), testCase["initial"]["a"] );
     EXPECT_EQ( cpu.GetXRegister(), testCase["initial"]["x"] );
     EXPECT_EQ( cpu.GetYRegister(), testCase["initial"]["y"] );
@@ -349,43 +607,39 @@ void CPUTestFixture::RunTestCase( const json &testCase ) // NOLINT
         EXPECT_EQ( cpu.Read( address ), value );
     }
 
-    // Temp: print initial state
-    /* std::cout << '\n'; */
-    /* std::cout << "Loading state from tests/json/small.json" << '\n'; */
-    /* std::cout << "Test name: " << testCase["name"] << '\n'; */
-    /* std::cout << initial_state << '\n'; */
+    // Fetch, decode, execute
+    cpu.Tick();
 
-    // TODO: Run CPU fetch-decode-execute method(s) once
-
+    // Check final state
     bool               test_failed = false; // Track if any test has failed
     std::ostringstream error_messages;      // Accumulate error messages
                                             //
-    if ( cpu.GetProgramCounter() != u16( testCase["final"]["pc"] ) )
+    if ( cpu.GetProgramCounter() != static_cast<u16>( testCase["final"]["pc"] ) )
     {
         test_failed = true;
         error_messages << "PC ";
     }
-    if ( cpu.GetAccumulator() != u8( testCase["final"]["a"] ) )
+    if ( cpu.GetAccumulator() != static_cast<u8>( testCase["final"]["a"] ) )
     {
         test_failed = true;
         error_messages << "A ";
     }
-    if ( cpu.GetXRegister() != u8( testCase["final"]["x"] ) )
+    if ( cpu.GetXRegister() != static_cast<u8>( testCase["final"]["x"] ) )
     {
         test_failed = true;
         error_messages << "X ";
     }
-    if ( cpu.GetYRegister() != u8( testCase["final"]["y"] ) )
+    if ( cpu.GetYRegister() != static_cast<u8>( testCase["final"]["y"] ) )
     {
         test_failed = true;
         error_messages << "Y ";
     }
-    if ( cpu.GetStackPointer() != u8( testCase["final"]["s"] ) )
+    if ( cpu.GetStackPointer() != static_cast<u8>( testCase["final"]["s"] ) )
     {
         test_failed = true;
         error_messages << "S ";
     }
-    if ( cpu.GetStatusRegister() != u8( testCase["final"]["p"] ) )
+    if ( cpu.GetStatusRegister() != static_cast<u8>( testCase["final"]["p"] ) )
     {
         test_failed = true;
         error_messages << "P ";
@@ -445,7 +699,8 @@ void CPUTestFixture::LoadStateFromJson( const json &jsonData, const std::string 
     }
 }
 
-std::string CPUTestFixture::GetCPUStateString( const json &jsonData, const std::string &state )
+std::string CPUTestFixture::GetCPUStateString( const json        &jsonData,
+                                               const std::string &state ) const
 {
     /*
     This function provides formatted output for expected vs. actual CPU state values,
@@ -456,7 +711,7 @@ std::string CPUTestFixture::GetCPUStateString( const json &jsonData, const std::
     */
 
     // Expected values
-    u16 const expected_pc = u16( jsonData[state]["pc"] );
+    u16 const expected_pc = static_cast<u16>( jsonData[state]["pc"] );
     u8 const  expected_a = jsonData[state]["a"];
     u8 const  expected_x = jsonData[state]["x"];
     u8 const  expected_y = jsonData[state]["y"];
@@ -474,10 +729,10 @@ std::string CPUTestFixture::GetCPUStateString( const json &jsonData, const std::
     u64 const actual_cycles = cpu.GetCycles();
 
     // Column Widths
-    const int label_width = 8;
-    const int value_width = 14;
+    constexpr int label_width = 8;
+    constexpr int value_width = 14;
 
-    // Use ostringstream to collect output
+    // Use osstringstream to collect output
     std::ostringstream output;
 
     // Print header
@@ -486,9 +741,10 @@ std::string CPUTestFixture::GetCPUStateString( const json &jsonData, const std::
            << std::setw( value_width ) << "ACTUAL" << '\n';
 
     // Function to format and print a line
-    auto print_line = [&]( const std::string &label, uint64_t expected, uint64_t actual )
+    auto print_line =
+        [&]( const std::string &label, const uint64_t expected, const uint64_t actual )
     {
-        auto to_hex_decimal_string = []( uint64_t value, int width )
+        auto to_hex_decimal_string = []( const uint64_t value, const int width )
         {
             std::stringstream str_stream;
             str_stream << std::hex << std::uppercase << std::setw( width ) << std::setfill( '0' )
@@ -496,7 +752,7 @@ std::string CPUTestFixture::GetCPUStateString( const json &jsonData, const std::
             return str_stream.str();
         };
 
-        int width = 4;
+        int width; // NOLINT
         if ( expected > 0xFFFF || actual > 0xFFFF )
         {
             width = 8;
@@ -541,7 +797,7 @@ std::string CPUTestFixture::GetCPUStateString( const json &jsonData, const std::
         uint8_t const  actual_value = cpu.Read( address );
 
         // Helper lambda to format values as "HEX (DECIMAL)"
-        auto format_value = []( uint8_t value )
+        auto format_value = []( const uint8_t value )
         {
             std::ostringstream oss;
             oss << std::hex << std::uppercase << std::setw( 2 ) << std::setfill( '0' )
@@ -566,11 +822,36 @@ std::string CPUTestFixture::GetCPUStateString( const json &jsonData, const std::
     // Return the accumulated string
     return output.str();
 }
+/*
+########################################
+||    Expose private methods here     ||
+########################################
+*/
 
-// -----------------------------------------------------------------------------
-// --------------------------- GENERAL HELPERS ---------------------------------
-//               Helpers that don't depend on the CPU class
-// -----------------------------------------------------------------------------
+void CPUTestFixture::SetFlags( const u8 flag ) { cpu.SetFlags( flag ); }
+void CPUTestFixture::ClearFlags( const u8 flag ) { cpu.ClearFlags( flag ); }
+bool CPUTestFixture::IsFlagSet( const u8 flag ) const { return cpu.IsFlagSet( flag ); }
+u8   CPUTestFixture::Read( const u16 address ) const { return cpu.Read( address ); }
+void CPUTestFixture::Write( const u16 address, const u8 data ) const { cpu.Write( address, data ); }
+u16  CPUTestFixture::IMM() { return cpu.IMM(); }
+u16  CPUTestFixture::ZPG() { return cpu.ZPG(); }
+u16  CPUTestFixture::ZPGX() { return cpu.ZPGX(); }
+u16  CPUTestFixture::ZPGY() { return cpu.ZPGY(); }
+u16  CPUTestFixture::ABS() { return cpu.ABS(); }
+u16  CPUTestFixture::ABSX() { return cpu.ABSX(); }
+u16  CPUTestFixture::ABSY() { return cpu.ABSY(); }
+u16  CPUTestFixture::IND() { return cpu.IND(); }
+u16  CPUTestFixture::INDX() { return cpu.INDX(); }
+u16  CPUTestFixture::INDY() { return cpu.INDY(); }
+u16  CPUTestFixture::REL() { return cpu.REL(); }
+
+/*
+################################################################
+||                                                            ||
+||                  General Helper Functions                  ||
+||                                                            ||
+################################################################
+*/
 
 auto extractTestsFromJson( const std::string &path ) -> json
 // Extracts test cases from a JSON file and returns them as a JSON object, with the
