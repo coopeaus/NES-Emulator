@@ -14,8 +14,30 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     ||                                                            ||
     ################################################################
     */
+    // LDA
     _opcodeTable[0xA9] = InstructionData{ "LDA_Immediate", &CPU::LDA, &CPU::IMM, 2 };
+    _opcodeTable[0xA5] = InstructionData{ "LDA_ZeroPage", &CPU::LDA, &CPU::ZPG, 3 };
+    _opcodeTable[0xB5] = InstructionData{ "LDA_ZeroPageX", &CPU::LDA, &CPU::ZPGX, 4 };
     _opcodeTable[0xAD] = InstructionData{ "LDA_Absolute", &CPU::LDA, &CPU::ABS, 4 };
+    _opcodeTable[0xBD] = InstructionData{ "LDA_AbsoluteX", &CPU::LDA, &CPU::ABSX, 4 };
+    _opcodeTable[0xB9] = InstructionData{ "LDA_AbsoluteY", &CPU::LDA, &CPU::ABSY, 4 };
+    _opcodeTable[0xA1] = InstructionData{ "LDA_IndirectX", &CPU::LDA, &CPU::INDX, 6 };
+    _opcodeTable[0xB1] = InstructionData{ "LDA_IndirectY", &CPU::LDA, &CPU::INDY, 5 };
+
+    // LDX
+    _opcodeTable[0xA2] = InstructionData{ "LDX_Immediate", &CPU::LDX, &CPU::IMM, 2 };
+    _opcodeTable[0xA6] = InstructionData{ "LDX_ZeroPage", &CPU::LDX, &CPU::ZPG, 3 };
+    _opcodeTable[0xB6] = InstructionData{ "LDX_ZeroPageY", &CPU::LDX, &CPU::ZPGY, 4 };
+    _opcodeTable[0xAE] = InstructionData{ "LDX_Absolute", &CPU::LDX, &CPU::ABS, 4 };
+    _opcodeTable[0xBE] = InstructionData{ "LDX_AbsoluteY", &CPU::LDX, &CPU::ABSY, 4 };
+
+    // LDY
+    _opcodeTable[0xA0] = InstructionData{ "LDY_Immediate", &CPU::LDY, &CPU::IMM, 2 };
+    _opcodeTable[0xA4] = InstructionData{ "LDY_ZeroPage", &CPU::LDY, &CPU::ZPG, 3 };
+    _opcodeTable[0xB4] = InstructionData{ "LDY_ZeroPageX", &CPU::LDY, &CPU::ZPGX, 4 };
+    _opcodeTable[0xAC] = InstructionData{ "LDY_Absolute", &CPU::LDY, &CPU::ABS, 4 };
+    _opcodeTable[0xBC] = InstructionData{ "LDY_AbsoluteX", &CPU::LDY, &CPU::ABSX, 4 };
+
 };
 
 // Getters
