@@ -14,6 +14,7 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     ||                                                            ||
     ################################################################
     */
+
     // LDA
     _opcodeTable[0xA9] = InstructionData{ "LDA_Immediate", &CPU::LDA, &CPU::IMM, 2 };
     _opcodeTable[0xA5] = InstructionData{ "LDA_ZeroPage", &CPU::LDA, &CPU::ZPG, 3 };
@@ -38,6 +39,24 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0xAC] = InstructionData{ "LDY_Absolute", &CPU::LDY, &CPU::ABS, 4 };
     _opcodeTable[0xBC] = InstructionData{ "LDY_AbsoluteX", &CPU::LDY, &CPU::ABSX, 4 };
 
+    // STA
+    _opcodeTable[0x85] = InstructionData{ "STA_ZeroPage", &CPU::STA, &CPU::ZPG, 3 };
+    _opcodeTable[0x95] = InstructionData{ "STA_ZeroPageX", &CPU::STA, &CPU::ZPGX, 4 };
+    _opcodeTable[0x8D] = InstructionData{ "STA_Absolute", &CPU::STA, &CPU::ABS, 4 };
+    _opcodeTable[0x9D] = InstructionData{ "STA_AbsoluteX", &CPU::STA, &CPU::ABSX, 5, false };
+    _opcodeTable[0x99] = InstructionData{ "STA_AbsoluteY", &CPU::STA, &CPU::ABSY, 5, false };
+    _opcodeTable[0x81] = InstructionData{ "STA_IndirectX", &CPU::STA, &CPU::INDX, 6, false };
+    _opcodeTable[0x91] = InstructionData{ "STA_IndirectY", &CPU::STA, &CPU::INDY, 6, false };
+
+    // STX
+    _opcodeTable[0x86] = InstructionData{ "STX_ZeroPage", &CPU::STX, &CPU::ZPG, 3 };
+    _opcodeTable[0x96] = InstructionData{ "STX_ZeroPageY", &CPU::STX, &CPU::ZPGY, 4 };
+    _opcodeTable[0x8E] = InstructionData{ "STX_Absolute", &CPU::STX, &CPU::ABS, 4 };
+
+    // STY
+    _opcodeTable[0x84] = InstructionData{ "STY_ZeroPage", &CPU::STY, &CPU::ZPG, 3 };
+    _opcodeTable[0x94] = InstructionData{ "STY_ZeroPageX", &CPU::STY, &CPU::ZPGX, 4 };
+    _opcodeTable[0x8C] = InstructionData{ "STY_Absolute", &CPU::STY, &CPU::ABS, 4 };
 };
 
 // Getters
