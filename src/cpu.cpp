@@ -114,95 +114,6 @@ void CPU::Reset()
 /*
 ################################################################
 ||                                                            ||
-||                    Instruction Helpers                     ||
-||                                                            ||
-################################################################
-*/
-
-void CPU::LoadRegister( u16 address, u8 &reg )
-{
-    /*
-      Used by all loading instructions (LDA, LDX, LDY)
-      It loads a register with a value from memory
-    */
-    u8 const value = Read( address );
-    reg = value;
-
-    // Set zero and negative flags
-    SetZeroAndNegativeFlags( value );
-};
-
-void CPU::SetFlags( const u8 flag )
-{
-    /*
-     * @brief set one or more flag bits through bitwise OR with the status register
-     *
-     * Used by the SEC, SED, and SEI instructions to set one or more flag bits through
-     * bitwise OR with the status register.
-     *
-     * Usage:
-     * SetFlags( Status::Carry ); // Set one flag
-     * SetFlags( Status::Carry | Status::Zero ); // Set multiple flags
-     */
-    _p |= flag;
-}
-void CPU::ClearFlags( const u8 flag )
-{
-    /* Clear Flags
-     * @brief clear one or more flag bits through bitwise AND of the complement (inverted) flag with
-     * the status register
-     *
-     * Used by the CLC, CLD, and CLI instructions to clear one or more flag bits through
-     * bitwise AND of the complement (inverted) flag with the status register.
-     *
-     * Usage:
-     * ClearFlags( Status::Carry ); // Clear one flag
-     * ClearFlags( Status::Carry | Status::Zero ); // Clear multiple flags
-     */
-    _p &= ~flag;
-}
-bool CPU::IsFlagSet( const u8 flag ) const
-{
-    /* @brief Utility function to check if a given status is set in the status register
-     *
-     * Usage:
-     * if ( IsFlagSet( Status::Carry ) )
-     * {
-     *   // Do something
-     * }
-     * if ( IsFlagSet( Status::Carry | Status::Zero ) )
-     * {
-     *   // Do something
-     * }
-     */
-    return ( _p & flag ) == flag;
-}
-
-void CPU::SetZeroAndNegativeFlags( u8 value )
-{
-    /*
-     * @brief Sets zero flag if value == 0, or negative flag if value is negative (bit 7 is set)
-     */
-
-    // Clear zero and negative flags
-    ClearFlags( Status::Zero | Status::Negative );
-
-    // Set zero flag if value is zero
-    if ( value == 0 )
-    {
-        SetFlags( Status::Zero );
-    }
-
-    // Set negative flag if bit 7 is set
-    if ( ( value & 0b10000000 ) != 0 )
-    {
-        SetFlags( Status::Negative );
-    }
-}
-
-/*
-################################################################
-||                                                            ||
 ||                      Addressing Modes                      ||
 ||                                                            ||
 ################################################################
@@ -393,6 +304,95 @@ auto CPU::REL() -> u16
     u16 const address = _pc + offset;
     _pc++;
     return address;
+}
+
+/*
+################################################################
+||                                                            ||
+||                    Instruction Helpers                     ||
+||                                                            ||
+################################################################
+*/
+
+void CPU::LoadRegister( u16 address, u8 &reg )
+{
+    /*
+     * @brief It loads a register with a value from memory
+     * Used by LDA, LDX, and LDY instructions
+     */
+    u8 const value = Read( address );
+    reg = value;
+
+    // Set zero and negative flags
+    SetZeroAndNegativeFlags( value );
+};
+
+void CPU::SetFlags( const u8 flag )
+{
+    /*
+     * @brief set one or more flag bits through bitwise OR with the status register
+     *
+     * Used by the SEC, SED, and SEI instructions to set one or more flag bits through
+     * bitwise OR with the status register.
+     *
+     * Usage:
+     * SetFlags( Status::Carry ); // Set one flag
+     * SetFlags( Status::Carry | Status::Zero ); // Set multiple flags
+     */
+    _p |= flag;
+}
+void CPU::ClearFlags( const u8 flag )
+{
+    /* Clear Flags
+     * @brief clear one or more flag bits through bitwise AND of the complement (inverted) flag with
+     * the status register
+     *
+     * Used by the CLC, CLD, and CLI instructions to clear one or more flag bits through
+     * bitwise AND of the complement (inverted) flag with the status register.
+     *
+     * Usage:
+     * ClearFlags( Status::Carry ); // Clear one flag
+     * ClearFlags( Status::Carry | Status::Zero ); // Clear multiple flags
+     */
+    _p &= ~flag;
+}
+bool CPU::IsFlagSet( const u8 flag ) const
+{
+    /* @brief Utility function to check if a given status is set in the status register
+     *
+     * Usage:
+     * if ( IsFlagSet( Status::Carry ) )
+     * {
+     *   // Do something
+     * }
+     * if ( IsFlagSet( Status::Carry | Status::Zero ) )
+     * {
+     *   // Do something
+     * }
+     */
+    return ( _p & flag ) == flag;
+}
+
+void CPU::SetZeroAndNegativeFlags( u8 value )
+{
+    /*
+     * @brief Sets zero flag if value == 0, or negative flag if value is negative (bit 7 is set)
+     */
+
+    // Clear zero and negative flags
+    ClearFlags( Status::Zero | Status::Negative );
+
+    // Set zero flag if value is zero
+    if ( value == 0 )
+    {
+        SetFlags( Status::Zero );
+    }
+
+    // Set negative flag if bit 7 is set
+    if ( ( value & 0b10000000 ) != 0 )
+    {
+        SetFlags( Status::Negative );
+    }
 }
 
 /*
