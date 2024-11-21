@@ -327,6 +327,15 @@ void CPU::LoadRegister( u16 address, u8 &reg )
     SetZeroAndNegativeFlags( value );
 };
 
+void CPU::StoreRegister( u16 address, u8 reg )
+{
+    /*
+     * @brief It stores a register value in memory
+     * Used by STA, STX, and STY instructions
+     */
+    Write( address, reg );
+};
+
 void CPU::SetFlags( const u8 flag )
 {
     /*
@@ -456,4 +465,50 @@ void CPU::LDY( u16 address )
      * LDY Absolute X: BC(4+)
      */
     LoadRegister( address, _y );
+}
+
+void CPU::STA( u16 address )
+{
+    /*
+     * @brief Store Accumulator in Memory
+     * N Z C I D V
+     * - - - - - -
+     * Usage and cycles:
+     * STA Zero Page: 85(3)
+     * STA Zero Page X: 95(4)
+     * STA Absolute: 8D(4)
+     * STA Absolute X: 9D(5)
+     * STA Absolute Y: 99(5)
+     * STA Indirect X: 81(6)
+     * STA Indirect Y: 91(6)
+     */
+    StoreRegister( address, _a );
+}
+
+void CPU::STX( u16 address )
+{
+    /*
+     * @brief Store X Register in Memory
+     * N Z C I D V
+     * - - - - - -
+     * Usage and cycles:
+     * STX Zero Page: 86(3)
+     * STX Zero Page Y: 96(4)
+     * STX Absolute: 8E(4)
+     */
+    StoreRegister( address, _x );
+}
+
+void CPU::STY( u16 address )
+{
+    /*
+     * @brief Store Y Register in Memory
+     * N Z C I D V
+     * - - - - - -
+     * Usage and cycles:
+     * STY Zero Page: 84(3)
+     * STY Zero Page X: 94(4)
+     * STY Absolute: 8C(4)
+     */
+    StoreRegister( address, _y );
 }

@@ -114,6 +114,7 @@ class CPU
 
     // LDA, LDX, and LDY helper
     void LoadRegister( u16 address, u8 &reg );
+    void StoreRegister( u16 address, u8 reg );
 
     /*
     ################################################################
@@ -146,4 +147,7 @@ class CPU
     void LDA( u16 address );
     void LDX( u16 address );
     void LDY( u16 address );
+    void STA( u16 address );
+    void STX( u16 address );
+    void STY( u16 address );
 };
