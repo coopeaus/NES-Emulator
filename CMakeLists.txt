@@ -119,6 +119,15 @@ elseif(WIN32)
           $<TARGET_FILE:SDL2::SDL2>
           $<TARGET_FILE_DIR:emu>/$<TARGET_FILE_NAME:SDL2::SDL2>
   )
+elseif(UNIX AND NOT APPLE)
+  message(STATUS "Configuring SDL2 for Linux")
+
+  # Assume SDL2 is installed on the system. We cannot baby Linux users.
+  find_package(SDL2 REQUIRED)
+  target_include_directories(emu PRIVATE ${SDL2_INCLUDE_DIRS})
+  target_link_libraries(emu PRIVATE ${SDL2_LIBRARIES})
+
+  message(STATUS "SDL2 found: ${SDL2_LIBRARIES}")
 endif()
 
 # ----------------------- TEST EXECUTABLES -----------------------
@@ -162,3 +171,4 @@ gtest_discover_tests(cpu_test
 # Useful for distribution or if you need emu to behave as a native MacOS app.
 # Has no effect on Windows or Linux builds.
 # set_target_properties(emu PROPERTIES MACOSX_BUNDLE TRUE)
+
