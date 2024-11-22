@@ -497,47 +497,47 @@ To run all tests:
 /* CPU_TEST( 79, ADC, AbsoluteY, "79.json" ); */
 /* CPU_TEST( 7D, ADC, AbsoluteX, "7d.json" ); */
 /* CPU_TEST( 7E, ROR, AbsoluteX, "7e.json" ); */
-/* CPU_TEST( 81, STA, IndirectX, "81.json" ); */
-/* CPU_TEST( 84, STY, ZeroPage, "84.json" ); */
-/* CPU_TEST( 85, STA, ZeroPage, "85.json" ); */
-/* CPU_TEST( 86, STX, ZeroPage, "86.json" ); */
+CPU_TEST( 81, STA, IndirectX, "81.json" );
+CPU_TEST( 84, STY, ZeroPage, "84.json" );
+CPU_TEST( 85, STA, ZeroPage, "85.json" );
+CPU_TEST( 86, STX, ZeroPage, "86.json" );
 /* CPU_TEST( 88, DEY, Implied, "88.json" ); */
 /* CPU_TEST( 8A, TXA, Implied, "8a.json" ); */
-/* CPU_TEST( 8C, STY, Absolute, "8c.json" ); */
-/* CPU_TEST( 8D, STA, Absolute, "8d.json" ); */
-/* CPU_TEST( 8E, STX, Absolute, "8e.json" ); */
+CPU_TEST( 8C, STY, Absolute, "8c.json" );
+CPU_TEST( 8D, STA, Absolute, "8d.json" );
+CPU_TEST( 8E, STX, Absolute, "8e.json" );
 /* CPU_TEST( 90, BCC, Relative, "90.json" ); */
-/* CPU_TEST( 91, STA, IndirectY, "91.json" ); */
-/* CPU_TEST( 94, STY, ZeroPageX, "94.json" ); */
-/* CPU_TEST( 95, STA, ZeroPageX, "95.json" ); */
-/* CPU_TEST( 96, STX, ZeroPageY, "96.json" ); */
+CPU_TEST( 91, STA, IndirectY, "91.json" );
+CPU_TEST( 94, STY, ZeroPageX, "94.json" );
+CPU_TEST( 95, STA, ZeroPageX, "95.json" );
+CPU_TEST( 96, STX, ZeroPageY, "96.json" );
 /* CPU_TEST( 98, TYA, Implied, "98.json" ); */
-/* CPU_TEST( 99, STA, AbsoluteY, "99.json" ); */
+CPU_TEST( 99, STA, AbsoluteY, "99.json" );
 /* CPU_TEST( 9A, TXS, Implied, "9a.json" ); */
-/* CPU_TEST( 9D, STA, AbsoluteX, "9d.json" ); */
-/* CPU_TEST( A0, LDY, Immediate, "a0.json" ); */
-/* CPU_TEST( A1, LDA, IndirectX, "a1.json" ); */
-/* CPU_TEST( A2, LDX, Immediate, "a2.json" ); */
-/* CPU_TEST( A4, LDY, ZeroPage, "a4.json" ); */
-/* CPU_TEST( A5, LDA, ZeroPage, "a5.json" ); */
-/* CPU_TEST( A6, LDX, ZeroPage, "a6.json" ); */
+CPU_TEST( 9D, STA, AbsoluteX, "9d.json" );
+CPU_TEST( A1, LDA, IndirectX, "a1.json" );
+CPU_TEST( A0, LDY, Immediate, "a0.json" );
+CPU_TEST( A2, LDX, Immediate, "a2.json" );
+CPU_TEST( A4, LDY, ZeroPage, "a4.json" );
+CPU_TEST( A5, LDA, ZeroPage, "a5.json" );
+CPU_TEST( A6, LDX, ZeroPage, "a6.json" );
 /* CPU_TEST( A8, TAY, Implied, "a8.json" ); */
 CPU_TEST( A9, LDA, Immediate, "a9.json" );
 /* CPU_TEST( AA, TAX, Implied, "aa.json" ); */
-/* CPU_TEST( AC, LDY, Absolute, "ac.json" ); */
+CPU_TEST( AC, LDY, Absolute, "ac.json" );
 CPU_TEST( AD, LDA, Absolute, "ad.json" );
-/* CPU_TEST( AE, LDX, Absolute, "ae.json" ); */
+CPU_TEST( AE, LDX, Absolute, "ae.json" );
 /* CPU_TEST( B0, BCS, Relative, "b0.json" ); */
-/* CPU_TEST( B1, LDA, IndirectY, "b1.json" ); */
-/* CPU_TEST( B4, LDY, ZeroPageX, "b4.json" ); */
-/* CPU_TEST( B5, LDA, ZeroPageX, "b5.json" ); */
-/* CPU_TEST( B6, LDX, ZeroPageY, "b6.json" ); */
+CPU_TEST( B1, LDA, IndirectY, "b1.json" );
+CPU_TEST( B4, LDY, ZeroPageX, "b4.json" );
+CPU_TEST( B5, LDA, ZeroPageX, "b5.json" );
+CPU_TEST( B6, LDX, ZeroPageY, "b6.json" );
 /* CPU_TEST( B8, CLV, Implied, "b8.json" ); */
-/* CPU_TEST( B9, LDA, AbsoluteY, "b9.json" ); */
+CPU_TEST( B9, LDA, AbsoluteY, "b9.json" );
 /* CPU_TEST( BA, TSX, Implied, "ba.json" ); */
-/* CPU_TEST( BC, LDY, AbsoluteX, "bc.json" ); */
-/* CPU_TEST( BD, LDA, AbsoluteX, "bd.json" ); */
-/* CPU_TEST( BE, LDX, AbsoluteY, "be.json" ); */
+CPU_TEST( BC, LDY, AbsoluteX, "bc.json" );
+CPU_TEST( BD, LDA, AbsoluteX, "bd.json" );
+CPU_TEST( BE, LDX, AbsoluteY, "be.json" );
 /* CPU_TEST( C0, CPY, Immediate, "c0.json" ); */
 /* CPU_TEST( C1, CMP, IndirectX, "c1.json" ); */
 /* CPU_TEST( C4, CPY, ZeroPage, "c4.json" ); */
