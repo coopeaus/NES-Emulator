@@ -93,9 +93,6 @@ cmake-build-*
 *.bak
 *.old
 
-# Ignore generated documentation
-/docs/
-
 # Ignore coverage files
 *.gcda
 *.gcno
