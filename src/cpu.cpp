@@ -14,8 +14,49 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     ||                                                            ||
     ################################################################
     */
+
+    // LDA
     _opcodeTable[0xA9] = InstructionData{ "LDA_Immediate", &CPU::LDA, &CPU::IMM, 2 };
+    _opcodeTable[0xA5] = InstructionData{ "LDA_ZeroPage", &CPU::LDA, &CPU::ZPG, 3 };
+    _opcodeTable[0xB5] = InstructionData{ "LDA_ZeroPageX", &CPU::LDA, &CPU::ZPGX, 4 };
     _opcodeTable[0xAD] = InstructionData{ "LDA_Absolute", &CPU::LDA, &CPU::ABS, 4 };
+    _opcodeTable[0xBD] = InstructionData{ "LDA_AbsoluteX", &CPU::LDA, &CPU::ABSX, 4 };
+    _opcodeTable[0xB9] = InstructionData{ "LDA_AbsoluteY", &CPU::LDA, &CPU::ABSY, 4 };
+    _opcodeTable[0xA1] = InstructionData{ "LDA_IndirectX", &CPU::LDA, &CPU::INDX, 6 };
+    _opcodeTable[0xB1] = InstructionData{ "LDA_IndirectY", &CPU::LDA, &CPU::INDY, 5 };
+
+    // LDX
+    _opcodeTable[0xA2] = InstructionData{ "LDX_Immediate", &CPU::LDX, &CPU::IMM, 2 };
+    _opcodeTable[0xA6] = InstructionData{ "LDX_ZeroPage", &CPU::LDX, &CPU::ZPG, 3 };
+    _opcodeTable[0xB6] = InstructionData{ "LDX_ZeroPageY", &CPU::LDX, &CPU::ZPGY, 4 };
+    _opcodeTable[0xAE] = InstructionData{ "LDX_Absolute", &CPU::LDX, &CPU::ABS, 4 };
+    _opcodeTable[0xBE] = InstructionData{ "LDX_AbsoluteY", &CPU::LDX, &CPU::ABSY, 4 };
+
+    // LDY
+    _opcodeTable[0xA0] = InstructionData{ "LDY_Immediate", &CPU::LDY, &CPU::IMM, 2 };
+    _opcodeTable[0xA4] = InstructionData{ "LDY_ZeroPage", &CPU::LDY, &CPU::ZPG, 3 };
+    _opcodeTable[0xB4] = InstructionData{ "LDY_ZeroPageX", &CPU::LDY, &CPU::ZPGX, 4 };
+    _opcodeTable[0xAC] = InstructionData{ "LDY_Absolute", &CPU::LDY, &CPU::ABS, 4 };
+    _opcodeTable[0xBC] = InstructionData{ "LDY_AbsoluteX", &CPU::LDY, &CPU::ABSX, 4 };
+
+    // STA
+    _opcodeTable[0x85] = InstructionData{ "STA_ZeroPage", &CPU::STA, &CPU::ZPG, 3 };
+    _opcodeTable[0x95] = InstructionData{ "STA_ZeroPageX", &CPU::STA, &CPU::ZPGX, 4 };
+    _opcodeTable[0x8D] = InstructionData{ "STA_Absolute", &CPU::STA, &CPU::ABS, 4 };
+    _opcodeTable[0x9D] = InstructionData{ "STA_AbsoluteX", &CPU::STA, &CPU::ABSX, 5, false };
+    _opcodeTable[0x99] = InstructionData{ "STA_AbsoluteY", &CPU::STA, &CPU::ABSY, 5, false };
+    _opcodeTable[0x81] = InstructionData{ "STA_IndirectX", &CPU::STA, &CPU::INDX, 6, false };
+    _opcodeTable[0x91] = InstructionData{ "STA_IndirectY", &CPU::STA, &CPU::INDY, 6, false };
+
+    // STX
+    _opcodeTable[0x86] = InstructionData{ "STX_ZeroPage", &CPU::STX, &CPU::ZPG, 3 };
+    _opcodeTable[0x96] = InstructionData{ "STX_ZeroPageY", &CPU::STX, &CPU::ZPGY, 4 };
+    _opcodeTable[0x8E] = InstructionData{ "STX_Absolute", &CPU::STX, &CPU::ABS, 4 };
+
+    // STY
+    _opcodeTable[0x84] = InstructionData{ "STY_ZeroPage", &CPU::STY, &CPU::ZPG, 3 };
+    _opcodeTable[0x94] = InstructionData{ "STY_ZeroPageX", &CPU::STY, &CPU::ZPGX, 4 };
+    _opcodeTable[0x8C] = InstructionData{ "STY_Absolute", &CPU::STY, &CPU::ABS, 4 };
 };
 
 // Getters
@@ -109,95 +150,6 @@ void CPU::Reset()
     // located at 0xFFFC and 0xFFFD. If no cartridge, we'll assume these values are
     // initialized to 0x00
     _pc = Read( 0xFFFD ) << 8 | Read( 0xFFFC );
-}
-
-/*
-################################################################
-||                                                            ||
-||                    Instruction Helpers                     ||
-||                                                            ||
-################################################################
-*/
-
-void CPU::LoadRegister( u16 address, u8 &reg )
-{
-    /*
-      Used by all loading instructions (LDA, LDX, LDY)
-      It loads a register with a value from memory
-    */
-    u8 const value = Read( address );
-    reg = value;
-
-    // Set zero and negative flags
-    SetZeroAndNegativeFlags( value );
-};
-
-void CPU::SetFlags( const u8 flag )
-{
-    /*
-     * @brief set one or more flag bits through bitwise OR with the status register
-     *
-     * Used by the SEC, SED, and SEI instructions to set one or more flag bits through
-     * bitwise OR with the status register.
-     *
-     * Usage:
-     * SetFlags( Status::Carry ); // Set one flag
-     * SetFlags( Status::Carry | Status::Zero ); // Set multiple flags
-     */
-    _p |= flag;
-}
-void CPU::ClearFlags( const u8 flag )
-{
-    /* Clear Flags
-     * @brief clear one or more flag bits through bitwise AND of the complement (inverted) flag with
-     * the status register
-     *
-     * Used by the CLC, CLD, and CLI instructions to clear one or more flag bits through
-     * bitwise AND of the complement (inverted) flag with the status register.
-     *
-     * Usage:
-     * ClearFlags( Status::Carry ); // Clear one flag
-     * ClearFlags( Status::Carry | Status::Zero ); // Clear multiple flags
-     */
-    _p &= ~flag;
-}
-bool CPU::IsFlagSet( const u8 flag ) const
-{
-    /* @brief Utility function to check if a given status is set in the status register
-     *
-     * Usage:
-     * if ( IsFlagSet( Status::Carry ) )
-     * {
-     *   // Do something
-     * }
-     * if ( IsFlagSet( Status::Carry | Status::Zero ) )
-     * {
-     *   // Do something
-     * }
-     */
-    return ( _p & flag ) == flag;
-}
-
-void CPU::SetZeroAndNegativeFlags( u8 value )
-{
-    /*
-     * @brief Sets zero flag if value == 0, or negative flag if value is negative (bit 7 is set)
-     */
-
-    // Clear zero and negative flags
-    ClearFlags( Status::Zero | Status::Negative );
-
-    // Set zero flag if value is zero
-    if ( value == 0 )
-    {
-        SetFlags( Status::Zero );
-    }
-
-    // Set negative flag if bit 7 is set
-    if ( ( value & 0b10000000 ) != 0 )
-    {
-        SetFlags( Status::Negative );
-    }
 }
 
 /*
@@ -398,6 +350,104 @@ auto CPU::REL() -> u16
 /*
 ################################################################
 ||                                                            ||
+||                    Instruction Helpers                     ||
+||                                                            ||
+################################################################
+*/
+
+void CPU::LoadRegister( u16 address, u8 &reg )
+{
+    /*
+     * @brief It loads a register with a value from memory
+     * Used by LDA, LDX, and LDY instructions
+     */
+    u8 const value = Read( address );
+    reg = value;
+
+    // Set zero and negative flags
+    SetZeroAndNegativeFlags( value );
+};
+
+void CPU::StoreRegister( u16 address, u8 reg )
+{
+    /*
+     * @brief It stores a register value in memory
+     * Used by STA, STX, and STY instructions
+     */
+    Write( address, reg );
+};
+
+void CPU::SetFlags( const u8 flag )
+{
+    /*
+     * @brief set one or more flag bits through bitwise OR with the status register
+     *
+     * Used by the SEC, SED, and SEI instructions to set one or more flag bits through
+     * bitwise OR with the status register.
+     *
+     * Usage:
+     * SetFlags( Status::Carry ); // Set one flag
+     * SetFlags( Status::Carry | Status::Zero ); // Set multiple flags
+     */
+    _p |= flag;
+}
+void CPU::ClearFlags( const u8 flag )
+{
+    /* Clear Flags
+     * @brief clear one or more flag bits through bitwise AND of the complement (inverted) flag with
+     * the status register
+     *
+     * Used by the CLC, CLD, and CLI instructions to clear one or more flag bits through
+     * bitwise AND of the complement (inverted) flag with the status register.
+     *
+     * Usage:
+     * ClearFlags( Status::Carry ); // Clear one flag
+     * ClearFlags( Status::Carry | Status::Zero ); // Clear multiple flags
+     */
+    _p &= ~flag;
+}
+bool CPU::IsFlagSet( const u8 flag ) const
+{
+    /* @brief Utility function to check if a given status is set in the status register
+     *
+     * Usage:
+     * if ( IsFlagSet( Status::Carry ) )
+     * {
+     *   // Do something
+     * }
+     * if ( IsFlagSet( Status::Carry | Status::Zero ) )
+     * {
+     *   // Do something
+     * }
+     */
+    return ( _p & flag ) == flag;
+}
+
+void CPU::SetZeroAndNegativeFlags( u8 value )
+{
+    /*
+     * @brief Sets zero flag if value == 0, or negative flag if value is negative (bit 7 is set)
+     */
+
+    // Clear zero and negative flags
+    ClearFlags( Status::Zero | Status::Negative );
+
+    // Set zero flag if value is zero
+    if ( value == 0 )
+    {
+        SetFlags( Status::Zero );
+    }
+
+    // Set negative flag if bit 7 is set
+    if ( ( value & 0b10000000 ) != 0 )
+    {
+        SetFlags( Status::Negative );
+    }
+}
+
+/*
+################################################################
+||                                                            ||
 ||                        Instructions                        ||
 ||                                                            ||
 ################################################################
@@ -456,4 +506,50 @@ void CPU::LDY( u16 address )
      * LDY Absolute X: BC(4+)
      */
     LoadRegister( address, _y );
+}
+
+void CPU::STA( u16 address )
+{
+    /*
+     * @brief Store Accumulator in Memory
+     * N Z C I D V
+     * - - - - - -
+     * Usage and cycles:
+     * STA Zero Page: 85(3)
+     * STA Zero Page X: 95(4)
+     * STA Absolute: 8D(4)
+     * STA Absolute X: 9D(5)
+     * STA Absolute Y: 99(5)
+     * STA Indirect X: 81(6)
+     * STA Indirect Y: 91(6)
+     */
+    StoreRegister( address, _a );
+}
+
+void CPU::STX( u16 address )
+{
+    /*
+     * @brief Store X Register in Memory
+     * N Z C I D V
+     * - - - - - -
+     * Usage and cycles:
+     * STX Zero Page: 86(3)
+     * STX Zero Page Y: 96(4)
+     * STX Absolute: 8E(4)
+     */
+    StoreRegister( address, _x );
+}
+
+void CPU::STY( u16 address )
+{
+    /*
+     * @brief Store Y Register in Memory
+     * N Z C I D V
+     * - - - - - -
+     * Usage and cycles:
+     * STY Zero Page: 84(3)
+     * STY Zero Page X: 94(4)
+     * STY Absolute: 8C(4)
+     */
+    StoreRegister( address, _y );
 }

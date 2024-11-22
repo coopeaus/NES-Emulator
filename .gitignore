@@ -93,9 +93,6 @@ cmake-build-*
 *.bak
 *.old
 
-# Ignore generated documentation
-/docs/
-
 # Ignore coverage files
 *.gcda
 *.gcno
@@ -119,3 +116,6 @@ fceux/
 
 # Local tooling
 lint.sh
+format.sh
+local.sh
+list.md
