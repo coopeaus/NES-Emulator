@@ -116,3 +116,6 @@ fceux/
 
 # Local tooling
 lint.sh
+format.sh
+local.sh
+list.md
