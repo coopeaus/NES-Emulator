@@ -58,15 +58,39 @@ endif()
 #   INTERFACE api_support_library      # Anything using emu, but not emu itself
 # )
 
+# --- SDL2 ---
+if(APPLE)
+  message(STATUS "Configuring SDL2 for macOS")
+  set(SDL2_FRAMEWORK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/sdl2/mac")
+  target_include_directories(emu PRIVATE "${SDL2_FRAMEWORK_DIR}/SDL2.framework/Headers")
+  target_link_libraries(emu PRIVATE
+          "-F${SDL2_FRAMEWORK_DIR}"
+          "-framework SDL2"
+  )
+
+  # Copy SDL2 framework to the build directory
+  add_custom_command(TARGET emu POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_directory
+          "${SDL2_FRAMEWORK_DIR}/SDL2.framework"
+          "$<TARGET_FILE_DIR:emu>/SDL2.framework"
+  )
+
+  # Set RPATH to look in the build directory
+  set_target_properties(emu PROPERTIES
+          BUILD_WITH_INSTALL_RPATH TRUE
+          INSTALL_RPATH "@loader_path"
+  )
+endif()
+
 # ----------------------- TEST EXECUTABLES -----------------------
 add_executable(sample_test
-  tests/sample.cpp
-  # Add related cpp files here
+        tests/sample.cpp
+        # Add related cpp files here
 )
 add_executable(cpu_test
-  tests/cpu_test.cpp
-  src/cpu.cpp
-  src/bus.cpp
+        tests/cpu_test.cpp
+        src/cpu.cpp
+        src/bus.cpp
 )
 # add other test executables here
 
@@ -87,10 +111,10 @@ enable_testing()
 include(GoogleTest)
 # ---
 gtest_discover_tests(sample_test
-    PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 gtest_discover_tests(cpu_test
-    PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 # Add other tests here
 
@@ -99,4 +123,3 @@ gtest_discover_tests(cpu_test
 # Useful for distribution or if you need emu to behave as a native MacOS app.
 # Has no effect on Windows or Linux builds.
 # set_target_properties(emu PROPERTIES MACOSX_BUNDLE TRUE)
-
