@@ -150,4 +150,10 @@ class CPU
     void STA( u16 address );
     void STX( u16 address );
     void STY( u16 address );
+
+    // Transfer Instructions
+    void TAX( u16 );
+    void TXA( u16 );
+    void TAY( u16 );
+    void TYA( u16 );
 };

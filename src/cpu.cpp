@@ -57,6 +57,19 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0x84] = InstructionData{ "STY_ZeroPage", &CPU::STY, &CPU::ZPG, 3 };
     _opcodeTable[0x94] = InstructionData{ "STY_ZeroPageX", &CPU::STY, &CPU::ZPGX, 4 };
     _opcodeTable[0x8C] = InstructionData{ "STY_Absolute", &CPU::STY, &CPU::ABS, 4 };
+
+    // TAX
+    _opcodeTable[0xAA] = InstructionData{ "TAX_Implied", &CPU::TAX, &CPU::IMP, 2 };
+
+    // TXA
+    _opcodeTable[0x8A] = InstructionData{ "TXA_Implied", &CPU::TXA, &CPU::IMP, 2 };
+
+    // TAY
+    _opcodeTable[0xA8] = InstructionData{ "TAY_Implied", &CPU::TAY, &CPU::IMP, 2 };
+
+    // TYA
+    _opcodeTable[0x98] = InstructionData{ "TYA_Implied", &CPU::TYA, &CPU::IMP, 2 };
+
 };
 
 // Getters
@@ -552,4 +565,56 @@ void CPU::STY( u16 address )
      * STY Absolute: 8C(4)
      */
     StoreRegister( address, _y );
+}
+
+void CPU::TAX( u16 )
+{
+    /*
+     * @brief Transfer Accumulator to X Register
+     * N Z C I D V
+     * + + - - - -
+     * Usage and cycles:
+     * TAX Implied: AA(2)
+     */
+    _x = _a;
+    SetZeroAndNegativeFlags( _x );
+}
+
+void CPU::TXA( u16 )
+{
+    /*
+     * @brief Transfer X Register to Accumulator
+     * N Z C I D V
+     * + + - - - -
+     * Usage and cycles:
+     * TXA Implied: 8A(2)
+     */
+    _a = _x;
+    SetZeroAndNegativeFlags( _a );
+}
+
+void CPU::TAY( u16 )
+{
+    /*
+     * @brief Transfer Accumulator to Y Register
+     * N Z C I D V
+     * + + - - - -
+     * Usage and cycles:
+     * TAY Implied: A8(2)
+     */
+    _y = _a;
+    SetZeroAndNegativeFlags( _y );
+}
+
+void CPU::TYA( u16 )
+{
+    /*
+     * @brief Transfer Y Register to Accumulator
+     * N Z C I D V
+     * + + - - - -
+     * Usage and cycles:
+     * TYA Implied: 98(2)
+     */
+    _a = _y;
+    SetZeroAndNegativeFlags( _a );
 }
