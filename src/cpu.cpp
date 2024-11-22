@@ -58,17 +58,12 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0x94] = InstructionData{ "STY_ZeroPageX", &CPU::STY, &CPU::ZPGX, 4 };
     _opcodeTable[0x8C] = InstructionData{ "STY_Absolute", &CPU::STY, &CPU::ABS, 4 };
 
-    // TAX
-    _opcodeTable[0xAA] = InstructionData{ "TAX_Implied", &CPU::TAX, &CPU::IMP, 2 };
+    // Transfer Instructions
+    _opcodeTable[0xAA] = InstructionData{ "TAX", &CPU::TAX, &CPU::IMP, 2 };
+    _opcodeTable[0x8A] = InstructionData{ "TXA", &CPU::TXA, &CPU::IMP, 2 };
+    _opcodeTable[0xA8] = InstructionData{ "TAY", &CPU::TAY, &CPU::IMP, 2 };
+    _opcodeTable[0x98] = InstructionData{ "TYA", &CPU::TYA, &CPU::IMP, 2 };
 
-    // TXA
-    _opcodeTable[0x8A] = InstructionData{ "TXA_Implied", &CPU::TXA, &CPU::IMP, 2 };
-
-    // TAY
-    _opcodeTable[0xA8] = InstructionData{ "TAY_Implied", &CPU::TAY, &CPU::IMP, 2 };
-
-    // TYA
-    _opcodeTable[0x98] = InstructionData{ "TYA_Implied", &CPU::TYA, &CPU::IMP, 2 };
 
 };
 
@@ -567,7 +562,7 @@ void CPU::STY( u16 address )
     StoreRegister( address, _y );
 }
 
-void CPU::TAX( u16 )
+void CPU::TAX( u16 address )
 {
     /*
      * @brief Transfer Accumulator to X Register
@@ -580,7 +575,7 @@ void CPU::TAX( u16 )
     SetZeroAndNegativeFlags( _x );
 }
 
-void CPU::TXA( u16 )
+void CPU::TXA( u16 address )
 {
     /*
      * @brief Transfer X Register to Accumulator
@@ -593,7 +588,7 @@ void CPU::TXA( u16 )
     SetZeroAndNegativeFlags( _a );
 }
 
-void CPU::TAY( u16 )
+void CPU::TAY( u16 address )
 {
     /*
      * @brief Transfer Accumulator to Y Register
@@ -606,7 +601,7 @@ void CPU::TAY( u16 )
     SetZeroAndNegativeFlags( _y );
 }
 
-void CPU::TYA( u16 )
+void CPU::TYA( u16 address )
 {
     /*
      * @brief Transfer Y Register to Accumulator
