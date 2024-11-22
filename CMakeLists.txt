@@ -10,14 +10,6 @@ set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
-if(MSVC)
-  # If in visual studio
-  add_compile_options(/W4 /WX) # /W4 for high warning level, /WX to treat warnings as errors
-else()
-  # GCC/Clang warning flags
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-endif()
-
 # Include directories
 include_directories( include )
 include_directories( tests/include ) # for tests only
@@ -29,9 +21,9 @@ include(FetchContent)
 
 # Fetch the Google Test Library
 FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        v1.15.2 # Latest version as of Nov 6, 2024
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG        v1.15.2 # Latest version as of Nov 6, 2024
 )
 
 # Ensures GoogleTest uses the shared C runtime (DLL) on Windows, instead of the static one
@@ -40,10 +32,17 @@ FetchContent_MakeAvailable(googletest)
 
 # ----------------------- MAIN EXECUTABLES -----------------------
 add_executable(emu
-  src/main.cpp
-  src/cpu.cpp
-  src/bus.cpp
+        src/main.cpp
+        src/cpu.cpp
+        src/bus.cpp
 )
+
+# Apply compiler options to emu target
+if(MSVC)
+  target_compile_options(emu PRIVATE /W4 /WX)
+else()
+  target_compile_options(emu PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
 
 # ----------------------- LIBRARIES -----------------------
 
