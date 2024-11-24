@@ -10,14 +10,6 @@ set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
-if(MSVC)
-  # If in visual studio
-  add_compile_options(/W4 /WX) # /W4 for high warning level, /WX to treat warnings as errors
-else()
-  # GCC/Clang warning flags
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-endif()
-
 # Include directories
 include_directories( include )
 include_directories( tests/include ) # for tests only
@@ -29,9 +21,9 @@ include(FetchContent)
 
 # Fetch the Google Test Library
 FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        v1.15.2 # Latest version as of Nov 6, 2024
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG        v1.15.2 # Latest version as of Nov 6, 2024
 )
 
 # Ensures GoogleTest uses the shared C runtime (DLL) on Windows, instead of the static one
@@ -40,10 +32,17 @@ FetchContent_MakeAvailable(googletest)
 
 # ----------------------- MAIN EXECUTABLES -----------------------
 add_executable(emu
-  src/main.cpp
-  src/cpu.cpp
-  src/bus.cpp
+        src/main.cpp
+        src/cpu.cpp
+        src/bus.cpp
 )
+
+# Apply compiler options to emu target
+if(MSVC)
+  target_compile_options(emu PRIVATE /W4 /WX)
+else()
+  target_compile_options(emu PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
 
 # ----------------------- LIBRARIES -----------------------
 
@@ -59,15 +58,87 @@ add_executable(emu
 #   INTERFACE api_support_library      # Anything using emu, but not emu itself
 # )
 
+# --- SDL2 ---
+if(APPLE)
+  message(STATUS "Configuring SDL2 for macOS")
+  set(SDL2_FRAMEWORK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/sdl2/mac")
+  target_include_directories(emu PRIVATE "${SDL2_FRAMEWORK_DIR}/SDL2.framework/Headers")
+  target_link_libraries(emu PRIVATE
+          "-F${SDL2_FRAMEWORK_DIR}"
+          "-framework SDL2"
+  )
+
+  # Copy SDL2 framework to the build directory
+  add_custom_command(TARGET emu POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_directory
+          "${SDL2_FRAMEWORK_DIR}/SDL2.framework"
+          "$<TARGET_FILE_DIR:emu>/SDL2.framework"
+  )
+
+  # Set RPATH to look in the build directory
+  set_target_properties(emu PROPERTIES
+          BUILD_WITH_INSTALL_RPATH TRUE
+          INSTALL_RPATH "@loader_path"
+  )
+elseif(WIN32)
+  message(STATUS "Configuring SDL2 for Windows")
+
+  # Fetch SDL2
+  FetchContent_Declare(
+          SDL2
+          GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+          GIT_TAG        release-2.30.9  # Latest version as of Nov 22, 2024
+  )
+
+  # SDL2 Build Options
+  set(SDL_STATIC OFF CACHE BOOL "" FORCE)       # Build SDL2 as a shared library
+  set(SDL_SHARED ON CACHE BOOL "" FORCE)
+  set(SDL_TEST OFF CACHE BOOL "" FORCE)         # Do not build SDL2 tests
+
+  # Ensure SDL2 builds with the same runtime library as the project
+  if(MSVC)
+    set(SDL_FORCE_STATIC_VCRT OFF CACHE BOOL "" FORCE)
+  endif()
+
+  # Prevent SDL2 from treating warnings as errors
+  set(SDL_WERROR OFF CACHE BOOL "" FORCE)
+
+  FetchContent_MakeAvailable(SDL2)
+
+  # Link SDL2 to emu target
+  target_link_libraries(emu PRIVATE SDL2::SDL2)
+
+  # Get the SDL2 include directories and add them to your target
+  get_target_property(SDL2_INCLUDE_DIRS SDL2::SDL2 INTERFACE_INCLUDE_DIRECTORIES)
+  message("SDL2 include directories: ${SDL2_INCLUDE_DIRS}")
+  target_include_directories(emu PRIVATE ${SDL2_INCLUDE_DIRS}/..)
+
+  # Copy SDL2.dll
+  add_custom_command(TARGET emu POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          $<TARGET_FILE:SDL2::SDL2>
+          $<TARGET_FILE_DIR:emu>/$<TARGET_FILE_NAME:SDL2::SDL2>
+  )
+elseif(UNIX AND NOT APPLE)
+  message(STATUS "Configuring SDL2 for Linux")
+
+  # Assume SDL2 is installed on the system. We cannot baby Linux users.
+  find_package(SDL2 REQUIRED)
+  target_include_directories(emu PRIVATE ${SDL2_INCLUDE_DIRS})
+  target_link_libraries(emu PRIVATE ${SDL2_LIBRARIES})
+
+  message(STATUS "SDL2 found: ${SDL2_LIBRARIES}")
+endif()
+
 # ----------------------- TEST EXECUTABLES -----------------------
 add_executable(sample_test
-  tests/sample.cpp
-  # Add related cpp files here
+        tests/sample.cpp
+        # Add related cpp files here
 )
 add_executable(cpu_test
-  tests/cpu_test.cpp
-  src/cpu.cpp
-  src/bus.cpp
+        tests/cpu_test.cpp
+        src/cpu.cpp
+        src/bus.cpp
 )
 # add other test executables here
 
@@ -88,10 +159,10 @@ enable_testing()
 include(GoogleTest)
 # ---
 gtest_discover_tests(sample_test
-    PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 gtest_discover_tests(cpu_test
-    PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 # Add other tests here
 
