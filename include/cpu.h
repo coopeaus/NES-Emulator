@@ -56,10 +56,10 @@ class CPU
     void ClearFlag( u8 flag );
 
   //Clear for Flags
-    void CLC() const;
-    void CLI() const;
-    void CLD() const;
-    void CLV() const;
+    void CLC();
+    void CLI();
+    void CLD();
+    void CLV();
 
   //Setters for Flags
     void SEC();

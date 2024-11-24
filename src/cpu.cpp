@@ -31,14 +31,14 @@ void CPU::SetFlag( const u8 flag) { _p |= flag; }
 void CPU::ClearFlag( const u8 flag ) {_p &= ~flag; }
 
 //flag clear
-void CPU::CLC() const { CPU::ClearFlag(CPU::Status.Carry); }
-void CPU::CLI() const { CPU::ClearFlag(CPU::Status.Interrupt_Disable); }
-void CPU::CLD() const { CPU::ClearFlag(CPU::Status.Decimal); }
-void CPU::CLV() const { CPU::ClearFlag(CPU::Status.Overflow); }
+void CPU::CLC() { CPU::ClearFlag(Carry); }
+void CPU::CLI() { CPU::ClearFlag(Interrupt_Disable); }
+void CPU::CLD() { CPU::ClearFlag(Decimal); }
+void CPU::CLV() { CPU::ClearFlag(Overflow); }
 
 //flag setters
-void CPU::SEC() { CPU::SetFlag(CPU::Status.Carry);}
-void CPU::SED() { CPU::SetFlag(CPU::Status.Decimal); }
-void CPU::SEI() { CPU::SetFlag(CPU::Status.Carry); }
+void CPU::SEC() { CPU::SetFlag(Carry);}
+void CPU::SED() { CPU::SetFlag(Decimal); }
+void CPU::SEI() { CPU::SetFlag(Carry); }
 
 u8 CPU::IsFlagSet( const u8 flag ) const { return static_cast<u8>((_p & flag) != 0);}
