@@ -22,7 +22,7 @@ cd "$BUILD_DIR"
 
 # Run CMake configuration
 echo "Configuring with CMake..."
-cmake .. || {
+cmake DCMAKE_CXX_COMPILER=clang++ .. || {
 	echo "CMake configuration failed."
 	exit 1
 }
