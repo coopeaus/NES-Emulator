@@ -14,6 +14,8 @@ RUN apt-get update && \
     cmake \
     git \
     ca-certificates \
+    libsdl2-2.0-0 \
+    libsdl2-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory and copy the current directory contents
@@ -24,7 +26,7 @@ COPY . /usr/src/app
 RUN rm -rf build && \
     mkdir build && \
     cd build && \
-    cmake ..
+    cmake -DCMAKE_CXX_COMPILER=clang++ ..
 
 # Expose the working directory as a volume to persist output files
 VOLUME ["/usr/src/app"]

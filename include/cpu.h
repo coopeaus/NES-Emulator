@@ -1,24 +1,13 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
+#include <string>
 
 // Aliases for integer types
 using u8 = uint8_t;
 using u16 = uint16_t;
 using u64 = uint64_t;
-
-// Enum for Status Register
-
-enum Status : u8
-  {
-    Carry = 1 << 0, // 0b 00000001
-    Zero = 1 << 1,  // 0b 00000010
-    Interrupt_Disable = 1 << 2,
-    Decimal = 1 << 3,
-    Overflow = 1 << 4,
-    Negative = 1 << 5,
-    B_Flag = 1 << 6
-  };
 
 // Forward declaration for reads and writes
 class Bus;
@@ -27,10 +16,6 @@ class CPU
 {
   public:
     explicit CPU( Bus *bus ); // Must pass a pointer to a Bus class on initialization
-
-    // Read/write methods
-    [[nodiscard]] auto Read( u16 address ) const -> u8;
-    void               Write( u16 address, u8 data );
 
     // Getters for registers
     [[nodiscard]] u8  GetAccumulator() const;
@@ -50,24 +35,9 @@ class CPU
     void SetProgramCounter( u16 value );
     void SetCycles( u64 value );
 
-    //Flag methods
-
-    void SetFlag( u8 flag );
-    void ClearFlag( u8 flag );
-
-  //Clear for Flags
-    void CLC();
-    void CLI();
-    void CLD();
-    void CLV();
-
-  //Setters for Flags
-    void SEC();
-    void SED();
-    void SEI();
-    [[nodiscard]] u8   IsFlagSet( u8 flag ) const;
-
   private:
+    friend class CPUTestFixture; // Sometimes used for testing private methods
+
     Bus *_bus; // Pointer to the Bus class
 
     // Registers
@@ -76,6 +46,108 @@ class CPU
     u8  _x = 0x00;    // X register
     u8  _y = 0x00;    // Y register
     u8  _s = 0xFD;    // Stack pointer (SP)
-    u8  _p = 0x00;    // Status register (P)
-    u64 _cycles = 0;  // Number of cycles
+    u8  _p =
+        0x00 | Unused; // Status register (P), per the specs, the unused flag should always be set
+    u64 _cycles = 0;   // Number of cycles
+
+    // Instruction data
+    struct InstructionData
+    {
+        std::string name;                        // Instruction mnemonic (e.g. LDA, STA)
+        void ( CPU::*instructionMethod )( u16 ); // Pointer to the instruction helper method
+        u16 ( CPU::*addressingModeMethod )();    // Pointer to the address mode helper method
+        u8 cycles;                               // Number of cycles the instruction takes
+        // Some instructions take an extra cycle if a page boundary is crossed. However, in some
+        // cases the extra cycle is not taken if the operation is a read. This will be set
+        // selectively for a handful of opcodes, but otherwise will be set to true by default
+        bool pageCrossPenalty = true;
+    };
+
+    bool _currentPageCrossPenalty = true;
+
+    // Opcode table
+    std::array<InstructionData, 256> _opcodeTable;
+
+    /*
+    ################################################################
+    ||                                                            ||
+    ||                        CPU Methods                         ||
+    ||                                                            ||
+    ################################################################
+    */
+    void Reset();
+
+    // Fetch/decode/execute cycle
+    [[nodiscard]] u8 Fetch();
+    void             Tick();
+
+    // Read/write methods
+    [[nodiscard]] auto Read( u16 address ) const -> u8;
+    void               Write( u16 address, u8 data ) const;
+
+    /*
+    ################################################################
+    ||                                                            ||
+    ||                    Instruction Helpers                     ||
+    ||                                                            ||
+    ################################################################
+    */
+
+    // Enum for Status Register
+    enum Status : u8
+    {
+        Carry = 1 << 0,            // 0b00000001
+        Zero = 1 << 1,             // 0b00000010
+        InterruptDisable = 1 << 2, // 0b00000100
+        Decimal = 1 << 3,          // 0b00001000
+        Break = 1 << 4,            // 0b00010000
+        Unused = 1 << 5,           // 0b00100000
+        Overflow = 1 << 6,         // 0b01000000
+        Negative = 1 << 7,         // 0b10000000
+    };
+
+    // Flag methods
+    void               SetFlags( u8 flag );
+    void               ClearFlags( u8 flag );
+    [[nodiscard]] auto IsFlagSet( u8 flag ) const -> bool;
+    void               SetZeroAndNegativeFlags( u8 value );
+
+    // LDA, LDX, and LDY helper
+    void LoadRegister( u16 address, u8 &reg );
+    void StoreRegister( u16 address, u8 reg );
+
+    /*
+    ################################################################
+    ||                                                            ||
+    ||                      Addressing Modes                      ||
+    ||                                                            ||
+    ################################################################
+    */
+    static auto IMP() -> u16; // Implied
+
+    auto IMM() -> u16;  // Immediate
+    auto ZPG() -> u16;  // Zero Page
+    auto ZPGX() -> u16; // Zero Page X
+    auto ZPGY() -> u16; // Zero Page Y
+    auto ABS() -> u16;  // Absolute
+    auto ABSX() -> u16; // Absolute X
+    auto ABSY() -> u16; // Absolute Y
+    auto IND() -> u16;  // Indirect
+    auto INDX() -> u16; // Indirect X
+    auto INDY() -> u16; // Indirect Y
+    auto REL() -> u16;  // Relative
+
+    /*
+    ################################################################
+    ||                                                            ||
+    ||                        Instructions                        ||
+    ||                                                            ||
+    ################################################################
+      */
+    void LDA( u16 address );
+    void LDX( u16 address );
+    void LDY( u16 address );
+    void STA( u16 address );
+    void STX( u16 address );
+    void STY( u16 address );
 };

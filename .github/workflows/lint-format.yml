@@ -23,13 +23,25 @@ jobs:
             echo "files_modified=false" >> $GITHUB_ENV
           fi
 
-      - name: Create build directory # needed for linting
+      # Install SDL dependencies to help build understand SDL header includes
+      - name: Install SDL dependencies
+        if: env.files_modified == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            cmake \
+            clang \
+            libsdl2-2.0-0 \
+            libsdl2-dev
+
+      - name: Create build directory
         if: env.files_modified == 'true'
         run: |
           rm -rf build
           mkdir -p build
           cd build
-          cmake ..
+          cmake -DCMAKE_CXX_COMPILER=clang++ ..
 
       - name: Run linter
         if: env.files_modified == 'true'

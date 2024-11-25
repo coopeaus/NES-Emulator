@@ -29,5 +29,5 @@ else
 fi
 
 # Isolating a specific test
-# ./scripts/test.sh "CPUTest.IMM" # Immediate addressing test
-# ./scripts/test.sh "CPUTest.xEA" # Test for opcode 0xEA (JMP)
+# ./scripts/test.sh "CPUTestFixture.IMM" # Immediate addressing test
+# ./scripts/test.sh "CPUTestFixture.xEA" # Test for opcode 0xEA (JMP)
