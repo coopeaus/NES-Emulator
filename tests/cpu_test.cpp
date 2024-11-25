@@ -457,7 +457,7 @@ CPU_TEST( 18, CLC, Implied, "18.json" );
 /* CPU_TEST( 31, AND, IndirectY, "31.json" ); */
 /* CPU_TEST( 35, AND, ZeroPageX, "35.json" ); */
 /* CPU_TEST( 36, ROL, ZeroPageX, "36.json" ); */
-/* CPU_TEST( 38, SEC, Implied, "38.json" ); */
+CPU_TEST( 38, SEC, Implied, "38.json" );
 /* CPU_TEST( 39, AND, AbsoluteY, "39.json" ); */
 /* CPU_TEST( 3D, AND, AbsoluteX, "3d.json" ); */
 /* CPU_TEST( 3E, ROL, AbsoluteX, "3e.json" ); */
@@ -493,7 +493,7 @@ CPU_TEST( 58, CLI, Implied, "58.json" );
 /* CPU_TEST( 71, ADC, IndirectY, "71.json" ); */
 /* CPU_TEST( 75, ADC, ZeroPageX, "75.json" ); */
 /* CPU_TEST( 76, ROR, ZeroPageX, "76.json" ); */
-/* CPU_TEST( 78, SEI, Implied, "78.json" ); */
+CPU_TEST( 78, SEI, Implied, "78.json" );
 /* CPU_TEST( 79, ADC, AbsoluteY, "79.json" ); */
 /* CPU_TEST( 7D, ADC, AbsoluteX, "7d.json" ); */
 /* CPU_TEST( 7E, ROR, AbsoluteX, "7e.json" ); */
@@ -572,7 +572,7 @@ CPU_TEST( D8, CLD, Implied, "d8.json" );
 /* CPU_TEST( F1, SBC, IndirectY, "f1.json" ); */
 /* CPU_TEST( F5, SBC, ZeroPageX, "f5.json" ); */
 /* CPU_TEST( F6, INC, ZeroPageX, "f6.json" ); */
-/* CPU_TEST( F8, SED, Implied, "f8.json" ); */
+CPU_TEST( F8, SED, Implied, "f8.json" );
 /* CPU_TEST( F9, SBC, AbsoluteY, "f9.json" ); */
 /* CPU_TEST( FD, SBC, AbsoluteX, "fd.json" ); */
 /* CPU_TEST( FE, INC, AbsoluteX, "fe.json" ); */

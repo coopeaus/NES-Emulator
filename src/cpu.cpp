@@ -57,6 +57,16 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0x84] = InstructionData{ "STY_ZeroPage", &CPU::STY, &CPU::ZPG, 3 };
     _opcodeTable[0x94] = InstructionData{ "STY_ZeroPageX", &CPU::STY, &CPU::ZPGX, 4 };
     _opcodeTable[0x8C] = InstructionData{ "STY_Absolute", &CPU::STY, &CPU::ABS, 4 };
+
+    // CLC
+    _opcodeTable[0x18] = InstructionData{ "CLC_Implied", &CPU::CLC, &CPU::IMP, 2 };
+    _opcodeTable[0x58] = InstructionData{ "CLI_Implied", &CPU::CLI, &CPU::IMP, 2 };
+    _opcodeTable[0xD8] = InstructionData{ "CLD_Implied", &CPU::CLD, &CPU::IMP, 2 };
+    _opcodeTable[0xB8] = InstructionData{ "CLV_Implied", &CPU::CLV, &CPU::IMP, 2 };
+
+    _opcodeTable[0x38] = InstructionData{ "SEC_Implied", &CPU::SEC, &CPU::IMP, 2 };
+    _opcodeTable[0x78] = InstructionData{ "SEI_Implied", &CPU::SEI, &CPU::IMP, 2 };
+    _opcodeTable[0xF8] = InstructionData{ "SED_Implied", &CPU::SED, &CPU::IMP, 2 };
 };
 
 // Getters
@@ -160,7 +170,7 @@ void CPU::Reset()
 ################################################################
 */
 
-auto CPU::IMP() -> u16
+auto CPU::IMP() -> u16 // NOLINT
 {
     /*
      * @brief Implied addressing mode
@@ -508,7 +518,7 @@ void CPU::LDY( u16 address )
     LoadRegister( address, _y );
 }
 
-void CPU::STA( u16 address )
+void CPU::STA( const u16 address ) //NOLINT
 {
     /*
      * @brief Store Accumulator in Memory
@@ -526,7 +536,7 @@ void CPU::STA( u16 address )
     StoreRegister( address, _a );
 }
 
-void CPU::STX( u16 address )
+void CPU::STX( const u16 address ) //NOLINT
 {
     /*
      * @brief Store X Register in Memory
@@ -540,7 +550,7 @@ void CPU::STX( u16 address )
     StoreRegister( address, _x );
 }
 
-void CPU::STY( u16 address )
+void CPU::STY( const u16 address ) //NOLINT
 {
     /*
      * @brief Store Y Register in Memory
@@ -552,4 +562,43 @@ void CPU::STY( u16 address )
      * STY Absolute: 8C(4)
      */
     StoreRegister( address, _y );
+}
+
+// flag clear
+void CPU::CLC( const u16 address )
+{
+    (void) address;
+    CPU::ClearFlags( CPU::Carry );
+}
+void CPU::CLI( const u16 address )
+{
+    (void) address;
+    CPU::ClearFlags( CPU::InterruptDisable );
+}
+void CPU::CLD( const u16 address )
+{
+    (void) address;
+    CPU::ClearFlags( CPU::Decimal );
+}
+void CPU::CLV( const u16 address )
+{
+    (void) address;
+    CPU::ClearFlags( CPU::Overflow );
+}
+
+// flag setters
+void CPU::SEC( const u16 address )
+{
+    (void) address;
+    CPU::SetFlags( CPU::Carry );
+}
+void CPU::SED( const u16 address )
+{
+    (void) address;
+    CPU::SetFlags( CPU::Decimal );
+}
+void CPU::SEI( const u16 address )
+{
+    (void) address;
+    CPU::SetFlags( CPU::InterruptDisable );
 }
