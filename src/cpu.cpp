@@ -536,7 +536,7 @@ void CPU::STA( const u16 address ) //NOLINT
     StoreRegister( address, _a );
 }
 
-void CPU::STX( const u16 address ) //NOLINT
+void CPU::STX( const u16 address ) // NOLINT
 {
     /*
      * @brief Store X Register in Memory
