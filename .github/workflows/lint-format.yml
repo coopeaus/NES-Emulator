@@ -59,6 +59,7 @@ jobs:
           tidy-review: true
           format-review: true
           database: "./build/compile_commands.json"
+          ignore: "lib"
 
       - name: Report failure
         if: steps.linter.outputs.checks-failed != '0' && env.files_modified == 'true'
