@@ -518,7 +518,7 @@ void CPU::LDY( u16 address )
     LoadRegister( address, _y );
 }
 
-void CPU::STA( const u16 address ) //NOLINT
+void CPU::STA( const u16 address ) // NOLINT
 {
     /*
      * @brief Store Accumulator in Memory
