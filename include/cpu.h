@@ -50,21 +50,10 @@ class CPU
     void SetProgramCounter( u16 value );
     void SetCycles( u64 value );
 
-    //Flag methods
+  //Flag methods
 
     void SetFlag( u8 flag );
     void ClearFlag( u8 flag );
-
-  //Clear for Flags
-    void CLC();
-    void CLI();
-    void CLD();
-    void CLV();
-
-  //Setters for Flags
-    void SEC();
-    void SED();
-    void SEI();
     [[nodiscard]] u8   IsFlagSet( u8 flag ) const;
 
   private:
