@@ -190,22 +190,32 @@ class CPU
     ||                                                            ||
     ################################################################
     */
-  void LDA( u16 address );
-  void LDX( u16 address );
-  void LDY( u16 address );
-  void STA( u16 address );
-  void STX( u16 address );
-  void STY( u16 address );
+    auto IMP() -> u16; // Implied //NOLINT
 
-  //Clear for Flags
-  void CLC( u16 address );
-  void CLI( u16 address );
-  void CLD( u16 address );
-  void CLV( u16 address );
+    auto IMM() -> u16;  // Immediate
+    auto ZPG() -> u16;  // Zero Page
+    auto ZPGX() -> u16; // Zero Page X
+    auto ZPGY() -> u16; // Zero Page Y
+    auto ABS() -> u16;  // Absolute
+    auto ABSX() -> u16; // Absolute X
+    auto ABSY() -> u16; // Absolute Y
+    auto IND() -> u16;  // Indirect
+    auto INDX() -> u16; // Indirect X
+    auto INDY() -> u16; // Indirect Y
+    auto REL() -> u16;  // Relative
 
-  //Setters for Flags
-  void SEC( u16 address );
-  void SED( u16 address );
-  void SEI( u16 address );
+    /*
+    ################################################################
+    ||                                                            ||
+    ||                        Instructions                        ||
+    ||                                                            ||
+    ################################################################
+      */
+    void LDA( u16 address );
+    void LDX( u16 address );
+    void LDY( u16 address );
+    void STA( u16 address );
+    void STX( u16 address );
+    void STY( u16 address );
 
 };
