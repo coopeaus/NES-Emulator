@@ -107,7 +107,6 @@ CTestCostData.txt
 # Ignore binary folders or output directories
 bin/
 obj/
-lib/
 fceux/
 
 # Ignore any other common or custom build directories
