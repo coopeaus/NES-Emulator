@@ -1,7 +1,7 @@
 // cpu.cpp
 
-#include "cpu.h"
 #include "bus.h"
+#include "cpu.h"
 #include <cstdint>
 #include <iostream>
 
@@ -57,7 +57,45 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0x84] = InstructionData{ "STY_ZeroPage", &CPU::STY, &CPU::ZPG, 3 };
     _opcodeTable[0x94] = InstructionData{ "STY_ZeroPageX", &CPU::STY, &CPU::ZPGX, 4 };
     _opcodeTable[0x8C] = InstructionData{ "STY_Absolute", &CPU::STY, &CPU::ABS, 4 };
-};
+
+    // ADC
+    _opcodeTable[0x69] = InstructionData{ "ADC_Immediate", &CPU::ADC, &CPU::IMM, 2 };
+    _opcodeTable[0x65] = InstructionData{ "ADC_ZeroPage", &CPU::ADC, &CPU::ZPG, 3 };
+    _opcodeTable[0x75] = InstructionData{ "ADC_ZeroPageX", &CPU::ADC, &CPU::ZPGX, 4 };
+    _opcodeTable[0x6D] = InstructionData{ "ADC_Absolute", &CPU::ADC, &CPU::ABS, 4 };
+    _opcodeTable[0x7D] = InstructionData{ "ADC_AbsoluteX", &CPU::ADC, &CPU::ABSX, 4 };
+    _opcodeTable[0x79] = InstructionData{ "ADC_AbsoluteY", &CPU::ADC, &CPU::ABSY, 4 };
+    _opcodeTable[0x61] = InstructionData{ "ADC_IndirectX", &CPU::ADC, &CPU::INDX, 6 };
+    _opcodeTable[0x71] = InstructionData{ "ADC_IndirectY", &CPU::ADC, &CPU::INDY, 5 };
+
+    // SBC
+    _opcodeTable[0xE9] = InstructionData{ "SBC_Immediate", &CPU::SBC, &CPU::IMM, 2 };
+    _opcodeTable[0xE5] = InstructionData{ "SBC_ZeroPage", &CPU::SBC, &CPU::ZPG, 3 };
+    _opcodeTable[0xF5] = InstructionData{ "SBC_ZeroPageX", &CPU::SBC, &CPU::ZPGX, 4 };
+    _opcodeTable[0xED] = InstructionData{ "SBC_Absolute", &CPU::SBC, &CPU::ABS, 4 };
+    _opcodeTable[0xFD] = InstructionData{ "SBC_AbsoluteX", &CPU::SBC, &CPU::ABSX, 4 };
+    _opcodeTable[0xF9] = InstructionData{ "SBC_AbsoluteY", &CPU::SBC, &CPU::ABSY, 4 };
+    _opcodeTable[0xE1] = InstructionData{ "SBC_IndirectX", &CPU::SBC, &CPU::INDX, 6 };
+    _opcodeTable[0xF1] = InstructionData{ "SBC_IndirectY", &CPU::SBC, &CPU::INDY, 5 };
+
+    // INC
+    _opcodeTable[0xE6] = InstructionData{ "INC_ZeroPage", &CPU::INC, &CPU::ZPG, 5 };
+    _opcodeTable[0xF6] = InstructionData{ "INC_ZeroPageX", &CPU::INC, &CPU::ZPGX, 6 };
+    _opcodeTable[0xEE] = InstructionData{ "INC_Absolute", &CPU::INC, &CPU::ABS, 6 };
+    _opcodeTable[0xFE] = InstructionData{ "INC_AbsoluteX", &CPU::INC, &CPU::ABSX, 7, false };
+
+    // DEC
+    _opcodeTable[0xC6] = InstructionData{ "DEC_ZeroPage", &CPU::DEC, &CPU::ZPG, 5 };
+    _opcodeTable[0xD6] = InstructionData{ "DEC_ZeroPageX", &CPU::DEC, &CPU::ZPGX, 6 };
+    _opcodeTable[0xCE] = InstructionData{ "DEC_Absolute", &CPU::DEC, &CPU::ABS, 6 };
+    _opcodeTable[0xDE] = InstructionData{ "DEC_AbsoluteX", &CPU::DEC, &CPU::ABSX, 7, false };
+
+    // INX, INY, DEX, DEY
+    _opcodeTable[0xE8] = InstructionData{ "INX", &CPU::INX, &CPU::IMP, 2 };
+    _opcodeTable[0xC8] = InstructionData{ "INY", &CPU::INY, &CPU::IMP, 2 };
+    _opcodeTable[0xCA] = InstructionData{ "DEX", &CPU::DEX, &CPU::IMP, 2 };
+    _opcodeTable[0x88] = InstructionData{ "DEY", &CPU::DEY, &CPU::IMP, 2 };
+}
 
 // Getters
 [[nodiscard]] u8  CPU::GetAccumulator() const { return _a; }
@@ -394,8 +432,8 @@ void CPU::SetFlags( const u8 flag )
 void CPU::ClearFlags( const u8 flag )
 {
     /* Clear Flags
-     * @brief clear one or more flag bits through bitwise AND of the complement (inverted) flag with
-     * the status register
+     * @brief clear one or more flag bits through bitwise AND of the complement (inverted) flag
+     * with the status register
      *
      * Used by the CLC, CLD, and CLI instructions to clear one or more flag bits through
      * bitwise AND of the complement (inverted) flag with the status register.
@@ -552,4 +590,194 @@ void CPU::STY( u16 address )
      * STY Absolute: 8C(4)
      */
     StoreRegister( address, _y );
+}
+
+void CPU::ADC( u16 address )
+{
+    /*
+     * @brief Add Memory to Accumulator with Carry
+     * N Z C I D V
+     * + + + - - +
+     * Usage and cycles:
+     * ADC Immediate: 69(2)
+     * ADC Zero Page: 65(3)
+     * ADC Zero Page X: 75(4)
+     * ADC Absolute: 6D(4)
+     * ADC Absolute X: 7D(4+)
+     * ADC Absolute Y: 79(4+)
+     * ADC Indirect X: 61(6)
+     * ADC Indirect Y: 71(5+)
+     */
+    u8 const value = Read( address );
+
+    // Store the sum in a 16-bit variable to check for overflow
+    u8        carry = IsFlagSet( Status::Carry ) ? 1 : 0;
+    u16 const sum = _a + value + carry;
+
+    // Set the carry flag if sum > 255
+    // this means that there will be an overflow
+    ( sum > 0xFF ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
+
+    // If the lower part of sum is zero, set the zero flag
+    ( ( sum & 0xFF ) == 0 ) ? SetFlags( Status::Zero ) : ClearFlags( Status::Zero );
+
+    // Signed overflow is set if the sign bit is different in the accumulator and the result
+    // e.g.
+    // 1000 0001 + // << Accumulator: -127
+    // 1000 0001   // << Value: -127
+    // ---------
+    // 0000 0010   // << Sum: 2. Sign bit is different, result is positive but should be
+    // negative
+    u8 accumulator_sign_bit = _a & 0b10000000;
+    u8 value_sign_bit = value & 0b10000000;
+    u8 sum_sign_bit = sum & 0b10000000;
+    ( accumulator_sign_bit == value_sign_bit && accumulator_sign_bit != sum_sign_bit )
+        ? SetFlags( Status::Overflow )
+        : ClearFlags( Status::Overflow );
+
+    // If bit 7 is set, set the negative flag
+    ( sum & 0b10000000 ) != 0 ? SetFlags( Status::Negative ) : ClearFlags( Status::Negative );
+
+    // Store the lower byte of the sum in the accumulator
+    _a = sum & 0xFF;
+}
+
+void CPU::SBC( u16 address )
+{
+    /* @brief Subtract Memory from Accumulator with Borrow
+     * N Z C I D V
+     * + + + - - +
+     * Usage and cycles:
+     * SBC Immediate: E9(2)
+     * SBC Zero Page: E5(3)
+     * SBC Zero Page X: F5(4)
+     * SBC Absolute: ED(4)
+     * SBC Absolute X: FD(4+)
+     * SBC Absolute Y: F9(4+)
+     * SBC Indirect X: E1(6)
+     * SBC Indirect Y: F1(5+)
+     */
+
+    u8 const value = Read( address );
+
+    // Store diff in a 16-bit variable to check for overflow
+    u8        carry = IsFlagSet( Status::Carry ) ? 0 : 1;
+    u16 const diff = _a - value - carry;
+
+    // Carry flag exists in the high byte?
+    ( diff < 0x100 ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
+
+    // If the lower part of diff is zero, set the zero flag
+    ( ( diff & 0xFF ) == 0 ) ? SetFlags( Status::Zero ) : ClearFlags( Status::Zero );
+
+    // Signed overflow is set if the sign bit is different in the accumulator and the result
+    // e.g.
+    // 0000 0001 - // << Accumulator: 1
+    // 0000 0010   // << Value: 2
+    // ---------
+    // 1111 1111   // << Diff: 127. Sign bit is different
+    u8 accumulator_sign_bit = _a & 0b10000000;
+    u8 value_sign_bit = value & 0b10000000;
+    u8 diff_sign_bit = diff & 0b10000000;
+    ( accumulator_sign_bit != value_sign_bit && accumulator_sign_bit != diff_sign_bit )
+        ? SetFlags( Status::Overflow )
+        : ClearFlags( Status::Overflow );
+
+    // If bit 7 is set, set the negative flag
+    ( diff & 0b10000000 ) != 0 ? SetFlags( Status::Negative ) : ClearFlags( Status::Negative );
+
+    // Store the lower byte of the diff in the accumulator
+    _a = diff & 0xFF;
+}
+
+void CPU::INC( u16 address )
+{
+    /*
+     * @brief Increment Memory by One
+     * N Z C I D V
+     * + + - - - -
+     * Usage and cycles:
+     * INC Zero Page: E6(5)
+     * INC Zero Page X: F6(6)
+     * INC Absolute: EE(6)
+     * INC Absolute X: FE(7)
+     */
+    u8 const value = Read( address );
+    u8 const result = value + 1;
+    SetZeroAndNegativeFlags( result );
+    Write( address, result );
+}
+
+void CPU::INX( u16 address )
+{
+    /*
+     * @brief Increment X Register by One
+     * N Z C I D V
+     * + + - - - -
+     * Usage and cycles:
+     * INX: E8(2)
+     */
+    (void) address;
+    _x++;
+    SetZeroAndNegativeFlags( _x );
+}
+
+void CPU::INY( u16 address )
+{
+    /*
+     * @brief Increment Y Register by One
+     * N Z C I D V
+     * + + - - - -
+     * Usage and cycles:
+     * INY: C8(2)
+     */
+    (void) address;
+    _y++;
+    SetZeroAndNegativeFlags( _y );
+}
+
+void CPU::DEC( u16 address )
+{
+    /*
+     * @brief Decrement Memory by One
+     * N Z C I D V
+     * + + - - - -
+     * Usage and cycles:
+     * DEC Zero Page: C6(5)
+     * DEC Zero Page X: D6(6)
+     * DEC Absolute: CE(6)
+     * DEC Absolute X: DE(7)
+     */
+    u8 const value = Read( address );
+    u8 const result = value - 1;
+    SetZeroAndNegativeFlags( result );
+    Write( address, result );
+}
+
+void CPU::DEX( u16 address )
+{
+    /*
+     * @brief Decrement X Register by One
+     * N Z C I D V
+     * + + - - - -
+     * Usage and cycles:
+     * DEX: CA(2)
+     */
+    (void) address;
+    _x--;
+    SetZeroAndNegativeFlags( _x );
+}
+
+void CPU::DEY( u16 address )
+{
+    /*
+     * @brief Decrement Y Register by One
+     * N Z C I D V
+     * + + - - - -
+     * Usage and cycles:
+     * DEY: 88(2)
+     */
+    (void) address;
+    _y--;
+    SetZeroAndNegativeFlags( _y );
 }

@@ -123,7 +123,7 @@ class CPU
     ||                                                            ||
     ################################################################
     */
-    static auto IMP() -> u16; // Implied
+    auto IMP() -> u16; // Implied
 
     auto IMM() -> u16;  // Immediate
     auto ZPG() -> u16;  // Zero Page
@@ -150,4 +150,14 @@ class CPU
     void STA( u16 address );
     void STX( u16 address );
     void STY( u16 address );
+
+    // Arithmetic
+    void ADC( u16 address );
+    void SBC( u16 address );
+    void INC( u16 address );
+    void DEC( u16 address );
+    void INX( u16 address );
+    void INY( u16 address );
+    void DEX( u16 address );
+    void DEY( u16 address );
 };
