@@ -173,43 +173,22 @@ class CPU
         Negative = 1 << 7,         // 0b10000000
     };
 
-  // Flag methods
-  void               SetFlags( u8 flag );
-  void               ClearFlags( u8 flag );
-  [[nodiscard]] auto IsFlagSet( u8 flag ) const -> bool;
-  void               SetZeroAndNegativeFlags( u8 value );
+    // Flag methods
+    void               SetFlags( u8 flag );
+    void               ClearFlags( u8 flag );
+    [[nodiscard]] auto IsFlagSet( u8 flag ) const -> bool;
+    void               SetZeroAndNegativeFlags( u8 value );
 
-  // LDA, LDX, and LDY helper
-  void LoadRegister( u16 address, u8 &reg );
-  void StoreRegister( u16 address, u8 reg ) const;
+    // LDA, LDX, and LDY helper
+    void LoadRegister( u16 address, u8 &reg );
+    void StoreRegister( u16 address, u8 reg ) const;
 
-  /*
-  ################################################################
-  ||                                                            ||
-  ||                      Addressing Modes                      ||
-  ||                                                            ||
-  ################################################################
-  */
-  auto IMP() -> u16; // Implied //NOLINT
-
-  auto IMM() -> u16;  // Immediate
-  auto ZPG() -> u16;  // Zero Page
-  auto ZPGX() -> u16; // Zero Page X
-  auto ZPGY() -> u16; // Zero Page Y
-  auto ABS() -> u16;  // Absolute
-  auto ABSX() -> u16; // Absolute X
-  auto ABSY() -> u16; // Absolute Y
-  auto IND() -> u16;  // Indirect
-  auto INDX() -> u16; // Indirect X
-  auto INDY() -> u16; // Indirect Y
-  auto REL() -> u16;  // Relative
-
-  /*
-  ################################################################
-  ||                                                            ||
-  ||                        Instructions                        ||
-  ||                                                            ||
-  ################################################################
+    /*
+    ################################################################
+    ||                                                            ||
+    ||                      Addressing Modes                      ||
+    ||                                                            ||
+    ################################################################
     */
   void LDA( u16 address );
   void LDX( u16 address );
