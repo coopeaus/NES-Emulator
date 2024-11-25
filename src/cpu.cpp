@@ -550,7 +550,7 @@ void CPU::STX( const u16 address ) //NOLINT
     StoreRegister( address, _x );
 }
 
-void CPU::STY( const u16 address ) //NOLINT
+void CPU::STY( const u16 address ) // NOLINT
 {
     /*
      * @brief Store Y Register in Memory
