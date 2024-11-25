@@ -198,15 +198,6 @@ void CPU::Reset()
 ################################################################
 */
 
-auto CPU::IMP() -> u16
-{
-    /*
-     * @brief Implied addressing mode
-     * This addressing mode does not require an operand
-     */
-    return 0;
-}
-
 auto CPU::IMM() -> u16
 {
     /*
@@ -611,7 +602,7 @@ void CPU::ADC( u16 address )
     u8 const value = Read( address );
 
     // Store the sum in a 16-bit variable to check for overflow
-    u8        carry = IsFlagSet( Status::Carry ) ? 1 : 0;
+    u8 const  carry = IsFlagSet( Status::Carry ) ? 1 : 0;
     u16 const sum = _a + value + carry;
 
     // Set the carry flag if sum > 255
@@ -628,9 +619,9 @@ void CPU::ADC( u16 address )
     // ---------
     // 0000 0010   // << Sum: 2. Sign bit is different, result is positive but should be
     // negative
-    u8 accumulator_sign_bit = _a & 0b10000000;
-    u8 value_sign_bit = value & 0b10000000;
-    u8 sum_sign_bit = sum & 0b10000000;
+    u8 const accumulator_sign_bit = _a & 0b10000000;
+    u8 const value_sign_bit = value & 0b10000000;
+    u8 const sum_sign_bit = sum & 0b10000000;
     ( accumulator_sign_bit == value_sign_bit && accumulator_sign_bit != sum_sign_bit )
         ? SetFlags( Status::Overflow )
         : ClearFlags( Status::Overflow );
@@ -661,7 +652,7 @@ void CPU::SBC( u16 address )
     u8 const value = Read( address );
 
     // Store diff in a 16-bit variable to check for overflow
-    u8        carry = IsFlagSet( Status::Carry ) ? 0 : 1;
+    u8 const  carry = IsFlagSet( Status::Carry ) ? 0 : 1;
     u16 const diff = _a - value - carry;
 
     // Carry flag exists in the high byte?
@@ -676,9 +667,9 @@ void CPU::SBC( u16 address )
     // 0000 0010   // << Value: 2
     // ---------
     // 1111 1111   // << Diff: 127. Sign bit is different
-    u8 accumulator_sign_bit = _a & 0b10000000;
-    u8 value_sign_bit = value & 0b10000000;
-    u8 diff_sign_bit = diff & 0b10000000;
+    u8 const accumulator_sign_bit = _a & 0b10000000;
+    u8 const value_sign_bit = value & 0b10000000;
+    u8 const diff_sign_bit = diff & 0b10000000;
     ( accumulator_sign_bit != value_sign_bit && accumulator_sign_bit != diff_sign_bit )
         ? SetFlags( Status::Overflow )
         : ClearFlags( Status::Overflow );
