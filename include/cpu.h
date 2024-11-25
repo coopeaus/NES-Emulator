@@ -114,7 +114,7 @@ class CPU
 
     // LDA, LDX, and LDY helper
     void LoadRegister( u16 address, u8 &reg );
-    void StoreRegister( u16 address, u8 reg );
+    void StoreRegister( u16 address, u8 reg ) const;
 
     /*
     ################################################################
@@ -123,7 +123,7 @@ class CPU
     ||                                                            ||
     ################################################################
     */
-    static auto IMP() -> u16; // Implied
+    auto IMP() -> u16; // Implied //NOLINT
 
     auto IMM() -> u16;  // Immediate
     auto ZPG() -> u16;  // Zero Page
@@ -150,4 +150,15 @@ class CPU
     void STA( u16 address );
     void STX( u16 address );
     void STY( u16 address );
+
+    // Clear for Flags
+    void CLC( u16 address );
+    void CLI( u16 address );
+    void CLD( u16 address );
+    void CLV( u16 address );
+
+    // Setters for Flags
+    void SEC( u16 address );
+    void SED( u16 address );
+    void SEI( u16 address );
 };
