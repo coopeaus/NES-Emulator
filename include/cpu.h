@@ -161,17 +161,17 @@ class CPU
     void SEC( u16 address );
     void SED( u16 address );
     void SEI( u16 address );
-  enum Status : u8
-  {
-    Carry = 1 << 0,            // 0b00000001
-    Zero = 1 << 1,             // 0b00000010
-    InterruptDisable = 1 << 2, // 0b00000100
-    Decimal = 1 << 3,          // 0b00001000
-    Break = 1 << 4,            // 0b00010000
-    Unused = 1 << 5,           // 0b00100000
-    Overflow = 1 << 6,         // 0b01000000
-    Negative = 1 << 7,         // 0b10000000
-};
+    enum Status : u8
+    {
+        Carry = 1 << 0,            // 0b00000001
+        Zero = 1 << 1,             // 0b00000010
+        InterruptDisable = 1 << 2, // 0b00000100
+        Decimal = 1 << 3,          // 0b00001000
+        Break = 1 << 4,            // 0b00010000
+        Unused = 1 << 5,           // 0b00100000
+        Overflow = 1 << 6,         // 0b01000000
+        Negative = 1 << 7,         // 0b10000000
+    };
 
   // Flag methods
   void               SetFlags( u8 flag );
