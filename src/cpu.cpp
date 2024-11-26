@@ -95,7 +95,17 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0xC8] = InstructionData{ "INY", &CPU::INY, &CPU::IMP, 2 };
     _opcodeTable[0xCA] = InstructionData{ "DEX", &CPU::DEX, &CPU::IMP, 2 };
     _opcodeTable[0x88] = InstructionData{ "DEY", &CPU::DEY, &CPU::IMP, 2 };
-}
+
+    // CLC
+    _opcodeTable[0x18] = InstructionData{ "CLC_Implied", &CPU::CLC, &CPU::IMP, 2 };
+    _opcodeTable[0x58] = InstructionData{ "CLI_Implied", &CPU::CLI, &CPU::IMP, 2 };
+    _opcodeTable[0xD8] = InstructionData{ "CLD_Implied", &CPU::CLD, &CPU::IMP, 2 };
+    _opcodeTable[0xB8] = InstructionData{ "CLV_Implied", &CPU::CLV, &CPU::IMP, 2 };
+
+    _opcodeTable[0x38] = InstructionData{ "SEC_Implied", &CPU::SEC, &CPU::IMP, 2 };
+    _opcodeTable[0x78] = InstructionData{ "SEI_Implied", &CPU::SEI, &CPU::IMP, 2 };
+    _opcodeTable[0xF8] = InstructionData{ "SED_Implied", &CPU::SED, &CPU::IMP, 2 };
+};
 
 // Getters
 [[nodiscard]] u8  CPU::GetAccumulator() const { return _a; }
@@ -397,7 +407,7 @@ void CPU::LoadRegister( u16 address, u8 &reg )
     SetZeroAndNegativeFlags( value );
 };
 
-void CPU::StoreRegister( u16 address, u8 reg )
+void CPU::StoreRegister( u16 address, u8 reg ) const
 {
     /*
      * @brief It stores a register value in memory
@@ -537,7 +547,7 @@ void CPU::LDY( u16 address )
     LoadRegister( address, _y );
 }
 
-void CPU::STA( u16 address )
+void CPU::STA( const u16 address ) // NOLINT
 {
     /*
      * @brief Store Accumulator in Memory
@@ -555,7 +565,7 @@ void CPU::STA( u16 address )
     StoreRegister( address, _a );
 }
 
-void CPU::STX( u16 address )
+void CPU::STX( const u16 address ) // NOLINT
 {
     /*
      * @brief Store X Register in Memory
@@ -569,7 +579,7 @@ void CPU::STX( u16 address )
     StoreRegister( address, _x );
 }
 
-void CPU::STY( u16 address )
+void CPU::STY( const u16 address ) // NOLINT
 {
     /*
      * @brief Store Y Register in Memory
@@ -771,4 +781,84 @@ void CPU::DEY( u16 address )
     (void) address;
     _y--;
     SetZeroAndNegativeFlags( _y );
+}
+
+void CPU::CLC( const u16 address )
+{
+    /* @brief Clear Carry Flag
+     * N Z C I D V
+     * - - 0 - - -
+     *   Usage and cycles:
+     *   CLC: 18(2)
+     */
+    (void) address;
+    CPU::ClearFlags( CPU::Carry );
+}
+
+void CPU::CLI( const u16 address )
+{
+    /* @brief Clear Interrupt Disable
+     * N Z C I D V
+     * - - - 0 - -
+     *   Usage and cycles:
+     *   CLI: 58(2)
+     */
+    (void) address;
+    CPU::ClearFlags( CPU::InterruptDisable );
+}
+void CPU::CLD( const u16 address )
+{
+    /* @brief Clear Decimal Mode
+     * N Z C I D V
+     * - - - - 0 -
+     *   Usage and cycles:
+     *   CLD: D8(2)
+     */
+    (void) address;
+    CPU::ClearFlags( CPU::Decimal );
+}
+void CPU::CLV( const u16 address )
+{
+    /* @brief Clear Overflow Flag
+     * N Z C I D V
+     * - - - - - 0
+     *   Usage and cycles:
+     *   CLV: B8(2)
+     */
+    (void) address;
+    CPU::ClearFlags( CPU::Overflow );
+}
+
+void CPU::SEC( const u16 address )
+{
+    /* @brief Set Carry Flag
+     * N Z C I D V
+     * - - 1 - - -
+     *   Usage and cycles:
+     *   SEC: 38(2)
+     */
+    (void) address;
+    CPU::SetFlags( CPU::Carry );
+}
+void CPU::SED( const u16 address )
+{
+    /* @brief Set Decimal Flag
+     * N Z C I D V
+     * - - - - 1 -
+     *   Usage and cycles:
+     *   SED: F8(2)
+     */
+    (void) address;
+    CPU::SetFlags( CPU::Decimal );
+}
+void CPU::SEI( const u16 address )
+{
+    /* @brief Set Interrupt Disable
+     * N Z C I D V
+     * - - - 1 - -
+     *   Usage and cycles:
+     *   SEI: 78(2)
+     */
+    (void) address;
+    CPU::SetFlags( CPU::InterruptDisable );
 }

@@ -114,7 +114,7 @@ class CPU
 
     // LDA, LDX, and LDY helper
     void LoadRegister( u16 address, u8 &reg );
-    void StoreRegister( u16 address, u8 reg );
+    void StoreRegister( u16 address, u8 reg ) const;
 
     /*
     ################################################################
@@ -135,7 +135,6 @@ class CPU
     auto INDX() -> u16;             // Indirect X
     auto INDY() -> u16;             // Indirect Y
     auto REL() -> u16;              // Relative
-
     /*
     ################################################################
     ||                                                            ||
@@ -159,4 +158,15 @@ class CPU
     void INY( u16 address );
     void DEX( u16 address );
     void DEY( u16 address );
+
+    // Clear for Flags
+    void CLC( u16 address );
+    void CLI( u16 address );
+    void CLD( u16 address );
+    void CLV( u16 address );
+
+    // Setters for Flags
+    void SEC( u16 address );
+    void SED( u16 address );
+    void SEI( u16 address );
 };
