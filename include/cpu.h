@@ -124,17 +124,17 @@ class CPU
     ################################################################
     */
     constexpr auto IMP() -> u16 { return 0; } // NOLINT
-    auto IMM() -> u16;              // Immediate
-    auto ZPG() -> u16;              // Zero Page
-    auto ZPGX() -> u16;             // Zero Page X
-    auto ZPGY() -> u16;             // Zero Page Y
-    auto ABS() -> u16;              // Absolute
-    auto ABSX() -> u16;             // Absolute X
-    auto ABSY() -> u16;             // Absolute Y
-    auto IND() -> u16;              // Indirect
-    auto INDX() -> u16;             // Indirect X
-    auto INDY() -> u16;             // Indirect Y
-    auto REL() -> u16;              // Relative
+    auto           IMM() -> u16;              // Immediate
+    auto           ZPG() -> u16;              // Zero Page
+    auto           ZPGX() -> u16;             // Zero Page X
+    auto           ZPGY() -> u16;             // Zero Page Y
+    auto           ABS() -> u16;              // Absolute
+    auto           ABSX() -> u16;             // Absolute X
+    auto           ABSY() -> u16;             // Absolute Y
+    auto           IND() -> u16;              // Indirect
+    auto           INDX() -> u16;             // Indirect X
+    auto           INDY() -> u16;             // Indirect Y
+    auto           REL() -> u16;              // Relative
     /*
     ################################################################
     ||                                                            ||
