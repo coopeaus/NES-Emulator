@@ -118,6 +118,10 @@ class CPU
 
     // Branch helper
     void BranchOnStatus( u16 offsetAddress, u8 flag, bool isSet );
+
+    // Compare helper
+    void CompareAddressWithRegister( u16 address, u8 reg );
+
     /*
     ################################################################
     ||                                                            ||
