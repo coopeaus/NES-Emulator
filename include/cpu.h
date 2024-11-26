@@ -123,7 +123,7 @@ class CPU
     ||                                                            ||
     ################################################################
     */
-    auto IMP() -> u16 { return 0; } // NOLINT
+    constexpr auto IMP() -> u16 { return 0; } // NOLINT
     auto IMM() -> u16;              // Immediate
     auto ZPG() -> u16;              // Zero Page
     auto ZPGX() -> u16;             // Zero Page X
