@@ -23,6 +23,24 @@ jobs:
             echo "files_modified=false" >> $GITHUB_ENV
           fi
 
+      # Cache apt packages
+      - name: Cache apt packages
+        if: env.files_modified == 'true'
+        uses: actions/cache@v3
+        id: cache-apt
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-cache
+
+      - name: Check if apt cache was hit
+        if: env.files_modified == 'true'
+        run: |
+          if [ "${{ steps.cache-apt.outputs.cache-hit }}" == 'true' ]; then
+            echo "Apt cache hit"
+          else
+            echo "Apt cache miss"
+          fi
+
       # Install SDL dependencies to help build understand SDL header includes
       - name: Install SDL dependencies
         if: env.files_modified == 'true'
@@ -35,10 +53,29 @@ jobs:
             libsdl2-2.0-0 \
             libsdl2-dev
 
+      # Cache CMake build directory
+      - name: Cache CMake build
+        if: env.files_modified == 'true'
+        uses: actions/cache@v3
+        id: cache-build
+        with:
+          path: build
+          key: ${{ runner.os }}-cmake-build-${{ hashFiles('CMakeLists.txt', '**/*.cpp', '**/*.hpp', '**/*.h', '**/*.c') }}
+          restore-keys: |
+            ${{ runner.os }}-cmake-build-
+
+      - name: Check if build cache was hit
+        if: env.files_modified == 'true'
+        run: |
+          if [ "${{ steps.cache-build.outputs.cache-hit }}" == 'true' ]; then
+            echo "Build cache hit"
+          else
+            echo "Build cache miss"
+          fi
+
       - name: Create build directory
         if: env.files_modified == 'true'
         run: |
-          rm -rf build
           mkdir -p build
           cd build
           cmake -DCMAKE_CXX_COMPILER=clang++ ..
