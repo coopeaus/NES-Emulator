@@ -116,6 +116,8 @@ class CPU
     void LoadRegister( u16 address, u8 &reg );
     void StoreRegister( u16 address, u8 reg ) const;
 
+    // Branch helper
+    void BranchOnStatus( u16 offsetAddress, u8 flag, bool isSet );
     /*
     ################################################################
     ||                                                            ||
