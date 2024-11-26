@@ -129,18 +129,18 @@ class CPU
     ||                                                            ||
     ################################################################
     */
-    auto IMP() -> u16 { return 0; } // NOLINT
-    auto IMM() -> u16;              // Immediate
-    auto ZPG() -> u16;              // Zero Page
-    auto ZPGX() -> u16;             // Zero Page X
-    auto ZPGY() -> u16;             // Zero Page Y
-    auto ABS() -> u16;              // Absolute
-    auto ABSX() -> u16;             // Absolute X
-    auto ABSY() -> u16;             // Absolute Y
-    auto IND() -> u16;              // Indirect
-    auto INDX() -> u16;             // Indirect X
-    auto INDY() -> u16;             // Indirect Y
-    auto REL() -> u16;              // Relative
+    constexpr auto IMP() -> u16 { return 0; } // NOLINT
+    auto           IMM() -> u16;              // Immediate
+    auto           ZPG() -> u16;              // Zero Page
+    auto           ZPGX() -> u16;             // Zero Page X
+    auto           ZPGY() -> u16;             // Zero Page Y
+    auto           ABS() -> u16;              // Absolute
+    auto           ABSX() -> u16;             // Absolute X
+    auto           ABSY() -> u16;             // Absolute Y
+    auto           IND() -> u16;              // Indirect
+    auto           INDX() -> u16;             // Indirect X
+    auto           INDY() -> u16;             // Indirect Y
+    auto           REL() -> u16;              // Relative
     /*
     ################################################################
     ||                                                            ||
@@ -148,6 +148,8 @@ class CPU
     ||                                                            ||
     ################################################################
       */
+
+    // Load/Store
     void LDA( u16 address );
     void LDX( u16 address );
     void LDY( u16 address );
@@ -165,14 +167,27 @@ class CPU
     void DEX( u16 address );
     void DEY( u16 address );
 
-    // Clear for Flags
+    // Clear/Set flags
     void CLC( u16 address );
     void CLI( u16 address );
     void CLD( u16 address );
     void CLV( u16 address );
-
-    // Setters for Flags
     void SEC( u16 address );
     void SED( u16 address );
     void SEI( u16 address );
+
+    // Branch
+    void BPL( u16 address );
+    void BMI( u16 address );
+    void BVC( u16 address );
+    void BVS( u16 address );
+    void BCC( u16 address );
+    void BCS( u16 address );
+    void BNE( u16 address );
+    void BEQ( u16 address );
+
+    // Compare
+    void CMP( u16 address );
+    void CPX( u16 address );
+    void CPY( u16 address );
 };
