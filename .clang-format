@@ -1,7 +1,8 @@
 IndentWidth: 4
 UseTab: Never
 ColumnLimit: 100 # Maximimum line length
-SortIncludes: true
+SortIncludes: false
+IncludeBlocks: Preserve
 
 SpacesInParentheses: true # ( a + b ) instead of (a + b)
 SpacesInContainerLiterals: true
