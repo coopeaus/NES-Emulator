@@ -128,3 +128,6 @@ void Bus::Write( const u16 address, const u8 data )
     // Optionally log a warning or ignore
     std::cout << "Unhandled write to address: " << std::hex << address << "\n";
 }
+
+
+asdf
