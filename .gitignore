@@ -29,6 +29,7 @@ _deps/
 
 # Ignore CMake build directory
 /build/
+/build_container/
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
