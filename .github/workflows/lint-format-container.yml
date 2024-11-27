@@ -46,4 +46,4 @@ jobs:
       - name: Run Linter
         if: env.files_modified == 'true'
         run: |
-          docker run -v $(pwd):/workspace -w /workspace ghcr.io/coopeaus/nes-emulator/build-lint-container:latest lint
+          docker run -e CI=${CI} -v $(pwd):/workspace -w /workspace ghcr.io/coopeaus/nes-emulator/build-lint-container:latest lint
