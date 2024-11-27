@@ -27,7 +27,7 @@ case "$1" in
       echo "compile_commands.json not found. Running cmake to generate it..."
       mkdir -p "$BUILD_DIR"
       cd "$BUILD_DIR"
-      cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. || {
+      cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. || {
         echo "CMake configuration failed."
         exit 1
       }
