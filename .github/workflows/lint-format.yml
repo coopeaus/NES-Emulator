@@ -23,6 +23,24 @@ jobs:
             echo "files_modified=false" >> $GITHUB_ENV
           fi
 
+      # Cache apt packages
+      - name: Cache apt packages
+        if: env.files_modified == 'true'
+        uses: actions/cache@v3
+        id: cache-apt
+        with:
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-cache
+
+      - name: Check if apt cache was hit
+        if: env.files_modified == 'true'
+        run: |
+          if [ "${{ steps.cache-apt.outputs.cache-hit }}" == 'true' ]; then
+            echo "Apt cache hit"
+          else
+            echo "Apt cache miss"
+          fi
+
       # Install SDL dependencies to help build understand SDL header includes
       - name: Install SDL dependencies
         if: env.files_modified == 'true'
