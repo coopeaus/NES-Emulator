@@ -1,14 +1,24 @@
 cmake_minimum_required( VERSION 3.15 )
 
-# Project name and version
-project( nes_emu VERSION 0.1 LANGUAGES CXX )
-
 # Enable compile_commands.json (for non-IDE builds)
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
 # C++ 17 standard
 set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
+
+# Set clang as the default compiler if available
+find_program( CLANGXX clang++ )
+
+if( CLANGXX )
+  set( CMAKE_CXX_COMPILER ${CLANGXX} )
+  message( STATUS "Using clang++ compiler" )
+else()
+  message( STATUS "Using default compiler" )
+endif()
+
+# Project name and version. Compiler info needs to be set before this.
+project( nes_emu VERSION 0.1 LANGUAGES CXX )
 
 # Include directories
 include_directories( include )

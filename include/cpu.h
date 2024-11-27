@@ -123,20 +123,18 @@ class CPU
     ||                                                            ||
     ################################################################
     */
-    auto IMP() -> u16; // Implied //NOLINT
-
-    auto IMM() -> u16;  // Immediate
-    auto ZPG() -> u16;  // Zero Page
-    auto ZPGX() -> u16; // Zero Page X
-    auto ZPGY() -> u16; // Zero Page Y
-    auto ABS() -> u16;  // Absolute
-    auto ABSX() -> u16; // Absolute X
-    auto ABSY() -> u16; // Absolute Y
-    auto IND() -> u16;  // Indirect
-    auto INDX() -> u16; // Indirect X
-    auto INDY() -> u16; // Indirect Y
-    auto REL() -> u16;  // Relative
-
+    constexpr auto IMP() -> u16 { return 0; } // NOLINT
+    auto           IMM() -> u16;              // Immediate
+    auto           ZPG() -> u16;              // Zero Page
+    auto           ZPGX() -> u16;             // Zero Page X
+    auto           ZPGY() -> u16;             // Zero Page Y
+    auto           ABS() -> u16;              // Absolute
+    auto           ABSX() -> u16;             // Absolute X
+    auto           ABSY() -> u16;             // Absolute Y
+    auto           IND() -> u16;              // Indirect
+    auto           INDX() -> u16;             // Indirect X
+    auto           INDY() -> u16;             // Indirect Y
+    auto           REL() -> u16;              // Relative
     /*
     ################################################################
     ||                                                            ||
@@ -150,6 +148,16 @@ class CPU
     void STA( u16 address );
     void STX( u16 address );
     void STY( u16 address );
+
+    // Arithmetic
+    void ADC( u16 address );
+    void SBC( u16 address );
+    void INC( u16 address );
+    void DEC( u16 address );
+    void INX( u16 address );
+    void INY( u16 address );
+    void DEX( u16 address );
+    void DEY( u16 address );
 
     // Clear for Flags
     void CLC( u16 address );

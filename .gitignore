@@ -10,7 +10,6 @@ _deps/
 # Ignore object files and static libraries
 *.o
 *.a
-*.lib
 
 # Ignore dynamic libraries
 *.so
