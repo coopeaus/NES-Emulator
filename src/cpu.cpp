@@ -105,6 +105,32 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0x38] = InstructionData{ "SEC_Implied", &CPU::SEC, &CPU::IMP, 2 };
     _opcodeTable[0x78] = InstructionData{ "SEI_Implied", &CPU::SEI, &CPU::IMP, 2 };
     _opcodeTable[0xF8] = InstructionData{ "SED_Implied", &CPU::SED, &CPU::IMP, 2 };
+
+    // Branch
+    _opcodeTable[0x10] = InstructionData{ "BPL_Relative", &CPU::BPL, &CPU::REL, 2 };
+    _opcodeTable[0x30] = InstructionData{ "BMI_Relative", &CPU::BMI, &CPU::REL, 2 };
+    _opcodeTable[0x50] = InstructionData{ "BVC_Relative", &CPU::BVC, &CPU::REL, 2 };
+    _opcodeTable[0x70] = InstructionData{ "BVS_Relative", &CPU::BVS, &CPU::REL, 2 };
+    _opcodeTable[0x90] = InstructionData{ "BCC_Relative", &CPU::BCC, &CPU::REL, 2 };
+    _opcodeTable[0xB0] = InstructionData{ "BCS_Relative", &CPU::BCS, &CPU::REL, 2 };
+    _opcodeTable[0xD0] = InstructionData{ "BNE_Relative", &CPU::BNE, &CPU::REL, 2 };
+    _opcodeTable[0xF0] = InstructionData{ "BEQ_Relative", &CPU::BEQ, &CPU::REL, 2 };
+
+    // CMP, CPX, CPY
+    _opcodeTable[0xC9] = InstructionData{ "CMP_Immediate", &CPU::CMP, &CPU::IMM, 2 };
+    _opcodeTable[0xC5] = InstructionData{ "CMP_ZeroPage", &CPU::CMP, &CPU::ZPG, 3 };
+    _opcodeTable[0xD5] = InstructionData{ "CMP_ZeroPageX", &CPU::CMP, &CPU::ZPGX, 4 };
+    _opcodeTable[0xCD] = InstructionData{ "CMP_Absolute", &CPU::CMP, &CPU::ABS, 4 };
+    _opcodeTable[0xDD] = InstructionData{ "CMP_AbsoluteX", &CPU::CMP, &CPU::ABSX, 4 };
+    _opcodeTable[0xD9] = InstructionData{ "CMP_AbsoluteY", &CPU::CMP, &CPU::ABSY, 4 };
+    _opcodeTable[0xC1] = InstructionData{ "CMP_IndirectX", &CPU::CMP, &CPU::INDX, 6 };
+    _opcodeTable[0xD1] = InstructionData{ "CMP_IndirectY", &CPU::CMP, &CPU::INDY, 5 };
+    _opcodeTable[0xE0] = InstructionData{ "CPX_Immediate", &CPU::CPX, &CPU::IMM, 2 };
+    _opcodeTable[0xE4] = InstructionData{ "CPX_ZeroPage", &CPU::CPX, &CPU::ZPG, 3 };
+    _opcodeTable[0xEC] = InstructionData{ "CPX_Absolute", &CPU::CPX, &CPU::ABS, 4 };
+    _opcodeTable[0xC0] = InstructionData{ "CPY_Immediate", &CPU::CPY, &CPU::IMM, 2 };
+    _opcodeTable[0xC4] = InstructionData{ "CPY_ZeroPage", &CPU::CPY, &CPU::ZPG, 3 };
+    _opcodeTable[0xCC] = InstructionData{ "CPY_Absolute", &CPU::CPY, &CPU::ABS, 4 };
 };
 
 // Getters
@@ -380,9 +406,8 @@ auto CPU::REL() -> u16
      * Sets the program counter between -128 and +127 bytes from the current location
      */
     using s8 = std::int8_t;
-    s8 const  offset = static_cast<s8>( Read( _pc ) );
+    s8 const  offset = static_cast<s8>( Read( _pc++ ) );
     u16 const address = _pc + offset;
-    _pc++;
     return address;
 }
 
@@ -482,6 +507,61 @@ void CPU::SetZeroAndNegativeFlags( u8 value )
     {
         SetFlags( Status::Negative );
     }
+}
+
+void CPU::BranchOnStatus( u16 offsetAddress, u8 flag, bool isSet )
+{
+    /* @brief Branch if status flag is set or clear
+     *
+     * Used by branch instructions to branch if a status flag is set or clear.
+     *
+     * Usage:
+     * BranchOnStatus( Status::Carry, true ); // Branch if carry flag is set
+     * BranchOnStatus( Status::Zero, false ); // Branch if zero flag is clear
+     */
+
+    bool const will_branch = ( _p & flag ) == flag;
+
+    // Path will branch
+    if ( will_branch == isSet )
+    {
+        // Store previous program counter value, used to check boundary crossing
+        u16 const prev_pc = _pc;
+
+        // Set _pc to the offset address, calculated by REL addressing mode
+        _pc = offsetAddress;
+
+        // +1 cyles because we're taking a branch
+        _cycles++;
+
+        // Add another cycle if page boundary is crossed
+        if ( ( _pc & 0xFF00 ) != ( prev_pc & 0xFF00 ) )
+        {
+            _cycles += 1;
+        }
+    }
+    // Path will not branch, nothing to do
+}
+
+void CPU::CompareAddressWithRegister( u16 address, u8 reg )
+{
+    /*
+     * @brief Compare a value in memory with a register
+     * Used by CMP, CPX, and CPY instructions
+     */
+
+    u8 const value = Read( address );
+
+    // Set the zero flag if the values are equal
+    ( reg == value ) ? SetFlags( Status::Zero ) : ClearFlags( Status::Zero );
+
+    // Set negative flag if the result is negative,
+    // i.e. the sign bit is set
+    ( ( reg - value ) & 0b10000000 ) != 0 ? SetFlags( Status::Negative )
+                                          : ClearFlags( Status::Negative );
+
+    // Set the carry flag if the reg >= value
+    ( reg >= value ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
 }
 
 /*
@@ -840,6 +920,7 @@ void CPU::SEC( const u16 address )
     (void) address;
     CPU::SetFlags( CPU::Carry );
 }
+
 void CPU::SED( const u16 address )
 {
     /* @brief Set Decimal Flag
@@ -851,6 +932,7 @@ void CPU::SED( const u16 address )
     (void) address;
     CPU::SetFlags( CPU::Decimal );
 }
+
 void CPU::SEI( const u16 address )
 {
     /* @brief Set Interrupt Disable
@@ -861,4 +943,136 @@ void CPU::SEI( const u16 address )
      */
     (void) address;
     CPU::SetFlags( CPU::InterruptDisable );
+}
+
+void CPU::BPL( const u16 address )
+{
+    /* @brief Branch if Positive
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   BPL: 10(2+)
+     */
+    BranchOnStatus( address, Status::Negative, false );
+}
+
+void CPU::BMI( const u16 address )
+{
+    /* @brief Branch if Minus
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   BMI: 30(2+)
+     */
+    BranchOnStatus( address, Status::Negative, true );
+}
+
+void CPU::BVC( const u16 address )
+{
+    /* @brief Branch if Overflow Clear
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   BVC: 50(2+)
+     */
+    BranchOnStatus( address, Status::Overflow, false );
+}
+
+void CPU::BVS( const u16 address )
+{
+    /* @brief Branch if Overflow Set
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   BVS: 70(2+)
+     */
+    BranchOnStatus( address, Status::Overflow, true );
+}
+
+void CPU::BCC( const u16 address )
+{
+    /* @brief Branch if Carry Clear
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   BCC: 90(2+)
+     */
+    BranchOnStatus( address, Status::Carry, false );
+}
+
+void CPU::BCS( const u16 address )
+{
+    /* @brief Branch if Carry Set
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   BCS: B0(2+)
+     */
+    BranchOnStatus( address, Status::Carry, true );
+}
+
+void CPU::BNE( const u16 address )
+{
+    /* @brief Branch if Not Equal
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   BNE: D0(2+)
+     */
+    BranchOnStatus( address, Status::Zero, false );
+}
+
+void CPU::BEQ( const u16 address )
+{
+    /* @brief Branch if Equal
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   BEQ: F0(2+)
+     */
+    BranchOnStatus( address, Status::Zero, true );
+}
+
+void CPU::CMP( u16 address )
+{
+    /* @brief Compare Memory and Accumulator
+     * N Z C I D V
+     * + + + - - -
+     *   Usage and cycles:
+     *   CMP Immediate: C9(2)
+     *   CMP Zero Page: C5(3)
+     *   CMP Zero Page X: D5(4)
+     *   CMP Absolute: CD(4)
+     *   CMP Absolute X: DD(4+)
+     *   CMP Absolute Y: D9(4+)
+     *   CMP Indirect X: C1(6)
+     *   CMP Indirect Y: D1(5+)
+     */
+    CompareAddressWithRegister( address, _a );
+}
+
+void CPU::CPX( u16 address )
+{
+    /* @brief Compare Memory and X Register
+     * N Z C I D V
+     * + + + - - -
+     *   Usage and cycles:
+     *   CPX Immediate: E0(2)
+     *   CPX Zero Page: E4(3)
+     *   CPX Absolute: EC(4)
+     */
+    CompareAddressWithRegister( address, _x );
+}
+
+void CPU::CPY( u16 address )
+{
+    /* @brief Compare Memory and Y Register
+     * N Z C I D V
+     * + + + - - -
+     *   Usage and cycles:
+     *   CPY Immediate: C0(2)
+     *   CPY Zero Page: C4(3)
+     *   CPY Absolute: CC(4)
+     */
+    CompareAddressWithRegister( address, _y );
 }

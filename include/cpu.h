@@ -116,6 +116,12 @@ class CPU
     void LoadRegister( u16 address, u8 &reg );
     void StoreRegister( u16 address, u8 reg ) const;
 
+    // Branch helper
+    void BranchOnStatus( u16 offsetAddress, u8 flag, bool isSet );
+
+    // Compare helper
+    void CompareAddressWithRegister( u16 address, u8 reg );
+
     /*
     ################################################################
     ||                                                            ||
@@ -142,6 +148,8 @@ class CPU
     ||                                                            ||
     ################################################################
       */
+
+    // Load/Store
     void LDA( u16 address );
     void LDX( u16 address );
     void LDY( u16 address );
@@ -159,14 +167,27 @@ class CPU
     void DEX( u16 address );
     void DEY( u16 address );
 
-    // Clear for Flags
+    // Clear/Set flags
     void CLC( u16 address );
     void CLI( u16 address );
     void CLD( u16 address );
     void CLV( u16 address );
-
-    // Setters for Flags
     void SEC( u16 address );
     void SED( u16 address );
     void SEI( u16 address );
+
+    // Branch
+    void BPL( u16 address );
+    void BMI( u16 address );
+    void BVC( u16 address );
+    void BVS( u16 address );
+    void BCC( u16 address );
+    void BCS( u16 address );
+    void BNE( u16 address );
+    void BEQ( u16 address );
+
+    // Compare
+    void CMP( u16 address );
+    void CPX( u16 address );
+    void CPY( u16 address );
 };
