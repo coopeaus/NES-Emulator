@@ -34,15 +34,23 @@ case "$1" in
       cd ..
     fi
 
-# Initialize failure flags for clang-format and clang-tidy
+    # Initialize failure flags for clang-format and clang-tidy
     format_failures=0
     lint_failures=0
 
     # Run clang-format on both .cpp and .h files, and check for issues
     echo "Running clang-format..."
-    for file in $(find src/ include/ -name '*.cpp' -o -name '*.h'); do
-      clang-format -i "$file" || format_failures=1
-    done
+    if [ -z "$CI" ]; then
+      # Run clang-format with -i (fixes errors) when not in CI
+      for file in $(find src/ include/ -name '*.cpp' -o -name '*.h'); do
+        clang-format -i "$file" || format_failures=1
+      done
+    else
+      # Run clang-format without -i (only checks errors) when in CI
+      for file in $(find src/ include/ -name '*.cpp' -o -name '*.h'); do
+        clang-format "$file" || format_failures=1
+      done
+    fi
 
     # Report failure if clang-format found issues
     report_failure "$format_failures" "clang-format" "formatting"

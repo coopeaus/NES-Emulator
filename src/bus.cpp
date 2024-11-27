@@ -110,7 +110,7 @@ void Bus::Write( const u16 address, const u8 data )
     }
 
     // SRAM (Save RAM): 0x6000 - 0x7FFF
-    if ( address >= 0x6000 && address <= 0x7FFF )
+         if (      address >= 0x6000 && address <= 0x7FFF            )     
     {
         _sram_memory[address - 0x6000] = data; // temp
         return;

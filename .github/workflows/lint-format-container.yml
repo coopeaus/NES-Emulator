@@ -1,3 +1,13 @@
+# This workflow performs linting and formatting checks based on
+# our defined clang-format and clang-tidy configurations.
+
+# The workflow is triggered on pull requests and checks for changes in C++ files.
+# If changes are detected, the workflow installs grabs the latest
+# Docker container, and runs linting/formatting tests. 
+
+# If the checks pass, the workflow will report success. If the checks fail,
+# the workflow will report failure.
+
 name: lint-format
 
 on: [pull_request]
@@ -37,5 +47,3 @@ jobs:
         if: env.files_modified == 'true'
         run: |
           docker run -v $(pwd):/workspace -w /workspace ghcr.io/coopeaus/nes-emulator/build-lint-container:latest lint
-        # Ensure the command fails if there are issues
-        continue-on-error: false

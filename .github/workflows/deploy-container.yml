@@ -1,6 +1,18 @@
+# This workflow is used for deploying the Docker container based on the
+# docker/alpine-Dockerfile to the GitHub Container Registry.
+
+# The workflow is only triggered manually, as this should be an infrequent
+# operation. The only time it should be triggered is when the Dockerfile
+# or entrypoint.sh script is updated.
+
+# The workflow uses the docker Buildx tool to build the Docker
+# container for both the amd64 and arm64 architectures. The workflow then
+# logs in to the GitHub Container Registry, builds the Docker container, and
+# pushes it to the GitHub Container Registry.
+
 name: Deploy-Container
 
-on: [workflow_dispatch, push]
+on: workflow_dispatch
 
 jobs:
     deploy:
