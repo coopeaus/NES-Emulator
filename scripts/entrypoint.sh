@@ -89,9 +89,25 @@ case "$1" in
     echo "Running build tasks..."
     ./scripts/build.sh
     ;;
+
+  # Handle testing
+  test)
+    echo "Running tests..."
+    # Check if a specific test name was passed
+    if [ -n "$2" ]; then
+      echo "Running specific test: $2"
+      ./scripts/test.sh "$2"
+    else
+      echo "Running all tests..."
+      ./scripts/test.sh
+    fi
+    ;;
   # Oops! Invalid command
   *)
-    echo "Houston, we have a problem. Make sure to use 'lint' or 'build'."
+    echo "Houston, we have a problem. Make sure to use 'lint', 'build' or 'test [test_name]'."
     exit 1
     ;;
+  
+
+    
 esac
