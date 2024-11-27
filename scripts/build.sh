@@ -36,4 +36,27 @@ cd "$BUILD_DIR"
 
 # Run CMake configuration to generate compile_commands.json
 echo "Configuring with CMake..."
-cmake -DCMAKE_CX
+cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. || {
+    echo "CMake configuration failed."
+    exit 1
+}
+
+# Run make to build the project
+echo "Building the project..."
+make || {
+    echo "Build failed."
+    exit 1
+}
+
+# Notify user of created executables
+echo "Checking for created executable files..."
+executables=$(find . -maxdepth 1 -type f -perm +111)
+
+if [ -n "$executables" ]; then
+    echo "Build complete. Created executables:"
+    for exec in $executables; do
+        echo " - $BUILD_DIR/$(basename $exec)"
+    done
+else
+    echo "No executable files were created."
+fi
