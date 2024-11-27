@@ -10,7 +10,7 @@
 
 name: lint-format
 
-on: [pull_request]
+on: [pull_request, push]
 
 jobs:
   lint:
