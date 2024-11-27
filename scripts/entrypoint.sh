@@ -39,17 +39,36 @@ case "$1" in
     lint_failures=0
 
     # Run clang-format on both .cpp and .h files, and check for issues
-    echo "Running clang-format..."
     if [ -z "$CI" ]; then
-      # Run clang-format with -i (fixes errors) when not in CI
+      # In local mode, automatically fix formatting
+      echo "Running clang-format locally and fixing formatting..."
       for file in $(find src/ include/ -name '*.cpp' -o -name '*.h'); do
-        clang-format -i "$file" || format_failures=1
+        clang-format -i "$file"
       done
+
     else
-      # Run clang-format without -i (only checks errors) when in CI
+      # In CI, check formatting without fixing
+      echo "Running clang-format in CI mode (check only)..."
+      format_failures=0
       for file in $(find src/ include/ -name '*.cpp' -o -name '*.h'); do
-        clang-format "$file" || format_failures=1
+        # Check if clang-format changes the file
+        if ! clang-format "$file" | diff -u "$file" - > /dev/null; then
+          echo "Formatting issues found in $file"
+          format_failures=1
+        fi
+        if [ $? -ne 0 ]; then
+          echo "Formatting issues found in $file"
+          format_failures=1
+        fi
       done
+
+      # Report failure if formatting issues were found
+      if [ "$format_failures" -ne 0 ]; then
+        echo "clang-format detected issues. Please fix the formatting. You can run formatting automatically using the instructions in the README"
+        exit 1
+      else
+        echo "clang-format passed with no issues."
+      fi
     fi
 
     # Report failure if clang-format found issues
