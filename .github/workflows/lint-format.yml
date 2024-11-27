@@ -67,4 +67,4 @@ jobs:
 
       - name: Report Success
         if: env.files_modified == 'false'
-        run: exit
+        run: exit 0
