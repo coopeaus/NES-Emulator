@@ -1,0 +1,29 @@
+# Alpine Base Image
+FROM alpine:latest
+
+# Install necessary packages
+RUN apk add --no-cache \
+    build-base \
+    clang \
+    clang-extra-tools \
+    cmake \
+    git \
+    ca-certificates \
+    sdl2 \
+    sdl2-dev \
+    bash \
+    file \
+    && rm -rf /var/cache/apk/*
+
+# Set the working directory
+WORKDIR /workspace
+
+# Expose a volume for mounting the project
+VOLUME ["/workspace"]
+
+# Add an entrypoint script to support flexibility
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Default entrypoint
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

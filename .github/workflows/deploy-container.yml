@@ -1,0 +1,38 @@
+# This workflow is used for deploying the Docker container based on the
+# docker/alpine-Dockerfile to the GitHub Container Registry.
+
+# The workflow is only triggered manually, as this should be an infrequent
+# operation. The only time it should be triggered is when the Dockerfile
+# or entrypoint.sh script is updated.
+
+# The workflow uses the docker Buildx tool to build the Docker
+# container for both the amd64 and arm64 architectures. The workflow then
+# logs in to the GitHub Container Registry, builds the Docker container, and
+# pushes it to the GitHub Container Registry.
+
+name: Deploy-Container
+
+on: [workflow_dispatch]
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+    
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+    
+        - name: Log in to GitHub Container Registry
+          uses: docker/login-action@v3
+          with:
+            registry: ghcr.io
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+    
+        - name: Use the Docker buildx tool
+          run: |
+            docker buildx create --use
+    
+        - name: Build and deploy Docker image to GHCR
+          run: |
+            docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/coopeaus/nes-emulator/build-lint-container:latest --push -f docker/alpine-Dockerfile .

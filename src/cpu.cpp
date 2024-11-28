@@ -131,6 +131,14 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0xC0] = InstructionData{ "CPY_Immediate", &CPU::CPY, &CPU::IMM, 2 };
     _opcodeTable[0xC4] = InstructionData{ "CPY_ZeroPage", &CPU::CPY, &CPU::ZPG, 3 };
     _opcodeTable[0xCC] = InstructionData{ "CPY_Absolute", &CPU::CPY, &CPU::ABS, 4 };
+
+    // PHA, PHP, PLA, PLP, TSX, TXS
+    _opcodeTable[0x48] = InstructionData{ "PHA_Implied", &CPU::PHA, &CPU::IMP, 3 };
+    _opcodeTable[0x08] = InstructionData{ "PHP_Implied", &CPU::PHP, &CPU::IMP, 3 };
+    _opcodeTable[0x68] = InstructionData{ "PLA_Implied", &CPU::PLA, &CPU::IMP, 4 };
+    _opcodeTable[0x28] = InstructionData{ "PLP_Implied", &CPU::PLP, &CPU::IMP, 4 };
+    _opcodeTable[0xBA] = InstructionData{ "TSX_Implied", &CPU::TSX, &CPU::IMP, 2 };
+    _opcodeTable[0x9A] = InstructionData{ "TXS_Implied", &CPU::TXS, &CPU::IMP, 2 };
 };
 
 // Getters
@@ -1075,4 +1083,108 @@ void CPU::CPY( u16 address )
      *   CPY Absolute: CC(4)
      */
     CompareAddressWithRegister( address, _y );
+}
+
+void CPU::PHA( const u16 address )
+{
+    /* @brief Push Accumulator on Stack
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   PHA: 48(3)
+     */
+    (void) address;
+
+    // Get the stack pointer
+    const u8 stack_pointer = GetStackPointer();
+
+    // Push the accumulator onto the stack
+    Write( 0x0100 + stack_pointer, GetAccumulator() );
+
+    // Decrement the stack pointer
+    SetStackPointer( stack_pointer - 1 );
+}
+
+void CPU::PHP( const u16 address )
+{
+    /* @brief Push Processor Status on Stack
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   PHP: 08(3)
+     */
+    (void) address;
+
+    // Get the stack pointer
+    const u8 stack_pointer = GetStackPointer();
+
+    // Set the Break flag before pushing the status register onto the stack
+    u8 status = GetStatusRegister();
+    status |= Break;
+
+    // Push the modified status register onto the stack
+    Write( 0x0100 + stack_pointer, status );
+
+    SetStackPointer( stack_pointer - 1 );
+}
+
+void CPU::PLA( const u16 address )
+{
+    /* @brief Pop Accumulator from Stack
+     * N Z C I D V
+     * + + - - - -
+     *   Usage and cycles:
+     *   PLA: 68(4)
+     */
+    (void) address;
+
+    // Increment the stack pointer first
+    SetStackPointer( GetStackPointer() + 1 );
+
+    // Get the acuumulator from the stack and set the zero and negative flags
+    SetAccumulator( Read( 0x100 + GetStackPointer() ) );
+    SetZeroAndNegativeFlags( _a );
+}
+
+void CPU::PLP( const u16 address )
+{
+    /* @brief Pop Processor Status from Stack
+     * N Z C I D V
+     * from stack
+     *   Usage and cycles:
+     *   PLP: 28(4)
+     */
+    (void) address;
+
+    // Increment the stack pointer first
+    SetStackPointer( GetStackPointer() + 1 );
+
+    SetStatusRegister( Read( 0x100 + GetStackPointer() ) );
+    ClearFlags( Status::Break );
+    SetFlags( Status::Unused );
+}
+
+void CPU::TSX( const u16 address )
+{
+    /* @brief Transfer Stack Pointer to X
+     * N Z C I D V
+     * + + - - - -
+     *   Usage and cycles:
+     *   TSX: BA(2)
+     */
+    (void) address;
+    SetXRegister( GetStackPointer() );
+    SetZeroAndNegativeFlags( GetXRegister() );
+}
+
+void CPU::TXS( const u16 address )
+{
+    /* @brief Transfer X to Stack Pointer
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   TXS: 9A(2)
+     */
+    (void) address;
+    SetStackPointer( GetXRegister() );
 }

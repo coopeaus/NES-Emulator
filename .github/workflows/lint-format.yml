@@ -1,6 +1,6 @@
 name: lint-format
 
-on: [pull_request]
+on: workflow_dispatch
 
 permissions:
   contents: write
