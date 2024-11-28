@@ -139,7 +139,6 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0x28] = InstructionData{ "PLP_Implied", &CPU::PLP, &CPU::IMP, 4 };
     _opcodeTable[0xBA] = InstructionData{ "TSX_Implied", &CPU::TSX, &CPU::IMP, 2 };
     _opcodeTable[0x9A] = InstructionData{ "TXS_Implied", &CPU::TXS, &CPU::IMP, 2 };
-
 };
 
 // Getters
@@ -1174,7 +1173,7 @@ void CPU::TSX( const u16 address )
      *   TSX: BA(2)
      */
     (void) address;
-    SetXRegister(GetStackPointer());
+    SetXRegister( GetStackPointer() );
     SetZeroAndNegativeFlags( GetXRegister() );
 }
 
