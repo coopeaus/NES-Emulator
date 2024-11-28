@@ -216,4 +216,10 @@ class CPU
     void RTS( u16 address );
     void RTI( u16 address );
     void BRK( u16 address );
+
+    // Bitwise
+    void AND( u16 address );
+    void EOR( u16 address );
+    void ORA( u16 address );
+    void BIT( u16 address );
 };

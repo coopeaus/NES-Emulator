@@ -427,34 +427,34 @@ To run all tests:
 
 /* CPU_TEST( SAMPLE, JSON, SANITY_CHECK, "temp.json" ); */
 CPU_TEST( 00, BRK, Implied, "00.json" );
-/* CPU_TEST( 01, ORA, IndirectX, "01.json" ); */
-/* CPU_TEST( 05, ORA, ZeroPage, "05.json" ); */
+CPU_TEST( 01, ORA, IndirectX, "01.json" );
+CPU_TEST( 05, ORA, ZeroPage, "05.json" );
 CPU_TEST( 06, ASL, ZeroPage, "06.json" );
 CPU_TEST( 08, PHP, Implied, "08.json" );
-/* CPU_TEST( 09, ORA, Immediate, "09.json" ); */
+CPU_TEST( 09, ORA, Immediate, "09.json" );
 CPU_TEST( 0A, ASL, Accumulator, "0a.json" );
-/* CPU_TEST( 0D, ORA, Absolute, "0d.json" ); */
+CPU_TEST( 0D, ORA, Absolute, "0d.json" );
 CPU_TEST( 0E, ASL, Absolute, "0e.json" );
 CPU_TEST( 10, BPL, Relative, "10.json" );
-/* CPU_TEST( 11, ORA, IndirectY, "11.json" ); */
-/* CPU_TEST( 15, ORA, ZeroPageX, "15.json" ); */
+CPU_TEST( 11, ORA, IndirectY, "11.json" );
+CPU_TEST( 15, ORA, ZeroPageX, "15.json" );
 CPU_TEST( 16, ASL, ZeroPageX, "16.json" );
 CPU_TEST( 18, CLC, Implied, "18.json" );
-/* CPU_TEST( 19, ORA, AbsoluteY, "19.json" ); */
-/* CPU_TEST( 1D, ORA, AbsoluteX, "1d.json" ); */
+CPU_TEST( 19, ORA, AbsoluteY, "19.json" );
+CPU_TEST( 1D, ORA, AbsoluteX, "1d.json" );
 CPU_TEST( 1E, ASL, AbsoluteX, "1e.json" );
 CPU_TEST( 20, JSR, Absolute, "20.json" );
 /* CPU_TEST( 21, AND, IndirectX, "21.json" ); */
-/* CPU_TEST( 24, BIT, ZeroPage, "24.json" ); */
+CPU_TEST( 24, BIT, ZeroPage, "24.json" );
 /* CPU_TEST( 25, AND, ZeroPage, "25.json" ); */
 CPU_TEST( 26, ROL, ZeroPage, "26.json" );
 CPU_TEST( 28, PLP, Implied, "28.json" );
 /* CPU_TEST( 29, AND, Immediate, "29.json" ); */
 CPU_TEST( 2A, ROL, Accumulator, "2a.json" );
-/* CPU_TEST( 2C, BIT, Absolute, "2c.json" ); */
+CPU_TEST( 2C, BIT, Absolute, "2c.json" );
 /* CPU_TEST( 2D, AND, Absolute, "2d.json" ); */
 CPU_TEST( 2E, ROL, Absolute, "2e.json" );
-/* CPU_TEST( 30, BMI, Relative, "30.json" ); */
+CPU_TEST( 30, BMI, Relative, "30.json" );
 /* CPU_TEST( 31, AND, IndirectY, "31.json" ); */
 /* CPU_TEST( 35, AND, ZeroPageX, "35.json" ); */
 CPU_TEST( 36, ROL, ZeroPageX, "36.json" );
@@ -463,22 +463,22 @@ CPU_TEST( 38, SEC, Implied, "38.json" );
 /* CPU_TEST( 3D, AND, AbsoluteX, "3d.json" ); */
 CPU_TEST( 3E, ROL, AbsoluteX, "3e.json" );
 CPU_TEST( 40, RTI, Implied, "40.json" );
-/* CPU_TEST( 41, EOR, IndirectX, "41.json" ); */
-/* CPU_TEST( 45, EOR, ZeroPage, "45.json" ); */
+CPU_TEST( 41, EOR, IndirectX, "41.json" );
+CPU_TEST( 45, EOR, ZeroPage, "45.json" );
 CPU_TEST( 46, LSR, ZeroPage, "46.json" );
 CPU_TEST( 48, PHA, Implied, "48.json" );
-/* CPU_TEST( 49, EOR, Immediate, "49.json" ); */
+CPU_TEST( 49, EOR, Immediate, "49.json" );
 CPU_TEST( 4A, LSR, Accumulator, "4a.json" );
 CPU_TEST( 4C, JMP, Absolute, "4c.json" );
-/* CPU_TEST( 4D, EOR, Absolute, "4d.json" ); */
+CPU_TEST( 4D, EOR, Absolute, "4d.json" );
 CPU_TEST( 4E, LSR, Absolute, "4e.json" );
 CPU_TEST( 50, BVC, Relative, "50.json" );
-/* CPU_TEST( 51, EOR, IndirectY, "51.json" ); */
-/* CPU_TEST( 55, EOR, ZeroPageX, "55.json" ); */
+CPU_TEST( 51, EOR, IndirectY, "51.json" );
+CPU_TEST( 55, EOR, ZeroPageX, "55.json" );
 CPU_TEST( 56, LSR, ZeroPageX, "56.json" );
 CPU_TEST( 58, CLI, Implied, "58.json" );
-/* CPU_TEST( 59, EOR, AbsoluteY, "59.json" ); */
-/* CPU_TEST( 5D, EOR, AbsoluteX, "5d.json" ); */
+CPU_TEST( 59, EOR, AbsoluteY, "59.json" );
+CPU_TEST( 5D, EOR, AbsoluteX, "5d.json" );
 CPU_TEST( 5E, LSR, AbsoluteX, "5e.json" );
 CPU_TEST( 60, RTS, Implied, "60.json" );
 CPU_TEST( 61, ADC, IndirectX, "61.json" );

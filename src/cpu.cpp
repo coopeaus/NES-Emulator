@@ -171,6 +171,32 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0x60] = InstructionData{ "RTS_Implied", &CPU::RTS, &CPU::IMP, 6 };
     _opcodeTable[0x40] = InstructionData{ "RTI_Implied", &CPU::RTI, &CPU::IMP, 6 };
     _opcodeTable[0x00] = InstructionData{ "BRK_Implied", &CPU::BRK, &CPU::IMP, 7 };
+
+    // TODO: AND
+
+    // ORA
+    _opcodeTable[0x09] = InstructionData{ "ORA_Immediate", &CPU::ORA, &CPU::IMM, 2 };
+    _opcodeTable[0x05] = InstructionData{ "ORA_ZeroPage", &CPU::ORA, &CPU::ZPG, 3 };
+    _opcodeTable[0x15] = InstructionData{ "ORA_ZeroPageX", &CPU::ORA, &CPU::ZPGX, 4 };
+    _opcodeTable[0x0D] = InstructionData{ "ORA_Absolute", &CPU::ORA, &CPU::ABS, 4 };
+    _opcodeTable[0x1D] = InstructionData{ "ORA_AbsoluteX", &CPU::ORA, &CPU::ABSX, 4 };
+    _opcodeTable[0x19] = InstructionData{ "ORA_AbsoluteY", &CPU::ORA, &CPU::ABSY, 4 };
+    _opcodeTable[0x01] = InstructionData{ "ORA_IndirectX", &CPU::ORA, &CPU::INDX, 6 };
+    _opcodeTable[0x11] = InstructionData{ "ORA_IndirectY", &CPU::ORA, &CPU::INDY, 5 };
+
+    // EOR
+    _opcodeTable[0x49] = InstructionData{ "EOR_Immediate", &CPU::EOR, &CPU::IMM, 2 };
+    _opcodeTable[0x45] = InstructionData{ "EOR_ZeroPage", &CPU::EOR, &CPU::ZPG, 3 };
+    _opcodeTable[0x55] = InstructionData{ "EOR_ZeroPageX", &CPU::EOR, &CPU::ZPGX, 4 };
+    _opcodeTable[0x4D] = InstructionData{ "EOR_Absolute", &CPU::EOR, &CPU::ABS, 4 };
+    _opcodeTable[0x5D] = InstructionData{ "EOR_AbsoluteX", &CPU::EOR, &CPU::ABSX, 4 };
+    _opcodeTable[0x59] = InstructionData{ "EOR_AbsoluteY", &CPU::EOR, &CPU::ABSY, 4 };
+    _opcodeTable[0x41] = InstructionData{ "EOR_IndirectX", &CPU::EOR, &CPU::INDX, 6 };
+    _opcodeTable[0x51] = InstructionData{ "EOR_IndirectY", &CPU::EOR, &CPU::INDY, 5 };
+
+    // BIT
+    _opcodeTable[0x24] = InstructionData{ "BIT_ZeroPage", &CPU::BIT, &CPU::ZPG, 3 };
+    _opcodeTable[0x2C] = InstructionData{ "BIT_Absolute", &CPU::BIT, &CPU::ABS, 4 };
 };
 
 // Getters
@@ -1532,4 +1558,66 @@ void CPU::BRK( const u16 address )
 
     // Set the interrupt disable flag
     SetFlags( InterruptDisable );
+}
+
+void CPU::ORA( const u16 address )
+{
+    /* @brief OR Memory with Accumulator
+     * N Z C I D V
+     * + + - - - -
+     *   Usage and cycles:
+     *   ORA Immediate: 09(2)
+     *   ORA Zero Page: 05(3)
+     *   ORA Zero Page X: 15(4)
+     *   ORA Absolute: 0D(4)
+     *   ORA Absolute X: 1D(4+)
+     *   ORA Absolute Y: 19(4+)
+     *   ORA Indirect X: 01(6)
+     *   ORA Indirect Y: 11(5+)
+     */
+
+    u8 const value = Read( address );
+    _a |= value;
+    SetZeroAndNegativeFlags( _a );
+}
+
+void CPU::EOR( const u16 address )
+{
+    /* @brief XOR Memory with Accumulator
+     * N Z C I D V
+     * + + - - - -
+     *   Usage and cycles:
+     *   EOR Immediate: 49(2)
+     *   EOR Zero Page: 45(3)
+     *   EOR Zero Page X: 55(4)
+     *   EOR Absolute: 4D(4)
+     *   EOR Absolute X: 5D(4+)
+     *   EOR Absolute Y: 59(4+)
+     *   EOR Indirect X: 41(6)
+     *   EOR Indirect Y: 51(5+)
+     */
+    u8 const value = Read( address );
+    _a ^= value;
+    SetZeroAndNegativeFlags( _a );
+}
+
+void CPU::BIT( const u16 address )
+{
+    /* @brief Test Bits in Memory with Accumulator
+     * Performs AND between accumulator and memory, but does not store the result
+     * N Z C I D V
+     * + + - - - +
+     *   Usage and cycles:
+     *   BIT Zero Page: 24(3)
+     *   BIT Absolute: 2C(4)
+     */
+
+    u8 value = Read( address );
+    SetZeroAndNegativeFlags( _a & value );
+
+    // Set overflow flag to bit 6 of value
+    ( value & 0b01000000 ) != 0 ? SetFlags( Status::Overflow ) : ClearFlags( Status::Overflow );
+
+    // Set negative flag to bit 7 of value
+    ( value & 0b10000000 ) != 0 ? SetFlags( Status::Negative ) : ClearFlags( Status::Negative );
 }
