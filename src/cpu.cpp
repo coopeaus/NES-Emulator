@@ -132,11 +132,14 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0xC4] = InstructionData{ "CPY_ZeroPage", &CPU::CPY, &CPU::ZPG, 3 };
     _opcodeTable[0xCC] = InstructionData{ "CPY_Absolute", &CPU::CPY, &CPU::ABS, 4 };
 
-    // PHA, PHP, PLA, PLP
+    // PHA, PHP, PLA, PLP, TSX, TXS
     _opcodeTable[0x48] = InstructionData{ "PHA_Implied", &CPU::PHA, &CPU::IMP, 3 };
     _opcodeTable[0x08] = InstructionData{ "PHP_Implied", &CPU::PHP, &CPU::IMP, 3 };
     _opcodeTable[0x68] = InstructionData{ "PLA_Implied", &CPU::PLA, &CPU::IMP, 4 };
     _opcodeTable[0x28] = InstructionData{ "PLP_Implied", &CPU::PLP, &CPU::IMP, 4 };
+    _opcodeTable[0xBA] = InstructionData{ "TSX_Implied", &CPU::TSX, &CPU::IMP, 2 };
+    _opcodeTable[0x9A] = InstructionData{ "TXS_Implied", &CPU::TXS, &CPU::IMP, 2 };
+
 };
 
 // Getters
@@ -1140,7 +1143,7 @@ void CPU::PLA( const u16 address )
     SetStackPointer( GetStackPointer() + 1 );
 
     // Get the acuumulator from the stack and set the zero and negative flags
-    _a = Read( 0x100 + GetStackPointer() );
+    SetAccumulator( Read( 0x100 + GetStackPointer() ) );
     SetZeroAndNegativeFlags( _a );
 }
 
@@ -1157,7 +1160,32 @@ void CPU::PLP( const u16 address )
     // Increment the stack pointer first
     SetStackPointer( GetStackPointer() + 1 );
 
-    _p = Read( 0x100 + GetStackPointer() );
+    SetStatusRegister( Read( 0x100 + GetStackPointer() ) );
     ClearFlags( Status::Break );
     SetFlags( Status::Unused );
+}
+
+void CPU::TSX( const u16 address )
+{
+    /* @brief Transfer Stack Pointer to X
+     * N Z C I D V
+     * + + - - - -
+     *   Usage and cycles:
+     *   TSX: BA(2)
+     */
+    (void) address;
+    SetXRegister(GetStackPointer());
+    SetZeroAndNegativeFlags( GetXRegister() );
+}
+
+void CPU::TXS( const u16 address )
+{
+    /* @brief Transfer X to Stack Pointer
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   TXS: 9A(2)
+     */
+    (void) address;
+    SetStackPointer( GetXRegister() );
 }

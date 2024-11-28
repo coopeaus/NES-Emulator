@@ -202,4 +202,6 @@ class CPU
     void PHP( u16 address );
     void PLA( u16 address );
     void PLP( u16 address );
+    void TSX( u16 address );
+    void TXS( u16 address );
 };

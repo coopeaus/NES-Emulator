@@ -514,7 +514,7 @@ CPU_TEST( 95, STA, ZeroPageX, "95.json" );
 CPU_TEST( 96, STX, ZeroPageY, "96.json" );
 /* CPU_TEST( 98, TYA, Implied, "98.json" ); */
 CPU_TEST( 99, STA, AbsoluteY, "99.json" );
-/* CPU_TEST( 9A, TXS, Implied, "9a.json" ); */
+CPU_TEST( 9A, TXS, Implied, "9a.json" );
 CPU_TEST( 9D, STA, AbsoluteX, "9d.json" );
 CPU_TEST( A1, LDA, IndirectX, "a1.json" );
 CPU_TEST( A0, LDY, Immediate, "a0.json" );
@@ -535,7 +535,7 @@ CPU_TEST( B5, LDA, ZeroPageX, "b5.json" );
 CPU_TEST( B6, LDX, ZeroPageY, "b6.json" );
 CPU_TEST( B8, CLV, Implied, "b8.json" );
 CPU_TEST( B9, LDA, AbsoluteY, "b9.json" );
-/* CPU_TEST( BA, TSX, Implied, "ba.json" ); */
+CPU_TEST( BA, TSX, Implied, "ba.json" );
 CPU_TEST( BC, LDY, AbsoluteX, "bc.json" );
 CPU_TEST( BD, LDA, AbsoluteX, "bd.json" );
 CPU_TEST( BE, LDX, AbsoluteY, "be.json" );
