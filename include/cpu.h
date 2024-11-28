@@ -122,6 +122,10 @@ class CPU
     // Compare helper
     void CompareAddressWithRegister( u16 address, u8 reg );
 
+    // Push/Pop helper
+    void               StackPush( u8 value );
+    [[nodiscard]] auto StackPop() -> u8;
+
     /*
     ################################################################
     ||                                                            ||

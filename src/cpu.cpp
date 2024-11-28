@@ -572,6 +572,26 @@ void CPU::CompareAddressWithRegister( u16 address, u8 reg )
     ( reg >= value ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
 }
 
+void CPU::StackPush( u8 value )
+{
+    /*
+     * @brief Push a value onto the stack
+     * The stack pointer is decremented and the value is written to the stack
+     * Stack addresses are between 0x0100 and 0x01FF
+     */
+    Write( 0x0100 + _s--, value );
+}
+
+u8 CPU::StackPop()
+{
+    /*
+     * @brief Pop a value from the stack
+     * The stack pointer is incremented and the value is read from the stack
+     * Stack addresses are between 0x0100 and 0x01FF
+     */
+    return Read( 0x0100 + ++_s );
+}
+
 /*
 ################################################################
 ||                                                            ||
