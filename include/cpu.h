@@ -38,7 +38,8 @@ class CPU
   private:
     friend class CPUTestFixture; // Sometimes used for testing private methods
 
-    Bus *_bus; // Pointer to the Bus class
+    Bus *_bus;         // Pointer to the Bus class
+    bool _imp = false; // Implicit addressing mode flag
 
     // Registers
     u16 _pc = 0x0000; // Program counter (PC)
@@ -133,18 +134,18 @@ class CPU
     ||                                                            ||
     ################################################################
     */
-    constexpr auto IMP() -> u16 { return 0; } // NOLINT
-    auto           IMM() -> u16;              // Immediate
-    auto           ZPG() -> u16;              // Zero Page
-    auto           ZPGX() -> u16;             // Zero Page X
-    auto           ZPGY() -> u16;             // Zero Page Y
-    auto           ABS() -> u16;              // Absolute
-    auto           ABSX() -> u16;             // Absolute X
-    auto           ABSY() -> u16;             // Absolute Y
-    auto           IND() -> u16;              // Indirect
-    auto           INDX() -> u16;             // Indirect X
-    auto           INDY() -> u16;             // Indirect Y
-    auto           REL() -> u16;              // Relative
+    auto IMP() -> u16;  // Implicit
+    auto IMM() -> u16;  // Immediate
+    auto ZPG() -> u16;  // Zero Page
+    auto ZPGX() -> u16; // Zero Page X
+    auto ZPGY() -> u16; // Zero Page Y
+    auto ABS() -> u16;  // Absolute
+    auto ABSX() -> u16; // Absolute X
+    auto ABSY() -> u16; // Absolute Y
+    auto IND() -> u16;  // Indirect
+    auto INDX() -> u16; // Indirect X
+    auto INDY() -> u16; // Indirect Y
+    auto REL() -> u16;  // Relative
     /*
     ################################################################
     ||                                                            ||
@@ -208,4 +209,11 @@ class CPU
     void PLP( u16 address );
     void TSX( u16 address );
     void TXS( u16 address );
+
+    // Jumps
+    void JMP( u16 address );
+    void JSR( u16 address );
+    void RTS( u16 address );
+    void RTI( u16 address );
+    void BRK( u16 address );
 };

@@ -139,6 +139,38 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0x28] = InstructionData{ "PLP_Implied", &CPU::PLP, &CPU::IMP, 4 };
     _opcodeTable[0xBA] = InstructionData{ "TSX_Implied", &CPU::TSX, &CPU::IMP, 2 };
     _opcodeTable[0x9A] = InstructionData{ "TXS_Implied", &CPU::TXS, &CPU::IMP, 2 };
+
+    // ASL, LSR
+    _opcodeTable[0x0A] = InstructionData{ "ASL_Implied", &CPU::ASL, &CPU::IMP, 2 };
+    _opcodeTable[0x06] = InstructionData{ "ASL_ZeroPage", &CPU::ASL, &CPU::ZPG, 5 };
+    _opcodeTable[0x16] = InstructionData{ "ASL_ZeroPageX", &CPU::ASL, &CPU::ZPGX, 6 };
+    _opcodeTable[0x0E] = InstructionData{ "ASL_Absolute", &CPU::ASL, &CPU::ABS, 6 };
+    _opcodeTable[0x1E] = InstructionData{ "ASL_AbsoluteX", &CPU::ASL, &CPU::ABSX, 7, false };
+    _opcodeTable[0x4A] = InstructionData{ "LSR_Implied", &CPU::LSR, &CPU::IMP, 2 };
+    _opcodeTable[0x46] = InstructionData{ "LSR_ZeroPage", &CPU::LSR, &CPU::ZPG, 5 };
+    _opcodeTable[0x56] = InstructionData{ "LSR_ZeroPageX", &CPU::LSR, &CPU::ZPGX, 6 };
+    _opcodeTable[0x4E] = InstructionData{ "LSR_Absolute", &CPU::LSR, &CPU::ABS, 6 };
+    _opcodeTable[0x5E] = InstructionData{ "LSR_AbsoluteX", &CPU::LSR, &CPU::ABSX, 7, false };
+
+    // ROL, ROR
+    _opcodeTable[0x2A] = InstructionData{ "ROL_Implied", &CPU::ROL, &CPU::IMP, 2 };
+    _opcodeTable[0x26] = InstructionData{ "ROL_ZeroPage", &CPU::ROL, &CPU::ZPG, 5 };
+    _opcodeTable[0x36] = InstructionData{ "ROL_ZeroPageX", &CPU::ROL, &CPU::ZPGX, 6 };
+    _opcodeTable[0x2E] = InstructionData{ "ROL_Absolute", &CPU::ROL, &CPU::ABS, 6 };
+    _opcodeTable[0x3E] = InstructionData{ "ROL_AbsoluteX", &CPU::ROL, &CPU::ABSX, 7, false };
+    _opcodeTable[0x6A] = InstructionData{ "ROR_Implied", &CPU::ROR, &CPU::IMP, 2 };
+    _opcodeTable[0x66] = InstructionData{ "ROR_ZeroPage", &CPU::ROR, &CPU::ZPG, 5 };
+    _opcodeTable[0x76] = InstructionData{ "ROR_ZeroPageX", &CPU::ROR, &CPU::ZPGX, 6 };
+    _opcodeTable[0x6E] = InstructionData{ "ROR_Absolute", &CPU::ROR, &CPU::ABS, 6 };
+    _opcodeTable[0x7E] = InstructionData{ "ROR_AbsoluteX", &CPU::ROR, &CPU::ABSX, 7, false };
+
+    // JMP JSR, RTS, RTI, BRK
+    _opcodeTable[0x4C] = InstructionData{ "JMP_Absolute", &CPU::JMP, &CPU::ABS, 3 };
+    _opcodeTable[0x6C] = InstructionData{ "JMP_Indirect", &CPU::JMP, &CPU::IND, 5 };
+    _opcodeTable[0x20] = InstructionData{ "JSR_Absolute", &CPU::JSR, &CPU::ABS, 6 };
+    _opcodeTable[0x60] = InstructionData{ "RTS_Implied", &CPU::RTS, &CPU::IMP, 6 };
+    _opcodeTable[0x40] = InstructionData{ "RTI_Implied", &CPU::RTI, &CPU::IMP, 6 };
+    _opcodeTable[0x00] = InstructionData{ "BRK_Implied", &CPU::BRK, &CPU::IMP, 7 };
 };
 
 // Getters
@@ -211,6 +243,9 @@ void CPU::Tick()
 
         // Add the number of cycles the instruction takes
         _cycles += instruction.cycles;
+
+        // Set the _imp flag to false
+        _imp = false;
     }
     else
     {
@@ -241,6 +276,16 @@ void CPU::Reset()
 ||                                                            ||
 ################################################################
 */
+
+auto CPU::IMP() -> u16
+{
+    /*
+     * @brief Implicit addressing mode
+     * This mode does not require an operand
+     */
+    _imp = true;
+    return 0;
+}
 
 auto CPU::IMM() -> u16
 {
@@ -1207,4 +1252,284 @@ void CPU::TXS( const u16 address )
      */
     (void) address;
     SetStackPointer( GetXRegister() );
+}
+
+void CPU::ASL( u16 address )
+{
+    /* @brief Arithmetic Shift Left
+     * N Z C I D V
+     * + + + - - -
+     *   Usage and cycles:
+     *   ASL Accumulator: 0A(2)
+     *   ASL Zero Page: 06(5)
+     *   ASL Zero Page X: 16(6)
+     *   ASL Absolute: 0E(6)
+     *   ASL Absolute X: 1E(7)
+     */
+
+    if ( _imp )
+    {
+        u8 accumulator = GetAccumulator();
+        // Set the carry flag if bit 7 is set
+        ( accumulator & 0b10000000 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
+
+        // Shift the accumulator left by one
+        accumulator <<= 1;
+
+        // Set the zero and negative flags
+        SetZeroAndNegativeFlags( accumulator );
+
+        // Set the new accumulator value
+        SetAccumulator( accumulator );
+    }
+    else
+    {
+        u8 const value = Read( address );
+
+        // Set the carry flag if bit 7 is set
+        ( value & 0b10000000 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
+
+        u8 const result = value << 1;
+
+        // Set the zero and negative flags
+        SetZeroAndNegativeFlags( result );
+
+        // Write the result back to memory
+        Write( address, result );
+    }
+}
+
+void CPU::LSR( u16 address )
+{
+    /* @brief Logical Shift Right
+     * N Z C I D V
+     * + + + - - -
+     *   Usage and cycles:
+     *   LSR Accumulator: 4A(2)
+     *   LSR Zero Page: 46(5)
+     *   LSR Zero Page X: 56(6)
+     *   LSR Absolute: 4E(6)
+     *   LSR Absolute X: 5E(7)
+     */
+
+    if ( _imp )
+    {
+        u8 accumulator = GetAccumulator();
+        // Set the carry flag if bit 0 is set
+        ( accumulator & 0b00000001 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
+
+        // Shift the accumulator right by one
+        accumulator >>= 1;
+
+        // Set the zero and negative flags
+        SetZeroAndNegativeFlags( accumulator );
+
+        // Set the new accumulator value
+        SetAccumulator( accumulator );
+    }
+    else
+    {
+        u8 const value = Read( address );
+
+        // Set the carry flag if bit 0 is set
+        ( value & 0b00000001 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
+
+        u8 const result = value >> 1;
+
+        // Set the zero and negative flags
+        SetZeroAndNegativeFlags( result );
+
+        // Write the result back to memory
+        Write( address, result );
+    }
+}
+
+void CPU::ROL( u16 address )
+{
+    /* @brief Rotate Left
+     * N Z C I D V
+     * + + + - - -
+     *   Usage and cycles:
+     *   ROL Accumulator: 2A(2)
+     *   ROL Zero Page: 26(5)
+     *   ROL Zero Page X: 36(6)
+     *   ROL Absolute: 2E(6)
+     *   ROL Absolute X: 3E(7)
+     */
+
+    const u8 carry = IsFlagSet( Status::Carry ) ? 1 : 0;
+    if ( _imp )
+    {
+        u8 accumulator = GetAccumulator();
+
+        // Set the carry flag if bit 7 is set
+        ( accumulator & 0b10000000 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
+
+        // Shift the accumulator left by one
+        accumulator <<= 1;
+
+        // Add the carry to the accumulator
+        accumulator |= carry;
+
+        // Set the zero and negative flags
+        SetZeroAndNegativeFlags( accumulator );
+
+        // Set the new accumulator value
+        SetAccumulator( accumulator );
+    }
+    else
+    {
+        u8 const value = Read( address );
+
+        // Set the carry flag if bit 7 is set
+        ( value & 0b10000000 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
+
+        u8 result = value << 1;
+        result |= carry;
+
+        // Set the zero and negative flags
+        SetZeroAndNegativeFlags( result );
+
+        // Write the result back to memory
+        Write( address, result );
+    }
+}
+
+void CPU::ROR( u16 address )
+{
+    /* @brief Rotate Right
+     * N Z C I D V
+     * + + + - - -
+     *   Usage and cycles:
+     *   ROR Accumulator: 6A(2)
+     *   ROR Zero Page: 66(5)
+     *   ROR Zero Page X: 76(6)
+     *   ROR Absolute: 6E(6)
+     *   ROR Absolute X: 7E(7)
+     */
+
+    const u8 carry = IsFlagSet( Status::Carry ) ? 1 : 0;
+
+    if ( _imp )
+    { // implied mode
+        u8 accumulator = GetAccumulator();
+
+        // Set the carry flag if bit 0 is set
+        ( accumulator & 0b00000001 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
+
+        // Shift the accumulator right by one
+        accumulator >>= 1;
+
+        // Add the carry to the accumulator
+        accumulator |= carry << 7;
+
+        // Set the zero and negative flags
+        SetZeroAndNegativeFlags( accumulator );
+
+        // Set the new accumulator value
+        SetAccumulator( accumulator );
+    }
+    else
+    { // Memory mode
+        u8 const value = Read( address );
+
+        // Set the carry flag if bit 0 is set
+        ( value & 0b00000001 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
+
+        u8 result = value >> 1;
+        result |= carry << 7;
+
+        // Set the zero and negative flags
+        SetZeroAndNegativeFlags( result );
+
+        // Write the result back to memory
+        Write( address, result );
+    }
+}
+
+void CPU::JMP( u16 address )
+{
+    /* @brief Jump to New Location
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   JMP Absolute: 4C(3)
+     *   JMP Indirect: 6C(5)
+     */
+    _pc = address;
+}
+
+void CPU::JSR( u16 address )
+{
+    /* @brief Jump to Sub Routine, Saving Return Address
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   JSR Absolute: 20(6)
+     */
+    u16 const return_address = _pc - 1;
+    StackPush( ( return_address >> 8 ) & 0xFF );
+    StackPush( return_address & 0xFF );
+    _pc = address;
+}
+
+void CPU::RTS( const u16 address )
+{
+    /* @brief Return from Subroutine
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   RTS: 60(6)
+     */
+    (void) address;
+    u16 low = StackPop();
+    u16 high = StackPop();
+    _pc = ( high << 8 ) | low;
+    _pc++;
+}
+
+void CPU::RTI( const u16 address )
+{
+    /* @brief Return from Interrupt
+     * N Z C I D V
+     * from stack
+     *   Usage and cycles:
+     *   RTI: 40(6)
+     */
+    (void) address;
+    u8 status = StackPop();
+
+    // Ignore the break flag and ensure the unused flag (bit 5) is set
+    _p = ( status & ~Break ) | Unused;
+
+    u16 low = StackPop();
+    u16 high = StackPop();
+    _pc = ( high << 8 ) | low;
+}
+
+void CPU::BRK( const u16 address )
+{
+    /* @brief Force Interrupt
+     * N Z C I D V
+     * from stack
+     *   Usage and cycles:
+     *   BRK: 00(7)
+     */
+    (void) address;
+    _pc++; // padding byte
+
+    // Push pc to the stack
+    StackPush( _pc >> 8 );
+    StackPush( _pc & 0x00FF );
+
+    // Push status with break and unused flag set (ignored when popped)
+    StackPush( _p | Break | Unused );
+
+    // Set PC to the value at the interrupt vector (0xFFFE)
+    u16 low = Read( 0xFFFE );
+    u16 high = Read( 0xFFFF );
+    _pc = ( high << 8 ) | low;
+
+    // Set the interrupt disable flag
+    SetFlags( InterruptDisable );
 }
