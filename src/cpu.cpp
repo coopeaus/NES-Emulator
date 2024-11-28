@@ -1482,8 +1482,8 @@ void CPU::RTS( const u16 address )
      *   RTS: 60(6)
      */
     (void) address;
-    u16 low = StackPop();
-    u16 high = StackPop();
+    u16 const low = StackPop();
+    u16 const high = StackPop();
     _pc = ( high << 8 ) | low;
     _pc++;
 }
@@ -1497,13 +1497,13 @@ void CPU::RTI( const u16 address )
      *   RTI: 40(6)
      */
     (void) address;
-    u8 status = StackPop();
+    u8 const status = StackPop();
 
     // Ignore the break flag and ensure the unused flag (bit 5) is set
     _p = ( status & ~Break ) | Unused;
 
-    u16 low = StackPop();
-    u16 high = StackPop();
+    u16 const low = StackPop();
+    u16 const high = StackPop();
     _pc = ( high << 8 ) | low;
 }
 
@@ -1526,8 +1526,8 @@ void CPU::BRK( const u16 address )
     StackPush( _p | Break | Unused );
 
     // Set PC to the value at the interrupt vector (0xFFFE)
-    u16 low = Read( 0xFFFE );
-    u16 high = Read( 0xFFFF );
+    u16 const low = Read( 0xFFFE );
+    u16 const high = Read( 0xFFFF );
     _pc = ( high << 8 ) | low;
 
     // Set the interrupt disable flag
