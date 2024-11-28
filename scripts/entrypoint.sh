@@ -77,7 +77,7 @@ case "$1" in
     # Run clang-tidy on both .cpp and .h files, and check for issues
     echo "Running clang-tidy..."
     for file in $(find src/ include/ -name '*.cpp' -o -name '*.h'); do
-      clang-tidy -p "$BUILD_DIR" -header-filter='.*' "$file" || lint_failures=1
+      clang-tidy -p "$BUILD_DIR" -header-filter='.*' "$file" -fix || lint_failures=1
     done
 
     # Report failure if clang-tidy found issues
