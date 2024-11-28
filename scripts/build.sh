@@ -21,12 +21,6 @@ cd "$(dirname "$0")/.." || exit 1
 
 echo "Starting build process..."
 
-# Remove the build directory if it exists (to avoid cache conflicts)
-if [ -d "$BUILD_DIR" ]; then
-    echo "Removing existing build directory: $BUILD_DIR"
-    rm -rf "$BUILD_DIR"
-fi
-
 # Create the build directory
 echo "Creating build directory: $BUILD_DIR"
 mkdir -p "$BUILD_DIR"
