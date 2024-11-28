@@ -1612,7 +1612,7 @@ void CPU::BIT( const u16 address )
      *   BIT Absolute: 2C(4)
      */
 
-    u8 value = Read( address );
+    u8 const value = Read( address );
     SetZeroAndNegativeFlags( _a & value );
 
     // Set overflow flag to bit 6 of value
