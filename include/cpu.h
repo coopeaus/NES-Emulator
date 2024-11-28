@@ -190,4 +190,16 @@ class CPU
     void CMP( u16 address );
     void CPX( u16 address );
     void CPY( u16 address );
+
+    // Shift
+    void ASL( u16 address );
+    void LSR( u16 address );
+    void ROL( u16 address );
+    void ROR( u16 address );
+
+    // Stack
+    void PHA( u16 address );
+    void PHP( u16 address );
+    void PLA( u16 address );
+    void PLP( u16 address );
 };

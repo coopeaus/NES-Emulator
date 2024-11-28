@@ -430,7 +430,7 @@ To run all tests:
 /* CPU_TEST( 01, ORA, IndirectX, "01.json" ); */
 /* CPU_TEST( 05, ORA, ZeroPage, "05.json" ); */
 /* CPU_TEST( 06, ASL, ZeroPage, "06.json" ); */
-/* CPU_TEST( 08, PHP, Implied, "08.json" ); */
+CPU_TEST( 08, PHP, Implied, "08.json" );
 /* CPU_TEST( 09, ORA, Immediate, "09.json" ); */
 /* CPU_TEST( 0A, ASL, Accumulator, "0a.json" ); */
 /* CPU_TEST( 0D, ORA, Absolute, "0d.json" ); */
@@ -448,7 +448,7 @@ CPU_TEST( 18, CLC, Implied, "18.json" );
 /* CPU_TEST( 24, BIT, ZeroPage, "24.json" ); */
 /* CPU_TEST( 25, AND, ZeroPage, "25.json" ); */
 /* CPU_TEST( 26, ROL, ZeroPage, "26.json" ); */
-/* CPU_TEST( 28, PLP, Implied, "28.json" ); */
+CPU_TEST( 28, PLP, Implied, "28.json" );
 /* CPU_TEST( 29, AND, Immediate, "29.json" ); */
 /* CPU_TEST( 2A, ROL, Accumulator, "2a.json" ); */
 /* CPU_TEST( 2C, BIT, Absolute, "2c.json" ); */
@@ -466,7 +466,7 @@ CPU_TEST( 38, SEC, Implied, "38.json" );
 /* CPU_TEST( 41, EOR, IndirectX, "41.json" ); */
 /* CPU_TEST( 45, EOR, ZeroPage, "45.json" ); */
 /* CPU_TEST( 46, LSR, ZeroPage, "46.json" ); */
-/* CPU_TEST( 48, PHA, Implied, "48.json" ); */
+CPU_TEST( 48, PHA, Implied, "48.json" );
 /* CPU_TEST( 49, EOR, Immediate, "49.json" ); */
 /* CPU_TEST( 4A, LSR, Accumulator, "4a.json" ); */
 /* CPU_TEST( 4C, JMP, Absolute, "4c.json" ); */
@@ -484,7 +484,7 @@ CPU_TEST( 58, CLI, Implied, "58.json" );
 CPU_TEST( 61, ADC, IndirectX, "61.json" );
 CPU_TEST( 65, ADC, ZeroPage, "65.json" );
 /* CPU_TEST( 66, ROR, ZeroPage, "66.json" ); */
-/* CPU_TEST( 68, PLA, Implied, "68.json" ); */
+CPU_TEST( 68, PLA, Implied, "68.json" );
 CPU_TEST( 69, ADC, Immediate, "69.json" );
 /* CPU_TEST( 6A, ROR, Accumulator, "6a.json" ); */
 /* CPU_TEST( 6C, JMP, Indirect, "6c.json" ); */
