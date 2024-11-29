@@ -163,6 +163,12 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0x76] = InstructionData{ "ROR_ZeroPageX", &CPU::ROR, &CPU::ZPGX, 6 };
     _opcodeTable[0x6E] = InstructionData{ "ROR_Absolute", &CPU::ROR, &CPU::ABS, 6 };
     _opcodeTable[0x7E] = InstructionData{ "ROR_AbsoluteX", &CPU::ROR, &CPU::ABSX, 7, false };
+
+    // Transfer
+    _opcodeTable[0xAA] = InstructionData{ "TAX_Implied", &CPU::TAX, &CPU::IMP, 2 };
+    _opcodeTable[0x8A] = InstructionData{ "TXA_Implied", &CPU::TXA, &CPU::IMP, 2 };
+    _opcodeTable[0xA8] = InstructionData{ "TAY_Implied", &CPU::TAY, &CPU::IMP, 2 };
+    _opcodeTable[0x98] = InstructionData{ "TYA_Implied", &CPU::TYA, &CPU::IMP, 2 };
 };
 
 // Getters
@@ -1417,4 +1423,56 @@ void CPU::ROR( u16 address )
         // Write the result back to memory
         Write( address, result );
     }
+}
+
+void CPU::TAX( const u16 address )
+{
+    /* @brief Transfer Accumulator to X Register
+     * N Z C I D V
+     * + + - - - -
+     *   Usage and cycles:
+     *   TAX: AA(2)
+     */
+    (void) address;
+    SetXRegister( GetAccumulator() );
+    SetZeroAndNegativeFlags( GetXRegister() );
+}
+
+void CPU::TXA( const u16 address )
+{
+    /* @brief Transfer X Register to Accumulator
+     * N Z C I D V
+     * + + - - - -
+     *   Usage and cycles:
+     *   TXA: 8A(2)
+     */
+    (void) address;
+    SetAccumulator( GetXRegister() );
+    SetZeroAndNegativeFlags( GetAccumulator() );
+}
+
+void CPU::TAY( const u16 address )
+{
+    /* @brief Transfer Accumulator to Y Register
+     * N Z C I D V
+     * + + - - - -
+     *   Usage and cycles:
+     *   TAY: A8(2)
+     */
+    (void) address;
+    SetYRegister( GetAccumulator() );
+    SetZeroAndNegativeFlags( GetYRegister() );
+}
+
+void CPU::TYA( const u16 address )
+{
+    /* @brief Transfer Y Register to Accumulator
+     * N Z C I D V
+     * + + - - - -
+     *   Usage and cycles:
+     *   TYA: 98(2)
+     */
+    (void) address;
+    SetAccumulator( GetYRegister() );
+    SetZeroAndNegativeFlags( GetAccumulator() );
 }

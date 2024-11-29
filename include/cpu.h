@@ -205,4 +205,10 @@ class CPU
     void PLP( u16 address );
     void TSX( u16 address );
     void TXS( u16 address );
+
+    // Transfer
+    void TAX( u16 address );
+    void TXA( u16 address );
+    void TAY( u16 address );
+    void TYA( u16 address );
 };
