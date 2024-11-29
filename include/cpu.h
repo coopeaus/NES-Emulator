@@ -222,4 +222,10 @@ class CPU
     void EOR( u16 address );
     void ORA( u16 address );
     void BIT( u16 address );
+
+    // Transfer
+    void TAX( u16 address );
+    void TXA( u16 address );
+    void TAY( u16 address );
+    void TYA( u16 address );
 };
