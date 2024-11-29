@@ -16,7 +16,7 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     */
 
     // NOP
-    _opcodeTable[0xEA] = InstructionData{"NOP_Implied", &CPU::NOP, &CPU::IMP, 2};
+    _opcodeTable[0xEA] = InstructionData{ "NOP_Implied", &CPU::NOP, &CPU::IMP, 2 };
 
     // LDA
     _opcodeTable[0xA9] = InstructionData{ "LDA_Immediate", &CPU::LDA, &CPU::IMM, 2 };
@@ -700,7 +700,7 @@ void CPU::NOP( u16 address )
      * Usage and cycles:
      * NOP Implied: EA(2)
      */
-    (void)address;
+    (void) address;
 }
 
 void CPU::LDA( u16 address )
