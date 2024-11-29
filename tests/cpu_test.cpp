@@ -31,7 +31,7 @@ class CPUTestFixture : public ::testing::Test
 
     void                      RunTestCase( const json &testCase );
     void                      LoadStateFromJson( const json &jsonData, const std::string &state );
-    [[nodiscard]] std::string GetCPUStateString( const json        &jsonData,
+    [[nodiscard]] std::string GetCPUStateString( const json &       jsonData,
                                                  const std::string &state ) const;
 
     // Expose private methods
@@ -700,7 +700,7 @@ void CPUTestFixture::LoadStateFromJson( const json &jsonData, const std::string 
     }
 }
 
-std::string CPUTestFixture::GetCPUStateString( const json        &jsonData,
+std::string CPUTestFixture::GetCPUStateString( const json &       jsonData,
                                                const std::string &state ) const
 {
     /*
@@ -742,11 +742,9 @@ std::string CPUTestFixture::GetCPUStateString( const json        &jsonData,
            << std::setw( value_width ) << "ACTUAL" << '\n';
 
     // Function to format and print a line
-    auto print_line =
-        [&]( const std::string &label, const uint64_t expected, const uint64_t actual )
-    {
-        auto to_hex_decimal_string = []( const uint64_t value, const int width )
-        {
+    auto print_line = [&]( const std::string &label, const uint64_t expected,
+                           const uint64_t actual ) {
+        auto to_hex_decimal_string = []( const uint64_t value, const int width ) {
             std::stringstream str_stream;
             str_stream << std::hex << std::uppercase << std::setw( width ) << std::setfill( '0' )
                        << value << " (" << std::dec << value << ")";
@@ -798,8 +796,7 @@ std::string CPUTestFixture::GetCPUStateString( const json        &jsonData,
         uint8_t const  actual_value = cpu.Read( address );
 
         // Helper lambda to format values as "HEX (DECIMAL)"
-        auto format_value = []( const uint8_t value )
-        {
+        auto format_value = []( const uint8_t value ) {
             std::ostringstream oss;
             oss << std::hex << std::uppercase << std::setw( 2 ) << std::setfill( '0' )
                 << static_cast<int>( value ) << " (" << std::dec << static_cast<int>( value )
