@@ -15,6 +15,9 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     ################################################################
     */
 
+    // NOP
+    _opcodeTable[0xEA] = InstructionData{ "NOP_Implied", &CPU::NOP, &CPU::IMP, 2 };
+
     // LDA
     _opcodeTable[0xA9] = InstructionData{ "LDA_Immediate", &CPU::LDA, &CPU::IMM, 2 };
     _opcodeTable[0xA5] = InstructionData{ "LDA_ZeroPage", &CPU::LDA, &CPU::ZPG, 3 };
@@ -172,7 +175,15 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0x40] = InstructionData{ "RTI_Implied", &CPU::RTI, &CPU::IMP, 6 };
     _opcodeTable[0x00] = InstructionData{ "BRK_Implied", &CPU::BRK, &CPU::IMP, 7 };
 
-    // TODO: AND
+    // AND
+    _opcodeTable[0x29] = InstructionData{ "AND_Immediate", &CPU::AND, &CPU::IMM, 2 };
+    _opcodeTable[0x25] = InstructionData{ "AND_ZeroPage", &CPU::AND, &CPU::ZPG, 3 };
+    _opcodeTable[0x35] = InstructionData{ "AND_ZeroPageX", &CPU::AND, &CPU::ZPGX, 4 };
+    _opcodeTable[0x2D] = InstructionData{ "AND_Absolute", &CPU::AND, &CPU::ABS, 4 };
+    _opcodeTable[0x3D] = InstructionData{ "AND_AbsoluteX", &CPU::AND, &CPU::ABSX, 4 };
+    _opcodeTable[0x39] = InstructionData{ "AND_AbsoluteY", &CPU::AND, &CPU::ABSY, 4 };
+    _opcodeTable[0x21] = InstructionData{ "AND_IndirectX", &CPU::AND, &CPU::INDX, 6 };
+    _opcodeTable[0x31] = InstructionData{ "AND_IndirectY", &CPU::AND, &CPU::INDY, 5 };
 
     // ORA
     _opcodeTable[0x09] = InstructionData{ "ORA_Immediate", &CPU::ORA, &CPU::IMM, 2 };
@@ -616,7 +627,7 @@ void CPU::BranchOnStatus( u16 offsetAddress, u8 flag, bool isSet )
         // Set _pc to the offset address, calculated by REL addressing mode
         _pc = offsetAddress;
 
-        // +1 cyles because we're taking a branch
+        // +1 cycles because we're taking a branch
         _cycles++;
 
         // Add another cycle if page boundary is crossed
@@ -679,6 +690,18 @@ u8 CPU::StackPop()
 * All complicated or reusable logic should be defined in the helper
 * methods.
 */
+
+void CPU::NOP( u16 address )
+{
+    /*
+     * @brief No operation
+     * N Z C I D V
+     * - - - - - -
+     * Usage and cycles:
+     * NOP Implied: EA(2)
+     */
+    (void) address;
+}
 
 void CPU::LDA( u16 address )
 {
@@ -1238,7 +1261,7 @@ void CPU::PLA( const u16 address )
     // Increment the stack pointer first
     SetStackPointer( GetStackPointer() + 1 );
 
-    // Get the acuumulator from the stack and set the zero and negative flags
+    // Get the accumulator from the stack and set the zero and negative flags
     SetAccumulator( Read( 0x100 + GetStackPointer() ) );
     SetZeroAndNegativeFlags( _a );
 }
@@ -1564,6 +1587,26 @@ void CPU::BRK( const u16 address )
 
     // Set the interrupt disable flag
     SetFlags( InterruptDisable );
+}
+
+void CPU::AND( u16 address )
+{
+    /* @brief XOR Memory with Accumulator
+     * N Z C I D V
+     * + + - - - -
+     *   Usage and cycles:
+     *   AND Immediate: 29(2)
+     *   AND Zero Page: 25(3)
+     *   AND Zero Page X: 35(4)
+     *   AND Absolute: 2D(4)
+     *   AND Absolute X: 3D(4+)
+     *   AND Absolute Y: 39(4+)
+     *   AND Indirect X: 21(6)
+     *   AND Indirect Y: 31(5+)
+     */
+    u8 const value = Read( address );
+    _a &= value;
+    SetZeroAndNegativeFlags( _a );
 }
 
 void CPU::ORA( const u16 address )
