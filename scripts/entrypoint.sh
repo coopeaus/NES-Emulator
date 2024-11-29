@@ -75,10 +75,27 @@ case "$1" in
     report_failure "$format_failures" "clang-format" "formatting"
 
     # Run clang-tidy on both .cpp and .h files, and check for issues
-    echo "Running clang-tidy..."
-    for file in $(find src/ include/ -name '*.cpp' -o -name '*.h'); do
-      clang-tidy -p "$BUILD_DIR" -header-filter='.*' "$file" -fix || lint_failures=1
-    done
+    if [ -z "$CI" ]; then
+      # In local mode, automatically fix linting issues
+      echo "Running clang-tidy locally and fixing issues..."
+      for file in $(find src/ include/ -name '*.cpp' -o -name '*.h'); do
+        clang-tidy -p "$BUILD_DIR" -header-filter='.*' -fix "$file" || lint_failures=1
+      done
+    else
+      # In CI, check linting without fixing
+      echo "Running clang-tidy in CI mode (check only)..."
+      for file in $(find src/ include/ -name '*.cpp' -o -name '*.h'); do
+        clang-tidy -p "$BUILD_DIR" -header-filter='.*' "$file" || lint_failures=1
+      done
+
+      # Report failure if linting issues were found
+      if [ "$lint_failures" -ne 0 ]; then
+        echo "clang-tidy detected issues. Please fix the linting issues. You can fix linting automatically using the instructions in the README"
+        exit 1
+      else
+        echo "clang-tidy passed with no issues."
+      fi
+    fi
 
     # Report failure if clang-tidy found issues
     report_failure "$lint_failures" "clang-tidy" "linting"
