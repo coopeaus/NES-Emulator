@@ -123,6 +123,10 @@ class CPU
     // Compare helper
     void CompareAddressWithRegister( u16 address, u8 reg );
 
+    // Push/Pop helper
+    void               StackPush( u8 value );
+    [[nodiscard]] auto StackPop() -> u8;
+
     /*
     ################################################################
     ||                                                            ||
@@ -205,6 +209,19 @@ class CPU
     void PLP( u16 address );
     void TSX( u16 address );
     void TXS( u16 address );
+
+    // Jumps
+    void JMP( u16 address );
+    void JSR( u16 address );
+    void RTS( u16 address );
+    void RTI( u16 address );
+    void BRK( u16 address );
+
+    // Bitwise
+    void AND( u16 address );
+    void EOR( u16 address );
+    void ORA( u16 address );
+    void BIT( u16 address );
 
     // Transfer
     void TAX( u16 address );

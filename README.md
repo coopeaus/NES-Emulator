@@ -40,17 +40,14 @@ find src/ -name '*.cpp' -exec clang-format -i {} \; # Apply formatting
 Linting and formatting with Docker
 
 ```bash
-# B
+# Build the docker image
 docker build -t project-linter -f docker/alpine-Dockerfile .
 
-# Linting/formatting checks (this will apply formatting when run locally)
-docker run -v $(pwd):/workspace -w /workspace project-linter lint
-```
-
-Building with Docker
-
-```bash
+# Build the project
 docker run -v $(pwd):/workspace -w /workspace project-linter build
+
+# Linting/formatting checks (this will apply fixes when run locally)
+docker run -v $(pwd):/workspace -w /workspace project-linter lint
 ```
 
 Docker build information is stored in a separate build_container directory. The build.sh
@@ -59,6 +56,7 @@ script will determine which directory to use based on the environment.
 ## Testing
 
 Testing locally
+
 ```bash
 # From the root directory:
 # To run all tests
@@ -66,9 +64,11 @@ Testing locally
 
 # To run an individual test, add the test name as an argument
 ./scripts/test.sh "CPUTestFixture.IMM" # Immediate addressing test
+./scripts/test.sh "CPUTestFixture.x29" # Test opcode 29, AND Immediate
 ```
 
 Testing with Docker
+
 ```bash
 # Ensure that the container is built, and that you have build the project as described
 # in the above section.
@@ -79,3 +79,4 @@ docker run -v $(pwd):/workspace -w /workspace project-linter test
 # To run an individual test, add the test name as an argument
 docker run -v $(pwd):/workspace -w /workspace project-linter test  "CPUTestFixture.IMM" # Immediate addressing test
 ```
+
