@@ -154,6 +154,9 @@ class CPU
     ################################################################
       */
 
+    // NOP
+    void NOP( u16 address );
+
     // Load/Store
     void LDA( u16 address );
     void LDX( u16 address );
