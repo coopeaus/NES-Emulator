@@ -1,20 +1,20 @@
 Checks: >
-  -*,
-  bugprone-*,
-  -bugprone-easily-swappable-parameters,
-  cppcoreguidelines-*,
-  modernize-*,
-  -modernize-use-auto,
-  -modernize-use-trailing-return-type,
-  performance-*,
-  readability-*,
-  misc-*,
-  -cppcoreguidelines-avoid-magic-numbers,
-  -readability-magic-numbers,
-  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
-  -cppcoreguidelines-pro-bounds-constant-array-index,
-  readability-identifier-naming
-
+  -*
+  ,bugprone-*
+  ,-bugprone-easily-swappable-parameters
+  ,cppcoreguidelines-*
+  ,modernize-*
+  ,-modernize-use-auto
+  ,-modernize-use-trailing-return-type
+  ,performance-*
+  ,readability-*
+  ,misc-*
+  ,-cppcoreguidelines-avoid-magic-numbers
+  ,-readability-magic-numbers
+  ,-cppcoreguidelines-pro-bounds-array-to-pointer-decay
+  ,-cppcoreguidelines-pro-bounds-constant-array-index
+  ,readability-identifier-naming
+  ,-readability-avoid-nested-conditional-operator
 CheckOptions:
   # Standardized naming conventions:
   - key: readability-identifier-naming.ClassCase
