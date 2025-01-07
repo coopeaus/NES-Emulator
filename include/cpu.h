@@ -231,4 +231,13 @@ class CPU
     void TXA( u16 address );
     void TAY( u16 address );
     void TYA( u16 address );
+
+    /*
+    ################################################
+    ||                                            ||
+    ||               Illegal Opcodes              ||
+    ||                                            ||
+    ################################################
+    */
+    void JAM( u16 address );
 };
