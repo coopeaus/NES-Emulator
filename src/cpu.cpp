@@ -6,7 +6,6 @@
 #include <cstddef>
 #include <iostream>
 #include <stdexcept>
-// #include <string>
 
 CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
 {
