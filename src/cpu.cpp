@@ -350,7 +350,7 @@ std::string CPU::DisassembleAtPC() // NOLINT
     }
 
     // Split name and addressing mode
-    size_t            split_pos = name_addrmode.find( '_' );
+    size_t const      split_pos = name_addrmode.find( '_' );
     std::string       name = name_addrmode.substr( 0, split_pos );
     std::string const addr_mode = name_addrmode.substr( split_pos + 1 );
 
