@@ -2,7 +2,10 @@
 
 #include "bus.h"
 #include "cpu.h"
+#include "utils.h"
+#include <cstddef>
 #include <iostream>
+#include <stdexcept>
 
 CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
 {
@@ -276,6 +279,8 @@ u8 CPU::Fetch()
  */
 void CPU::Tick()
 {
+    // debug, print the instruction
+    // std::cout << DisassembleAtPC() << '\n';
 
     // Fetch the next opcode and increment the program counter
     u8 const opcode = Fetch();
@@ -323,6 +328,113 @@ void CPU::Reset()
     // located at 0xFFFC and 0xFFFD. If no cartridge, we'll assume these values are
     // initialized to 0x00
     _pc = Read( 0xFFFD ) << 8 | Read( 0xFFFC );
+}
+
+std::string CPU::DisassembleAtPC() // NOLINT
+{
+    /*
+     * @brief Disassembles the instruction at the current program counter
+     * Useful to understand what the current instruction is doing
+     */
+    std::string output;
+
+    // Fetch the instruction name and address mode from the opcode table
+    std::string const &name_addrmode = _opcodeTable[Read( _pc )].name;
+    if ( name_addrmode.empty() )
+    {
+        std::cerr << "Attempted to grab from a non existing table entry at PC: "
+                  << utils::toHex( _pc, 4 ) << '\n';
+        std::cerr << "Opcode: " << utils::toHex( Read( _pc ), 2 ) << '\n';
+        // This is only used for debugging, so we can throw an exception
+        throw std::runtime_error( "Invalid opcode" );
+    }
+
+    // Split name and addressing mode
+    size_t const      split_pos = name_addrmode.find( '_' );
+    std::string       name = name_addrmode.substr( 0, split_pos );
+    std::string const addr_mode = name_addrmode.substr( split_pos + 1 );
+
+    // Program counter address
+    // i.e. FFFF
+    output += utils::toHex( _pc, 4 ) + ":  ";
+
+    // Hex instruction
+    // i.e. 4C F5 C5, this is the hex instruction
+    u8 const    bytes = _opcodeTable[Read( _pc )].bytes;
+    std::string hex_instruction;
+    for ( u8 i = 0; i < bytes; i++ )
+    {
+        hex_instruction += utils::toHex( Read( _pc + i ), 2 ) + ' ';
+    }
+
+    // formatting, the instruction hex_instruction will be 9 characters long, with space padding to
+    // the right. This makes sure the hex line is the same length for all instructions
+    hex_instruction += std::string( 9 - ( bytes * 3 ), ' ' );
+    output += hex_instruction;
+
+    // If name starts with a "*", it is an illegal opcode
+    ( name[0] == '*' ) ? output += "*" + name.substr( 1 ) + " " : output += name + " ";
+
+    // Addressing mode and operand
+    u8 value = 0x00;
+    u8 low = 0x00;
+    u8 high = 0x00;
+    if ( addr_mode == "Implied" )
+    {
+        // Nothing to prefix
+    }
+    else if ( addr_mode == "Immediate" )
+    {
+        value = Read( _pc + 1 );
+        output += "#$" + utils::toHex( value, 2 );
+    }
+    else if ( addr_mode == "ZeroPage" || addr_mode == "ZeroPageX" || addr_mode == "ZeroPageY" )
+    {
+        value = Read( _pc + 1 );
+        output += "$" + utils::toHex( value, 2 );
+
+        ( addr_mode == "ZeroPageX" )   ? output += ", X"
+        : ( addr_mode == "ZeroPageY" ) ? output += ", Y"
+                                       : output += "";
+    }
+    else if ( addr_mode == "Absolute" || addr_mode == "AbsoluteX" || addr_mode == "AbsoluteY" )
+    {
+        low = Read( _pc + 1 );
+        high = Read( _pc + 2 );
+        u16 const address = ( high << 8 ) | low;
+
+        output += "$" + utils::toHex( address, 4 );
+        ( addr_mode == "AbsoluteX" )   ? output += ", X"
+        : ( addr_mode == "AbsoluteY" ) ? output += ", Y"
+                                       : output += "";
+    }
+    else if ( addr_mode == "Indirect" )
+    {
+        low = Read( _pc + 1 );
+        high = Read( _pc + 2 );
+        u16 const address = ( high << 8 ) | low;
+        output += "($" + utils::toHex( address, 4 ) + ")";
+    }
+    else if ( addr_mode == "IndirectX" || addr_mode == "IndirectY" )
+    {
+        value = Read( _pc + 1 );
+        ( addr_mode == "IndirectX" ) ? output += "($" + utils::toHex( value, 2 ) + ", X)"
+                                     : output += "($" + utils::toHex( value, 2 ) + "), Y";
+    }
+    else if ( addr_mode == "Relative" )
+    {
+        value = Read( _pc + 1 );
+        s8 const  offset = static_cast<s8>( value );
+        u16 const address = _pc + 2 + offset;
+
+        output += "$" + utils::toHex( value, 2 ) + " [$" + utils::toHex( address, 4 ) + "]";
+    }
+    else
+    {
+        // Houston.. yet again
+        throw std::runtime_error( "Unknown addressing mode: " + addr_mode );
+    }
+    return output;
 }
 
 /*
@@ -514,7 +626,6 @@ auto CPU::REL() -> u16
      * The next byte is a signed offset
      * Sets the program counter between -128 and +127 bytes from the current location
      */
-    using s8 = std::int8_t;
     s8 const  offset = static_cast<s8>( Read( _pc++ ) );
     u16 const address = _pc + offset;
     return address;
