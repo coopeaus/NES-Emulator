@@ -705,7 +705,7 @@ u8 CPU::StackPop()
 * methods.
 */
 
-void CPU::NOP( u16 address )
+void CPU::NOP( u16 address ) // NOLINT
 {
     /*
      * @brief No operation
