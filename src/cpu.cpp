@@ -214,6 +214,20 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0x8A] = InstructionData{ "TXA_Implied", &CPU::TXA, &CPU::IMP, 2 };
     _opcodeTable[0xA8] = InstructionData{ "TAY_Implied", &CPU::TAY, &CPU::IMP, 2 };
     _opcodeTable[0x98] = InstructionData{ "TYA_Implied", &CPU::TYA, &CPU::IMP, 2 };
+
+    // Illegal - JAM (02, 12, 22, 32, 45, 52, 62, 72, 92, B2, D2, F2)
+    _opcodeTable[0x02] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3 };
+    _opcodeTable[0x12] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3 };
+    _opcodeTable[0x22] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3 };
+    _opcodeTable[0x32] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3 };
+    _opcodeTable[0x42] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3 };
+    _opcodeTable[0x52] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3 };
+    _opcodeTable[0x62] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3 };
+    _opcodeTable[0x72] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3 };
+    _opcodeTable[0x92] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3 };
+    _opcodeTable[0xB2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3 };
+    _opcodeTable[0xD2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3 };
+    _opcodeTable[0xF2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3 };
 };
 
 // Getters
@@ -691,7 +705,7 @@ u8 CPU::StackPop()
 * methods.
 */
 
-void CPU::NOP( u16 address )
+void CPU::NOP( u16 address ) // NOLINT
 {
     /*
      * @brief No operation
@@ -1721,4 +1735,22 @@ void CPU::TYA( const u16 address )
     (void) address;
     SetAccumulator( GetYRegister() );
     SetZeroAndNegativeFlags( GetAccumulator() );
+}
+
+/*
+################################################################
+||                                                            ||
+||                      Illegal Opcodes                       ||
+||                                                            ||
+################################################################
+*/
+void CPU::JAM( const u16 address ) // NOLINT
+{
+    /* @brief Illegal Opcode
+     * Freezes the hardware, usually never called
+     * Tom Harte tests include these, though, so for completeness, we'll add them
+     */
+    (void) address;
+    // Do nothing (undo the pc increment)
+    _pc--;
 }
