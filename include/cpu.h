@@ -7,7 +7,9 @@
 // Aliases for integer types
 using u8 = uint8_t;
 using u16 = uint16_t;
+using u32 = uint32_t;
 using u64 = uint64_t;
+using s8 = int8_t;
 
 // Forward declaration for reads and writes
 class Bus;
@@ -58,6 +60,7 @@ class CPU
         void ( CPU::*instructionMethod )( u16 ); // Pointer to the instruction helper method
         u16 ( CPU::*addressingModeMethod )();    // Pointer to the address mode helper method
         u8 cycles;                               // Number of cycles the instruction takes
+        u8 bytes;                                // Number of bytes the instruction takes
         // Some instructions take an extra cycle if a page boundary is crossed. However, in some
         // cases the extra cycle is not taken if the operation is a read. This will be set
         // selectively for a handful of opcodes, but otherwise will be set to true by default
@@ -85,6 +88,9 @@ class CPU
     // Read/write methods
     [[nodiscard]] auto Read( u16 address ) const -> u8;
     void               Write( u16 address, u8 data ) const;
+
+    // Debugging
+    std::string DisassembleAtPC();
 
     /*
     ################################################################
