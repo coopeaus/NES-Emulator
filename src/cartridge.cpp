@@ -146,3 +146,198 @@ Cartridge::Cartridge( const std::string &file_path )
 }
 
 /*
+################################
+||                            ||
+||   Read / Write Interface   ||
+||                            ||
+################################
+*/
+[[nodiscard]] u8 Cartridge::Read( u16 address )
+{
+    /** @brief Reads from the cartridge
+     * This function is called by the CPU and PPU to read data from the cartridge
+     */
+
+    // From the PPU
+    if ( address >= 0x0000 && address <= 0x1FFF )
+    {
+        return ReadChrROM( address );
+    }
+
+    // From the CPU
+    if ( address >= 0x4020 && address <= 0x5FFF )
+    {
+        return ReadExpansionROM( address );
+    }
+    if ( address >= 0x6000 && address <= 0x7FFF )
+    {
+        return ReadPrgRAM( address );
+    }
+    if ( address >= 0x8000 && address <= 0xFFFF )
+    {
+        return ReadPrgROM( address );
+    }
+    return 0xFF;
+}
+
+void Cartridge::Write( u16 address, u8 data )
+{
+    /** @brief Writes to the cartridge
+     * This function is called by the CPU and PPU to write data to the cartridge
+     */
+    // From the PPU
+    if ( address >= 0x0000 && address <= 0x1FFF )
+    {
+        WriteChrRAM( address, data );
+        return;
+    }
+
+    // From the CPU
+    if ( address >= 0x4020 && address <= 0x5FFF )
+    {
+        WriteExpansionRAM( address, data );
+        return;
+    }
+    if ( address >= 0x6000 && address <= 0x7FFF )
+    {
+        WritePrgRAM( address, data );
+        return;
+    }
+    if ( address >= 0x8000 && address <= 0xFFFF )
+    {
+        WritePrgROM( address, data );
+        return;
+    }
+}
+
+/*
+################################
+||                            ||
+||       Reads Internal       ||
+||                            ||
+################################
+*/
+
+[[nodiscard]] u8 Cartridge::ReadPrgROM( u16 address )
+{
+    /** @brief Reads from the PRG ROM, ranges from 0x8000 to 0xFFFF
+     * PRG ROM is the program ROM, which contains the game code
+     */
+    if ( address >= 0x8000 && address <= 0xFFFF )
+    {
+        return _prg_rom[_mapper->TranslateCPUAddress( address )];
+    }
+    return 0xFF;
+}
+
+[[nodiscard]] u8 Cartridge::ReadChrROM( u16 address )
+{
+    /** @brief Reads from the CHR ROM, ranges from 0x0000 to 0x1FFF
+     * CHR ROM is the character ROM, which contains the graphics data for the PPU
+     */
+    if ( address >= 0x0000 && address <= 0x1FFF )
+    {
+        return _chr_rom[_mapper->TranslatePPUAddress( address )];
+    }
+    return 0xFF;
+}
+
+[[nodiscard]] u8 Cartridge::ReadPrgRAM( u16 address )
+{
+    /** @brief Reads from the PRG RAM, ranges from 0x6000 to 0x7FFF
+     * This is usually used for save data, but any game that uses PRG RAM
+     * Not every game uses PRG RAM. In iNes 2.0, presence of PRG RAM is indicated by
+     * the 8th bit in the header. However, to keep compatibility with iNes 1.0, whether
+     * a game uses PRG RAM or not will be determined by the mapper.
+     */
+    if ( address >= 0x6000 && address <= 0x7FFF && _mapper->HasPrgRam() )
+    {
+        return _prg_ram[address - 0x6000];
+    }
+    return 0xFF;
+}
+
+[[nodiscard]] u8 Cartridge::ReadExpansionROM( u16 address )
+{
+    /** @brief Reads from the expansion ROM, ranges from 0x4020 to 0x5FFF
+     * Expansion ROM is rarely used, but when it is, it's used for additional program data
+     */
+    if ( address >= 0x4020 && address <= 0x5FFF && _mapper->HasExpansionRom() )
+    {
+        return _expansion_memory[address - 0x4020];
+    }
+    return 0xFF;
+}
+
+/*
+################################
+||                            ||
+||       Write Internal       ||
+||                            ||
+################################
+*/
+void Cartridge::WritePrgROM( u16 address, u8 data )
+{
+    /** @brief Writes to the PRG ROM, ranges from 0x8000 to 0xFFFF
+     * PRG ROM is ready-only. However, many mappers use writes to the ROM
+     * to trigger bank switching.
+     */
+    if ( address >= 0x8000 && address <= 0xFFFF )
+    {
+        _mapper->HandleCPUWrite( address, data );
+    }
+}
+
+void Cartridge::WriteChrRAM( u16 address, u8 data )
+{
+    /** @brief Writes to the CHR memory (used for graphics), mapped to the PPU address space
+     *
+     * CHR RAM resides in the cartridge and is used by the PPU for graphics
+     * This function is called by the PPU, not the CPU, to write data to CHR-RAM when the game
+     * uses CHR-RAM instead of CHR-ROM
+     *
+     * The CPU cannot access CHR memory directly. It writes to the PPU registers ($2006 and
+     * $2007), and the PPU will call this method.
+     *
+     * Address Translation:
+     * - PPU provdes an address in its memory space ($0000 - $1FFF)
+     * - The assigned mapper handles the translation, and writes to the CHR-RAM array
+     *
+     * Write Logic:
+     * - If the cartridge uses CHR-RAM, write work as described above
+     * - If the cartridge uses CHR-ROM, writes are ignored
+     * - It's either one or the other, never both.
+     * - Byte 5 provides the number of CHR-ROM banks. If 0, then that's a signal that a game
+     * uses CHR RAM
+     */
+    u16 const translated_address = _mapper->TranslatePPUAddress( address );
+    if ( _uses_chr_ram && address >= 0x0000 && address <= 0x1FFF )
+    {
+        _chr_ram[translated_address] = data;
+    }
+}
+
+void Cartridge::WritePrgRAM( u16 address, u8 data )
+{
+    /** @brief Writes to the PRG RAM, ranges from 0x6000 to 0x7FFF
+     * This is usually used for save data, but any game that uses PRG RAM can use this
+     * Not every game uses PRG RAM. In iNes 2.0, presence of PRG RAM is indicated by
+     * the 8th bit in the header. However, to keep compatibility with iNes 1.0, whether
+     * a game uses PRG RAM or not will be determined by the mapper.
+     */
+    if ( address >= 0x6000 && address <= 0x7FFF && _mapper->HasPrgRam() )
+    {
+        _prg_ram[address - 0x6000] = data;
+    }
+}
+
+void Cartridge::WriteExpansionRAM( u16 address, u8 data )
+{
+    /** @brief Writes to the expansion ROM, ranges from 0x4020 to 0x5FFF
+     * Expansion ROM is rarely used, but when it is, it's used for additional program data
+     */
+    if ( address >= 0x4020 && address <= 0x5FFF && _mapper->HasExpansionRam() )
+    {
+        _expansion_memory[address - 0x4020] = data;
+    }
+}
