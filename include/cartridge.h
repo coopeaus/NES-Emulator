@@ -2,6 +2,7 @@
 
 #include "cpu.h"
 #include "mappers/mapper-base.h"
+#include <array>
 #include <string>
 #include <vector>
 #include <memory>

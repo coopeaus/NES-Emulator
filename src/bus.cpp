@@ -1,6 +1,8 @@
 #include "bus.h"
 #include "cartridge.h"
 #include <iostream>
+#include <memory>
+#include <utility>
 
 // Constructor to initialize the bus with a flat memory model
 Bus::Bus( const bool use_flat_memory ) : _use_flat_memory( use_flat_memory )
