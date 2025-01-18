@@ -1,5 +1,8 @@
 #include "bus.h"
+#include "cartridge.h"
 #include <iostream>
+#include <memory>
+#include <utility>
 
 // Constructor to initialize the bus with a flat memory model
 Bus::Bus( const bool use_flat_memory ) : _use_flat_memory( use_flat_memory )
@@ -7,9 +10,6 @@ Bus::Bus( const bool use_flat_memory ) : _use_flat_memory( use_flat_memory )
     _ram.fill( 0 );
     _ppu_memory.fill( 0 );
     _apu_io_memory.fill( 0 );
-    _expansion_rom_memory.fill( 0 );
-    _sram_memory.fill( 0 );
-    _prg_rom_memory.fill( 0 );
 }
 
 u8 Bus::Read( const u16 address ) const
@@ -41,30 +41,10 @@ u8 Bus::Read( const u16 address ) const
         return _apu_io_memory[address & 0x001F];
     }
 
-    // Expansion ROM: 0x4020 - 0x5FFF (if applicable)
-    if ( address >= 0x4020 && address <= 0x5FFF )
+    // 4020 and up is cartridge territory
+    if ( address >= 0x4020 && address <= 0xFFFF )
     {
-        // This will be read from the cartridge, it's rarely used
-        // Normally, if there's no cartridge, the convention is to return 0xFF
-        // For now, this memory will be read from a temp private member of bus
-        return _expansion_rom_memory[address - 0x4020];
-    }
-
-    // SRAM (Save RAM): 0x6000 - 0x7FFF
-    if ( address >= 0x6000 && address <= 0x7FFF )
-    {
-        // This will be read from the cartridge, if present
-        // It represents battery-backed save data. Returns 0xFF if no cartridge
-        // For now, this memory will be read from a temp private member of bus
-        return _sram_memory[address - 0x6000];
-    }
-
-    // PRG ROM: 0x8000 - 0xFFFF
-    if ( address >= 0x8000 && address <= 0xFFFF )
-    {
-        // This is PRG ROM, where the game code is stored
-        // For now, this memory will be read from a temp private member of bus
-        return _prg_rom_memory[address - 0x8000];
+        return _cartridge->Read( address );
     }
 
     // Unhandled address ranges return open bus value
@@ -102,29 +82,18 @@ void Bus::Write( const u16 address, const u8 data )
         return;
     }
 
-    // Expansion ROM: 0x4020 - 0x5FFF (if applicable)
-    if ( address >= 0x4020 && address <= 0x5FFF )
+    // 4020 and up is cartridge territory
+    if ( address >= 0x4020 && address <= 0xFFFF )
     {
-        _expansion_rom_memory[address - 0x4020] = data; // temp
+        _cartridge->Write( address, data );
         return;
     }
-
-    // SRAM (Save RAM): 0x6000 - 0x7FFF
-    if ( address >= 0x6000 && address <= 0x7FFF )
-    {
-        _sram_memory[address - 0x6000] = data; // temp
-        return;
-    }
-
-    // PRG ROM: 0x8000 - 0xFFFF (read only)
-    if ( address >= 0x8000 && address <= 0xFFFF )
-    {
-        std::cout << "Attempted write to read-only PRG ROM address: " << std::hex << address
-                  << "\n";
-        return;
-    }
-
     // Unhandled address ranges
     // Optionally log a warning or ignore
     std::cout << "Unhandled write to address: " << std::hex << address << "\n";
+}
+
+void Bus::LoadCartridge( std::shared_ptr<Cartridge> cartridge )
+{
+    _cartridge = std::move( cartridge );
 }

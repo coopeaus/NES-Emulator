@@ -108,6 +108,7 @@ CTestCostData.txt
 bin/
 obj/
 fceux/
+tests/output/
 
 # Ignore any other common or custom build directories
 /build/
