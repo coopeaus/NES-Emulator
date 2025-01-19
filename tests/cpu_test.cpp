@@ -613,33 +613,36 @@ CPU_TEST( D2, JAM, Implied, "d2.json" );
 CPU_TEST( F2, JAM, Implied, "f2.json" );
 
 /* Illegal NOP */
-// CPU_TEST( 1A, NOP, Implied, "1a.json" );
-// CPU_TEST( 3A, NOP, Implied, "3a.json" );
-// CPU_TEST( 5A, NOP, Implied, "5a.json" );
-// CPU_TEST( 7A, NOP, Implied, "7a.json" );
-// CPU_TEST( DA, NOP, Implied, "da.json" );
-// CPU_TEST( FA, NOP, Implied, "fa.json" );
-// CPU_TEST( 80, NOP, Immediate, "80.json" );
-// CPU_TEST( 82, NOP, Immediate, "82.json" );
-// CPU_TEST( 89, NOP, Immediate, "89.json" );
-// CPU_TEST( C2, NOP, Immediate, "c2.json" );
-// CPU_TEST( E2, NOP, Immediate, "e2.json" );
-// CPU_TEST( 04, NOP, ZeroPage, "04.json" );
-// CPU_TEST( 44, NOP, ZeroPage, "44.json" );
-// CPU_TEST( 64, NOP, ZeroPage, "64.json" );
-// CPU_TEST( 14, NOP, ZeroPageX, "14.json" );
-// CPU_TEST( 34, NOP, ZeroPageX, "34.json" );
-// CPU_TEST( 54, NOP, ZeroPageX, "54.json" );
-// CPU_TEST( 74, NOP, ZeroPageX, "74.json" );
-// CPU_TEST( D4, NOP, ZeroPageX, "d4.json" );
-// CPU_TEST( F4, NOP, ZeroPageX, "f4.json" );
-// CPU_TEST( 0C, NOP, Absolute, "0c.json" );
-// CPU_TEST( 1C, NOP, AbsoluteX, "1c.json" );
-// CPU_TEST( 3C, NOP, AbsoluteX, "3c.json" );
-// CPU_TEST( 5C, NOP, AbsoluteX, "5c.json" );
-// CPU_TEST( 7C, NOP, AbsoluteX, "7c.json" );
-// CPU_TEST( DC, NOP, AbsoluteX, "dc.json" );
-// CPU_TEST( FC, NOP, AbsoluteX, "fc.json" );
+CPU_TEST( 1A, NOP, Implied, "1a.json" );
+CPU_TEST( 3A, NOP, Implied, "3a.json" );
+CPU_TEST( 5A, NOP, Implied, "5a.json" );
+CPU_TEST( 7A, NOP, Implied, "7a.json" );
+CPU_TEST( DA, NOP, Implied, "da.json" );
+CPU_TEST( FA, NOP, Implied, "fa.json" );
+CPU_TEST( 80, NOP, Immediate, "80.json" );
+CPU_TEST( 82, NOP, Immediate, "82.json" );
+CPU_TEST( 89, NOP, Immediate, "89.json" );
+CPU_TEST( C2, NOP, Immediate, "c2.json" );
+CPU_TEST( E2, NOP, Immediate, "e2.json" );
+CPU_TEST( 04, NOP, ZeroPage, "04.json" );
+CPU_TEST( 44, NOP, ZeroPage, "44.json" );
+CPU_TEST( 64, NOP, ZeroPage, "64.json" );
+CPU_TEST( 14, NOP, ZeroPageX, "14.json" );
+CPU_TEST( 34, NOP, ZeroPageX, "34.json" );
+CPU_TEST( 54, NOP, ZeroPageX, "54.json" );
+CPU_TEST( 74, NOP, ZeroPageX, "74.json" );
+CPU_TEST( D4, NOP, ZeroPageX, "d4.json" );
+CPU_TEST( F4, NOP, ZeroPageX, "f4.json" );
+CPU_TEST( 0C, NOP, Absolute, "0c.json" );
+CPU_TEST( 1C, NOP, AbsoluteX, "1c.json" );
+CPU_TEST( 3C, NOP, AbsoluteX, "3c.json" );
+CPU_TEST( 5C, NOP, AbsoluteX, "5c.json" );
+CPU_TEST( 7C, NOP, AbsoluteX, "7c.json" );
+CPU_TEST( DC, NOP, AbsoluteX, "dc.json" );
+CPU_TEST( FC, NOP, AbsoluteX, "fc.json" );
+
+/* Illegal SBC */
+CPU_TEST( EB, SBC, Immediate, "eb.json" );
 
 /* Illegal SL0 */
 // CPU_TEST( 07, SLO, ZeroPage, "07.json" );
@@ -678,10 +681,10 @@ CPU_TEST( F2, JAM, Implied, "f2.json" );
 // CPU_TEST( 73, RRA, IndirectY, "73.json" );
 
 /* Illegal SAX */
-// CPU_TEST( 87, SAX, ZeroPage, "87.json" );
-// CPU_TEST( 97, SAX, ZeroPageY, "97.json" );
-// CPU_TEST( 8F, SAX, Absolute, "8f.json" );
-// CPU_TEST( 83, SAX, IndirectX, "83.json" );
+CPU_TEST( 87, SAX, ZeroPage, "87.json" );
+CPU_TEST( 97, SAX, ZeroPageY, "97.json" );
+CPU_TEST( 8F, SAX, Absolute, "8f.json" );
+CPU_TEST( 83, SAX, IndirectX, "83.json" );
 
 /* Illegal LAX */
 // CPU_TEST( A7, LAX, ZeroPage, "a7.json" );

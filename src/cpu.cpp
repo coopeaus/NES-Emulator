@@ -20,6 +20,35 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     // NOP
     _opcodeTable[0xEA] = InstructionData{ "NOP_Implied", &CPU::NOP, &CPU::IMP, 2, 1 };
 
+    // Illegal - NOP
+    _opcodeTable[0x1A] = InstructionData{ "NOP_Implied", &CPU::NOP, &CPU::IMP, 2, 1 };
+    _opcodeTable[0x3A] = InstructionData{ "NOP_Implied", &CPU::NOP, &CPU::IMP, 2, 1 };
+    _opcodeTable[0x5A] = InstructionData{ "NOP_Implied", &CPU::NOP, &CPU::IMP, 2, 1 };
+    _opcodeTable[0x7A] = InstructionData{ "NOP_Implied", &CPU::NOP, &CPU::IMP, 2, 1 };
+    _opcodeTable[0xDA] = InstructionData{ "NOP_Implied", &CPU::NOP, &CPU::IMP, 2, 1 };
+    _opcodeTable[0xFA] = InstructionData{ "NOP_Implied", &CPU::NOP, &CPU::IMP, 2, 1 };
+    _opcodeTable[0x80] = InstructionData{ "NOP_Immediate", &CPU::NOP, &CPU::IMM, 2, 2 };
+    _opcodeTable[0x82] = InstructionData{ "NOP_Immediate", &CPU::NOP, &CPU::IMM, 2, 2 };
+    _opcodeTable[0x89] = InstructionData{ "NOP_Immediate", &CPU::NOP, &CPU::IMM, 2, 2 };
+    _opcodeTable[0xC2] = InstructionData{ "NOP_Immediate", &CPU::NOP, &CPU::IMM, 2, 2 };
+    _opcodeTable[0xE2] = InstructionData{ "NOP_Immediate", &CPU::NOP, &CPU::IMM, 2, 2 };
+    _opcodeTable[0x04] = InstructionData{ "NOP_ZeroPage", &CPU::NOP, &CPU::ZPG, 3, 2 };
+    _opcodeTable[0x44] = InstructionData{ "NOP_ZeroPage", &CPU::NOP, &CPU::ZPG, 3, 2 };
+    _opcodeTable[0x64] = InstructionData{ "NOP_ZeroPage", &CPU::NOP, &CPU::ZPG, 3, 2 };
+    _opcodeTable[0x14] = InstructionData{ "NOP_ZeroPageX", &CPU::NOP, &CPU::ZPGX, 4, 2 };
+    _opcodeTable[0x34] = InstructionData{ "NOP_ZeroPageX", &CPU::NOP, &CPU::ZPGX, 4, 2 };
+    _opcodeTable[0x54] = InstructionData{ "NOP_ZeroPageX", &CPU::NOP, &CPU::ZPGX, 4, 2 };
+    _opcodeTable[0x74] = InstructionData{ "NOP_ZeroPageX", &CPU::NOP, &CPU::ZPGX, 4, 2 };
+    _opcodeTable[0xD4] = InstructionData{ "NOP_ZeroPageX", &CPU::NOP, &CPU::ZPGX, 4, 2 };
+    _opcodeTable[0xF4] = InstructionData{ "NOP_ZeroPageX", &CPU::NOP, &CPU::ZPGX, 4, 2 };
+    _opcodeTable[0x0C] = InstructionData{ "NOP_Absolute", &CPU::NOP, &CPU::ABS, 4, 3 };
+    _opcodeTable[0x1C] = InstructionData{ "NOP_AbsoluteX", &CPU::NOP, &CPU::ABSX, 4, 3 };
+    _opcodeTable[0x3C] = InstructionData{ "NOP_AbsoluteX", &CPU::NOP, &CPU::ABSX, 4, 3 };
+    _opcodeTable[0x5C] = InstructionData{ "NOP_AbsoluteX", &CPU::NOP, &CPU::ABSX, 4, 3 };
+    _opcodeTable[0x7C] = InstructionData{ "NOP_AbsoluteX", &CPU::NOP, &CPU::ABSX, 4, 3 };
+    _opcodeTable[0xDC] = InstructionData{ "NOP_AbsoluteX", &CPU::NOP, &CPU::ABSX, 4, 3 };
+    _opcodeTable[0xFC] = InstructionData{ "NOP_AbsoluteX", &CPU::NOP, &CPU::ABSX, 4, 3 };
+
     // LDA
     _opcodeTable[0xA9] = InstructionData{ "LDA_Immediate", &CPU::LDA, &CPU::IMM, 2, 2 };
     _opcodeTable[0xA5] = InstructionData{ "LDA_ZeroPage", &CPU::LDA, &CPU::ZPG, 3, 2 };
@@ -82,6 +111,9 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0xF9] = InstructionData{ "SBC_AbsoluteY", &CPU::SBC, &CPU::ABSY, 4, 3 };
     _opcodeTable[0xE1] = InstructionData{ "SBC_IndirectX", &CPU::SBC, &CPU::INDX, 6, 2 };
     _opcodeTable[0xF1] = InstructionData{ "SBC_IndirectY", &CPU::SBC, &CPU::INDY, 5, 2 };
+
+    // Illegal - SBC
+    _opcodeTable[0xEB] = InstructionData{ "SBC_Immediate", &CPU::SBC, &CPU::IMM, 2, 2 };
 
     // INC
     _opcodeTable[0xE6] = InstructionData{ "INC_ZeroPage", &CPU::INC, &CPU::ZPG, 5, 2 };
@@ -230,6 +262,12 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0xB2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
     _opcodeTable[0xD2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
     _opcodeTable[0xF2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
+
+    // Illegal - SAX (87, 97, 8F, 83)
+    _opcodeTable[0x87] = InstructionData{ "SAX_ZeroPage", &CPU::SAX, &CPU::ZPG, 3, 2 };
+    _opcodeTable[0x97] = InstructionData{ "SAX_ZeroPageY", &CPU::SAX, &CPU::ZPGY, 4, 2 };
+    _opcodeTable[0x8F] = InstructionData{ "SAX_Absolute", &CPU::SAX, &CPU::ABS, 4, 3 };
+    _opcodeTable[0x83] = InstructionData{ "SAX_IndirectX", &CPU::SAX, &CPU::INDX, 6, 2 };
 };
 
 // Getters
@@ -823,6 +861,35 @@ void CPU::NOP( u16 address ) // NOLINT
      * - - - - - -
      * Usage and cycles:
      * NOP Implied: EA(2)
+     *
+     * --  Illegal  --
+     * NOP Implied: 1A(2)
+     * NOP Implied: 3A(2)
+     * NOP Implied: 5A(2)
+     * NOP Implied: 7A(2)
+     * NOP Implied: DA(2)
+     * NOP Implied: FA(2)
+     * NOP Immediate: 80(2)
+     * NOP Immediate: 82(2)
+     * NOP Immediate: 89(2)
+     * NOP Immediate: C2(2)
+     * NOP Immediate: E2(2)
+     * NOP Zero Page: 04(3)
+     * NOP Zero Page: 44(3)
+     * NOP Zero Page: 64(3)
+     * NOP Zero Page X: 14(4)
+     * NOP Zero Page X: 34(4)
+     * NOP Zero Page X: 54(4)
+     * NOP Zero Page X: 74(4)
+     * NOP Zero Page X: D4(4)
+     * NOP Zero Page X: F4(4)
+     * NOP Absolute: 0C(4)
+     * NOP Absolute: 1C(4)
+     * NOP Absolute: 3C(4)
+     * NOP Absolute: 5C(4)
+     * NOP Absolute: 7C(4)
+     * NOP Absolute: DC(4)
+     * NOP Absolute: FC(4)
      */
     (void) address;
 }
@@ -989,6 +1056,8 @@ void CPU::SBC( u16 address )
      * SBC Absolute Y: F9(4+)
      * SBC Indirect X: E1(6)
      * SBC Indirect Y: F1(5+)
+     * --  Illegal  --
+     * SBC Immediate: EB(2)
      */
 
     u8 const value = Read( address );
@@ -996,6 +1065,13 @@ void CPU::SBC( u16 address )
     // Store diff in a 16-bit variable to check for overflow
     u8 const  carry = IsFlagSet( Status::Carry ) ? 0 : 1;
     u16 const diff = _a - value - carry;
+    // u8 const result = static_cast<u8>(diff & 0xFF);  // Extract lower 8 bits
+
+    // std::cout << "SBC Debug - A: " << std::hex << (int)_a
+    //           << ", Value: " << (int)value
+    //           << ", Carry: " << (int)carry
+    //           << ", Diff: " << (int)diff
+    //           << ", Result: " << (int)result << "\n";
 
     // Carry flag exists in the high byte?
     ( diff < 0x100 ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
@@ -1863,4 +1939,18 @@ void CPU::JAM( const u16 address ) // NOLINT
     (void) address;
     // Do nothing (undo the pc increment)
     _pc--;
+}
+
+void CPU::SAX( const u16 address ) // NOLINT
+{
+    /* @brief Illegal opcode: combines STX and AND
+     * N Z C I D V
+     * - - - - - -
+     *   Usage and cycles:
+     *   SAX Zero Page: 87(3)
+     *   SAX Zero Page Y: 97(4)
+     *   SAX Indirect X: 83(6)
+     *   SAX Absolute: 8F(4)
+     */
+    Write( address, _a & _x );
 }
