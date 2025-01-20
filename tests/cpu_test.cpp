@@ -663,22 +663,22 @@ CPU_TEST( EB, SBC, Immediate, "eb.json" );
 // CPU_TEST( 33, RLA, IndirectY, "33.json" );
 
 /* Illegal SRE */
-// CPU_TEST( 47, SRE, ZeroPage, "47.json" );
-// CPU_TEST( 57, SRE, ZeroPageX, "57.json" );
-// CPU_TEST( 4F, SRE, Absolute, "4f.json" );
-// CPU_TEST( 5F, SRE, AbsoluteX, "5f.json" );
-// CPU_TEST( 5B, SRE, AbsoluteY, "5b.json" );
-// CPU_TEST( 43, SRE, IndirectX, "43.json" );
-// CPU_TEST( 53, SRE, IndirectY, "53.json" );
+CPU_TEST( 47, SRE, ZeroPage, "47.json" );
+CPU_TEST( 57, SRE, ZeroPageX, "57.json" );
+CPU_TEST( 4F, SRE, Absolute, "4f.json" );
+CPU_TEST( 5F, SRE, AbsoluteX, "5f.json" );
+CPU_TEST( 5B, SRE, AbsoluteY, "5b.json" );
+CPU_TEST( 43, SRE, IndirectX, "43.json" );
+CPU_TEST( 53, SRE, IndirectY, "53.json" );
 
 /* Illegal RRA */
-// CPU_TEST( 67, RRA, ZeroPage, "67.json" );
-// CPU_TEST( 77, RRA, ZeroPageX, "77.json" );
-// CPU_TEST( 6F, RRA, Absolute, "6f.json" );
-// CPU_TEST( 7F, RRA, AbsoluteX, "7f.json" );
-// CPU_TEST( 7B, RRA, AbsoluteY, "7b.json" );
-// CPU_TEST( 63, RRA, IndirectX, "63.json" );
-// CPU_TEST( 73, RRA, IndirectY, "73.json" );
+CPU_TEST( 67, RRA, ZeroPage, "67.json" );
+CPU_TEST( 77, RRA, ZeroPageX, "77.json" );
+CPU_TEST( 6F, RRA, Absolute, "6f.json" );
+CPU_TEST( 7F, RRA, AbsoluteX, "7f.json" );
+CPU_TEST( 7B, RRA, AbsoluteY, "7b.json" );
+CPU_TEST( 63, RRA, IndirectX, "63.json" );
+CPU_TEST( 73, RRA, IndirectY, "73.json" );
 
 /* Illegal SAX */
 CPU_TEST( 87, SAX, ZeroPage, "87.json" );
@@ -716,10 +716,10 @@ CPU_TEST( B3, LAX, IndirectY, "b3.json" );
 // CPU_TEST( F3, ISC, IndirectY, "f3.json" );
 
 /* Illegal ALR */
-// CPU_TEST( 4B, ALR, Immediate, "4b.json" );
+CPU_TEST( 4B, ALR, Immediate, "4b.json" );
 
 /* Illegal ARR */
-// CPU_TEST( 6B, ARR, Immediate, "6b.json" );
+CPU_TEST( 6B, ARR, Immediate, "6b.json" );
 
 /*
 ################################################################
