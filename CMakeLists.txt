@@ -47,6 +47,7 @@ add_executable(emu
         src/bus.cpp
         src/cartridge.cpp
         src/mappers/mapper0.cpp
+        src/mappers/mapper1.cpp
 )
 
 # Apply compiler options to emu target
@@ -153,6 +154,8 @@ add_executable(cpu_test
         src/bus.cpp
         src/cartridge.cpp
         src/mappers/mapper0.cpp
+        src/mappers/mapper1.cpp
+        src/utils.cpp
 )
 
 add_executable(rom_test
@@ -161,6 +164,8 @@ add_executable(rom_test
   src/bus.cpp
   src/cartridge.cpp
   src/mappers/mapper0.cpp
+  src/mappers/mapper1.cpp
+  src/utils.cpp
 )
 # add other test executables here
 

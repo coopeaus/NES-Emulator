@@ -45,7 +45,7 @@ class CPU
     void               Write( u16 address, u8 data ) const;
 
     // Debugging
-    std::string DisassembleAtPC();
+    std::string LogLineAtPC( bool verbose = true );
 
   private:
     friend class CPUTestFixture; // Sometimes used for testing private methods
@@ -54,14 +54,13 @@ class CPU
     bool _imp = false; // Implicit addressing mode flag
 
     // Registers
-    u16 _pc = 0x0000; // Program counter (PC)
-    u8  _a = 0x00;    // Accumulator register (A)
-    u8  _x = 0x00;    // X register
-    u8  _y = 0x00;    // Y register
-    u8  _s = 0xFD;    // Stack pointer (SP)
-    u8  _p =
-        0x00 | Unused; // Status register (P), per the specs, the unused flag should always be set
-    u64 _cycles = 0;   // Number of cycles
+    u16 _pc = 0x0000;       // Program counter (PC)
+    u8  _a = 0x00;          // Accumulator register (A)
+    u8  _x = 0x00;          // X register
+    u8  _y = 0x00;          // Y register
+    u8  _s = 0xFD;          // Stack pointer (SP)
+    u8  _p = 0x00 | Unused; // Status register (P), per the specs, the unused flag should always be set
+    u64 _cycles = 0;        // Number of cycles
 
     // Instruction data
     struct InstructionData

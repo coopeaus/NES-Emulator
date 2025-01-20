@@ -4,6 +4,7 @@
 #include "cpu.h"
 #include "utils.h"
 #include <cstddef>
+#include <string>
 #include <iostream>
 #include <stdexcept>
 
@@ -362,7 +363,7 @@ u8 CPU::Fetch()
 void CPU::Tick()
 {
     // debug, print the instruction
-    // std::cout << DisassembleAtPC() << '\n';
+    // std::cout << LogLineAtPC() << '\n';
 
     // Fetch the next opcode and increment the program counter
     u8 const opcode = Fetch();
@@ -412,7 +413,7 @@ void CPU::Reset()
     _pc = Read( 0xFFFD ) << 8 | Read( 0xFFFC );
 }
 
-std::string CPU::DisassembleAtPC() // NOLINT
+std::string CPU::LogLineAtPC( bool verbose ) // NOLINT
 {
     /*
      * @brief Disassembles the instruction at the current program counter
@@ -424,8 +425,8 @@ std::string CPU::DisassembleAtPC() // NOLINT
     std::string const &name_addrmode = _opcodeTable[Read( _pc )].name;
     if ( name_addrmode.empty() )
     {
-        std::cerr << "Attempted to grab from a non existing table entry at PC: "
-                  << utils::toHex( _pc, 4 ) << '\n';
+        std::cerr << "Attempted to grab from a non existing table entry at PC: " << utils::toHex( _pc, 4 )
+                  << '\n';
         std::cerr << "Opcode: " << utils::toHex( Read( _pc ), 2 ) << '\n';
         // This is only used for debugging, so we can throw an exception
         throw std::runtime_error( "Invalid opcode" );
@@ -458,9 +459,10 @@ std::string CPU::DisassembleAtPC() // NOLINT
     ( name[0] == '*' ) ? output += "*" + name.substr( 1 ) + " " : output += name + " ";
 
     // Addressing mode and operand
-    u8 value = 0x00;
-    u8 low = 0x00;
-    u8 high = 0x00;
+    std::string assembly_str;
+    u8          value = 0x00;
+    u8          low = 0x00;
+    u8          high = 0x00;
     if ( addr_mode == "Implied" )
     {
         // Nothing to prefix
@@ -468,16 +470,16 @@ std::string CPU::DisassembleAtPC() // NOLINT
     else if ( addr_mode == "Immediate" )
     {
         value = Read( _pc + 1 );
-        output += "#$" + utils::toHex( value, 2 );
+        assembly_str += "#$" + utils::toHex( value, 2 );
     }
     else if ( addr_mode == "ZeroPage" || addr_mode == "ZeroPageX" || addr_mode == "ZeroPageY" )
     {
         value = Read( _pc + 1 );
-        output += "$" + utils::toHex( value, 2 );
+        assembly_str += "$" + utils::toHex( value, 2 );
 
-        ( addr_mode == "ZeroPageX" )   ? output += ", X"
-        : ( addr_mode == "ZeroPageY" ) ? output += ", Y"
-                                       : output += "";
+        ( addr_mode == "ZeroPageX" )   ? assembly_str += ", X"
+        : ( addr_mode == "ZeroPageY" ) ? assembly_str += ", Y"
+                                       : assembly_str += "";
     }
     else if ( addr_mode == "Absolute" || addr_mode == "AbsoluteX" || addr_mode == "AbsoluteY" )
     {
@@ -485,23 +487,23 @@ std::string CPU::DisassembleAtPC() // NOLINT
         high = Read( _pc + 2 );
         u16 const address = ( high << 8 ) | low;
 
-        output += "$" + utils::toHex( address, 4 );
-        ( addr_mode == "AbsoluteX" )   ? output += ", X"
-        : ( addr_mode == "AbsoluteY" ) ? output += ", Y"
-                                       : output += "";
+        assembly_str += "$" + utils::toHex( address, 4 );
+        ( addr_mode == "AbsoluteX" )   ? assembly_str += ", X"
+        : ( addr_mode == "AbsoluteY" ) ? assembly_str += ", Y"
+                                       : assembly_str += "";
     }
     else if ( addr_mode == "Indirect" )
     {
         low = Read( _pc + 1 );
         high = Read( _pc + 2 );
         u16 const address = ( high << 8 ) | low;
-        output += "($" + utils::toHex( address, 4 ) + ")";
+        assembly_str += "($" + utils::toHex( address, 4 ) + ")";
     }
     else if ( addr_mode == "IndirectX" || addr_mode == "IndirectY" )
     {
         value = Read( _pc + 1 );
-        ( addr_mode == "IndirectX" ) ? output += "($" + utils::toHex( value, 2 ) + ", X)"
-                                     : output += "($" + utils::toHex( value, 2 ) + "), Y";
+        ( addr_mode == "IndirectX" ) ? assembly_str += "($" + utils::toHex( value, 2 ) + ", X)"
+                                     : assembly_str += "($" + utils::toHex( value, 2 ) + "), Y";
     }
     else if ( addr_mode == "Relative" )
     {
@@ -509,12 +511,48 @@ std::string CPU::DisassembleAtPC() // NOLINT
         s8 const  offset = static_cast<s8>( value );
         u16 const address = _pc + 2 + offset;
 
-        output += "$" + utils::toHex( value, 2 ) + " [$" + utils::toHex( address, 4 ) + "]";
+        assembly_str += "$" + utils::toHex( value, 2 ) + " [$" + utils::toHex( address, 4 ) + "]";
     }
     else
     {
         // Houston.. yet again
         throw std::runtime_error( "Unknown addressing mode: " + addr_mode );
+    }
+    // Pad the assembly string with spaces, for fixed length
+
+    output += assembly_str + std::string( 15 - assembly_str.size(), ' ' );
+
+    // Add more log info
+    if ( verbose )
+    {
+        std::string registers_str;
+        // Format
+        // a: 00 x: 00 y: 00 s: FD
+        registers_str += "a: " + utils::toHex( _a, 2 ) + " ";
+        registers_str += "x: " + utils::toHex( _x, 2 ) + " ";
+        registers_str += "y: " + utils::toHex( _y, 2 ) + " ";
+        registers_str += "s: " + utils::toHex( _s, 2 ) + " ";
+
+        // status register
+        // Will return a formatted status string
+        // p: hex value, status string (NV-BDIZC). Letter present is flag set, dash is flag unset
+        std::string status_str;
+        status_str += "p: " + utils::toHex( _p, 2 ) + "  ";
+
+        std::string status_flags = "NV-BDIZC";
+        std::string status_flags_lower = "nv-bdizc";
+        std::string status_flags_str;
+        for ( int i = 7; i >= 0; i-- )
+        {
+            status_flags_str += ( _p & ( 1 << i ) ) != 0 ? status_flags[7 - i] : status_flags_lower[7 - i];
+        }
+        status_str += status_flags_str;
+
+        // Combine to the output string
+        output += registers_str + status_str;
+
+        // cycle count
+        output += "  Cycle: " + std::to_string( _cycles );
     }
     return output;
 }
@@ -859,8 +897,7 @@ void CPU::CompareAddressWithRegister( u16 address, u8 reg )
 
     // Set negative flag if the result is negative,
     // i.e. the sign bit is set
-    ( ( reg - value ) & 0b10000000 ) != 0 ? SetFlags( Status::Negative )
-                                          : ClearFlags( Status::Negative );
+    ( ( reg - value ) & 0b10000000 ) != 0 ? SetFlags( Status::Negative ) : ClearFlags( Status::Negative );
 
     // Set the carry flag if the reg >= value
     ( reg >= value ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );

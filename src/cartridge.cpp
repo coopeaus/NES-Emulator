@@ -1,5 +1,4 @@
 #include "cartridge.h"
-#include "cpu.h"
 #include <array>
 #include <cstddef>
 #include <fstream>
@@ -9,7 +8,9 @@
 #include <string>
 
 // Mappers
+#include "mappers/mapper-base.h"
 #include "mappers/mapper0.h"
+#include "mappers/mapper1.h"
 
 Cartridge::Cartridge( const std::string &file_path )
 {
@@ -74,11 +75,10 @@ Cartridge::Cartridge( const std::string &file_path )
     // Provided by the 3rd bit of byte 6.
     _four_screen_mode = ( flags6 & 0b00001000 );
 
-    // PRG banks
-    // The number of 16 KiB PRG banks available. Stored in byte 4
+    // PRG and CHR banks, derived from bytes 4 and 5
+    u8 const     prg_rom_banks = header[4];
+    u8 const     chr_rom_banks = header[5];
     size_t const prg_rom_size = static_cast<size_t>( header[4] * 16 * 1024 );
-
-    // CHR banks, derived from byte 5
     size_t const chr_rom_size = static_cast<size_t>( header[5] * 8 * 1024 );
 
     // Mapper number
@@ -136,7 +136,10 @@ Cartridge::Cartridge( const std::string &file_path )
     switch ( mapper_number )
     {
         case 0:
-            _mapper = std::make_shared<Mapper0>( prg_rom_size, chr_rom_size );
+            _mapper = std::make_shared<Mapper0>( prg_rom_banks, chr_rom_banks );
+            break;
+        case 1:
+            _mapper = std::make_shared<Mapper1>( prg_rom_banks, chr_rom_banks );
             break;
         default:
             throw std::runtime_error( "Unsupported mapper: " + std::to_string( mapper_number ) );
@@ -225,7 +228,8 @@ void Cartridge::Write( u16 address, u8 data )
      */
     if ( address >= 0x8000 && address <= 0xFFFF )
     {
-        return _prg_rom[_mapper->TranslateCPUAddress( address )];
+        u32 const translated_address = _mapper->TranslateCPUAddress( address );
+        return _prg_rom[translated_address];
     }
     return 0xFF;
 }
@@ -237,7 +241,8 @@ void Cartridge::Write( u16 address, u8 data )
      */
     if ( address >= 0x0000 && address <= 0x1FFF )
     {
-        return _chr_rom[_mapper->TranslatePPUAddress( address )];
+        u32 const translated_address = _mapper->TranslatePPUAddress( address );
+        return _chr_rom[translated_address];
     }
     return 0xFF;
 }
@@ -250,7 +255,7 @@ void Cartridge::Write( u16 address, u8 data )
      * the 8th bit in the header. However, to keep compatibility with iNes 1.0, whether
      * a game uses PRG RAM or not will be determined by the mapper.
      */
-    if ( address >= 0x6000 && address <= 0x7FFF && _mapper->HasPrgRam() )
+    if ( address >= 0x6000 && address <= 0x7FFF && _mapper->SupportsPrgRam() )
     {
         return _prg_ram[address - 0x6000];
     }
@@ -310,9 +315,9 @@ void Cartridge::WriteChrRAM( u16 address, u8 data )
      * - Byte 5 provides the number of CHR-ROM banks. If 0, then that's a signal that a game
      * uses CHR RAM
      */
-    u16 const translated_address = _mapper->TranslatePPUAddress( address );
     if ( _uses_chr_ram && address >= 0x0000 && address <= 0x1FFF )
     {
+        u16 const translated_address = _mapper->TranslatePPUAddress( address );
         _chr_ram[translated_address] = data;
     }
 }
@@ -325,7 +330,7 @@ void Cartridge::WritePrgRAM( u16 address, u8 data )
      * the 8th bit in the header. However, to keep compatibility with iNes 1.0, whether
      * a game uses PRG RAM or not will be determined by the mapper.
      */
-    if ( address >= 0x6000 && address <= 0x7FFF && _mapper->HasPrgRam() )
+    if ( address >= 0x6000 && address <= 0x7FFF && _mapper->SupportsPrgRam() )
     {
         _prg_ram[address - 0x6000] = data;
     }
@@ -340,4 +345,20 @@ void Cartridge::WriteExpansionRAM( u16 address, u8 data )
     {
         _expansion_memory[address - 0x4020] = data;
     }
+}
+
+/*
+################################
+||                            ||
+||        Other Methods       ||
+||                            ||
+################################
+*/
+MirrorMode Cartridge::GetMirrorMode()
+{
+    /** @brief Returns the mirror mode of the cartridge
+     * The mirror mode determines how the PPU should handle nametable mirroring
+     * We'll let each mapper determine the mirror mode
+     */
+    return _mapper->GetMirrorMode();
 }

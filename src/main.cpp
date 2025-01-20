@@ -14,8 +14,8 @@ int main()
         return 1;
     }
 
-    SDL_Window *window = SDL_CreateWindow( "NES Emulator", SDL_WINDOWPOS_CENTERED,
-                                           SDL_WINDOWPOS_CENTERED, 512, 480, SDL_WINDOW_SHOWN );
+    SDL_Window *window = SDL_CreateWindow( "NES Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                           512, 480, SDL_WINDOW_SHOWN );
 
     if ( window == nullptr )
     {
