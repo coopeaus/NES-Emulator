@@ -645,13 +645,13 @@ CPU_TEST( FC, NOP, AbsoluteX, "fc.json" );
 CPU_TEST( EB, SBC, Immediate, "eb.json" );
 
 /* Illegal SL0 */
-// CPU_TEST( 07, SLO, ZeroPage, "07.json" );
-// CPU_TEST( 17, SLO, ZeroPageX, "17.json" );
-// CPU_TEST( 0F, SLO, Absolute, "0f.json" );
-// CPU_TEST( 1F, SLO, AbsoluteX, "1f.json" );
-// CPU_TEST( 1B, SLO, AbsoluteY, "1b.json" );
-// CPU_TEST( 03, SLO, IndirectX, "03.json" );
-// CPU_TEST( 13, SLO, IndirectY, "13.json" );
+CPU_TEST( 07, SLO, ZeroPage, "07.json" );
+CPU_TEST( 17, SLO, ZeroPageX, "17.json" );
+CPU_TEST( 0F, SLO, Absolute, "0f.json" );
+CPU_TEST( 1F, SLO, AbsoluteX, "1f.json" );
+CPU_TEST( 1B, SLO, AbsoluteY, "1b.json" );
+CPU_TEST( 03, SLO, IndirectX, "03.json" );
+CPU_TEST( 13, SLO, IndirectY, "13.json" );
 
 /* Illegal RLA */
 // CPU_TEST( 27, RLA, ZeroPage, "27.json" );
