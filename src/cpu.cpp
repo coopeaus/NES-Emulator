@@ -250,24 +250,35 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0x98] = InstructionData{ "TYA_Implied", &CPU::TYA, &CPU::IMP, 2, 1 };
 
     // Illegal - JAM (02, 12, 22, 32, 45, 52, 62, 72, 92, B2, D2, F2)
-    _opcodeTable[0x02] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x12] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x22] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x32] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x42] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x52] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x62] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x72] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x92] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0xB2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0xD2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0xF2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
+    _opcodeTable[0x02] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x12] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x22] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x32] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x42] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x52] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x62] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x72] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x92] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0xB2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0xD2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0xF2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
 
     // Illegal - SAX (87, 97, 8F, 83)
     _opcodeTable[0x87] = InstructionData{ "SAX_ZeroPage", &CPU::SAX, &CPU::ZPG, 3, 2 };
     _opcodeTable[0x97] = InstructionData{ "SAX_ZeroPageY", &CPU::SAX, &CPU::ZPGY, 4, 2 };
     _opcodeTable[0x8F] = InstructionData{ "SAX_Absolute", &CPU::SAX, &CPU::ABS, 4, 3 };
     _opcodeTable[0x83] = InstructionData{ "SAX_IndirectX", &CPU::SAX, &CPU::INDX, 6, 2 };
+
+    // Illegal - LXA (AB)
+    _opcodeTable[0xAB] = InstructionData{ "LXA_Immediate", &CPU::LXA, &CPU::IMM, 2, 2 };
+
+    // Illegal - LAX (A7, B7, AF, BF, A3, B3)
+    _opcodeTable[0xA7] = InstructionData{ "LAX_ZeroPage", &CPU::LAX, &CPU::ZPG, 3, 2 };
+    _opcodeTable[0xB7] = InstructionData{ "LAX_ZeroPageY", &CPU::LAX, &CPU::ZPGY, 4, 2 };
+    _opcodeTable[0xAF] = InstructionData{ "LAX_Absolute", &CPU::LAX, &CPU::ABS, 4, 3 };
+    _opcodeTable[0xBF] = InstructionData{ "LAX_AbsoluteY", &CPU::LAX, &CPU::ABSY, 4, 3 };
+    _opcodeTable[0xA3] = InstructionData{ "LAX_IndirectX", &CPU::LAX, &CPU::INDX, 6, 2 };
+    _opcodeTable[0xB3] = InstructionData{ "LAX_IndirectY", &CPU::LAX, &CPU::INDY, 5, 2 };
 };
 
 // Getters
@@ -1937,8 +1948,8 @@ void CPU::JAM( const u16 address ) // NOLINT
      * Tom Harte tests include these, though, so for completeness, we'll add them
      */
     (void) address;
-    // Do nothing (undo the pc increment)
-    _pc--;
+
+    // Do nothing
 }
 
 void CPU::SAX( const u16 address ) // NOLINT
@@ -1953,4 +1964,39 @@ void CPU::SAX( const u16 address ) // NOLINT
      *   SAX Absolute: 8F(4)
      */
     Write( address, _a & _x );
+}
+
+void CPU::LXA( const u16 address )
+{
+    /* @brief Illegal opcode: combines LDA and LDX
+     * N Z C I D V
+     * + + - - - -
+     *   Usage and cycles:
+     *   LXA Immediate: AB(2)
+     */
+
+    u8 const magic_constant = 0xEE;
+    u8 const value = Read( address );
+
+    u8 const result = ( ( _a | magic_constant ) & value );
+    _a = result;
+    _x = result;
+    SetZeroAndNegativeFlags( _a );
+}
+
+void CPU::LAX( const u16 address )
+{
+    /* @brief Illegal opcode: combines LDA and LDX
+     * N Z C I D V
+     * + + - - - -
+     *   Usage and cycles:
+     *   LAX Zero Page: A7(3)
+     *   LAX Zero Page Y: B7(4)
+     *   LAX Absolute: AF(4)
+     *   LAX Absolute Y: BF(4+)
+     *   LAX Indirect X: A3(6)
+     *   LAX Indirect Y: B3(5+)
+     */
+    LDA( address );
+    LDX( address );
 }
