@@ -45,6 +45,8 @@ add_executable(emu
         src/main.cpp
         src/cpu.cpp
         src/bus.cpp
+        src/cartridge.cpp
+        src/mappers/mapper0.cpp
 )
 
 # Apply compiler options to emu target
@@ -149,12 +151,23 @@ add_executable(cpu_test
         tests/cpu_test.cpp
         src/cpu.cpp
         src/bus.cpp
+        src/cartridge.cpp
+        src/mappers/mapper0.cpp
+)
+
+add_executable(rom_test
+  tests/rom_test.cpp
+  src/cpu.cpp
+  src/bus.cpp
+  src/cartridge.cpp
+  src/mappers/mapper0.cpp
 )
 # add other test executables here
 
 # ----------------------- TEST LIBRARIES -----------------------
 target_link_libraries(sample_test PRIVATE gtest_main)
 target_link_libraries(cpu_test PRIVATE gtest_main)
+target_link_libraries(rom_test PRIVATE gtest_main)
 # Link all other test executables to gtest_main
 
 # --- enable testing, do not touch, set only once ---
@@ -172,6 +185,9 @@ gtest_discover_tests(sample_test
         PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 gtest_discover_tests(cpu_test
+        PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+gtest_discover_tests(rom_test
         PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 # Add other tests here

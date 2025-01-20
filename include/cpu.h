@@ -37,6 +37,16 @@ class CPU
     void SetProgramCounter( u16 value );
     void SetCycles( u64 value );
 
+    // public cpu methods
+    void               Reset();
+    [[nodiscard]] u8   Fetch();
+    void               Tick();
+    [[nodiscard]] auto Read( u16 address ) const -> u8;
+    void               Write( u16 address, u8 data ) const;
+
+    // Debugging
+    std::string DisassembleAtPC();
+
   private:
     friend class CPUTestFixture; // Sometimes used for testing private methods
 
@@ -71,26 +81,6 @@ class CPU
 
     // Opcode table
     std::array<InstructionData, 256> _opcodeTable;
-
-    /*
-    ################################################################
-    ||                                                            ||
-    ||                        CPU Methods                         ||
-    ||                                                            ||
-    ################################################################
-    */
-    void Reset();
-
-    // Fetch/decode/execute cycle
-    [[nodiscard]] u8 Fetch();
-    void             Tick();
-
-    // Read/write methods
-    [[nodiscard]] auto Read( u16 address ) const -> u8;
-    void               Write( u16 address, u8 data ) const;
-
-    // Debugging
-    std::string DisassembleAtPC();
 
     /*
     ################################################################
@@ -247,4 +237,11 @@ class CPU
     */
     void JAM( u16 address );
     void SLO( u16 address );
+    void SAX( u16 address );
+    void LXA( u16 address );
+    void LAX( u16 address );
+    void ARR( u16 address );
+    void ALR( u16 address );
+    void RRA( u16 address );
+    void SRE( u16 address );
 };
