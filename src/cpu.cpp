@@ -2033,34 +2033,42 @@ void CPU::ARR( const u16 address )
      *   Usage and cycles:
      *   ARR Immediate: 6B(2)
      */
-    u8 value = Read( address );
-    
+    u8 const value = Read( address );
+
     // Perform AND with accumulator
     _a &= value;
-    
+
     // Grab carry-in if carry flag is set
-    u8 carry_in = IsFlagSet( Carry ) ? 0x80 : 0x00;
-    
+    u8 const carry_in = IsFlagSet( Carry ) ? 0x80 : 0x00;
+
     // Perform ROR on the result
-    u8 result = (_a >> 1) | carry_in;
-    
+    u8 const result = ( _a >> 1 ) | carry_in;
+
     // Set accumulator to the result
     _a = result;
-    
+
     // Set zero and negative flags
     SetZeroAndNegativeFlags( _a );
-    
+
     // Set carry flag based on 6th bit of accumulator
-    if ( _a & 0x40 )
+    if ( ( _a & 0x40 ) != 0 )
+    {
         SetFlags( Carry );
+    }
     else
+    {
         ClearFlags( Carry );
-    
+    }
+
     // Set overflow flag based on XOR of bits 6 and 5
-    if ( ((_a >> 6) ^ (_a >> 5)) & 0x01 )
+    if ( ( ( ( _a >> 6 ) ^ ( _a >> 5 ) ) & 0x01 ) != 0 )
+    {
         SetFlags( Overflow );
+    }
     else
+    {
         ClearFlags( Overflow );
+    }
 }
 
 void CPU::ALR( const u16 address )
@@ -2071,20 +2079,24 @@ void CPU::ALR( const u16 address )
      *   Usage and cycles:
      *   ALR Immediate: 4B(2)
      */
-    u8 value = Read( address );
-    
+    u8 const value = Read( address );
+
     // Perform AND with accumulator
     _a &= value;
-    
+
     // Set carry flag based on least significant bit
-    if ( _a & 0x01 )
+    if ( ( _a & 0x01 ) != 0 )
+    {
         SetFlags( Carry );
+    }
     else
+    {
         ClearFlags( Carry );
-    
+    }
+
     // Shift right by 1 bit
     _a >>= 1;
-    
+
     // Set zero and negative flags
     SetZeroAndNegativeFlags( _a );
 }
@@ -2104,23 +2116,27 @@ void CPU::RRA( const u16 address )
      *   RRA Indirect Y: 73(8)
      */
     // First, read the value and perform ROR
-    u8 value = Read( address );
-    
+    u8 const value = Read( address );
+
     // Grab carry-in if carry flag is set
-    u8 carry_in = IsFlagSet( Carry ) ? 0x80 : 0x00;
-    
+    u8 const carry_in = IsFlagSet( Carry ) ? 0x80 : 0x00;
+
     // Perform ROR
-    u8 ror_result = (value >> 1) | carry_in;
-    
+    u8 const ror_result = ( value >> 1 ) | carry_in;
+
     // Write back the ROR result
     Write( address, ror_result );
-    
+
     // Set carry flag based on least significant bit of original value
-    if ( value & 0x01 )
+    if ( ( value & 0x01 ) != 0 )
+    {
         SetFlags( Carry );
+    }
     else
+    {
         ClearFlags( Carry );
-    
+    }
+
     // Now perform ADC with the ROR result
     ADC( address );
 }
@@ -2140,20 +2156,24 @@ void CPU::SRE( const u16 address )
      *   SRE Indirect Y: 53(8)
      */
     // First, read the value and perform LSR
-    u8 value = Read( address );
-    
+    u8 const value = Read( address );
+
     // Set carry flag based on least significant bit
-    if ( value & 0x01 )
+    if ( ( value & 0x01 ) != 0 )
+    {
         SetFlags( Carry );
+    }
     else
+    {
         ClearFlags( Carry );
-    
+    }
+
     // Perform LSR
-    u8 lsr_result = value >> 1;
-    
+    u8 const lsr_result = value >> 1;
+
     // Write back the LSR result
     Write( address, lsr_result );
-    
+
     // Now perform EOR with the LSR result
     EOR( address );
 }
