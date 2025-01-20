@@ -246,4 +246,5 @@ class CPU
     ################################################
     */
     void JAM( u16 address );
+    void SLO( u16 address );
 };

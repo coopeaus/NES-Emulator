@@ -230,6 +230,17 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0xB2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
     _opcodeTable[0xD2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
     _opcodeTable[0xF2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
+
+    // Illegal - SLO (03, 07, 0F, 13, 17, 1B, 1F)
+    _opcodeTable[0x03] = InstructionData{ "SLO_IndirectX", &CPU::SLO, &CPU::IMP, 8, 1 };
+    _opcodeTable[0x07] = InstructionData{ "SLO_ZeroPage", &CPU::SLO, &CPU::IMP, 5, 1 };
+    _opcodeTable[0x0F] = InstructionData{ "SLO_Absolute", &CPU::SLO, &CPU::IMP, 6, 1 };
+    _opcodeTable[0x13] = InstructionData{ "SLO_IndirectY", &CPU::SLO, &CPU::IMP, 8, 1 };
+    _opcodeTable[0x17] = InstructionData{ "SLO_ZeroPageX", &CPU::SLO, &CPU::IMP, 6, 1 };
+    _opcodeTable[0x1B] = InstructionData{ "SLO_AbsoluteY", &CPU::SLO, &CPU::IMP, 7, 1 };
+    _opcodeTable[0x1F] = InstructionData{ "SLO_AbsoluteX", &CPU::SLO, &CPU::IMP, 7, 1 };
+
+
 };
 
 // Getters
@@ -1863,4 +1874,10 @@ void CPU::JAM( const u16 address ) // NOLINT
     (void) address;
     // Do nothing (undo the pc increment)
     _pc--;
+}
+
+void CPU::SLO( const u16 address ) // NOLINT
+{
+   CPU::ASL(address);
+    CPU::ORA(address);
 }
