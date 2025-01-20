@@ -236,6 +236,7 @@ class CPU
     ################################################
     */
     void JAM( u16 address );
+    void SLO( u16 address );
     void SAX( u16 address );
     void LXA( u16 address );
     void LAX( u16 address );
