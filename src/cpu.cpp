@@ -250,18 +250,18 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0x98] = InstructionData{ "TYA_Implied", &CPU::TYA, &CPU::IMP, 2, 1 };
 
     // Illegal - JAM (02, 12, 22, 32, 45, 52, 62, 72, 92, B2, D2, F2)
-    _opcodeTable[0x02] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x12] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x22] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x32] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x42] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x52] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x62] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x72] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0x92] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0xB2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0xD2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
-    _opcodeTable[0xF2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
+    _opcodeTable[0x02] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x12] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x22] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x32] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x42] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x52] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x62] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x72] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0x92] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0xB2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0xD2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
+    _opcodeTable[0xF2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 11, 1 };
 
     // Illegal - SAX (87, 97, 8F, 83)
     _opcodeTable[0x87] = InstructionData{ "SAX_ZeroPage", &CPU::SAX, &CPU::ZPG, 3, 2 };
@@ -1949,8 +1949,7 @@ void CPU::JAM( const u16 address ) // NOLINT
      */
     (void) address;
 
-    // Do nothing, and set the number of cycles to the expected in Tom Harte tests
-    SetCycles( 8 );
+    // Do nothing
 }
 
 void CPU::SAX( const u16 address ) // NOLINT
