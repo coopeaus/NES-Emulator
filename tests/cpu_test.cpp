@@ -721,7 +721,7 @@ CPU_TEST( 4B, ALR, Immediate, "4b.json" );
 /* Illegal ARR */
 CPU_TEST( 6B, ARR, Immediate, "6b.json" );
 
-
+/*
 ################################################################
 ||                                                            ||
 ||                    Test Fixture Methods                    ||
