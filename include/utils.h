@@ -1,10 +1,21 @@
 #pragma once
 
 #include "cpu.h"
+#include <regex>
 #include <string>
+#include <vector>
+
+using u8 = std::uint8_t;
+using u16 = std::uint16_t;
+using namespace std;
 
 namespace utils
 {
+
+using MatchResult = std::vector<std::string>;
+using MatchResults = std::vector<MatchResult>;
+MatchResult  parseLogLine( const std::string &line, const std::regex &pattern, std::size_t expectedMatches );
+MatchResults parseLog( const std::string &filename, const std::regex &pattern, std::size_t expectedMatches );
 
 inline std::string toHex( u16 num, u8 width = 4 )
 {

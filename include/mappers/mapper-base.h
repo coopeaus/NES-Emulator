@@ -7,15 +7,24 @@ using u16 = uint16_t;
 using u32 = uint32_t;
 using u64 = uint64_t;
 
-/**
- * @brief Mapper base class
- * All other mappers will inherit from this class
- */
+enum class MirrorMode : u8
+{
+    Horizontal,
+    Vertical,
+    SingleLower,
+    SingleUpper,
+    FourScreen
+};
+
 class Mapper
 {
+    /**
+     * @brief Mapper base class
+     * All other mappers will inherit from this class
+     */
   public:
-    Mapper( size_t prg_size_bytes, size_t chr_size_bytes )
-        : _prg_KiB_capacity( prg_size_bytes ), _chr_KiB_capacity( chr_size_bytes )
+    Mapper( u8 prg_rom_banks, u8 chr_rom_banks )
+        : _prg_rom_banks( prg_rom_banks ), _chr_rom_banks( chr_rom_banks )
     {
     }
 
@@ -40,19 +49,21 @@ class Mapper
     virtual ~Mapper() = default;
 
     // Getters
-    [[nodiscard]] size_t GetPrgSize() const { return _prg_KiB_capacity; }
-    [[nodiscard]] size_t GetChrSize() const { return _chr_KiB_capacity; }
+    [[nodiscard]] size_t GetPrgBankCount() const { return _prg_rom_banks; }
+    [[nodiscard]] size_t GetChrBankCount() const { return _chr_rom_banks; }
 
     // Base methods
-    virtual u16                TranslateCPUAddress( u16 address ) = 0;
-    virtual u16                TranslatePPUAddress( u16 address ) = 0;
-    virtual void               HandleCPUWrite( u16 address, u8 data ) = 0;
-    [[nodiscard]] virtual u8   GetMirrorMode() = 0;
-    [[nodiscard]] virtual bool HasPrgRam() = 0;
+    virtual u32  TranslateCPUAddress( u16 address ) = 0;
+    virtual u32  TranslatePPUAddress( u16 address ) = 0;
+    virtual void HandleCPUWrite( u16 address, u8 data ) = 0;
+
+    [[nodiscard]] virtual bool SupportsPrgRam() = 0;
     [[nodiscard]] virtual bool HasExpansionRom() = 0;
     [[nodiscard]] virtual bool HasExpansionRam() = 0;
 
+    [[nodiscard]] virtual MirrorMode GetMirrorMode() = 0;
+
   private:
-    size_t _prg_KiB_capacity;
-    size_t _chr_KiB_capacity;
+    u8 _prg_rom_banks;
+    u8 _chr_rom_banks;
 };
