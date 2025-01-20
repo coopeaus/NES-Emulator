@@ -232,13 +232,13 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0xF2] = InstructionData{ "JAM_Implied", &CPU::JAM, &CPU::IMP, 3, 1 };
 
     // Illegal - SLO (03, 07, 0F, 13, 17, 1B, 1F)
-    _opcodeTable[0x03] = InstructionData{ "SLO_IndirectX", &CPU::SLO, &CPU::IMP, 8, 1 };
-    _opcodeTable[0x07] = InstructionData{ "SLO_ZeroPage", &CPU::SLO, &CPU::IMP, 5, 1 };
-    _opcodeTable[0x0F] = InstructionData{ "SLO_Absolute", &CPU::SLO, &CPU::IMP, 6, 1 };
-    _opcodeTable[0x13] = InstructionData{ "SLO_IndirectY", &CPU::SLO, &CPU::IMP, 8, 1 };
-    _opcodeTable[0x17] = InstructionData{ "SLO_ZeroPageX", &CPU::SLO, &CPU::IMP, 6, 1 };
-    _opcodeTable[0x1B] = InstructionData{ "SLO_AbsoluteY", &CPU::SLO, &CPU::IMP, 7, 1 };
-    _opcodeTable[0x1F] = InstructionData{ "SLO_AbsoluteX", &CPU::SLO, &CPU::IMP, 7, 1 };
+    _opcodeTable[0x03] = InstructionData{ "SLO_IndirectX", &CPU::SLO, &CPU::INDX, 8, 1 };
+    _opcodeTable[0x07] = InstructionData{ "SLO_ZeroPage", &CPU::SLO, &CPU::ZPG, 5, 1 };
+    _opcodeTable[0x0F] = InstructionData{ "SLO_Absolute", &CPU::SLO, &CPU::ABS, 6, 1 };
+    _opcodeTable[0x13] = InstructionData{ "SLO_IndirectY", &CPU::SLO, &CPU::INDY, 8, 1 };
+    _opcodeTable[0x17] = InstructionData{ "SLO_ZeroPageX", &CPU::SLO, &CPU::ZPGX, 6, 1 };
+    _opcodeTable[0x1B] = InstructionData{ "SLO_AbsoluteY", &CPU::SLO, &CPU::ABSY, 7, 1 };
+    _opcodeTable[0x1F] = InstructionData{ "SLO_AbsoluteX", &CPU::SLO, &CPU::ABSX, 7, 1 };
 
 
 };
