@@ -93,7 +93,4 @@ void Bus::Write( const u16 address, const u8 data )
     std::cout << "Unhandled write to address: " << std::hex << address << "\n";
 }
 
-void Bus::LoadCartridge( std::shared_ptr<Cartridge> cartridge )
-{
-    _cartridge = std::move( cartridge );
-}
+void Bus::LoadCartridge( std::shared_ptr<Cartridge> cartridge ) { _cartridge = std::move( cartridge ); }

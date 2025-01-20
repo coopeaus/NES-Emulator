@@ -1,6 +1,8 @@
 #pragma once
 
 #include "cpu.h"
+#include <cstdint>
+#include <cstddef>
 #include <regex>
 #include <string>
 #include <vector>
