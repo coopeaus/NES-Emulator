@@ -31,8 +31,7 @@ class CPUTestFixture : public ::testing::Test
 
     void                      RunTestCase( const json &testCase );
     void                      LoadStateFromJson( const json &jsonData, const std::string &state );
-    [[nodiscard]] std::string GetCPUStateString( const json        &jsonData,
-                                                 const std::string &state ) const;
+    [[nodiscard]] std::string GetCPUStateString( const json &jsonData, const std::string &state ) const;
 
     // Expose private methods
     // CPUTestFixture is a friend class of CPU. To use cpu private methods, we need to create
@@ -89,8 +88,7 @@ TEST_F( CPUTestFixture, StatusFlags )
     SetFlags( interrupt_disable );
     EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | carry | zero | interrupt_disable | unused );
     SetFlags( decimal );
-    EXPECT_EQ( cpu.GetStatusRegister(),
-               0x00 | carry | zero | interrupt_disable | decimal | unused );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | carry | zero | interrupt_disable | decimal | unused );
     SetFlags( break_flag );
     EXPECT_EQ( cpu.GetStatusRegister(),
                0x00 | carry | zero | interrupt_disable | decimal | break_flag | unused );
@@ -101,13 +99,11 @@ TEST_F( CPUTestFixture, StatusFlags )
     SetFlags( negative );
     EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | overflow | negative );
     // set all flags
-    SetFlags( carry | zero | interrupt_disable | decimal | break_flag | overflow | negative |
-              unused );
-    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | carry | zero | interrupt_disable | decimal |
-                                            break_flag | overflow | negative | unused );
+    SetFlags( carry | zero | interrupt_disable | decimal | break_flag | overflow | negative | unused );
+    EXPECT_EQ( cpu.GetStatusRegister(), 0x00 | carry | zero | interrupt_disable | decimal | break_flag |
+                                            overflow | negative | unused );
     // clear all flags
-    ClearFlags( carry | zero | interrupt_disable | decimal | break_flag | overflow | negative |
-                unused );
+    ClearFlags( carry | zero | interrupt_disable | decimal | break_flag | overflow | negative | unused );
     EXPECT_EQ( cpu.GetStatusRegister(), 0x00 );
 
     // IsFlagSet method
@@ -261,8 +257,7 @@ TEST_F( CPUTestFixture, IND )
 
     // Write a value at the effective address
     Write( addr, 0xEF );
-    EXPECT_EQ( Read( addr ), 0xEF )
-        << "Expected 0xEF, but got " << static_cast<int>( Read( addr ) );
+    EXPECT_EQ( Read( addr ), 0xEF ) << "Expected 0xEF, but got " << static_cast<int>( Read( addr ) );
 
     // Ensure the pc is incremented by 2
     EXPECT_EQ( cpu.GetProgramCounter(), 0x0002 );
@@ -293,8 +288,7 @@ TEST_F( CPUTestFixture, IND_Bug )
     Write( no_bug_addr, 0xAB );
 
     u16 const effective_addr = IND();
-    EXPECT_EQ( effective_addr, bug_addr )
-        << "Expected 0x1234, but got " << std::hex << effective_addr;
+    EXPECT_EQ( effective_addr, bug_addr ) << "Expected 0x1234, but got " << std::hex << effective_addr;
     EXPECT_EQ( Read( effective_addr ), 0xEF )
         << "Expected 0xEF, but got " << static_cast<int>( Read( effective_addr ) );
     EXPECT_EQ( cpu.GetProgramCounter(), 0x0002 );
@@ -322,8 +316,7 @@ TEST_F( CPUTestFixture, INDX )
     Write( effective_addr, 0x42 );
 
     u16 const addr = INDX();
-    EXPECT_EQ( addr, effective_addr )
-        << "Expected " << std::hex << effective_addr << ", but got " << addr;
+    EXPECT_EQ( addr, effective_addr ) << "Expected " << std::hex << effective_addr << ", but got " << addr;
     EXPECT_EQ( Read( addr ), 0x42 ) << "Expected 0x42, but got " << int( Read( addr ) ); // NOLINT
     EXPECT_EQ( cpu.GetProgramCounter(), 0x0001 );
 
@@ -370,8 +363,7 @@ TEST_F( CPUTestFixture, REL )
     cpu.SetProgramCounter( 0x1000 );
     Write( 0x1000, 0x05 );
     u16 const forward_branch = REL();
-    EXPECT_EQ( forward_branch, 0x1006 )
-        << "Expected 0x1006, but got " << std::hex << forward_branch;
+    EXPECT_EQ( forward_branch, 0x1006 ) << "Expected 0x1006, but got " << std::hex << forward_branch;
     EXPECT_EQ( cpu.GetProgramCounter(), 0x1001 ) << "Expected PC to be 0x1001 after REL";
 
     printTestStartMsg( test_name );
@@ -390,17 +382,17 @@ TEST_F( CPUTestFixture, REL )
  * e.g. x00_BRK_Implied, x01_ORA_IndirectX, x05_ORA_ZeroPage, etc.
  */
 // NOLINTBEGIN(cppcoreguidelines-macro-usage)
-#define CPU_TEST( opcode_hex, mnemonic, addr_mode, filename )                                      \
-    TEST_F( CPUTestFixture, x##opcode_hex##_##mnemonic##_##addr_mode )                             \
-    {                                                                                              \
-        std::string const testName = #opcode_hex " " #mnemonic " " #addr_mode;                     \
-        printTestStartMsg( testName );                                                             \
-        json const testCases = extractTestsFromJson( "tests/json/" filename );                     \
-        for ( const auto &testCase : testCases )                                                   \
-        {                                                                                          \
-            RunTestCase( testCase );                                                               \
-        }                                                                                          \
-        printTestEndMsg( testName );                                                               \
+#define CPU_TEST( opcode_hex, mnemonic, addr_mode, filename )                                                \
+    TEST_F( CPUTestFixture, x##opcode_hex##_##mnemonic##_##addr_mode )                                       \
+    {                                                                                                        \
+        std::string const testName = #opcode_hex " " #mnemonic " " #addr_mode;                               \
+        printTestStartMsg( testName );                                                                       \
+        json const testCases = extractTestsFromJson( "tests/json/" filename );                               \
+        for ( const auto &testCase : testCases )                                                             \
+        {                                                                                                    \
+            RunTestCase( testCase );                                                                         \
+        }                                                                                                    \
+        printTestEndMsg( testName );                                                                         \
     }
 // NOLINTEND(cppcoreguidelines-macro-usage)
 
@@ -654,13 +646,13 @@ CPU_TEST( 03, SLO, IndirectX, "03.json" );
 CPU_TEST( 13, SLO, IndirectY, "13.json" );
 
 /* Illegal RLA */
-// CPU_TEST( 27, RLA, ZeroPage, "27.json" );
-// CPU_TEST( 37, RLA, ZeroPageX, "37.json" );
-// CPU_TEST( 2F, RLA, Absolute, "2f.json" );
-// CPU_TEST( 3F, RLA, AbsoluteX, "3f.json" );
-// CPU_TEST( 3B, RLA, AbsoluteY, "3b.json" );
-// CPU_TEST( 23, RLA, IndirectX, "23.json" );
-// CPU_TEST( 33, RLA, IndirectY, "33.json" );
+CPU_TEST( 27, RLA, ZeroPage, "27.json" );
+CPU_TEST( 37, RLA, ZeroPageX, "37.json" );
+CPU_TEST( 2F, RLA, Absolute, "2f.json" );
+CPU_TEST( 3F, RLA, AbsoluteX, "3f.json" );
+CPU_TEST( 3B, RLA, AbsoluteY, "3b.json" );
+CPU_TEST( 23, RLA, IndirectX, "23.json" );
+CPU_TEST( 33, RLA, IndirectY, "33.json" );
 
 /* Illegal SRE */
 CPU_TEST( 47, SRE, ZeroPage, "47.json" );
@@ -843,8 +835,7 @@ void CPUTestFixture::LoadStateFromJson( const json &jsonData, const std::string 
     }
 }
 
-std::string CPUTestFixture::GetCPUStateString( const json        &jsonData,
-                                               const std::string &state ) const
+std::string CPUTestFixture::GetCPUStateString( const json &jsonData, const std::string &state ) const
 {
     /*
     This function provides formatted output for expected vs. actual CPU state values,
@@ -885,14 +876,11 @@ std::string CPUTestFixture::GetCPUStateString( const json        &jsonData,
            << std::setw( value_width ) << "ACTUAL" << '\n';
 
     // Function to format and print a line
-    auto print_line =
-        [&]( const std::string &label, const uint64_t expected, const uint64_t actual )
-    {
-        auto to_hex_decimal_string = []( const uint64_t value, const int width )
-        {
+    auto print_line = [&]( const std::string &label, const uint64_t expected, const uint64_t actual ) {
+        auto to_hex_decimal_string = []( const uint64_t value, const int width ) {
             std::stringstream str_stream;
-            str_stream << std::hex << std::uppercase << std::setw( width ) << std::setfill( '0' )
-                       << value << " (" << std::dec << value << ")";
+            str_stream << std::hex << std::uppercase << std::setw( width ) << std::setfill( '0' ) << value
+                       << " (" << std::dec << value << ")";
             return str_stream.str();
         };
 
@@ -941,12 +929,10 @@ std::string CPUTestFixture::GetCPUStateString( const json        &jsonData,
         uint8_t const  actual_value = cpu.Read( address );
 
         // Helper lambda to format values as "HEX (DECIMAL)"
-        auto format_value = []( const uint8_t value )
-        {
+        auto format_value = []( const uint8_t value ) {
             std::ostringstream oss;
             oss << std::hex << std::uppercase << std::setw( 2 ) << std::setfill( '0' )
-                << static_cast<int>( value ) << " (" << std::dec << static_cast<int>( value )
-                << ")";
+                << static_cast<int>( value ) << " (" << std::dec << static_cast<int>( value ) << ")";
             return oss.str();
         };
 
