@@ -2324,7 +2324,7 @@ void CPU::DCP( u16 address )
     Write( address, value );
 
     // CMP with value
-    u8 result = _a - value;
+    u8 const result = _a - value;
 
     // set carry flag
     if ( _a >= value )
