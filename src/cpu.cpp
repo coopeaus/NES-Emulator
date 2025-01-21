@@ -322,6 +322,15 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0x3B] = InstructionData{ "RLA_AbsoluteY", &CPU::RLA, &CPU::ABSY, 7, 3, false };
     _opcodeTable[0x23] = InstructionData{ "RLA_IndirectX", &CPU::RLA, &CPU::INDX, 8, 2 };
     _opcodeTable[0x33] = InstructionData{ "RLA_IndirectY", &CPU::RLA, &CPU::INDY, 8, 2, false };
+
+    // Illegal - DCP
+    _opcodeTable[0xC7] = InstructionData{ "DCP_ZeroPage", &CPU::DCP, &CPU::ZPG, 5, 2 };
+    _opcodeTable[0xD7] = InstructionData{ "DCP_ZeroPageX", &CPU::DCP, &CPU::ZPGX, 6, 2 };
+    _opcodeTable[0xCF] = InstructionData{ "DCP_Absolute", &CPU::DCP, &CPU::ABS, 6, 3 };
+    _opcodeTable[0xDF] = InstructionData{ "DCP_AbsoluteX", &CPU::DCP, &CPU::ABSX, 7, 3, false };
+    _opcodeTable[0xDB] = InstructionData{ "DCP_AbsoluteY", &CPU::DCP, &CPU::ABSY, 7, 3, false };
+    _opcodeTable[0xC3] = InstructionData{ "DCP_IndirectX", &CPU::DCP, &CPU::INDX, 8, 2 };
+    _opcodeTable[0xD3] = InstructionData{ "DCP_IndirectY", &CPU::DCP, &CPU::INDY, 8, 2, false };
 };
 
 // Getters
@@ -2291,4 +2300,41 @@ void CPU::RLA( u16 address )
     _a &= value;
 
     SetZeroAndNegativeFlags( _a );
+}
+
+void CPU::DCP( u16 address )
+{
+    /* @brief Illegal opcode: combines DEC and CMP
+     * N Z C I D V
+     * + + + - - -
+     *   Usage and cycles:
+     *   DCP Zero Page: C7(5)
+     *   DCP Zero Page X: D7(6)
+     *   DCP Absolute: CF(6)
+     *   DCP Absolute X: DF(7)
+     *   DCP Absolute Y: DB(7)
+     *   DCP Indirect X: C3(8)
+     *   DCP Indirect Y: D3(8)
+     */
+    // decrement value in memory
+    u8 value = Read( address );
+
+    // decrement in memory
+    value = value - 1;
+    Write( address, value );
+
+    // CMP with value
+    u8 result = _a - value;
+
+    // set carry flag
+    if ( _a >= value )
+    {
+        SetFlags( Status::Carry );
+    }
+    else
+    {
+        ClearFlags( Status::Carry );
+    }
+
+    SetZeroAndNegativeFlags( result );
 }

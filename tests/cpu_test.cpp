@@ -698,13 +698,13 @@ CPU_TEST( A3, LAX, IndirectX, "a3.json" );
 CPU_TEST( B3, LAX, IndirectY, "b3.json" );
 
 /* Illegal DCP */
-// CPU_TEST( C7, DCP, ZeroPage, "c7.json" );
-// CPU_TEST( D7, DCP, ZeroPageX, "d7.json" );
-// CPU_TEST( CF, DCP, Absolute, "cf.json" );
-// CPU_TEST( DF, DCP, AbsoluteX, "df.json" );
-// CPU_TEST( DB, DCP, AbsoluteY, "db.json" );
-// CPU_TEST( C3, DCP, IndirectX, "c3.json" );
-// CPU_TEST( D3, DCP, IndirectY, "d3.json" );
+CPU_TEST( C7, DCP, ZeroPage, "c7.json" );
+CPU_TEST( D7, DCP, ZeroPageX, "d7.json" );
+CPU_TEST( CF, DCP, Absolute, "cf.json" );
+CPU_TEST( DF, DCP, AbsoluteX, "df.json" );
+CPU_TEST( DB, DCP, AbsoluteY, "db.json" );
+CPU_TEST( C3, DCP, IndirectX, "c3.json" );
+CPU_TEST( D3, DCP, IndirectY, "d3.json" );
 
 /* Illegal ISC */
 // CPU_TEST( E7, ISC, ZeroPage, "e7.json" );
