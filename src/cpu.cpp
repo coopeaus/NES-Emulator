@@ -313,6 +313,24 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0x5B] = InstructionData{ "SRE_AbsoluteY", &CPU::SRE, &CPU::ABSY, 7, 3, false };
     _opcodeTable[0x43] = InstructionData{ "SRE_IndirectX", &CPU::SRE, &CPU::INDX, 8, 2, false };
     _opcodeTable[0x53] = InstructionData{ "SRE_IndirectY", &CPU::SRE, &CPU::INDY, 8, 2, false };
+
+    // Illegal Opcode - RLA
+    _opcodeTable[0x27] = InstructionData{ "RLA_ZeroPage", &CPU::RLA, &CPU::ZPG, 5, 2 };
+    _opcodeTable[0x37] = InstructionData{ "RLA_ZeroPageX", &CPU::RLA, &CPU::ZPGX, 6, 2 };
+    _opcodeTable[0x2F] = InstructionData{ "RLA_Absolute", &CPU::RLA, &CPU::ABS, 6, 3 };
+    _opcodeTable[0x3F] = InstructionData{ "RLA_AbsoluteX", &CPU::RLA, &CPU::ABSX, 7, 3, false };
+    _opcodeTable[0x3B] = InstructionData{ "RLA_AbsoluteY", &CPU::RLA, &CPU::ABSY, 7, 3, false };
+    _opcodeTable[0x23] = InstructionData{ "RLA_IndirectX", &CPU::RLA, &CPU::INDX, 8, 2 };
+    _opcodeTable[0x33] = InstructionData{ "RLA_IndirectY", &CPU::RLA, &CPU::INDY, 8, 2, false };
+
+    // Illegal - DCP
+    _opcodeTable[0xC7] = InstructionData{ "DCP_ZeroPage", &CPU::DCP, &CPU::ZPG, 5, 2 };
+    _opcodeTable[0xD7] = InstructionData{ "DCP_ZeroPageX", &CPU::DCP, &CPU::ZPGX, 6, 2 };
+    _opcodeTable[0xCF] = InstructionData{ "DCP_Absolute", &CPU::DCP, &CPU::ABS, 6, 3 };
+    _opcodeTable[0xDF] = InstructionData{ "DCP_AbsoluteX", &CPU::DCP, &CPU::ABSX, 7, 3, false };
+    _opcodeTable[0xDB] = InstructionData{ "DCP_AbsoluteY", &CPU::DCP, &CPU::ABSY, 7, 3, false };
+    _opcodeTable[0xC3] = InstructionData{ "DCP_IndirectX", &CPU::DCP, &CPU::INDX, 8, 2 };
+    _opcodeTable[0xD3] = InstructionData{ "DCP_IndirectY", &CPU::DCP, &CPU::INDY, 8, 2, false };
 };
 
 // Getters
@@ -2240,4 +2258,83 @@ void CPU::SRE( const u16 address )
 
     // Now perform EOR with the LSR result
     EOR( address );
+}
+
+void CPU::RLA( u16 address )
+{
+    /*
+     * @brief Illegal opcode: combines ROL and AND
+     * N Z C I D V
+     * + + + - - -
+     *   Usage and cycles:
+     *   RLA Zero Page: 27(5)
+     *   RLA Zero Page X: 37(6)
+     *   RLA Absolute: 2F(6)
+     *   RLA Absolute X: 3F(7)
+     *   RLA Absolute Y: 3B(7)
+     *   RLA Indirect X: 23(8)
+     *   RLA Indirect Y: 33(8)
+     */
+    // read value for ROL
+    u8 value = Read( address );
+
+    // check carry-in from flag
+    u8 const carry_in = IsFlagSet( Carry ) ? 1 : 0;
+
+    // rotate left
+    if ( ( value & 0b10000000 ) != 0 )
+    {
+        SetFlags( Carry ); // if most significant bit is set
+    }
+    else
+    {
+        ClearFlags( Carry );
+    }
+    // set ROL by shifting left one bit
+    value = ( value << 1 ) | carry_in;
+
+    // write ROL to memory
+    Write( address, value );
+
+    // use AND with accumulator
+    _a &= value;
+
+    SetZeroAndNegativeFlags( _a );
+}
+
+void CPU::DCP( u16 address )
+{
+    /* @brief Illegal opcode: combines DEC and CMP
+     * N Z C I D V
+     * + + + - - -
+     *   Usage and cycles:
+     *   DCP Zero Page: C7(5)
+     *   DCP Zero Page X: D7(6)
+     *   DCP Absolute: CF(6)
+     *   DCP Absolute X: DF(7)
+     *   DCP Absolute Y: DB(7)
+     *   DCP Indirect X: C3(8)
+     *   DCP Indirect Y: D3(8)
+     */
+    // decrement value in memory
+    u8 value = Read( address );
+
+    // decrement in memory
+    value = value - 1;
+    Write( address, value );
+
+    // CMP with value
+    u8 const result = _a - value;
+
+    // set carry flag
+    if ( _a >= value )
+    {
+        SetFlags( Status::Carry );
+    }
+    else
+    {
+        ClearFlags( Status::Carry );
+    }
+
+    SetZeroAndNegativeFlags( result );
 }
