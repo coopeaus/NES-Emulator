@@ -10,7 +10,7 @@ class Mapper2 : public Mapper
     auto TranslatePPUAddress( u16 address ) -> u32 override;
     void HandleCPUWrite( u16 address, u8 data ) override;
 
-    [[nodiscard]] bool SupportsPrgRam() override { return true; }
+    [[nodiscard]] bool SupportsPrgRam() override { return false; }
     [[nodiscard]] bool HasExpansionRom() override { return false; }
     [[nodiscard]] bool HasExpansionRam() override { return false; }
 
