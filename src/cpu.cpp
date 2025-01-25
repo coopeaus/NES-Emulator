@@ -331,6 +331,13 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0xDB] = InstructionData{ "DCP_AbsoluteY", &CPU::DCP, &CPU::ABSY, 7, 3, false };
     _opcodeTable[0xC3] = InstructionData{ "DCP_IndirectX", &CPU::DCP, &CPU::INDX, 8, 2 };
     _opcodeTable[0xD3] = InstructionData{ "DCP_IndirectY", &CPU::DCP, &CPU::INDY, 8, 2, false };
+
+    // Illegal Opcode - ANC
+    _opcodeTable[0x0B] = InstructionData{ "ANC_Immediate_1", &CPU::ANC, &CPU::IMM, 2, 2 };
+    _opcodeTable[0x2B] = InstructionData{ "ANC_Immediate_2", &CPU::ANC, &CPU::IMM, 2, 2 };
+
+    // Illegal Opcode - SBX (AXS)
+    _opcodeTable[0xCB] = InstructionData{ "SBX_Immediate", &CPU::SBX, &CPU::IMM, 2, 2 };  
 };
 
 // Getters
@@ -2337,4 +2344,33 @@ void CPU::DCP( u16 address )
     }
 
     SetZeroAndNegativeFlags( result );
+}
+
+void CPU::ANC( u16 address ) {
+    // Explicitly call AND method
+    AND(address);
+
+    // Set Carry flag based on Negative flag
+    (IsFlagSet(Status::Negative)) ? SetFlags(Status::Carry) : ClearFlags(Status::Carry);
+}
+
+void CPU::SBX( u16 address) {
+    // Read operand from address
+    u8 operand = Read(address);
+    
+    // Get the value of (A & X)
+    u8 axValue = _a & _x;
+    
+    // Calculate value - operand and store in unsigned 16-bit result
+    u16 result = axValue - operand;
+    
+    // Store first 8 bits of result in X
+    _x = result & 0xFF;
+    
+    // Set Carry flag if bit 8 is set in the result
+    (result & 0x100) ? SetFlags(Status::Carry) : ClearFlags(Status::Carry);
+    
+    // Set zero and negative flags based on X
+    (_x == 0) ? SetFlags(Status::Zero) : ClearFlags(Status::Zero);
+    (_x & 0x80) ? SetFlags(Status::Negative) : ClearFlags(Status::Negative);
 }
