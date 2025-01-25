@@ -245,6 +245,6 @@ class CPU
     void SRE( u16 address );
     void RLA( u16 address );
     void DCP( u16 address );
-    void ANC( u16 address );  
-    void SBX( u16 address );  
+    void ANC( u16 address );
+    void SBX( u16 address );
 };
