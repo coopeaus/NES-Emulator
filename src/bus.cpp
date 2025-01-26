@@ -1,14 +1,14 @@
 #include "bus.h"
 #include "cartridge.h"
+#include "ppu.h"
 #include <iostream>
 #include <memory>
 #include <utility>
 
 // Constructor to initialize the bus with a flat memory model
-Bus::Bus( const bool use_flat_memory ) : _use_flat_memory( use_flat_memory )
+Bus::Bus( PPU *ppu, const bool use_flat_memory ) : _ppu( ppu ), _use_flat_memory( use_flat_memory )
 {
     _ram.fill( 0 );
-    _ppu_memory.fill( 0 );
     _apu_io_memory.fill( 0 );
 }
 
@@ -30,7 +30,7 @@ u8 Bus::Read( const u16 address ) const
     {
         // ppu read will go here. For now, return from temp private member of bus
         const u16 ppu_register = 0x2000 + ( address & 0x0007 );
-        return _ppu_memory[ppu_register];
+        return _ppu->HandleCpuRead( ppu_register );
     }
 
     // APU and I/O Registers: 0x4000 - 0x401F
@@ -71,7 +71,7 @@ void Bus::Write( const u16 address, const u8 data )
     if ( address >= 0x2000 && address <= 0x3FFF )
     {
         const u16 ppu_register = 0x2000 + ( address & 0x0007 );
-        _ppu_memory[ppu_register] = data; // temp
+        _ppu->HandleCpuWrite( ppu_register, data );
         return;
     }
 

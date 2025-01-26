@@ -20,7 +20,7 @@ class Bus
     // Bus( PPU &ppu, APU &apu, bool use_flat_memory = false );
 
     // Initialized with flat memory disabled by default. Enabled in json tests only
-    Bus( bool use_flat_memory = false );
+    Bus( PPU *ppu, bool use_flat_memory = false );
 
     // Memory read/write interface
     [[nodiscard]] u8 Read( uint16_t address ) const;
@@ -34,8 +34,7 @@ class Bus
     std::shared_ptr<Cartridge> _cartridge;
 
     // APU and PPU stubs
-    /* PPU &_ppu; */
-    /* APU &_apu; */
+    PPU *_ppu;
 
     // Flat memory for early implementation
     bool                  _use_flat_memory; // For testing purposes
@@ -45,6 +44,5 @@ class Bus
     std::array<u8, 0x0800> _ram{}; // 2KB internal cpu RAM
 
     // Stubs
-    std::array<u8, 0x2000> _ppu_memory{};    // 8KB PPU memory (temp)
     std::array<u8, 0x0020> _apu_io_memory{}; // 32 bytes APU and I/O registers
 };
