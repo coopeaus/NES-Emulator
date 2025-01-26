@@ -46,6 +46,7 @@ add_executable(emu
         src/cpu.cpp
         src/bus.cpp
         src/cartridge.cpp
+        src/ppu.cpp
         src/mappers/mapper0.cpp
         src/mappers/mapper1.cpp
 )
@@ -153,6 +154,7 @@ add_executable(cpu_test
         src/cpu.cpp
         src/bus.cpp
         src/cartridge.cpp
+        src/ppu.cpp
         src/mappers/mapper0.cpp
         src/mappers/mapper1.cpp
         src/utils.cpp
@@ -163,6 +165,7 @@ add_executable(rom_test
   src/cpu.cpp
   src/bus.cpp
   src/cartridge.cpp
+        src/ppu.cpp
   src/mappers/mapper0.cpp
   src/mappers/mapper1.cpp
   src/utils.cpp
