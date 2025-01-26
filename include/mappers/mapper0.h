@@ -13,5 +13,5 @@ class Mapper0 : public Mapper
     [[nodiscard]] bool HasExpansionRom() override { return false; }
     [[nodiscard]] bool HasExpansionRam() override { return false; }
 
-    [[nodiscard]] MirrorMode GetMirrorMode() override { return MirrorMode::Horizontal; }
+    [[nodiscard]] MirrorMode GetMirrorMode() override { return MirrorMode::Vertical; }
 };
