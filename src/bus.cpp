@@ -6,7 +6,7 @@
 #include <utility>
 
 // Constructor to initialize the bus with a flat memory model
-Bus::Bus( PPU *ppu, const bool use_flat_memory ) : _ppu(ppu), _use_flat_memory( use_flat_memory )
+Bus::Bus( PPU *ppu, const bool use_flat_memory ) : _ppu( ppu ), _use_flat_memory( use_flat_memory )
 {
     _ram.fill( 0 );
     _apu_io_memory.fill( 0 );
