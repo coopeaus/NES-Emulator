@@ -69,7 +69,7 @@ Cartridge::Cartridge( const std::string &file_path )
 
     // Mirror mode
     // Provided by the 0th bit of byte 6.
-    u8 mirror_mode = header[6] & 0b00000001;
+    u8 const mirror_mode = header[6] & 0b00000001;
     ( mirror_mode == 0 ) ? _mirror_mode = MirrorMode::Horizontal : _mirror_mode = MirrorMode::Vertical;
 
     // Four screen mode

@@ -1,6 +1,7 @@
 #include "ppu.h"
 #include "bus.h"
-#include "cartridge.h"
+#include "cartridge.h" // NOLINT(misc-include-cleaner)
+#include "mappers/mapper-base.h"
 
 PPU::PPU( Bus *bus, bool isDisabled ) : _isDisabled( isDisabled ), _bus( bus ) {}
 
@@ -443,7 +444,7 @@ void PPU::Tick() // NOLINT
     // Cycles 321-336 are beyond the visible scanline, but continue for the next scanline
     if ( ( _cycle >= 1 && _cycle <= 256 ) || ( _cycle >= 321 && _cycle <= 336 ) )
     {
-        u8 stage = ( _cycle - 1 ) & 0x07;
+        u8 const stage = ( _cycle - 1 ) & 0x07;
 
         switch ( stage )
         {
@@ -572,7 +573,7 @@ void PPU::Tick() // NOLINT
 
 u16 PPU::ResolveNameTableAddress( u16 addr )
 {
-    MirrorMode mirror_mode = _bus->cartridge->GetMirrorMode();
+    MirrorMode const mirror_mode = _bus->cartridge->GetMirrorMode();
 
     switch ( mirror_mode )
     {
