@@ -2370,9 +2370,9 @@ void CPU::SBX( u16 address )
     _x = result & 0xFF;
 
     // Set Carry flag if bit 8 is set in the result
-    (( result & 0x100 ) != 0) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
+    ( ( result & 0x100 ) != 0 ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
 
     // Set zero and negative flags based on X
     ( _x == 0 ) ? SetFlags( Status::Zero ) : ClearFlags( Status::Zero );
-    (( _x & 0x80 ) != 0) ? SetFlags( Status::Negative ) : ClearFlags( Status::Negative );
+    ( ( _x & 0x80 ) != 0 ) ? SetFlags( Status::Negative ) : ClearFlags( Status::Negative );
 }
