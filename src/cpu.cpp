@@ -335,9 +335,6 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     // Illegal Opcode - ANC
     _opcodeTable[0x0B] = InstructionData{ "ANC_Immediate_1", &CPU::ANC, &CPU::IMM, 2, 2 };
     _opcodeTable[0x2B] = InstructionData{ "ANC_Immediate_2", &CPU::ANC, &CPU::IMM, 2, 2 };
-
-    // Illegal Opcode - SBX (AXS)
-    _opcodeTable[0xCB] = InstructionData{ "SBX_Immediate", &CPU::SBX, &CPU::IMM, 2, 2 };
 };
 
 // Getters
