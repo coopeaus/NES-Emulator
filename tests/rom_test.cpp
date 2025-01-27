@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "bus.h"
 #include "cpu.h"
+#include "ppu.h"
 #include "utils.h"
 #include "cartridge.h"
 #include <fstream>
@@ -21,7 +22,8 @@ using namespace std;
 TEST( RomTests, Nestest )
 {
     Bus bus;
-    CPU cpu( &bus );
+    CPU cpu = bus.cpu;
+    PPU ppu = bus.ppu;
 
     // Create a shared pointer to Cartridge
     shared_ptr<Cartridge> cartridge = make_shared<Cartridge>( "tests/roms/nestest.nes" );

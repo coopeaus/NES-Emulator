@@ -13,36 +13,69 @@ class Cartridge
   public:
     Cartridge( const string &file_path );
 
-    // Rule of 5
+    /*
+    ################################
+    ||          Operators         ||
+    ################################
+    */
     Cartridge( const Cartridge & ) = delete;
     Cartridge &operator=( const Cartridge & ) = delete;
     Cartridge( Cartridge && ) = delete;
     Cartridge &operator=( Cartridge && ) = delete;
     ~Cartridge() = default;
 
+    /*
+    ################################
+    ||            Reads           ||
+    ################################
+    */
     [[nodiscard]] u8 Read( u16 address );
-    void             Write( u16 address, u8 data );
+    [[nodiscard]] u8 ReadChrROM( u16 address );        // 0x0000 - 0x1FFF: PPU
+    [[nodiscard]] u8 ReadCartridgeVRAM( u16 address ); // 0x2800 - 0x2FFF: PPU (four screen mode)
+    [[nodiscard]] u8 ReadExpansionROM( u16 address );  // 0x4020 - 0x5FFF: CPU
+    [[nodiscard]] u8 ReadPrgRAM( u16 address );        // 0x6000 - 0x7FFF: CPU
+    [[nodiscard]] u8 ReadPrgROM( u16 address );        // 0x8000 - 0xFFFF: CPU
 
-  private:
-    // Reads
-    [[nodiscard]] u8 ReadChrROM( u16 address );       // 0x0000 - 0x1FFF: PPU
-    [[nodiscard]] u8 ReadExpansionROM( u16 address ); // 0x4020 - 0x5FFF: CPU
-    [[nodiscard]] u8 ReadPrgRAM( u16 address );       // 0x6000 - 0x7FFF: CPU
-    [[nodiscard]] u8 ReadPrgROM( u16 address );       // 0x8000 - 0xFFFF: CPU
+    /*
+    ################################
+    ||           Writes           ||
+    ################################
+    */
+    void Write( u16 address, u8 data );
+    void WriteChrRAM( u16 address, u8 data );        // 0x0000 - 0x1FFF: PPU
+    void WriteCartridgeVRAM( u16 address, u8 data ); // 0x2800 - 0x2FFF: PPU (four screen mode)
+    void WriteExpansionRAM( u16 address, u8 data );  // 0x4020 - 0x5FFF: CPU
+    void WritePrgRAM( u16 address, u8 data );        // 0x6000 - 0x7FFF: CPU
+    void WritePrgROM( u16 address, u8 data );        // 0x8000 - 0xFFFF: CPU
 
-    // Writes
-    void WriteChrRAM( u16 address, u8 data );       // 0x0000 - 0x1FFF: PPU
-    void WriteExpansionRAM( u16 address, u8 data ); // 0x4020 - 0x5FFF: CPU
-    void WritePrgRAM( u16 address, u8 data );       // 0x6000 - 0x7FFF: CPU
-    void WritePrgROM( u16 address, u8 data );       // 0x8000 - 0xFFFF: CPU
-
+    /*
+    ################################
+    ||      Cartridge Methods     ||
+    ################################
+    */
     [[nodiscard]] MirrorMode GetMirrorMode();
 
-    // PRG ROM: Program ROM
+  private:
+    /*
+    ################################
+    ||      Memory Variables      ||
+    ################################
+    */
+
+    /* PRG ROM
+      Program Read-Only Memory, stores the game's code
+      Each cartridge provides 16KiB PRG ROM banks. For simpler cartridges
+      The size is fixed, but for others, many banks are provided.
+      The iNes header specifies how many PRG ROM banks are provided, so we
+      can define _prg_rom as a vector and resize it during ROM initialization
+    */
     vector<u8> _prg_rom;
 
     /* CHR ROM and RAM
-      These store pattern table data
+      Character Read-Only Memory and Character Random Access Memory
+      These store pattern table data. There are two pattern tables,
+      each 4KiB in size. Pattern tables store 256 8x8 tiles, which the PPU
+      uses to render backgrounds and sprites
 
       Games use either CHR ROM or CHR RAM, but never both
       If CHR ROM is not present, CHR RAM is used by default
@@ -55,11 +88,9 @@ class Cartridge
 
       If a game uses CHR RAM, it starts empty and the CPU fills in the pattern
       table data dynamically. Having dynamic pattern tables allowed devs to
-      create dynamic tiles, though they had to be careful to avoid overwriting
-      essential data.
+      create dynamic tiles.
     */
-
-    vector<u8>        _chr_rom;
+    vector<u8>        _chr_rom;   // Sized based on the number of CHR ROM banks
     array<u8, 0x1FFF> _chr_ram{}; // 8192 bytes (8 KiB)
 
     // PRG RAM: Program RAM, also known as Save RAM (SRAM) or Work RAM sometimes
@@ -71,12 +102,21 @@ class Cartridge
     // Can be both ROM or RAM, determined by the mapper
     array<u8, 0x1FFF> _expansion_memory{};
 
-    // Mapper
-    shared_ptr<Mapper> _mapper;
+    // Cartrdige VRAM
+    // The PPU has 2KiB of vram for nametables (background layout information).
+    // Some cartridges provided 2Kib extra which allowed for four unique
+    // nametables without mirroring. Nametables are documented in the PPU class.
+    array<u8, 2048> _cartridge_vram{};
 
-    // Cartridge flags
-    u8   _has_battery = 0;
-    u8   _four_screen_mode = 0;
-    u8   _mirror_mode = 0;
-    bool _uses_chr_ram = false;
+    /*
+    ################################
+    ||      Global Variables      ||
+    ################################
+    */
+    shared_ptr<Mapper> _mapper;
+    u8                 _mapper_number = 0;
+    u8                 _has_battery = 0;
+    bool               _four_screen_mode = false;
+    MirrorMode         _mirror_mode = MirrorMode::Vertical;
+    bool               _uses_chr_ram = false;
 };
