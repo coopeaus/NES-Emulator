@@ -2404,10 +2404,11 @@ void CPU::ISC( const u16 address )
     SetZeroAndNegativeFlags( _a );
 }
 
-void CPU::ANC( u16 address ) {
+void CPU::ANC( u16 address )
+{
     // Explicitly call AND method
-    AND(address);
+    AND( address );
 
     // Set Carry flag based on Negative flag
-    (IsFlagSet(Status::Negative)) ? SetFlags(Status::Carry) : ClearFlags(Status::Carry);
+    ( IsFlagSet( Status::Negative ) ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
 }
