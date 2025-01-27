@@ -2354,4 +2354,3 @@ void CPU::ANC( u16 address )
     // Set Carry flag based on Negative flag
     ( IsFlagSet( Status::Negative ) ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
 }
-
