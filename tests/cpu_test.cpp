@@ -701,13 +701,13 @@ CPU_TEST( C3, DCP, IndirectX, "c3.json" );
 CPU_TEST( D3, DCP, IndirectY, "d3.json" );
 
 /* Illegal ISC */
-// CPU_TEST( E7, ISC, ZeroPage, "e7.json" );
-// CPU_TEST( F7, ISC, ZeroPageX, "f7.json" );
-// CPU_TEST( EF, ISC, Absolute, "ef.json" );
-// CPU_TEST( FF, ISC, AbsoluteX, "ff.json" );
-// CPU_TEST( FB, ISC, AbsoluteY, "fb.json" );
-// CPU_TEST( E3, ISC, IndirectX, "e3.json" );
-// CPU_TEST( F3, ISC, IndirectY, "f3.json" );
+CPU_TEST( E7, ISC, ZeroPage, "e7.json" );
+CPU_TEST( F7, ISC, ZeroPageX, "f7.json" );
+CPU_TEST( EF, ISC, Absolute, "ef.json" );
+CPU_TEST( FF, ISC, AbsoluteX, "ff.json" );
+CPU_TEST( FB, ISC, AbsoluteY, "fb.json" );
+CPU_TEST( E3, ISC, IndirectX, "e3.json" );
+CPU_TEST( F3, ISC, IndirectY, "f3.json" );
 
 /* Illegal ALR */
 CPU_TEST( 4B, ALR, Immediate, "4b.json" );
