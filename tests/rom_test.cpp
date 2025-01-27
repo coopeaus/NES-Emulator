@@ -21,9 +21,9 @@ using namespace std;
 
 TEST( RomTests, Nestest )
 {
-    PPU ppu;
-    Bus bus(&ppu);
-    CPU cpu( &bus );
+    Bus bus;
+    CPU cpu = bus.cpu;
+    PPU ppu = bus.ppu;
 
     // Create a shared pointer to Cartridge
     shared_ptr<Cartridge> cartridge = make_shared<Cartridge>( "tests/roms/nestest.nes" );
