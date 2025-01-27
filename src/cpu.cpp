@@ -340,6 +340,10 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     _opcodeTable[0xFB] = InstructionData{ "ISC_AbsoluteY", &CPU::ISC, &CPU::ABSY, 7, 3, false };
     _opcodeTable[0xE3] = InstructionData{ "ISC_IndirectX", &CPU::ISC, &CPU::INDX, 8, 2 };
     _opcodeTable[0xF3] = InstructionData{ "ISC_IndirectY", &CPU::ISC, &CPU::INDY, 8, 2, false };
+
+    // Illegal Opcode - ANC
+    _opcodeTable[0x0B] = InstructionData{ "ANC_Immediate_1", &CPU::ANC, &CPU::IMM, 2, 2 };
+    _opcodeTable[0x2B] = InstructionData{ "ANC_Immediate_2", &CPU::ANC, &CPU::IMM, 2, 2 };
 };
 
 // Getters
@@ -2398,4 +2402,12 @@ void CPU::ISC( const u16 address )
     _a = result;
 
     SetZeroAndNegativeFlags( _a );
+}
+
+void CPU::ANC( u16 address ) {
+    // Explicitly call AND method
+    AND(address);
+
+    // Set Carry flag based on Negative flag
+    (IsFlagSet(Status::Negative)) ? SetFlags(Status::Carry) : ClearFlags(Status::Carry);
 }

@@ -715,6 +715,10 @@ CPU_TEST( 4B, ALR, Immediate, "4b.json" );
 /* Illegal ARR */
 CPU_TEST( 6B, ARR, Immediate, "6b.json" );
 
+/* Illegal ANC */ 
+CPU_TEST( 0B, ANC, Immediate, "0b.json" );
+CPU_TEST( 2B, ANC, AbsoluteX, "2b.json" );
+
 /*
 ################################################################
 ||                                                            ||
