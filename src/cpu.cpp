@@ -2355,24 +2355,3 @@ void CPU::ANC( u16 address )
     ( IsFlagSet( Status::Negative ) ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
 }
 
-void CPU::SBX( u16 address )
-{
-    // Read operand from address
-    u8 const operand = Read( address );
-
-    // Get the value of (A & X)
-    u8 const ax_value = _a & _x;
-
-    // Calculate value - operand and store in unsigned 16-bit result
-    u16 const result = ax_value - operand;
-
-    // Store first 8 bits of result in X
-    _x = result & 0xFF;
-
-    // Set Carry flag if bit 8 is set in the result
-    ( ( result & 0x100 ) != 0 ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
-
-    // Set zero and negative flags based on X
-    ( _x == 0 ) ? SetFlags( Status::Zero ) : ClearFlags( Status::Zero );
-    ( ( _x & 0x80 ) != 0 ) ? SetFlags( Status::Negative ) : ClearFlags( Status::Negative );
-}

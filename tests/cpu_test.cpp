@@ -719,9 +719,6 @@ CPU_TEST( 6B, ARR, Immediate, "6b.json" );
 CPU_TEST( 0B, ANC, Immediate, "0b.json" );
 CPU_TEST( 2B, ANC, AbsoluteX, "2b.json" );
 
-/*Illegal SBX */ 
-CPU_TEST( CB, SBX, Immediate, "cb.json" );
-
 /*
 ################################################################
 ||                                                            ||
