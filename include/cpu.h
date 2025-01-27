@@ -245,4 +245,5 @@ class CPU
     void SRE( u16 address );
     void RLA( u16 address );
     void DCP( u16 address );
+    void ISC( u16 address );
 };
