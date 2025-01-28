@@ -3,6 +3,7 @@
 #include "bus.h"
 #include "cpu.h"
 #include "utils.h"
+#include <cstdint>
 #include <string>
 #include <iostream>
 #include <stdexcept>
@@ -446,8 +447,8 @@ std::string CPU::LogLineAtPC( bool verbose ) // NOLINT
      */
     std::string output;
 
-    std::string name = _opcodeTable[Read( _pc )].name;
-    std::string addr_mode = _opcodeTable[Read( _pc )].addr_mode;
+    std::string       name = _opcodeTable[Read( _pc )].name;
+    std::string const addr_mode = _opcodeTable[Read( _pc )].addr_mode;
 
     // Program counter address
     // i.e. FFFF
@@ -565,7 +566,7 @@ std::string CPU::LogLineAtPC( bool verbose ) // NOLINT
         output += registers_str + status_str;
 
         // Scanline num (V)
-        std::string scanline_str = std::to_string( _bus->ppu.GetScanline() );
+        std::string const scanline_str = std::to_string( _bus->ppu.GetScanline() );
         // std::string scanline_str_adjusted = std::string( 4 - scanline_str.size(), ' ' );
         output += "  V: " + scanline_str;
 
@@ -707,17 +708,17 @@ void CPU::NMI()
     StackPush( _pc & 0xFF );
 
     // 3) Push status register with B=0; bit 5 (Unused) = 1
-    u8 pushed_status = ( _p & ~Break ) | Unused;
+    u8 const pushed_status = ( _p & ~Break ) | Unused;
     StackPush( pushed_status );
 
     // 4) Fetch low byte of NMI vector ($FFFA)
-    u8 low = ReadAndTick( 0xFFFA );
+    u8 const low = ReadAndTick( 0xFFFA );
 
     // 5) Set I flag
     SetFlags( InterruptDisable );
 
     // 6) Fetch high byte of NMI vector ($FFFB)
-    u8 high = ReadAndTick( 0xFFFB );
+    u8 const high = ReadAndTick( 0xFFFB );
 
     // 7) Update PC
     _pc = static_cast<u16>( high ) << 8 | low;
@@ -736,11 +737,11 @@ void CPU::IRQ()
     Tick();
     StackPush( ( _pc >> 8 ) & 0xFF );
     StackPush( _pc & 0xFF );
-    u8 pushed_status = ( _p & ~Break ) | Unused;
+    u8 const pushed_status = ( _p & ~Break ) | Unused;
     StackPush( pushed_status );
-    u8 low = ReadAndTick( 0xFFFE );
+    u8 const low = ReadAndTick( 0xFFFE );
     SetFlags( InterruptDisable );
-    u8 high = ReadAndTick( 0xFFFF );
+    u8 const high = ReadAndTick( 0xFFFF );
     _pc = static_cast<u16>( high ) << 8 | low;
 }
 

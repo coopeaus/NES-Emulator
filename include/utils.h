@@ -1,10 +1,12 @@
 #pragma once
 
+#include <cstddef>
 #include <string>
 #include <cstdint>
 #include <unordered_set>
 #include <sstream>
 #include <regex>
+#include <vector>
 
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
