@@ -582,22 +582,14 @@ CPU_TEST( F8, SED, Implied, "f8.json" );
 
 /*
 ################################
-||                            ||
 ||       Illegal Opcodes      ||
-||                            ||
 ################################
 */
-
-/* Illegal Jam
- * These will jam the hardware are are generally not used.
- * These should still be tested. They should not have any effect
- */
 CPU_TEST( 02, JAM, Implied, "02.json" );
 CPU_TEST( 12, JAM, Implied, "12.json" );
 CPU_TEST( 22, JAM, Implied, "22.json" );
 CPU_TEST( 32, JAM, Implied, "32.json" );
 CPU_TEST( 42, JAM, Implied, "42.json" );
-CPU_TEST( 45, JAM, Implied, "42.json" );
 CPU_TEST( 52, JAM, Implied, "52.json" );
 CPU_TEST( 62, JAM, Implied, "62.json" );
 CPU_TEST( 72, JAM, Implied, "72.json" );
@@ -605,8 +597,6 @@ CPU_TEST( 92, JAM, Implied, "92.json" );
 CPU_TEST( B2, JAM, Implied, "b2.json" );
 CPU_TEST( D2, JAM, Implied, "d2.json" );
 CPU_TEST( F2, JAM, Implied, "f2.json" );
-
-/* Illegal NOP */
 CPU_TEST( 1A, NOP, Implied, "1a.json" );
 CPU_TEST( 3A, NOP, Implied, "3a.json" );
 CPU_TEST( 5A, NOP, Implied, "5a.json" );
@@ -634,11 +624,6 @@ CPU_TEST( 5C, NOP, AbsoluteX, "5c.json" );
 CPU_TEST( 7C, NOP, AbsoluteX, "7c.json" );
 CPU_TEST( DC, NOP, AbsoluteX, "dc.json" );
 CPU_TEST( FC, NOP, AbsoluteX, "fc.json" );
-
-/* Illegal SBC */
-CPU_TEST( EB, SBC, Immediate, "eb.json" );
-
-/* Illegal SL0 */
 CPU_TEST( 07, SLO, ZeroPage, "07.json" );
 CPU_TEST( 17, SLO, ZeroPageX, "17.json" );
 CPU_TEST( 0F, SLO, Absolute, "0f.json" );
@@ -646,8 +631,6 @@ CPU_TEST( 1F, SLO, AbsoluteX, "1f.json" );
 CPU_TEST( 1B, SLO, AbsoluteY, "1b.json" );
 CPU_TEST( 03, SLO, IndirectX, "03.json" );
 CPU_TEST( 13, SLO, IndirectY, "13.json" );
-
-/* Illegal RLA */
 CPU_TEST( 27, RLA, ZeroPage, "27.json" );
 CPU_TEST( 37, RLA, ZeroPageX, "37.json" );
 CPU_TEST( 2F, RLA, Absolute, "2f.json" );
@@ -655,8 +638,6 @@ CPU_TEST( 3F, RLA, AbsoluteX, "3f.json" );
 CPU_TEST( 3B, RLA, AbsoluteY, "3b.json" );
 CPU_TEST( 23, RLA, IndirectX, "23.json" );
 CPU_TEST( 33, RLA, IndirectY, "33.json" );
-
-/* Illegal SRE */
 CPU_TEST( 47, SRE, ZeroPage, "47.json" );
 CPU_TEST( 57, SRE, ZeroPageX, "57.json" );
 CPU_TEST( 4F, SRE, Absolute, "4f.json" );
@@ -664,8 +645,6 @@ CPU_TEST( 5F, SRE, AbsoluteX, "5f.json" );
 CPU_TEST( 5B, SRE, AbsoluteY, "5b.json" );
 CPU_TEST( 43, SRE, IndirectX, "43.json" );
 CPU_TEST( 53, SRE, IndirectY, "53.json" );
-
-/* Illegal RRA */
 CPU_TEST( 67, RRA, ZeroPage, "67.json" );
 CPU_TEST( 77, RRA, ZeroPageX, "77.json" );
 CPU_TEST( 6F, RRA, Absolute, "6f.json" );
@@ -673,25 +652,16 @@ CPU_TEST( 7F, RRA, AbsoluteX, "7f.json" );
 CPU_TEST( 7B, RRA, AbsoluteY, "7b.json" );
 CPU_TEST( 63, RRA, IndirectX, "63.json" );
 CPU_TEST( 73, RRA, IndirectY, "73.json" );
-
-/* Illegal SAX */
 CPU_TEST( 87, SAX, ZeroPage, "87.json" );
 CPU_TEST( 97, SAX, ZeroPageY, "97.json" );
 CPU_TEST( 8F, SAX, Absolute, "8f.json" );
 CPU_TEST( 83, SAX, IndirectX, "83.json" );
-
-/* Illegal LXA */
-CPU_TEST( AB, LXA, Immediate, "ab.json" );
-
-/* Illegal LAX */
 CPU_TEST( A7, LAX, ZeroPage, "a7.json" );
 CPU_TEST( B7, LAX, ZeroPageY, "b7.json" );
 CPU_TEST( AF, LAX, Absolute, "af.json" );
 CPU_TEST( BF, LAX, AbsoluteY, "bf.json" );
 CPU_TEST( A3, LAX, IndirectX, "a3.json" );
 CPU_TEST( B3, LAX, IndirectY, "b3.json" );
-
-/* Illegal DCP */
 CPU_TEST( C7, DCP, ZeroPage, "c7.json" );
 CPU_TEST( D7, DCP, ZeroPageX, "d7.json" );
 CPU_TEST( CF, DCP, Absolute, "cf.json" );
@@ -699,8 +669,6 @@ CPU_TEST( DF, DCP, AbsoluteX, "df.json" );
 CPU_TEST( DB, DCP, AbsoluteY, "db.json" );
 CPU_TEST( C3, DCP, IndirectX, "c3.json" );
 CPU_TEST( D3, DCP, IndirectY, "d3.json" );
-
-/* Illegal ISC */
 CPU_TEST( E7, ISC, ZeroPage, "e7.json" );
 CPU_TEST( F7, ISC, ZeroPageX, "f7.json" );
 CPU_TEST( EF, ISC, Absolute, "ef.json" );
@@ -708,17 +676,13 @@ CPU_TEST( FF, ISC, AbsoluteX, "ff.json" );
 CPU_TEST( FB, ISC, AbsoluteY, "fb.json" );
 CPU_TEST( E3, ISC, IndirectX, "e3.json" );
 CPU_TEST( F3, ISC, IndirectY, "f3.json" );
-
-/* Illegal ALR */
 CPU_TEST( 4B, ALR, Immediate, "4b.json" );
-
-/* Illegal ARR */
 CPU_TEST( 6B, ARR, Immediate, "6b.json" );
-
-/* Illegal ANC */ 
+CPU_TEST( EB, USBC, Immediate, "eb.json" );
 CPU_TEST( 0B, ANC, Immediate, "0b.json" );
-CPU_TEST( 2B, ANC, AbsoluteX, "2b.json" );
-
+CPU_TEST( 2B, ANC, Immediate, "2b.json" );
+CPU_TEST( AB, LXA, Immediate, "ab.json" );
+CPU_TEST( CB, SBX, Immediate, "cb.json" );
 /*
 ################################################################
 ||                                                            ||
@@ -750,7 +714,7 @@ void CPUTestFixture::RunTestCase( const json &testCase ) // NOLINT
     }
 
     // Fetch, decode, execute
-    cpu.Tick();
+    cpu.DecodeExecute();
 
     // Check final state
     bool               test_failed = false; // Track if any test has failed
