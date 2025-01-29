@@ -31,6 +31,7 @@ class PPU
     */
     void SetScanline( s16 scanline );
     void SetCycles( u16 cycles );
+    void SetIsCpuReadingPpuStatus( bool isReading );
 
     /*
     ################################
@@ -77,6 +78,7 @@ class PPU
     u16  _cycle = 4;
     u64  _frame = 1;
     bool _isRenderingEnabled = false;
+    bool _isCpuReadingPpuStatus = false;
 
     /*
     ################################

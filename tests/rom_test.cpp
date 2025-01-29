@@ -38,6 +38,7 @@ TEST( RomTests, Nestest )
 
     // color codes
     const std::string red = "\033[31m";
+    const std::string green = "\033[32m";
     const std::string reset = "\033[0m";
 
     if ( !actual_output.is_open() )
@@ -62,7 +63,7 @@ TEST( RomTests, Nestest )
         u8  y;
         u8  p;
         u8  sp;
-        // s16 ppu_cycles;
+        s16 ppu_cycles;
         u64 cpu_cycles;
     };
     std::vector<NestestLogInfo> expected_lines;
@@ -75,7 +76,7 @@ TEST( RomTests, Nestest )
         entry.y = static_cast<u8>( stoul( match[3], nullptr, 16 ) );
         entry.p = static_cast<u8>( stoul( match[4], nullptr, 16 ) );
         entry.sp = static_cast<u8>( stoul( match[5], nullptr, 16 ) );
-        // entry.ppu_cycles = static_cast<s16>( stoul( match[6], nullptr, 10 ) );
+        entry.ppu_cycles = static_cast<s16>( stoul( match[6], nullptr, 10 ) );
         entry.cpu_cycles = stoull( match[7], nullptr, 10 );
         expected_lines.push_back( entry );
     }
@@ -96,104 +97,133 @@ TEST( RomTests, Nestest )
 
     while ( line_index < expected_lines.size() )
     {
-        // Save output to our own log file
-        actual_output << cpu.LogLineAtPC() << '\n';
-
-        // Get the expected line
-        const auto &expected = expected_lines[line_index];
-
-        // Compare all the relevant values with expected
-
-        if ( cpu.GetProgramCounter() != expected.pc )
+        try
         {
-            did_fail = true;
-            cerr << '\n';
-            cerr << red << ( line_index + 1 ) << ": PC mismatch\n" << reset;
-            cerr << "Expected: " << utils::toHex( expected.pc, 4 ) << "    "
-                 << "Actual: " << utils::toHex( cpu.GetProgramCounter(), 4 ) << '\n';
-            cerr << '\n';
-        }
+            // Save output to our own log file
+            actual_output << cpu.LogLineAtPC() << '\n';
 
-        if ( cpu.GetAccumulator() != expected.a )
+            // Get the expected line
+            const auto &expected = expected_lines[line_index];
+
+            // Compare all the relevant values with expected
+
+            if ( cpu.GetProgramCounter() != expected.pc )
+            {
+                did_fail = true;
+                cerr << '\n';
+                cerr << red << ( line_index + 1 ) << ": PC mismatch" << reset << '\n';
+                cerr << "Expected: " << utils::toHex( expected.pc, 4 ) << "    "
+                     << "Actual: " << utils::toHex( cpu.GetProgramCounter(), 4 ) << '\n';
+                cerr << '\n';
+            }
+
+            if ( cpu.GetAccumulator() != expected.a )
+            {
+                did_fail = true;
+                cerr << '\n';
+                std::cerr << red << ( line_index + 1 ) << ": A mismatch" << reset << '\n';
+                std::cerr << "Expected: " << utils::toHex( expected.a, 2 ) << "    "
+                          << "Actual: " << utils::toHex( cpu.GetAccumulator(), 2 ) << '\n';
+                cerr << '\n';
+            }
+
+            if ( cpu.GetXRegister() != expected.x )
+            {
+                did_fail = true;
+                cerr << '\n';
+                std::cerr << red << ( line_index + 1 ) << ": X mismatch" << reset << '\n';
+                std::cerr << "Expected: " << utils::toHex( expected.x, 2 ) << "    "
+                          << "Actual: " << utils::toHex( cpu.GetXRegister(), 2 ) << '\n';
+                cerr << '\n';
+            }
+
+            if ( cpu.GetYRegister() != expected.y )
+            {
+                did_fail = true;
+                cerr << '\n';
+                std::cerr << red << ( line_index + 1 ) << ": Y mismatch" << reset << '\n';
+                std::cerr << "Expected: " << utils::toHex( expected.y, 2 ) << "    "
+                          << "Actual: " << utils::toHex( cpu.GetYRegister(), 2 ) << '\n';
+                cerr << '\n';
+            }
+
+            if ( cpu.GetStatusRegister() != expected.p )
+            {
+                did_fail = true;
+                cerr << '\n';
+                std::cerr << red << ( line_index + 1 ) << ": P mismatch" << reset << '\n';
+                std::cerr << "Expected: " << utils::toHex( expected.p, 2 ) << "    "
+                          << "Actual: " << utils::toHex( cpu.GetStatusRegister(), 2 ) << '\n';
+                cerr << '\n';
+            }
+
+            if ( cpu.GetStackPointer() != expected.sp )
+            {
+                did_fail = true;
+                cerr << '\n';
+                std::cerr << red << ( line_index + 1 ) << ": SP mismatch" << reset << '\n';
+                std::cerr << "Expected: " << utils::toHex( expected.sp, 2 ) << "    "
+                          << "Actual: " << utils::toHex( cpu.GetStackPointer(), 2 ) << '\n';
+                cerr << '\n';
+            }
+
+            if ( cpu.GetCycles() != expected.cpu_cycles )
+            {
+                did_fail = true;
+                cerr << '\n';
+                std::cerr << red << ( line_index + 1 ) << ": Cycles mismatch" << reset << '\n';
+                std::cerr << "Expected: " << expected.cpu_cycles << "    "
+                          << "Actual: " << cpu.GetCycles() << '\n';
+                cerr << '\n';
+            }
+
+            if ( did_fail )
+            {
+                string         actual_line = cpu.LogLineAtPC();
+                NestestLogInfo expected = expected_lines[line_index];
+
+                // Set the pc state to expected and then log the line, to match formatting
+                cpu.SetProgramCounter( expected.pc );
+                cpu.SetAccumulator( expected.a );
+                cpu.SetXRegister( expected.x );
+                cpu.SetYRegister( expected.y );
+                cpu.SetStackPointer( expected.sp );
+                cpu.SetStatusRegister( expected.p );
+                cpu.SetCycles( expected.cpu_cycles );
+                ppu.SetScanline( expected.ppu_cycles );
+                ppu.SetCycles( expected.ppu_cycles );
+
+                string expected_line = cpu.LogLineAtPC();
+
+                std::cerr << red << "Mismatch detected at line " << ( line_index + 1 ) << reset << '\n';
+                std::cerr << "\n";
+                std::cerr << "Actual Vs. Expected:\n";
+                std::cerr << red << actual_line << reset << '\n';
+                std::cerr << green << expected_line << reset << '\n';
+                std::cerr << "\n";
+                FAIL();
+                break;
+            }
+
+            cpu.DecodeExecute(); // Run one CPU cycle
+            line_index++;
+        }
+        catch ( const std::exception &e )
         {
-            did_fail = true;
-            cerr << '\n';
-            std::cerr << red << ( line_index + 1 ) << ": A mismatch\n" << reset;
-            std::cerr << "Expected: " << utils::toHex( expected.a, 2 ) << "    "
-                      << "Actual: " << utils::toHex( cpu.GetAccumulator(), 2 ) << '\n';
-            cerr << '\n';
+            std::cerr << red << "Failed at line " << ( line_index + 1 ) << reset << '\n';
+            std::cerr << "Exception: " << e.what() << '\n';
+            FAIL();
         }
-
-        if ( cpu.GetXRegister() != expected.x )
-        {
-            did_fail = true;
-            cerr << '\n';
-            std::cerr << red << ( line_index + 1 ) << ": X mismatch\n" << reset;
-            std::cerr << "Expected: " << utils::toHex( expected.x, 2 ) << "    "
-                      << "Actual: " << utils::toHex( cpu.GetXRegister(), 2 ) << '\n';
-            cerr << '\n';
-        }
-
-        if ( cpu.GetYRegister() != expected.y )
-        {
-            did_fail = true;
-            cerr << '\n';
-            std::cerr << red << ( line_index + 1 ) << ": Y mismatch\n" << reset;
-            std::cerr << "Expected: " << utils::toHex( expected.y, 2 ) << "    "
-                      << "Actual: " << utils::toHex( cpu.GetYRegister(), 2 ) << '\n';
-            cerr << '\n';
-        }
-
-        if ( cpu.GetStatusRegister() != expected.p )
-        {
-            did_fail = true;
-            cerr << '\n';
-            std::cerr << red << ( line_index + 1 ) << ": P mismatch\n" << reset;
-            std::cerr << "Expected: " << utils::toHex( expected.p, 2 ) << "    "
-                      << "Actual: " << utils::toHex( cpu.GetStatusRegister(), 2 ) << '\n';
-            cerr << '\n';
-        }
-
-        if ( cpu.GetStackPointer() != expected.sp )
-        {
-            did_fail = true;
-            cerr << '\n';
-            std::cerr << red << ( line_index + 1 ) << ": SP mismatch\n" << reset;
-            std::cerr << "Expected: " << utils::toHex( expected.sp, 2 ) << "    "
-                      << "Actual: " << utils::toHex( cpu.GetStackPointer(), 2 ) << '\n';
-            cerr << '\n';
-        }
-
-        if ( cpu.GetCycles() != expected.cpu_cycles )
-        {
-            did_fail = true;
-            cerr << '\n';
-            std::cerr << red << ( line_index + 1 ) << ": Cycles mismatch\n" << reset;
-            std::cerr << "Expected: " << expected.cpu_cycles << "    "
-                      << "Actual: " << cpu.GetCycles() << '\n';
-            cerr << '\n';
-        }
-
-        if ( did_fail )
-        {
-
-            FAIL() << red << "Mismatch detected at line " << ( line_index + 1 ) << reset;
-            break;
-        }
-
-        cpu.Tick(); // Run one CPU cycle
-        line_index++;
     }
 
     if ( did_fail )
     {
-        std::cerr << red << "Nestest failed.\n" << reset;
+        std::cerr << red << "Nestest failed." << reset << '\n';
     }
     else
     {
 
-        std::string green = "\033[32m";
-        std::cout << green << "Nestest passed.\n" << reset;
+        std::cout << green << "Nestest passed." << reset << '\n';
     }
 
     actual_output.close();

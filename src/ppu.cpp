@@ -24,6 +24,7 @@ PPU::PPU( Bus *bus, bool isDisabled ) : _isDisabled( isDisabled ), _bus( bus ) {
 */
 void PPU::SetScanline( s16 scanline ) { _scanline = scanline; }
 void PPU::SetCycles( u16 cycles ) { _cycle = cycles; }
+void PPU::SetIsCpuReadingPpuStatus( bool isReading ) { _isCpuReadingPpuStatus = isReading; }
 
 /*
 ################################
@@ -380,7 +381,7 @@ void PPU::Write( u16 address, u8 data ) // NOLINT
 */
 void PPU::Tick() // NOLINT
 {
-    if ( _isDisabled )
+    if ( _isDisabled || _bus->IsTestMode() )
     {
         return;
     }
@@ -404,7 +405,17 @@ void PPU::Tick() // NOLINT
     ||       End Of Scanline      ||
     ################################
     */
-    // TODO: Implement
+    if ( _cycle > 340 )
+    {
+        _cycle = 0;
+        _scanline++;
+
+        if ( _scanline > 260 )
+        {
+            _scanline = -1;
+            _frame++;
+        }
+    }
 
     /*
     ################################
