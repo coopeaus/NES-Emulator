@@ -51,8 +51,8 @@ jobs:
       - name: Run Nestest ROM
         if: env.files_modified == 'true'
         run: |
-          mkdir /tests/output
-          touch /tests/output/my_nestest-log.txt
+          mkdir ./tests/output
+          touch ./tests/output/my_nestest-log.txt
           chmod ugo +rw /tests/output/my_nestest-log.txt
           docker run -e CI=${CI} -v $(pwd):/workspace -w /workspace ghcr.io/coopeaus/nes-emulator/build-lint-container:latest build
           docker run -e CI=${CI} -v $(pwd):/workspace -w /workspace ghcr.io/coopeaus/nes-emulator/build-lint-container:latest test "RomTests.Nestest"
