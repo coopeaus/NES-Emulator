@@ -62,4 +62,4 @@ jobs:
           ctest --test-dir /workspace/build_container --show-only
           
           echo 'Trying to run the test...'
-          test RomTests.Nestest"
+          exec /entrypoint.sh test 'RomTests.Nestest'"
