@@ -60,13 +60,12 @@ void PPU::SetIsCpuReadingPpuStatus( bool isReading ) { _isCpuReadingPpuStatus = 
          * blank flag is cleared after constructing the return value, ensuring the
          * CPU sees the state before the read's side effects.
          */
-        u8 status = _ppuStatus.value & 0xE0;
-        u8 noise = _ppuStatus.value & 0x1F;
-        u8 data = status | noise;
+        u8 const status = _ppuStatus.value & 0xE0;
+        u8 const noise = _ppuStatus.value & 0x1F;
+        u8 const data = status | noise;
         _ppuStatus.bit.vertical_blank = 0;
         _addrLatch = false;
         return data;
-
     }
     // 2004: OAM Data
     if ( address == 0x2004 )
@@ -100,10 +99,10 @@ void PPU::SetIsCpuReadingPpuStatus( bool isReading ) { _isCpuReadingPpuStatus = 
             return _bus->Read( _vramAddr.value );
         }
 
-        u8 data = _ppuDataBuffer;
+        u8 const data = _ppuDataBuffer;
         _ppuDataBuffer = _bus->Read( _vramAddr.value );
 
-        _vramAddr.value += _ppuCtrl.bit.increment_mode ? 32 : 1;
+        _vramAddr.value += _ppuCtrl.bit.vram_increment ? 32 : 1;
         return data;
     }
     return 0xFF;
@@ -180,7 +179,7 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                 return;
             }
             _oam[_oamAddr] = data;
-            _oamAddr = (_oamAddr + 1) & 0xFF;
+            _oamAddr = ( _oamAddr + 1 ) & 0xFF;
             return;
         }
         // 2005: PPUSCROLL
