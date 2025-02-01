@@ -60,8 +60,13 @@ void PPU::SetIsCpuReadingPpuStatus( bool isReading ) { _isCpuReadingPpuStatus = 
          * blank flag is cleared after constructing the return value, ensuring the
          * CPU sees the state before the read's side effects.
          */
-        // TODO: Implement
-        return 0xFF;
+        u8 status = _ppuStatus.value & 0xE0;
+        u8 noise = _ppuStatus.value & 0x1F;
+        u8 data = status | noise;
+        _ppuStatus.bit.vertical_blank = 0;
+        _addrLatch = false;
+        return data;
+
     }
     // 2004: OAM Data
     if ( address == 0x2004 )
@@ -71,7 +76,11 @@ void PPU::SetIsCpuReadingPpuStatus( bool isReading ) { _isCpuReadingPpuStatus = 
            If called while _renderingEnabled and in visible scanline range (0-239),
            Returns corrupted data (0xFF)
         */
-        // TODO: Impelement
+        if ( _isRenderingEnabled && _scanline >= 0 && _scanline <= 239 )
+        {
+            return 0xFF;
+        }
+        return _oam[_oamAddr];
     }
 
     // 2007: PPU Data
@@ -86,7 +95,16 @@ void PPU::SetIsCpuReadingPpuStatus( bool isReading ) { _isCpuReadingPpuStatus = 
           The _ppuDataBuffer is then updated with the data at the new _vramAddr, in preparation
           for the next non-palette memory read.
          */
-        // TODO: Implement
+        if ( _vramAddr.value >= 0x3F00 && _vramAddr.value <= 0x3FFF )
+        {
+            return _bus->Read( _vramAddr.value );
+        }
+
+        u8 data = _ppuDataBuffer;
+        _ppuDataBuffer = _bus->Read( _vramAddr.value );
+
+        _vramAddr.value += _ppuCtrl.bit.increment_mode ? 32 : 1;
+        return data;
     }
     return 0xFF;
 }
@@ -157,8 +175,13 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
               If _isRenderingEnabled and in visible scanline range (0-239),
               Ignore the write
              */
-            // TODO: Implement
-            break;
+            if ( _isRenderingEnabled && _scanline >= 0 && _scanline <= 239 )
+            {
+                return;
+            }
+            _oam[_oamAddr] = data;
+            _oamAddr = (_oamAddr + 1) & 0xFF;
+            return;
         }
         // 2005: PPUSCROLL
         case 0x2005: // NOLINT
