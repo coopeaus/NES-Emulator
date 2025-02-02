@@ -100,7 +100,7 @@ void PPU::SetIsCpuReadingPpuStatus( bool isReading ) { _isCpuReadingPpuStatus = 
         }
 
         u8 const data = _ppuDataBuffer;
-        _ppuDataBuffer = _bus->Read( _vramAddr.value );
+        _ppuDataBuffer = Read( _vramAddr.value );
 
         _vramAddr.value += _ppuCtrl.bit.vram_increment ? 32 : 1;
         return data;
