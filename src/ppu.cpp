@@ -96,7 +96,7 @@ void PPU::SetIsCpuReadingPpuStatus( bool isReading ) { _isCpuReadingPpuStatus = 
          */
         if ( _vramAddr.value >= 0x3F00 && _vramAddr.value <= 0x3FFF )
         {
-            return _bus->Read( _vramAddr.value );
+            return Read( _vramAddr.value );
         }
 
         u8 const data = _ppuDataBuffer;
