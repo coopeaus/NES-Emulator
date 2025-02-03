@@ -396,78 +396,6 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
 /*
 ################################################
 ||                                            ||
-||                   Getters                  ||
-||                                            ||
-################################################
-*/
-[[nodiscard]] u8 CPU::GetAccumulator() const
-{
-    return _a;
-}
-[[nodiscard]] u8 CPU::GetXRegister() const
-{
-    return _x;
-}
-[[nodiscard]] u8 CPU::GetYRegister() const
-{
-    return _y;
-}
-[[nodiscard]] u8 CPU::GetStatusRegister() const
-{
-    return _p;
-}
-[[nodiscard]] u16 CPU::GetProgramCounter() const
-{
-    return _pc;
-}
-[[nodiscard]] u8 CPU::GetStackPointer() const
-{
-    return _s;
-}
-[[nodiscard]] u64 CPU::GetCycles() const
-{
-    return _cycles;
-}
-
-/*
-################################################
-||                                            ||
-||                   Setters                  ||
-||                                            ||
-################################################
-*/
-void CPU::SetAccumulator( u8 value )
-{
-    _a = value;
-}
-void CPU::SetXRegister( u8 value )
-{
-    _x = value;
-}
-void CPU::SetYRegister( u8 value )
-{
-    _y = value;
-}
-void CPU::SetStatusRegister( u8 value )
-{
-    _p = value;
-}
-void CPU::SetProgramCounter( u16 value )
-{
-    _pc = value;
-}
-void CPU::SetStackPointer( u8 value )
-{
-    _s = value;
-}
-void CPU::SetCycles( u64 value )
-{
-    _cycles = value;
-}
-
-/*
-################################################
-||                                            ||
 ||                Debug Methods               ||
 ||                                            ||
 ################################################
@@ -621,7 +549,7 @@ void CPU::Write( u16 address, u8 data ) const
 auto CPU::ReadAndTick( u16 address ) -> u8
 {
     if ( address == 0x2002 ) {
-        _bus->ppu.SetIsCpuReadingPpuStatus( true );
+        SetReading2002( true );
     }
     Tick();
     u8 const data = Read( address );
@@ -713,6 +641,7 @@ void CPU::NMI()
      * It interrupts whatever the CPU is doing at its current cycle to go update the PPU.
      * Uses 7 cycles, cannot be disabled.
      */
+    SetNmiInProgress( true );
     // 1) Two dummy cycles (hardware reads the same PC twice, discarding the data)
     Tick();
     Tick();
@@ -736,6 +665,8 @@ void CPU::NMI()
 
     // 7) Update PC
     _pc = static_cast<u16>( high ) << 8 | low;
+
+    SetNmiInProgress( false );
 }
 
 void CPU::IRQ()

@@ -20,18 +20,18 @@ class PPU
     ||           Getters          ||
     ################################
     */
-    [[nodiscard]] s16        GetScanline() const;
-    [[nodiscard]] u16        GetCycles() const;
     [[nodiscard]] MirrorMode GetMirrorMode();
+    [[nodiscard]] s16        GetScanline() const { return _scanline; }
+    [[nodiscard]] u16        GetCycles() const { return _cycle; }
+    [[nodiscard]] u16        GetFrame() const { return _frame; }
 
     /*
     ################################
     ||           Setters          ||
     ################################
     */
-    void SetScanline( s16 scanline );
-    void SetCycles( u16 cycles );
-    void SetIsCpuReadingPpuStatus( bool isReading );
+    void SetScanline( s16 scanline ) { _scanline = scanline; }
+    void SetCycles( u16 cycles ) { _cycle = cycles; }
 
     /*
     ################################
@@ -67,6 +67,27 @@ class PPU
     void DmaTransfer( u8 data );
     u16  ResolveNameTableAddress( u16 addr );
     void Tick();
+    void LoadNextBgShiftRegisters();
+    void UpdateShiftRegisters();
+    void LoadNametableByte();
+    void LoadAttributeByte();
+    void LoadPatternPlane0Byte();
+    void LoadPatternPlane1Byte();
+    void IncrementScrollX();
+    void IncrementScrollY();
+    u8   GetBgPalette();
+    u8   GetSpritePalette();
+    u8   GetBgPixel();
+    u8   GetSpritePixel();
+    u32  GetOutputPixel( u8 bgPixel, u8 spritePixel, u8 bgPalette, u8 spritePalette );
+    void TriggerNmi();
+
+    /*
+    ################################
+    ||        SDL Callback        ||
+    ################################
+    */
+    void ( *onFrameReady )( const u32 *frameBuffer ) = nullptr;
 
     /*
     ################################
@@ -82,11 +103,19 @@ class PPU
     ||      Global Variables      ||
     ################################
     */
-    s16  _scanline = 0;
-    u16  _cycle = 4;
-    u64  _frame = 1;
-    bool _isRenderingEnabled = false;
-    bool _isCpuReadingPpuStatus = false;
+    s16            _scanline = 0;
+    u16            _cycle = 4;
+    u64            _frame = 1;
+    bool           _isRenderingEnabled = false;
+    bool           _preventVBlank = false;
+    array<u32, 64> _nesPaletteRgbValues{};
+
+    /*
+    ################################
+    ||        SDL Variables       ||
+    ################################
+    */
+    array<u32, 61440> _frameBuffer{};
 
     /*
     ################################
@@ -94,6 +123,20 @@ class PPU
     ################################
     */
     bool _isDisabled = false;
+
+    /*
+    ######################################
+    ||  Background Rendering Variables  ||
+    ######################################
+    */
+    u8  _nametableByte = 0x00;
+    u8  _attributeByte = 0x00;
+    u8  _bgPlane0Byte = 0x00;
+    u8  _bgPlane1Byte = 0x00;
+    u16 _bgShiftPatternLow = 0x0000;
+    u16 _bgShiftPatternHigh = 0x0000;
+    u16 _bgShiftAttributeLow = 0x0000;
+    u16 _bgShiftAttributeHigh = 0x0000;
 
     /*
     ################################

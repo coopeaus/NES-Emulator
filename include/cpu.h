@@ -24,54 +24,58 @@ class CPU
     ||           Getters          ||
     ################################
     */
-    [[nodiscard]] u8  GetAccumulator() const;
-    [[nodiscard]] u8  GetXRegister() const;
-    [[nodiscard]] u8  GetYRegister() const;
-    [[nodiscard]] u8  GetStatusRegister() const;
-    [[nodiscard]] u8  GetStackPointer() const;
-    [[nodiscard]] u16 GetProgramCounter() const;
-    [[nodiscard]] u64 GetCycles() const;
+    u8   GetAccumulator() const { return _a; }
+    u8   GetXRegister() const { return _x; }
+    u8   GetYRegister() const { return _y; }
+    u8   GetStatusRegister() const { return _p; }
+    u16  GetProgramCounter() const { return _pc; }
+    u8   GetStackPointer() const { return _s; }
+    u64  GetCycles() const { return _cycles; }
+    bool IsReading2002() const { return _reading2002; }
+    bool IsNmiInProgress() const { return _nmiInProgress; }
 
     /*
     ################################
     ||           Setters          ||
     ################################
     */
-    void SetAccumulator( u8 value );
-    void SetXRegister( u8 value );
-    void SetYRegister( u8 value );
-    void SetStatusRegister( u8 value );
-    void SetStackPointer( u8 value );
-    void SetProgramCounter( u16 value );
-    void SetCycles( u64 value );
+    void SetAccumulator( u8 value ) { _a = value; }
+    void SetXRegister( u8 value ) { _x = value; }
+    void SetYRegister( u8 value ) { _y = value; }
+    void SetStatusRegister( u8 value ) { _p = value; }
+    void SetProgramCounter( u16 value ) { _pc = value; }
+    void SetStackPointer( u8 value ) { _s = value; }
+    void SetCycles( u64 value ) { _cycles = value; }
+    void SetReading2002( bool value ) { _reading2002 = value; };
+    void SetNmiInProgress( bool value ) { _nmiInProgress = value; }
 
     /*
     ################################
     ||         CPU Methods        ||
     ################################
     */
-    void               Reset();
-    [[nodiscard]] u8   Fetch();
-    void               DecodeExecute();
-    void               Tick();
-    [[nodiscard]] auto Read( u16 address ) const -> u8;
-    [[nodiscard]] auto ReadAndTick( u16 address ) -> u8;
-    void               Write( u16 address, u8 data ) const;
-    void               WriteAndTick( u16 address, u8 data );
-    void               NMI();
-    void               IRQ();
+    void Reset();
+    u8   Fetch();
+    void DecodeExecute();
+    void Tick();
+    auto Read( u16 address ) const -> u8;
+    auto ReadAndTick( u16 address ) -> u8;
+    void Write( u16 address, u8 data ) const;
+    void WriteAndTick( u16 address, u8 data );
+    void NMI();
+    void IRQ();
 
     /*
     ################################
     ||        Debug Methods       ||
     ################################
     */
-    std::string               LogLineAtPC( bool verbose = true );
-    [[nodiscard]] std::string GetTrace() const { return _trace; }
-    void                      EnableTracelog() { _traceEnabled = true; }
-    void                      DisableTracelog() { _traceEnabled = false; }
-    void                      EnableJsonTestMode() { _isTestMode = true; }
-    void                      DisableJsonTestMode() { _isTestMode = false; }
+    std::string LogLineAtPC( bool verbose = true );
+    std::string GetTrace() const { return _trace; }
+    void        EnableTracelog() { _traceEnabled = true; }
+    void        DisableTracelog() { _traceEnabled = false; }
+    void        EnableJsonTestMode() { _isTestMode = true; }
+    void        DisableJsonTestMode() { _isTestMode = false; }
 
   private:
     friend class CPUTestFixture; // Sometimes used for testing private methods
@@ -97,6 +101,8 @@ class CPU
     bool        _didVblank = false;
     bool        _currentPageCrossPenalty = true;
     bool        _isWriteModify = false;
+    bool        _reading2002 = false;
+    bool        _nmiInProgress = false;
     std::string _instructionName;
     std::string _addrMode;
 
@@ -161,10 +167,10 @@ class CPU
     };
 
     // Flag methods
-    void               SetFlags( u8 flag );
-    void               ClearFlags( u8 flag );
-    [[nodiscard]] auto IsFlagSet( u8 flag ) const -> bool;
-    void               SetZeroAndNegativeFlags( u8 value );
+    void SetFlags( u8 flag );
+    void ClearFlags( u8 flag );
+    auto IsFlagSet( u8 flag ) const -> bool;
+    void SetZeroAndNegativeFlags( u8 value );
 
     // LDA, LDX, and LDY helper
     void LoadRegister( u16 address, u8 &reg );
@@ -177,8 +183,8 @@ class CPU
     void CompareAddressWithRegister( u16 address, u8 reg );
 
     // Push/Pop helper
-    void               StackPush( u8 value );
-    [[nodiscard]] auto StackPop() -> u8;
+    void StackPush( u8 value );
+    auto StackPop() -> u8;
 
     /*
     ################################################################
