@@ -107,6 +107,7 @@ int main()
     */
     using Clock = chrono::high_resolution_clock;
     auto start = Clock::now();
+    auto lastExecuteTime = Clock::now();
     auto lastFpsTime = Clock::now();
     auto lastPollTime = Clock::now();
     auto lastRenderTime = Clock::now();
@@ -115,6 +116,9 @@ int main()
     auto pollElapsed = chrono::duration_cast<chrono::milliseconds>( now - start ).count();
     auto renderElapsed = chrono::duration_cast<chrono::milliseconds>( now - start ).count();
     u16  lastFrame = 0; // Stores the last known frame count
+
+    constexpr auto targetFrameTime = 1000.0 / 60.0;
+    auto           executeElapsed = std::chrono::duration<double, milli>( now - start ).count();
 
     /*
     ################################
@@ -125,8 +129,18 @@ int main()
     */
     bool running = true;
     while ( running ) {
-        bus.cpu.DecodeExecute();
         now = Clock::now();
+
+        /*
+        ################################
+        ||        Execute Frame       ||
+        ################################
+        */
+        executeElapsed = std::chrono::duration<double, milli>( now - lastExecuteTime ).count();
+        if ( executeElapsed >= targetFrameTime ) {
+            bus.cpu.ExecuteFrame();
+            lastExecuteTime = now;
+        }
 
         /*
         ################################

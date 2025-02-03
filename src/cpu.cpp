@@ -740,6 +740,14 @@ void CPU::DecodeExecute()
         std::cerr << "Bad opcode: " << std::hex << static_cast<int>( opcode ) << '\n';
     }
 }
+
+void CPU::ExecuteFrame()
+{
+    u16 currentFrame = _bus->ppu.GetFrame();
+    while ( currentFrame == _bus->ppu.GetFrame() ) {
+        DecodeExecute();
+    }
+}
 /*
 ################################################################
 ||                                                            ||

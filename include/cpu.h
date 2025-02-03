@@ -64,6 +64,7 @@ class CPU
     void WriteAndTick( u16 address, u8 data );
     void NMI();
     void IRQ();
+    void ExecuteFrame();
 
     /*
     ################################
