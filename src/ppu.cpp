@@ -387,8 +387,20 @@ void PPU::Tick() // NOLINT
     ||                            ||
     ################################
     */
+    if ( _scanline == -1 && _cycle == 339 && ( _frame % 2 == 1 ) && _isRenderingEnabled )
+    {
+        // skip by resetting scanline and cycle early
+        _cycle = 0;
+        _scanline = 0;
+        return;
+    }
 
-    if ( _scanline == -1 ) {
+    /*
+    ################################
+    ||       Increment Cycle      ||
+    ################################
+    */
+    _cycle++;
 
         /*
         ################################
