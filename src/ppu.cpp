@@ -544,137 +544,41 @@ void PPU::Tick() // NOLINT
 
     /*
     ################################
-    ||    Transfer Y (280-340)    ||
+    ||                            ||
+    ||           Drawing          ||
+    ||                            ||
     ################################
     */
-    // TODO: Implement
+    if ( _scanline >= 0 && _scanline < 240 && _cycle >= 0 && _cycle < 256 ) {
+        u8 const  bgPalette = GetBgPalette();
+        u8 const  spritePalette = GetSpritePalette();
+        u8 const  bgPixel = GetBgPixel();
+        u8 const  spritePixel = GetSpritePixel();
+        u32 const outputPixel = GetOutputPixel( bgPixel, spritePixel, bgPalette, spritePalette );
+        u16       bufferIndex = ( _scanline * 256 ) + _cycle;
+        _frameBuffer.at( bufferIndex ) = outputPixel;
+    }
+
+    _cycle++;
 
     /*
     ################################
-    ||  Visible Scalines (0-239)  ||
+    ||       End Of Scanline      ||
     ################################
     */
+    if ( _cycle > 340 ) {
+        _cycle = 0;
+        _scanline++;
 
-    if ( _scanline < 0 || _scanline > 239 ) {
-        return;
-    }
-
-    // Cycle 0, Idle cycle
-
-    // Cycles 1-256: Tile and Pixel Rendering
-    // Cycles 321-336 are beyond the visible scanline, but continue for the next scanline
-    if ( ( _cycle >= 1 && _cycle <= 256 ) || ( _cycle >= 321 && _cycle <= 336 ) ) {
-        u8 const stage = ( _cycle - 1 ) & 0x07;
-
-        switch ( stage ) {
-            // 0-1 fetch the nametable byte
-            case 1:
-                // Grab the first 12 bits of the vram address
-                // which provide nametable select, coarse Y scroll, and coarse x scroll information
-                // Nametable address is 0x2000 plus the offset of the vram address.
-                // TODO: Implement
-                break;
-
-            // 2-3 fetch the attribute table byte
-            case 3: // NOLINT
-            {
-                /* Attribute Table
-                The attribute table is a 64-byte region located at addresses 0x23C0-0x23FF within the
-                nametable memory. Each byte corresponds to a 32x32 pixel region on the screen,
-                which is further divided into 4 smaller 16x16 pixel boxes.
-
-                Each attribute byte determines the palette ID for each of these 16x16 pixel boxes,
-                allowing the PPU to assign distinct color palettes to specific screen regions.
-
-                Attribute Byte Structure:
-                7654 3210
-                |||| ||++- Palette ID for the top-left 16x16 pixel box
-                |||| ++--- Palette ID for the top-right 16x16 pixel box
-                ||++------ Palette ID for the bottom-left 16x16 pixel box
-                ++-------- Palette ID for the bottom-right 16x16 pixel box
-
-                Example:
-                Attribute Byte: 1010 0111
-                  |||| ||++- 11 (palette 3) for top-left box
-                  |||| ++--- 01 (palette 1) for top-right box
-                  ||++------ 10 (palette 2) for bottom-left box
-                  ++-------- 10 (palette 2) for bottom-right box
-
-                Visual Representation:
-                  ,---- Top-left (palette 3)
-                  |3 1 - Top-right (palette 1)
-                  |2 2 - Bottom-right (palette 2)
-                  `---- Bottom-left (palette 2)
-
-                Each attribute byte affects a 32x32 pixel region. The attribute table covers the
-                entire screen as an 8x8 grid of 32x32 regions (totaling 256x240 pixels).
-                The first 8 bytes of the attribute table correspond to the top row of 32x256 pixels,
-                the next 8 bytes correspond to the next row, and so on.
-
-                Attribute Table Coverage:
-                - Top-left corner of the screen: Address 0x23C0
-                - Bottom-right corner of the screen: Address 0x23FF
-                */
-
-                // The attribute is 12 bits and is composed as follows
-                /*
-                NN 1111 YYY XXX
-                || |||| ||| +++-- high 3 bits of coarse X (x/4)
-                || |||| +++------ high 3 bits of coarse Y (y/4)
-                || ++++---------- attribute offset (from the 23C0 offset)
-                ++--------------- nametable select
-                */
-                // TODO: Implement
-                break;
-            }
-            // 4-5 fetch pattern table plane 0
-            case 5: {
-                /*
-                  If the name tables provide the "which tile" and "which palette",
-                  the pattern table byte provides the "which pixel" and the "which palette color"
-
-                  A pattern table byte represents an 8x8 tile.
-                  Each bit is a 2bit color value (0-3). How can two bits fit into one bit?
-                  They can't. That's why two planes are used.
-                  Plane 0 holds the least significant bit of the color value
-                  Plane 1 holds the most significant bit of the color value
-                  A pattern table byte is grabbed in two reads, and the values are then combined
-
-                  Here's an illustration with just 4 bits
-                  Plane 1:   1010
-                  Plane 0:   1100,
-
-                  Index:     3120
-
-                  Reading vertically, 0b11 = 3, 0b01 = 1, 0b10 = 2, 0b00 = 0
-                  The 3, 1, 2, and 0 are the palette indeces for these pixels
-                 */
-
-                // TODO: Implement
-                break;
-            }
-            // 6-7 fetch pattern table plane 1
-            // 7: Increment scroll x
-            // 7: Increment scroll y on cycle 256
-            case 7: {
-                // TODO: Implement
-                break;
-            }
-            default:
-                break;
+        if ( _scanline > 260 ) {
+            _scanline = -1;
+            _frame++;
         }
     }
 
     /*
-    #################################
-    ||  Transfer X Position (257)  ||
-    #################################
-    */
-    // TODO: Implement
-
-    /*
     ################################
-    ||   Unused Reads (338, 340)  ||
+    ||        Vblank Start        ||
     ################################
     */
     // TODO: Implement
