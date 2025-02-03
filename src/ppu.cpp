@@ -120,7 +120,12 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
               Additionally, _tempAddr nametable x and y bits are update from the
               _cpuCtrl nametable x and y bits.
              */
-            // TODO: Implement
+
+            if ( _ppuCtrl.bit.nmiEnable && _ppuStatus.bit.verticalBlank ) {
+                TriggerNmi();
+            }
+            _tempAddr.bit.nametableX = _ppuCtrl.bit.nametableX;
+            _tempAddr.bit.nametableY = _ppuCtrl.bit.nametableY;
             break;
         }
         // 2001: PPUMASK
