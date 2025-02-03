@@ -374,36 +374,138 @@ void PPU::Write( u16 address, u8 data ) // NOLINT
 */
 void PPU::Tick() // NOLINT
 {
-    if ( _isDisabled || _bus->IsTestMode() ) {
+    if ( _isDisabled ) {
         return;
     }
 
     /*
     ################################
-    ||    Odd Frame Cycle Skip    ||
+    ||                            ||
+    ||  Pre-render Scanline (-1)  ||
+    ||                            ||
     ################################
     */
-    // TODO: Implement
+
+    if ( _scanline == -1 ) {
+
+        /*
+        ################################
+        ||    Odd Frame Cycle Skip    ||
+        ################################
+        */
+        // TODO: Implement
+
+        /*
+        ################################
+        ||         Vblank End         ||
+        ################################
+        */
+        // TODO: Implement
+
+        /*
+        ################################
+        ||    Transfer Y (280-340)    ||
+        ################################
+        */
+        // TODO: Implement
+    }
 
     /*
-    ################################
-    ||       Increment Cycle      ||
-    ################################
+    #################################
+    ||                             ||
+    ||  Visible Scanlines (0-239)  ||
+    ||                             ||
+    #################################
     */
-    _cycle++;
 
-    /*
-    ################################
-    ||       End Of Scanline      ||
-    ################################
-    */
-    if ( _cycle > 340 ) {
-        _cycle = 0;
-        _scanline++;
+    if ( _scanline >= 0 && _scanline <= 239 ) {
 
-        if ( _scanline > 260 ) {
-            _scanline = -1;
-            _frame++;
+        // Cycle 0, Idle cycle
+
+        /*
+        #########################################
+        ||  Background Events, every 8 cycles  ||
+        #########################################
+        */
+        // Cycles 1-256: Tile and Pixel Rendering
+        // Cycles 321-336 are beyond the visible scanline, but continue for the next scanline
+        if ( ( _cycle >= 1 && _cycle <= 256 ) || ( _cycle >= 321 && _cycle <= 336 ) ) {
+
+            // Update the current pixel info
+            UpdateShiftRegisters();
+
+            /* Rendering events
+               PPU does a series of events which repeat every 8 cycles
+               8 cycles is 8 pixels, which is the width of a tile
+               See the wiki PPU diagram for more details
+               https://www.nesdev.org/w/images/default/4/4f/Ppu.svg
+             */
+            u8 const event = ( _cycle - 1 ) & 0x07;
+
+            switch ( event ) {
+                // 0-1 fetch the nametable byte
+                case 1: {
+
+                    LoadNextBgShiftRegisters();
+                    LoadNametableByte();
+                    break;
+                }
+
+                // 2-3 fetch the attribute table byte
+                case 3: {
+                    LoadAttributeByte();
+                    break;
+                }
+                // 4-5 fetch pattern table plane 0
+                case 5: {
+                    LoadPatternPlane0Byte();
+                    break;
+                }
+                // 6-7 fetch pattern table plane 1
+                // 7: Increment scroll x
+                // 7: Increment scroll y on cycle 256
+                case 7: {
+                    LoadPatternPlane1Byte();
+                    IncrementScrollX();
+                    IncrementScrollY();
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+
+        /*
+        ##################################
+        ||  End of Tile Fetching (257)  ||
+        ##################################
+        */
+        if ( _cycle == 257 ) {
+            LoadNextBgShiftRegisters();
+
+            // Transfer nametable and coarse X from temp to vram address
+            _vramAddr.bit.nametableX = _tempAddr.bit.nametableX;
+            _vramAddr.bit.coarseX = _tempAddr.bit.coarseX;
+        }
+
+        /*
+        ###################################
+        ||                               ||
+        ||  Sprite Evaluation (257-320)  ||
+        ||                               ||
+        ###################################
+        */
+        if ( _cycle >= 257 && _cycle <= 320 ) {
+            //  TODO: Sprite evaluation
+        }
+
+        /*
+        ################################
+        ||   Unused Reads (338, 340)  ||
+        ################################
+        */
+        if ( _cycle == 338 || _cycle == 340 ) {
+            _nametableByte = Read( 0x2000 | ( _vramAddr.value & 0x0FFF ) );
         }
     }
 
