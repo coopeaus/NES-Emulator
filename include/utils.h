@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <cstdint>
 #include <unordered_set>
@@ -143,7 +144,7 @@ inline array<uint32_t, 64> readPalette( const string &filename )
     }
 
     file.seekg( 0, std::ios::end );
-    streamsize fileSize = file.tellg();
+    streamsize const fileSize = file.tellg();
     if ( fileSize != 192 ) {
         std::cerr << "utils::readPalette: Invalid palette file size: " << fileSize << '\n';
         throw std::runtime_error( "Invalid palette file size" );
@@ -159,10 +160,10 @@ inline array<uint32_t, 64> readPalette( const string &filename )
 
     // Convert to 32-bit RGBA (SDL_PIXELFORMAT_RGBA32)
     for ( int i = 0; i < 64; ++i ) {
-        uint8_t red = buffer[i * 3 + 0];
-        uint8_t green = buffer[i * 3 + 1];
-        uint8_t blue = buffer[i * 3 + 2];
-        uint8_t alpha = 0xFF;
+        uint8_t const red = buffer[( i * 3 ) + 0];
+        uint8_t const green = buffer[( i * 3 ) + 1];
+        uint8_t const blue = buffer[( i * 3 ) + 2];
+        uint8_t const alpha = 0xFF;
         nesPalette[i] = ( alpha << 24 ) | ( blue << 16 ) | ( green << 8 ) | red;
     }
 

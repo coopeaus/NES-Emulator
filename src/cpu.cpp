@@ -743,7 +743,7 @@ void CPU::DecodeExecute()
 
 void CPU::ExecuteFrame()
 {
-    u16 currentFrame = _bus->ppu.GetFrame();
+    u16 const currentFrame = _bus->ppu.GetFrame();
     while ( currentFrame == _bus->ppu.GetFrame() ) {
         DecodeExecute();
     }

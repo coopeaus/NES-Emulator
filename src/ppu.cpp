@@ -3,6 +3,8 @@
 #include "utils.h"
 #include "cartridge.h" // NOLINT
 #include "mappers/mapper-base.h"
+#include <exception>
+#include <cstdlib>
 
 PPU::PPU( Bus *bus ) : _bus( bus )
 {
@@ -555,7 +557,7 @@ void PPU::Tick() // NOLINT
         u8 const  bgPixel = GetBgPixel();
         u8 const  spritePixel = GetSpritePixel();
         u32 const outputPixel = GetOutputPixel( bgPixel, spritePixel, bgPalette, spritePalette );
-        u16       bufferIndex = ( _scanline * 256 ) + _cycle;
+        u16 const bufferIndex = ( _scanline * 256 ) + _cycle;
         _frameBuffer.at( bufferIndex ) = outputPixel;
     }
 

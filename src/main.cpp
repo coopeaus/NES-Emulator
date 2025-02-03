@@ -2,11 +2,14 @@
 #include "SDL2/SDL_pixels.h"
 #include "SDL2/SDL_render.h"
 #include "SDL2/SDL_video.h"
+#include <SDL2/SDL_events.h>
 #include "bus.h"
 #include "cartridge.h"
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <ratio>
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <iostream>
@@ -24,9 +27,8 @@ constexpr int BUFFER_SIZE = 61440; // NOLINT
 
 SDL_Texture *texture = nullptr; // NOLINT
 
-void emulation();
-void signalHandler( int signal );
-void renderFrame( const u32 *frameBufferData );
+void signalHandler( int signal );               // NOLINT
+void renderFrame( const u32 *frameBufferData ); // NOLINT
 
 int main()
 {
@@ -149,8 +151,8 @@ int main()
         */
         fpsElapsed = chrono::duration_cast<chrono::milliseconds>( now - lastFpsTime ).count();
         if ( fpsElapsed >= 1000 ) {
-            u16 currentFrame = bus.ppu.GetFrame();
-            u16 framesRendered = currentFrame - lastFrame; // Calculate FPS
+            u16 const currentFrame = bus.ppu.GetFrame();
+            u16 const framesRendered = currentFrame - lastFrame; // Calculate FPS
             cout << "FPS: " << framesRendered << '\n';
 
             lastFrame = currentFrame; // Store current frame count
