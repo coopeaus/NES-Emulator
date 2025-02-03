@@ -5,7 +5,7 @@ class Mapper2 : public Mapper
 {
 
   public:
-    Mapper2( u8 prg_rom_banks, u8 chr_rom_banks, MirrorMode mirror_mode );
+    Mapper2( u8 prgRomBanks, u8 chrRomBanks, MirrorMode mirrorMode );
     auto TranslateCPUAddress( u16 address ) -> u32 override;
     auto TranslatePPUAddress( u16 address ) -> u32 override;
     void HandleCPUWrite( u16 address, u8 data ) override;
@@ -17,8 +17,8 @@ class Mapper2 : public Mapper
     [[nodiscard]] MirrorMode GetMirrorMode() override;
 
   private:
-    u8 _prg_bank_16_lo{ 0 };
+    u8 _prgBank16Lo{ 0 };
 
     // Mirroring mode (fixed)
-    MirrorMode _mirror_mode;
+    MirrorMode _mirrorMode;
 };
