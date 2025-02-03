@@ -2,15 +2,12 @@
 #include "mappers/mapper-base.h"
 #include <stdexcept>
 
-Mapper2::Mapper2( u8 prgRomBanks, u8 chrRomBanks, MirrorMode mirrorMode )
-    : Mapper( prgRomBanks, chrRomBanks ), _mirrorMode( mirrorMode )
+Mapper2::Mapper2( u8 prg_rom_banks, u8 chr_rom_banks, MirrorMode mirror_mode )
+    : Mapper( prg_rom_banks, chr_rom_banks ), _mirror_mode( mirror_mode )
 {
 }
 
-MirrorMode Mapper2::GetMirrorMode()
-{
-    return _mirrorMode;
-}
+MirrorMode Mapper2::GetMirrorMode() { return _mirror_mode; }
 
 /*
 ################################
@@ -29,16 +26,18 @@ MirrorMode Mapper2::GetMirrorMode()
      */
 
     // More specific implementation details are available in the mapper1.cpp file
-    if ( address >= 0x8000 && address <= 0xBFFF ) {
+    if ( address >= 0x8000 && address <= 0xBFFF )
+    {
         // Translate address for swappable lower 16KiB bank (0x8000-0xBFFF)
-        u32 const bankOffset = _prgBank16Lo * 0x4000;
-        return bankOffset + ( address & 0x3FFF );
+        u32 const bank_offset = _prg_bank_16_lo * 0x4000;
+        return bank_offset + ( address & 0x3FFF );
     }
 
-    if ( address >= 0xC000 && address <= 0xFFFF ) {
+    if ( address >= 0xC000 && address <= 0xFFFF )
+    {
         // Swap out the fixed upper 16 KiB bank.
-        u32 const bankOffset = ( GetPrgBankCount() - 1 ) * 0x4000;
-        return bankOffset + ( address & 0x3FFF );
+        u32 const bank_offset = ( GetPrgBankCount() - 1 ) * 0x4000;
+        return bank_offset + ( address & 0x3FFF );
     }
 
     // If out of PRG range
@@ -65,9 +64,10 @@ void Mapper2::HandleCPUWrite( u16 address, u8 data )
      *        (0xC000-0xFFFF).
      */
 
-    if ( address >= 0x8000 && address <= 0xFFFF ) {
+    if ( address >= 0x8000 && address <= 0xFFFF )
+    {
         // Set the lower 16 KiB bank
-        _prgBank16Lo = data & 0b00001111;
+        _prg_bank_16_lo = data & 0b00001111;
     }
 }
 
@@ -83,7 +83,8 @@ void Mapper2::HandleCPUWrite( u16 address, u8 data )
     /**
      * @brief Translate PPU address. Mapper 2 only supports direct mapping
      */
-    if ( address >= 0x0000 && address <= 0x1FFF ) {
+    if ( address >= 0x0000 && address <= 0x1FFF )
+    {
         return address;
     }
     return 0xFF;
