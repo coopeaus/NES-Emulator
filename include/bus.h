@@ -19,7 +19,7 @@ class Bus
 {
   public:
     // Initialized with flat memory disabled by default. Enabled in json tests only
-    Bus( bool use_flat_memory = false );
+    Bus();
 
     /*
     ################################
@@ -45,6 +45,8 @@ class Bus
     ################################
     */
     [[nodiscard]] bool IsTestMode() const;
+    void               EnableJsonTestMode() { _useFlatMemory = true; }
+    void               DisableJsonTesetMode() { _useFlatMemory = false; }
 
   private:
     /*
@@ -59,13 +61,13 @@ class Bus
     ||       Debug Variables      ||
     ################################
     */
-    bool                  _use_flat_memory; // For testing purposes
-    std::array<u8, 65536> _flat_memory{};   // 64KB memory, for early testing
+    bool                  _useFlatMemory{}; // For testing purposes
+    std::array<u8, 65536> _flatMemory{};    // 64KB memory, for early testing
 
     /*
     ################################
     ||       Temporary Stubs      ||
     ################################
     */
-    std::array<u8, 0x0020> _apu_io_memory{}; // 32 bytes APU and I/O registers
+    std::array<u8, 0x0020> _apuIoMemory{}; // 32 bytes APU and I/O registers
 };
