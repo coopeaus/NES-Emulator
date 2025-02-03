@@ -50,6 +50,8 @@ PPU::PPU( Bus *bus ) : _bus( bus )
         u8 const data = status | noise;
         _ppuStatus.bit.verticalBlank = 0;
         _addrLatch = false;
+        _bus->cpu.SetReading2002( false );
+        _preventVBlank = false;
         return data;
     }
     // 2004: OAM Data
@@ -405,14 +407,33 @@ void PPU::Tick() // NOLINT
     ||        Vblank Start        ||
     ################################
     */
-    // TODO: Implement
+    if ( _scanline == 241 ) {
+        // If the CPU is reading register 2002 on cycle 0 of scanline 241
+        // Vblank will not be set until the next frame due to a hardware race condition bug
+        if ( _cycle == 0 && _bus->cpu.IsReading2002() ) {
+            _preventVBlank = true;
+        }
 
-    /*
-    ################################
-    ||         Vblank End         ||
-    ################################
-    */
-    // TODO: Implement
+        // Set the Vblank flag on cycle 1
+        if ( _cycle == 1 ) {
+
+            // SDL Callback for rendering the framebuffer
+            if ( onFrameReady != nullptr ) {
+                onFrameReady( _frameBuffer.data() );
+            }
+
+            // Vblank and NMI
+            if ( !_preventVBlank ) {
+                _ppuStatus.bit.verticalBlank = 1;
+
+                // Trigger NMI if NMI is enabled
+                if ( _ppuCtrl.bit.nmiEnable ) {
+                    TriggerNmi();
+                }
+            }
+            _preventVBlank = false;
+        }
+    }
 
     /*
     ################################
