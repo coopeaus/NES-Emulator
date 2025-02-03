@@ -25,11 +25,11 @@ class CPUTestFixture : public ::testing::Test
 {
   protected:
     // All tests assume flat memory model, which is why true is passed to Bus constructor
-    Bus bus = Bus( true ); // NOLINT
-    CPU cpu;               // NOLINT
-    PPU ppu;               // NOLINT
+    Bus bus;
+    CPU cpu;
+    PPU ppu;
 
-    CPUTestFixture() : ppu( bus.ppu ), cpu( bus.cpu ) {}
+    CPUTestFixture() : cpu( bus.cpu ), ppu( bus.ppu ) {}
 
     void                      RunTestCase( const json &testCase );
     void                      LoadStateFromJson( const json &jsonData, const std::string &state );
@@ -694,6 +694,9 @@ CPU_TEST( CB, SBX, Immediate, "cb.json" );
 void CPUTestFixture::RunTestCase( const json &testCase ) // NOLINT
 {
     // Initialize CPU
+    bus.EnableJsonTestMode();
+    cpu.EnableJsonTestMode();
+    ppu.EnableJsonTestMode();
     cpu.Reset();
 
     LoadStateFromJson( testCase, "initial" );

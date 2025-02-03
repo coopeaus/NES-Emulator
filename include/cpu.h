@@ -67,9 +67,11 @@ class CPU
     ################################
     */
     std::string               LogLineAtPC( bool verbose = true );
-    [[nodiscard]] std::string GetTrace() const;
-    void                      EnableTracelog();
-    void                      DisableTracelog();
+    [[nodiscard]] std::string GetTrace() const { return _trace; }
+    void                      EnableTracelog() { _trace_enabled = true; }
+    void                      DisableTracelog() { _trace_enabled = false; }
+    void                      EnableJsonTestMode() { _is_test_mode = true; }
+    void                      DisableJsonTestMode() { _is_test_mode = false; }
 
   private:
     friend class CPUTestFixture; // Sometimes used for testing private methods
@@ -103,6 +105,7 @@ class CPU
     ||       Debug Variables      ||
     ################################
     */
+    bool        _is_test_mode = false;
     bool        _trace_enabled = false;
     bool        _did_trace = false;
     std::string _trace;

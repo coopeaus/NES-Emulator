@@ -13,7 +13,7 @@ using namespace std;
 class PPU
 {
   public:
-    PPU( Bus *bus, bool isDisabled = false );
+    PPU( Bus *bus );
 
     /*
     ################################
@@ -67,6 +67,14 @@ class PPU
     void DmaTransfer( u8 data );
     u16  ResolveNameTableAddress( u16 addr );
     void Tick();
+
+    /*
+    ################################
+    ||        Debug Methods       ||
+    ################################
+    */
+    void EnableJsonTestMode() { _isDisabled = true; }
+    void DisableJsonTestMode() { _isDisabled = false; }
 
   private:
     /*

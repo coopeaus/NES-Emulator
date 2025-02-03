@@ -1,9 +1,9 @@
 #include "ppu.h"
 #include "bus.h"
-#include "cartridge.h" // NOLINT(misc-include-cleaner)
+#include "cartridge.h" // NOLINT
 #include "mappers/mapper-base.h"
 
-PPU::PPU( Bus *bus, bool isDisabled ) : _isDisabled( isDisabled ), _bus( bus ) {}
+PPU::PPU( Bus *bus ) : _bus( bus ) {}
 
 /*
 ################################
