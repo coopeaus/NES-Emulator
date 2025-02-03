@@ -1,12 +1,14 @@
 #pragma once
 
 #include <cstddef>
+#include <iostream>
 #include <string>
 #include <cstdint>
 #include <unordered_set>
 #include <sstream>
 #include <regex>
 #include <vector>
+#include <fstream>
 
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
@@ -119,6 +121,51 @@ inline std::string getAvailableOpcodeNames()
         result.pop_back();
     }
     return result;
+}
+
+/*
+################################
+||                            ||
+||        Palette Read        ||
+||                            ||
+################################
+*/
+
+inline array<uint32_t, 64> readPalette( const string &filename )
+{
+    array<uint32_t, 64> nesPalette{};
+
+    std::ifstream file( filename, std::ios::binary );
+    if ( !file ) {
+        std::cerr << "utils::readPalette: Failed to open palette file: " << filename << '\n';
+        throw std::runtime_error( "Failed to open palette file" );
+    }
+
+    file.seekg( 0, std::ios::end );
+    streamsize fileSize = file.tellg();
+    if ( fileSize != 192 ) {
+        std::cerr << "utils::readPalette: Invalid palette file size: " << fileSize << '\n';
+        throw std::runtime_error( "Invalid palette file size" );
+    }
+
+    file.seekg( 0, std::ios::beg );
+
+    char buffer[192]; // NOLINT
+    if ( !file.read( buffer, 192 ) ) {
+        std::cerr << "utils::readPalette: Failed to read palette file: " << filename << '\n';
+        throw std::runtime_error( "Failed to read palette file" );
+    }
+
+    // Convert to 32-bit RGBA (SDL_PIXELFORMAT_RGBA32)
+    for ( int i = 0; i < 64; ++i ) {
+        uint8_t red = buffer[i * 3 + 0];
+        uint8_t green = buffer[i * 3 + 1];
+        uint8_t blue = buffer[i * 3 + 2];
+        uint8_t alpha = 0xFF;
+        nesPalette[i] = ( alpha << 24 ) | ( blue << 16 ) | ( green << 8 ) | red;
+    }
+
+    return nesPalette;
 }
 
 } // namespace utils
