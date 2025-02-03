@@ -68,10 +68,10 @@ class CPU
     */
     std::string               LogLineAtPC( bool verbose = true );
     [[nodiscard]] std::string GetTrace() const { return _trace; }
-    void                      EnableTracelog() { _trace_enabled = true; }
-    void                      DisableTracelog() { _trace_enabled = false; }
-    void                      EnableJsonTestMode() { _is_test_mode = true; }
-    void                      DisableJsonTestMode() { _is_test_mode = false; }
+    void                      EnableTracelog() { _traceEnabled = true; }
+    void                      DisableTracelog() { _traceEnabled = false; }
+    void                      EnableJsonTestMode() { _isTestMode = true; }
+    void                      DisableJsonTestMode() { _isTestMode = false; }
 
   private:
     friend class CPUTestFixture; // Sometimes used for testing private methods
@@ -94,20 +94,20 @@ class CPU
     ||      Global Variables      ||
     ################################
     */
-    bool        _did_vblank = false;
+    bool        _didVblank = false;
     bool        _currentPageCrossPenalty = true;
-    bool        _is_write_modify = false;
-    std::string _instruction_name;
-    std::string _addr_mode;
+    bool        _isWriteModify = false;
+    std::string _instructionName;
+    std::string _addrMode;
 
     /*
     ################################
     ||       Debug Variables      ||
     ################################
     */
-    bool        _is_test_mode = false;
-    bool        _trace_enabled = false;
-    bool        _did_trace = false;
+    bool        _isTestMode = false;
+    bool        _traceEnabled = false;
+    bool        _didTrace = false;
     std::string _trace;
 
     /*
@@ -122,10 +122,9 @@ class CPU
     ||        Opcode Table        ||
     ################################
     */
-    struct InstructionData
-    {
+    struct InstructionData {
         std::string name;                        // Instruction mnemonic (e.g. LDA, STA)
-        std::string addr_mode;                   // Addressing mode mnemonic (e.g. ABS, ZPG)
+        std::string addrMode;                    // Addressing mode mnemonic (e.g. ABS, ZPG)
         void ( CPU::*instructionMethod )( u16 ); // Pointer to the instruction helper method
         u16 ( CPU::*addressingModeMethod )();    // Pointer to the address mode helper method
         u8 cycles;                               // Number of cycles the instruction takes
@@ -150,8 +149,7 @@ class CPU
     */
 
     // Enum for Status Register
-    enum Status : u8
-    {
+    enum Status : u8 {
         Carry = 1 << 0,            // 0b00000001
         Zero = 1 << 1,             // 0b00000010
         InterruptDisable = 1 << 2, // 0b00000100

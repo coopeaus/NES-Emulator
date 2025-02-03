@@ -8,8 +8,7 @@
 
 int main()
 {
-    if ( SDL_Init( SDL_INIT_VIDEO ) != 0 )
-    {
+    if ( SDL_Init( SDL_INIT_VIDEO ) != 0 ) {
         std::cerr << "SDL_Init Error: " << SDL_GetError() << '\n';
         return 1;
     }
@@ -17,16 +16,14 @@ int main()
     SDL_Window *window = SDL_CreateWindow( "NES Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                            512, 480, SDL_WINDOW_SHOWN );
 
-    if ( window == nullptr )
-    {
+    if ( window == nullptr ) {
         std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << '\n';
         SDL_Quit();
         return 1;
     }
 
     SDL_Renderer *renderer = SDL_CreateRenderer( window, -1, SDL_RENDERER_ACCELERATED );
-    if ( renderer == nullptr )
-    {
+    if ( renderer == nullptr ) {
         std::cerr << "SDL_CreateRenderer Error: " << SDL_GetError() << '\n';
         SDL_DestroyWindow( window );
         SDL_Quit();
@@ -35,12 +32,9 @@ int main()
     bool      running = true;
     SDL_Event event;
 
-    while ( running )
-    {
-        while ( SDL_PollEvent( &event ) != 0 )
-        {
-            if ( event.type == SDL_QUIT )
-            {
+    while ( running ) {
+        while ( SDL_PollEvent( &event ) != 0 ) {
+            if ( event.type == SDL_QUIT ) {
                 running = false;
             }
         }

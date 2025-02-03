@@ -369,26 +369,22 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
     ################################
     */
     // Validate Opcode names and address mode strings
-    for ( int i = 0; i < 256; i++ )
-    {
+    for ( int i = 0; i < 256; i++ ) {
         string const name = _opcodeTable[i].name;
         // if no name, skip, it's an empty entry
-        if ( name.empty() )
-        {
+        if ( name.empty() ) {
             continue;
         }
-        string const addr_mode = _opcodeTable[i].addr_mode;
-        if ( !utils::isValidOpcodeName( name ) )
-        {
+        string const addrMode = _opcodeTable[i].addrMode;
+        if ( !utils::isValidOpcodeName( name ) ) {
             string output = "Invalid opcode name: " + name;
             output += " for opcode: " + utils::toHex( i, 2 );
             output += '\n';
             output += "Valid names: \n" + utils::getAvailableOpcodeNames();
             throw std::runtime_error( output );
         }
-        if ( !utils::isValidAddrModeStr( addr_mode ) )
-        {
-            string output = "Invalid address mode string: " + addr_mode;
+        if ( !utils::isValidAddrModeStr( addrMode ) ) {
+            string output = "Invalid address mode string: " + addrMode;
             output += " for opcode: " + utils::toHex( i, 2 );
             output += '\n';
             output += "Valid address mode strings: \n" + utils::getAvailableAddrModes();
@@ -404,13 +400,34 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
 ||                                            ||
 ################################################
 */
-[[nodiscard]] u8  CPU::GetAccumulator() const { return _a; }
-[[nodiscard]] u8  CPU::GetXRegister() const { return _x; }
-[[nodiscard]] u8  CPU::GetYRegister() const { return _y; }
-[[nodiscard]] u8  CPU::GetStatusRegister() const { return _p; }
-[[nodiscard]] u16 CPU::GetProgramCounter() const { return _pc; }
-[[nodiscard]] u8  CPU::GetStackPointer() const { return _s; }
-[[nodiscard]] u64 CPU::GetCycles() const { return _cycles; }
+[[nodiscard]] u8 CPU::GetAccumulator() const
+{
+    return _a;
+}
+[[nodiscard]] u8 CPU::GetXRegister() const
+{
+    return _x;
+}
+[[nodiscard]] u8 CPU::GetYRegister() const
+{
+    return _y;
+}
+[[nodiscard]] u8 CPU::GetStatusRegister() const
+{
+    return _p;
+}
+[[nodiscard]] u16 CPU::GetProgramCounter() const
+{
+    return _pc;
+}
+[[nodiscard]] u8 CPU::GetStackPointer() const
+{
+    return _s;
+}
+[[nodiscard]] u64 CPU::GetCycles() const
+{
+    return _cycles;
+}
 
 /*
 ################################################
@@ -419,13 +436,34 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
 ||                                            ||
 ################################################
 */
-void CPU::SetAccumulator( u8 value ) { _a = value; }
-void CPU::SetXRegister( u8 value ) { _x = value; }
-void CPU::SetYRegister( u8 value ) { _y = value; }
-void CPU::SetStatusRegister( u8 value ) { _p = value; }
-void CPU::SetProgramCounter( u16 value ) { _pc = value; }
-void CPU::SetStackPointer( u8 value ) { _s = value; }
-void CPU::SetCycles( u64 value ) { _cycles = value; }
+void CPU::SetAccumulator( u8 value )
+{
+    _a = value;
+}
+void CPU::SetXRegister( u8 value )
+{
+    _x = value;
+}
+void CPU::SetYRegister( u8 value )
+{
+    _y = value;
+}
+void CPU::SetStatusRegister( u8 value )
+{
+    _p = value;
+}
+void CPU::SetProgramCounter( u16 value )
+{
+    _pc = value;
+}
+void CPU::SetStackPointer( u8 value )
+{
+    _s = value;
+}
+void CPU::SetCycles( u64 value )
+{
+    _cycles = value;
+}
 
 /*
 ################################################
@@ -434,10 +472,6 @@ void CPU::SetCycles( u64 value ) { _cycles = value; }
 ||                                            ||
 ################################################
 */
-[[nodiscard]] std::string CPU::GetTrace() const { return _trace; }
-
-void CPU::EnableTracelog() { _trace_enabled = true; }
-void CPU::DisableTracelog() { _trace_enabled = false; }
 
 std::string CPU::LogLineAtPC( bool verbose ) // NOLINT
 {
@@ -448,7 +482,7 @@ std::string CPU::LogLineAtPC( bool verbose ) // NOLINT
     std::string output;
 
     std::string       name = _opcodeTable[Read( _pc )].name;
-    std::string const addr_mode = _opcodeTable[Read( _pc )].addr_mode;
+    std::string const addrMode = _opcodeTable[Read( _pc )].addrMode;
 
     // Program counter address
     // i.e. FFFF
@@ -457,124 +491,106 @@ std::string CPU::LogLineAtPC( bool verbose ) // NOLINT
     // Hex instruction
     // i.e. 4C F5 C5, this is the hex instruction
     u8 const    bytes = _opcodeTable[Read( _pc )].bytes;
-    std::string hex_instruction;
-    for ( u8 i = 0; i < bytes; i++ )
-    {
-        hex_instruction += utils::toHex( Read( _pc + i ), 2 ) + ' ';
+    std::string hexInstruction;
+    for ( u8 i = 0; i < bytes; i++ ) {
+        hexInstruction += utils::toHex( Read( _pc + i ), 2 ) + ' ';
     }
 
     // formatting, the instruction hex_instruction will be 9 characters long, with space padding to
     // the right. This makes sure the hex line is the same length for all instructions
-    hex_instruction += std::string( 9 - ( bytes * 3 ), ' ' );
-    output += hex_instruction;
+    hexInstruction += std::string( 9 - ( bytes * 3 ), ' ' );
+    output += hexInstruction;
 
     // If name starts with a "*", it is an illegal opcode
     ( name[0] == '*' ) ? output += "*" + name.substr( 1 ) + " " : output += name + " ";
 
     // Addressing mode and operand
 
-    std::string assembly_str;
+    std::string assemblyStr;
     u8          value = 0x00;
     u8          low = 0x00;
     u8          high = 0x00;
-    if ( addr_mode == "IMP" )
-    {
+    if ( addrMode == "IMP" ) {
         // Nothing to prefix
-    }
-    else if ( addr_mode == "IMM" )
-    {
+    } else if ( addrMode == "IMM" ) {
         value = Read( _pc + 1 );
-        assembly_str += "#$" + utils::toHex( value, 2 );
-    }
-    else if ( addr_mode == "ZPG" || addr_mode == "ZPGX" || addr_mode == "ZPGY" )
-    {
+        assemblyStr += "#$" + utils::toHex( value, 2 );
+    } else if ( addrMode == "ZPG" || addrMode == "ZPGX" || addrMode == "ZPGY" ) {
         value = Read( _pc + 1 );
-        assembly_str += "$" + utils::toHex( value, 2 );
+        assemblyStr += "$" + utils::toHex( value, 2 );
 
-        ( addr_mode == "ZPGX" )   ? assembly_str += ", X"
-        : ( addr_mode == "ZPGY" ) ? assembly_str += ", Y"
-                                  : assembly_str += "";
-    }
-    else if ( addr_mode == "ABS" || addr_mode == "ABSX" || addr_mode == "ABSY" )
-    {
+        ( addrMode == "ZPGX" )   ? assemblyStr += ", X"
+        : ( addrMode == "ZPGY" ) ? assemblyStr += ", Y"
+                                 : assemblyStr += "";
+    } else if ( addrMode == "ABS" || addrMode == "ABSX" || addrMode == "ABSY" ) {
         low = Read( _pc + 1 );
         high = Read( _pc + 2 );
         u16 const address = ( high << 8 ) | low;
 
-        assembly_str += "$" + utils::toHex( address, 4 );
-        ( addr_mode == "ABSX" )   ? assembly_str += ", X"
-        : ( addr_mode == "ABSY" ) ? assembly_str += ", Y"
-                                  : assembly_str += "";
-    }
-    else if ( addr_mode == "IND" )
-    {
+        assemblyStr += "$" + utils::toHex( address, 4 );
+        ( addrMode == "ABSX" )   ? assemblyStr += ", X"
+        : ( addrMode == "ABSY" ) ? assemblyStr += ", Y"
+                                 : assemblyStr += "";
+    } else if ( addrMode == "IND" ) {
         low = Read( _pc + 1 );
         high = Read( _pc + 2 );
         u16 const address = ( high << 8 ) | low;
-        assembly_str += "($" + utils::toHex( address, 4 ) + ")";
-    }
-    else if ( addr_mode == "INDX" || addr_mode == "INDY" )
-    {
+        assemblyStr += "($" + utils::toHex( address, 4 ) + ")";
+    } else if ( addrMode == "INDX" || addrMode == "INDY" ) {
         value = Read( _pc + 1 );
-        ( addr_mode == "INDX" ) ? assembly_str += "($" + utils::toHex( value, 2 ) + ", X)"
-                                : assembly_str += "($" + utils::toHex( value, 2 ) + "), Y";
-    }
-    else if ( addr_mode == "REL" )
-    {
+        ( addrMode == "INDX" ) ? assemblyStr += "($" + utils::toHex( value, 2 ) + ", X)"
+                               : assemblyStr += "($" + utils::toHex( value, 2 ) + "), Y";
+    } else if ( addrMode == "REL" ) {
         value = Read( _pc + 1 );
         s8 const  offset = static_cast<s8>( value );
         u16 const address = _pc + 2 + offset;
 
-        assembly_str += "$" + utils::toHex( value, 2 ) + " [$" + utils::toHex( address, 4 ) + "]";
-    }
-    else
-    {
+        assemblyStr += "$" + utils::toHex( value, 2 ) + " [$" + utils::toHex( address, 4 ) + "]";
+    } else {
         // Houston.. yet again
-        throw std::runtime_error( "Unknown addressing mode: " + addr_mode );
+        throw std::runtime_error( "Unknown addressing mode: " + addrMode );
     }
 
     // Pad the assembly string with spaces, for fixed length
-    output += assembly_str + std::string( 15 - assembly_str.size(), ' ' );
+    output += assemblyStr + std::string( 15 - assemblyStr.size(), ' ' );
 
     // Add more log info
-    if ( verbose )
-    {
-        std::string registers_str;
+    if ( verbose ) {
+        std::string registersStr;
         // Format
         // a: 00 x: 00 y: 00 s: FD
-        registers_str += "a: " + utils::toHex( _a, 2 ) + " ";
-        registers_str += "x: " + utils::toHex( _x, 2 ) + " ";
-        registers_str += "y: " + utils::toHex( _y, 2 ) + " ";
-        registers_str += "s: " + utils::toHex( _s, 2 ) + " ";
+        registersStr += "a: " + utils::toHex( _a, 2 ) + " ";
+        registersStr += "x: " + utils::toHex( _x, 2 ) + " ";
+        registersStr += "y: " + utils::toHex( _y, 2 ) + " ";
+        registersStr += "s: " + utils::toHex( _s, 2 ) + " ";
 
         // status register
         // Will return a formatted status string
         // p: hex value, status string (NV-BDIZC). Letter present is flag set, dash is flag unset
-        std::string status_str;
-        status_str += "p: " + utils::toHex( _p, 2 ) + "  ";
+        std::string statusStr;
+        statusStr += "p: " + utils::toHex( _p, 2 ) + "  ";
 
-        std::string status_flags = "NV-BDIZC";
-        std::string status_flags_lower = "nv--dizc";
-        std::string status_flags_str;
-        for ( int i = 7; i >= 0; i-- )
-        {
-            status_flags_str += ( _p & ( 1 << i ) ) != 0 ? status_flags[7 - i] : status_flags_lower[7 - i];
+        std::string statusFlags = "NV-BDIZC";
+        std::string statusFlagsLower = "nv--dizc";
+        std::string statusFlagsStr;
+        for ( int i = 7; i >= 0; i-- ) {
+            statusFlagsStr += ( _p & ( 1 << i ) ) != 0 ? statusFlags[7 - i] : statusFlagsLower[7 - i];
         }
-        status_str += status_flags_str;
+        statusStr += statusFlagsStr;
 
         // Combine to the output string
-        output += registers_str + status_str;
+        output += registersStr + statusStr;
 
         // Scanline num (V)
-        std::string const scanline_str = std::to_string( _bus->ppu.GetScanline() );
+        std::string const scanlineStr = std::to_string( _bus->ppu.GetScanline() );
         // std::string scanline_str_adjusted = std::string( 4 - scanline_str.size(), ' ' );
-        output += "  V: " + scanline_str;
+        output += "  V: " + scanlineStr;
 
         // PPU cycles (H), pad for 3 characters + space
-        u16 const   ppu_cycles = _bus->ppu.GetCycles();
-        std::string ppu_cycles_str = std::to_string( ppu_cycles );
-        ppu_cycles_str += std::string( 4 - ppu_cycles_str.size(), ' ' );
-        output += "  H: " + ppu_cycles_str; // PPU cycle
+        u16 const   ppuCycles = _bus->ppu.GetCycles();
+        std::string ppuCyclesStr = std::to_string( ppuCycles );
+        ppuCyclesStr += std::string( 4 - ppuCyclesStr.size(), ' ' );
+        output += "  H: " + ppuCyclesStr; // PPU cycle
 
         // cycle count
         output += "  Cycle: " + std::to_string( _cycles );
@@ -592,14 +608,19 @@ std::string CPU::LogLineAtPC( bool verbose ) // NOLINT
 */
 
 // Pass off reads and writes to the bus
-auto CPU::Read( u16 address ) const -> u8 { return _bus->Read( address ); }
-void CPU::Write( u16 address, u8 data ) const { _bus->Write( address, data ); }
+auto CPU::Read( u16 address ) const -> u8
+{
+    return _bus->Read( address );
+}
+void CPU::Write( u16 address, u8 data ) const
+{
+    _bus->Write( address, data );
+}
 
 // Read with cycle spend
 auto CPU::ReadAndTick( u16 address ) -> u8
 {
-    if ( address == 0x2002 )
-    {
+    if ( address == 0x2002 ) {
         _bus->ppu.SetIsCpuReadingPpuStatus( true );
     }
     Tick();
@@ -614,10 +635,8 @@ auto CPU::WriteAndTick( u16 address, u8 data ) -> void
 
     // Writing to PPUCTRL, PPUMASK, PPUSCROLL, and PPUADDR is ignored until after cycle ~29658
     if ( !_bus->IsTestMode() &&
-         ( address == 0x2000 || address == 0x2001 || address == 0x2005 || address == 0x2006 ) )
-    {
-        if ( _cycles < 29658 )
-        {
+         ( address == 0x2000 || address == 0x2001 || address == 0x2005 || address == 0x2006 ) ) {
+        if ( _cycles < 29658 ) {
             return;
         }
     }
@@ -645,12 +664,11 @@ void CPU::Tick()
        Used for creating a trace log that matches Mesen. This is
        a costly operation, so it's only used for debugging
      */
-    if ( !_did_trace && _trace_enabled )
-    {
+    if ( !_didTrace && _traceEnabled ) {
         _pc--;
         _trace = LogLineAtPC( true );
         _pc++;
-        _did_trace = true;
+        _didTrace = true;
     }
 
     _bus->ppu.Tick();
@@ -669,16 +687,12 @@ void CPU::Reset()
     _pc = Read( 0xFFFD ) << 8 | Read( 0xFFFC );
 
     // Add 7 cycles
-    if ( !_bus->IsTestMode() )
-    {
+    if ( !_bus->IsTestMode() ) {
 
-        for ( u8 i = 0; i < 7; i++ )
-        {
+        for ( u8 i = 0; i < 7; i++ ) {
             Tick();
         }
-    }
-    else
-    {
+    } else {
         _cycles = 0;
     }
 }
@@ -708,8 +722,8 @@ void CPU::NMI()
     StackPush( _pc & 0xFF );
 
     // 3) Push status register with B=0; bit 5 (Unused) = 1
-    u8 const pushed_status = ( _p & ~Break ) | Unused;
-    StackPush( pushed_status );
+    u8 const pushedStatus = ( _p & ~Break ) | Unused;
+    StackPush( pushedStatus );
 
     // 4) Fetch low byte of NMI vector ($FFFA)
     u8 const low = ReadAndTick( 0xFFFA );
@@ -729,16 +743,15 @@ void CPU::IRQ()
     /* @brief: IRQ, can be called when interrupt disable is turned off.
      * Uses 7 cycles
      */
-    if ( ( _p & InterruptDisable ) != 0 )
-    {
+    if ( ( _p & InterruptDisable ) != 0 ) {
         return;
     }
     Tick();
     Tick();
     StackPush( ( _pc >> 8 ) & 0xFF );
     StackPush( _pc & 0xFF );
-    u8 const pushed_status = ( _p & ~Break ) | Unused;
-    StackPush( pushed_status );
+    u8 const pushedStatus = ( _p & ~Break ) | Unused;
+    StackPush( pushedStatus );
     u8 const low = ReadAndTick( 0xFFFE );
     SetFlags( InterruptDisable );
     u8 const high = ReadAndTick( 0xFFFF );
@@ -757,44 +770,41 @@ void CPU::DecodeExecute()
      * If the opcode is invalid, an error message is printed to stderr.
      */
 
-    _did_trace = false;
+    _didTrace = false;
 
     // Fetch the next opcode and increment the program counter
     u8 const opcode = Fetch();
 
     // Decode the opcode
     auto const &instruction = _opcodeTable[opcode];
-    auto        instruction_handler = instruction.instructionMethod;
-    auto        addressing_mode_handler = instruction.addressingModeMethod;
+    auto        instructionHandler = instruction.instructionMethod;
+    auto        addressingModeHandler = instruction.addressingModeMethod;
 
-    if ( instruction_handler != nullptr && addressing_mode_handler != nullptr )
-    {
+    if ( instructionHandler != nullptr && addressingModeHandler != nullptr ) {
         // Set the page cross penalty for the current instruction
         // Used in addressing modes: ABSX, ABSY, INDY
         _currentPageCrossPenalty = instruction.pageCrossPenalty;
 
         // Write / modify instructions use a dummy read before writing, so
         // we should set a flag for those
-        _is_write_modify = instruction.isWriteModify;
+        _isWriteModify = instruction.isWriteModify;
 
         // Set current instr mnemonic globally
-        _instruction_name = instruction.name;
+        _instructionName = instruction.name;
 
         // Set current address mode string globally
-        _addr_mode = instruction.addr_mode;
+        _addrMode = instruction.addrMode;
 
         // Calculate the address using the addressing mode
-        u16 const address = ( this->*addressing_mode_handler )();
+        u16 const address = ( this->*addressingModeHandler )();
 
         // Execute the instruction fetched from the opcode table
-        ( this->*instruction_handler )( address );
+        ( this->*instructionHandler )( address );
 
         // Reset flags
-        _is_write_modify = false;
-        _did_trace = false;
-    }
-    else
-    {
+        _isWriteModify = false;
+        _didTrace = false;
+    } else {
         // Houston, we have a problem. No opcode was found.
         std::cerr << "Bad opcode: " << std::hex << static_cast<int>( opcode ) << '\n';
     }
@@ -844,10 +854,10 @@ auto CPU::ZPGX() -> u16
      * Returns the address from the zero page (0x0000 - 0x00FF) + X register
      * The value of the next byte is the address in the zero page.
      */
-    u8 const  zero_page_address = ReadAndTick( _pc++ );
-    u16 const final_address = ( zero_page_address + _x ) & 0x00FF;
+    u8 const  zeroPageAddress = ReadAndTick( _pc++ );
+    u16 const finalAddress = ( zeroPageAddress + _x ) & 0x00FF;
     Tick(); // Account for calculating the final address
-    return final_address;
+    return finalAddress;
 }
 
 auto CPU::ZPGY() -> u16
@@ -857,13 +867,12 @@ auto CPU::ZPGY() -> u16
      * Returns the address from the zero page (0x0000 - 0x00FF) + Y register
      * The value of the next byte is the address in the zero page.
      */
-    u8 const zero_page_address = ( ReadAndTick( _pc++ ) + _y ) & 0x00FF;
+    u8 const zeroPageAddress = ( ReadAndTick( _pc++ ) + _y ) & 0x00FF;
 
-    if ( _is_write_modify )
-    {
+    if ( _isWriteModify ) {
         Tick();
     }
-    return zero_page_address;
+    return zeroPageAddress;
 }
 
 auto CPU::ABS() -> u16
@@ -887,21 +896,19 @@ auto CPU::ABSX() -> u16
     u16 const low = ReadAndTick( _pc++ );
     u16 const high = ReadAndTick( _pc++ );
     u16 const address = ( high << 8 ) | low;
-    u16 const final_address = address + _x;
+    u16 const finalAddress = address + _x;
 
     // If the final address crosses a page boundary, an additional cycle is required
     // Instructions that should ignore this: ASL, ROL, LSR, ROR, STA, DEC, INC
-    if ( _currentPageCrossPenalty && ( final_address & 0xFF00 ) != ( address & 0xFF00 ) )
-    {
+    if ( _currentPageCrossPenalty && ( finalAddress & 0xFF00 ) != ( address & 0xFF00 ) ) {
         Tick();
     }
 
-    if ( _is_write_modify )
-    {
+    if ( _isWriteModify ) {
         // Dummy read, in preparation to overwrite the address
         Tick();
     }
-    return final_address;
+    return finalAddress;
 }
 
 auto CPU::ABSY() -> u16
@@ -914,21 +921,19 @@ auto CPU::ABSY() -> u16
     u16 const low = ReadAndTick( _pc++ );
     u16 const high = ReadAndTick( _pc++ );
     u16 const address = ( high << 8 ) | low;
-    u16 const final_address = address + _y;
+    u16 const finalAddress = address + _y;
 
     // If the final address crosses a page boundary, an additional cycle is required
     // Instructions that should ignore this: STA
-    if ( _currentPageCrossPenalty && ( final_address & 0xFF00 ) != ( address & 0xFF00 ) )
-    {
+    if ( _currentPageCrossPenalty && ( finalAddress & 0xFF00 ) != ( address & 0xFF00 ) ) {
         Tick();
     }
-    if ( _is_write_modify )
-    {
+    if ( _isWriteModify ) {
         // Dummy read, in preparation to overwrite the address
         Tick();
     }
 
-    return final_address;
+    return finalAddress;
 }
 
 auto CPU::IND() -> u16
@@ -941,26 +946,23 @@ auto CPU::IND() -> u16
      * There's a hardware bug that prevents the address from crossing a page boundary
      */
 
-    u16 const ptr_low = ReadAndTick( _pc++ );
-    u16 const ptr_high = ReadAndTick( _pc++ );
-    u16 const ptr = ( ptr_high << 8 ) | ptr_low;
+    u16 const ptrLow = ReadAndTick( _pc++ );
+    u16 const ptrHigh = ReadAndTick( _pc++ );
+    u16 const ptr = ( ptrHigh << 8 ) | ptrLow;
 
-    u8 const address_low = ReadAndTick( ptr );
+    u8 const addressLow = ReadAndTick( ptr );
     u8       address_high; // NOLINT
 
     // 6502 Bug: If the pointer address wraps around a page boundary (e.g. 0x01FF),
     // the CPU reads the low byte from 0x01FF and the high byte from the start of
     // the same page (0x0100) instead of the start of the next page (0x0200).
-    if ( ptr_low == 0xFF )
-    {
+    if ( ptrLow == 0xFF ) {
         address_high = ReadAndTick( ptr & 0xFF00 );
-    }
-    else
-    {
+    } else {
         address_high = ReadAndTick( ptr + 1 );
     }
 
-    return ( address_high << 8 ) | address_low;
+    return ( address_high << 8 ) | addressLow;
 }
 
 auto CPU::INDX() -> u16
@@ -971,11 +973,11 @@ auto CPU::INDX() -> u16
      * X register is added to the zero-page address to get the pointer address
      * Final address is the value stored at the POINTER address
      */
-    Tick();                                                                 // Account for operand fetch
-    u8 const  zero_page_address = ( ReadAndTick( _pc++ ) + _x ) & 0x00FF;   // 1 cycle
-    u16 const ptr_low = ReadAndTick( zero_page_address );                   // 1 cycle
-    u16 const ptr_high = ReadAndTick( ( zero_page_address + 1 ) & 0x00FF ); // 1 cycle
-    return ( ptr_high << 8 ) | ptr_low;
+    Tick();                                                              // Account for operand fetch
+    u8 const  zeroPageAddress = ( ReadAndTick( _pc++ ) + _x ) & 0x00FF;  // 1 cycle
+    u16 const ptrLow = ReadAndTick( zeroPageAddress );                   // 1 cycle
+    u16 const ptrHigh = ReadAndTick( ( zeroPageAddress + 1 ) & 0x00FF ); // 1 cycle
+    return ( ptrHigh << 8 ) | ptrLow;
 }
 
 auto CPU::INDY() -> u16
@@ -986,21 +988,19 @@ auto CPU::INDY() -> u16
      * The value stored at the zero-page address is the pointer address
      * The value in the Y register is added to the FINAL address
      */
-    u16 const zero_page_address = ReadAndTick( _pc++ );
-    u16 const ptr_low = ReadAndTick( zero_page_address );
-    u16 const ptr_high = ReadAndTick( ( zero_page_address + 1 ) & 0x00FF );
+    u16 const zeroPageAddress = ReadAndTick( _pc++ );
+    u16 const ptrLow = ReadAndTick( zeroPageAddress );
+    u16 const ptrHigh = ReadAndTick( ( zeroPageAddress + 1 ) & 0x00FF );
 
-    u16 const address = ( ( ptr_high << 8 ) | ptr_low ) + _y;
+    u16 const address = ( ( ptrHigh << 8 ) | ptrLow ) + _y;
 
     // If the final address crosses a page boundary, an additional cycle is required
     // Instructions that should ignore this: STA
-    if ( _currentPageCrossPenalty && ( address & 0xFF00 ) != ( ptr_high << 8 ) )
-    {
+    if ( _currentPageCrossPenalty && ( address & 0xFF00 ) != ( ptrHigh << 8 ) ) {
         Tick();
     }
 
-    if ( _is_write_modify )
-    {
+    if ( _isWriteModify ) {
         // Dummy read, in preparation to overwrite the address
         Tick();
     }
@@ -1105,14 +1105,12 @@ void CPU::SetZeroAndNegativeFlags( u8 value )
     ClearFlags( Status::Zero | Status::Negative );
 
     // Set zero flag if value is zero
-    if ( value == 0 )
-    {
+    if ( value == 0 ) {
         SetFlags( Status::Zero );
     }
 
     // Set negative flag if bit 7 is set
-    if ( ( value & 0b10000000 ) != 0 )
-    {
+    if ( ( value & 0b10000000 ) != 0 ) {
         SetFlags( Status::Negative );
     }
 }
@@ -1128,13 +1126,12 @@ void CPU::BranchOnStatus( u16 offsetAddress, u8 flag, bool isSet )
      * BranchOnStatus( Status::Zero, false ); // Branch if zero flag is clear
      */
 
-    bool const will_branch = ( _p & flag ) == flag;
+    bool const willBranch = ( _p & flag ) == flag;
 
     // Path will branch
-    if ( will_branch == isSet )
-    {
+    if ( willBranch == isSet ) {
         // Store previous program counter value, used to check boundary crossing
-        u16 const prev_pc = _pc;
+        u16 const prevPc = _pc;
 
         // Set _pc to the offset address, calculated by REL addressing mode
         _pc = offsetAddress;
@@ -1143,8 +1140,7 @@ void CPU::BranchOnStatus( u16 offsetAddress, u8 flag, bool isSet )
         Tick();
 
         // Add another cycle if page boundary is crossed
-        if ( ( _pc & 0xFF00 ) != ( prev_pc & 0xFF00 ) )
-        {
+        if ( ( _pc & 0xFF00 ) != ( prevPc & 0xFF00 ) ) {
             Tick();
         }
     }
@@ -1159,12 +1155,9 @@ void CPU::CompareAddressWithRegister( u16 address, u8 reg )
      */
 
     u8 value = 0;
-    if ( _instruction_name == "*DCP" )
-    {
+    if ( _instructionName == "*DCP" ) {
         value = Read( address ); // 0 cycles
-    }
-    else
-    {
+    } else {
         value = ReadAndTick( address );
     }
 
@@ -1367,12 +1360,9 @@ void CPU::ADC( u16 address )
      */
     u8 value = 0;
 
-    if ( _instruction_name == "*RRA" )
-    {
+    if ( _instructionName == "*RRA" ) {
         value = Read( address ); // No cycle spend
-    }
-    else
-    {
+    } else {
         value = ReadAndTick( address );
     }
 
@@ -1394,10 +1384,10 @@ void CPU::ADC( u16 address )
     // ---------
     // 0000 0010   // << Sum: 2. Sign bit is different, result is positive but should be
     // negative
-    u8 const accumulator_sign_bit = _a & 0b10000000;
-    u8 const value_sign_bit = value & 0b10000000;
-    u8 const sum_sign_bit = sum & 0b10000000;
-    ( accumulator_sign_bit == value_sign_bit && accumulator_sign_bit != sum_sign_bit )
+    u8 const accumulatorSignBit = _a & 0b10000000;
+    u8 const valueSignBit = value & 0b10000000;
+    u8 const sumSignBit = sum & 0b10000000;
+    ( accumulatorSignBit == valueSignBit && accumulatorSignBit != sumSignBit )
         ? SetFlags( Status::Overflow )
         : ClearFlags( Status::Overflow );
 
@@ -1428,12 +1418,9 @@ void CPU::SBC( u16 address )
      */
 
     u8 value = 0;
-    if ( _instruction_name == "*ISC" )
-    {
+    if ( _instructionName == "*ISC" ) {
         value = Read( address ); // 0 cycles
-    }
-    else
-    {
+    } else {
         value = ReadAndTick( address );
     }
     // u8 const value = ReadAndTick( address );
@@ -1454,10 +1441,10 @@ void CPU::SBC( u16 address )
     // 0000 0010   // << Value: 2
     // ---------
     // 1111 1111   // << Diff: 127. Sign bit is different
-    u8 const accumulator_sign_bit = _a & 0b10000000;
-    u8 const value_sign_bit = value & 0b10000000;
-    u8 const diff_sign_bit = diff & 0b10000000;
-    ( accumulator_sign_bit != value_sign_bit && accumulator_sign_bit != diff_sign_bit )
+    u8 const accumulatorSignBit = _a & 0b10000000;
+    u8 const valueSignBit = value & 0b10000000;
+    u8 const diffSignBit = diff & 0b10000000;
+    ( accumulatorSignBit != valueSignBit && accumulatorSignBit != diffSignBit )
         ? SetFlags( Status::Overflow )
         : ClearFlags( Status::Overflow );
 
@@ -1787,13 +1774,13 @@ void CPU::PHA( const u16 address )
     (void) address;
 
     // Get the stack pointer
-    const u8 stack_pointer = GetStackPointer();
+    const u8 stackPointer = GetStackPointer();
 
     // Push the accumulator onto the stack
-    WriteAndTick( 0x0100 + stack_pointer, GetAccumulator() );
+    WriteAndTick( 0x0100 + stackPointer, GetAccumulator() );
 
     // Decrement the stack pointer
-    SetStackPointer( stack_pointer - 1 );
+    SetStackPointer( stackPointer - 1 );
 }
 
 void CPU::PHP( const u16 address )
@@ -1807,16 +1794,16 @@ void CPU::PHP( const u16 address )
     (void) address;
 
     // Get the stack pointer
-    const u8 stack_pointer = GetStackPointer();
+    const u8 stackPointer = GetStackPointer();
 
     // Set the Break flag before pushing the status register onto the stack
     u8 status = GetStatusRegister();
     status |= Break;
 
     // Push the modified status register onto the stack
-    WriteAndTick( 0x0100 + stack_pointer, status );
+    WriteAndTick( 0x0100 + stackPointer, status );
 
-    SetStackPointer( stack_pointer - 1 );
+    SetStackPointer( stackPointer - 1 );
 }
 
 void CPU::PLA( const u16 address )
@@ -1895,8 +1882,7 @@ void CPU::ASL( u16 address )
      *   ASL Absolute X: 1E(7)
      */
 
-    if ( _addr_mode == "IMP" )
-    {
+    if ( _addrMode == "IMP" ) {
         u8 accumulator = GetAccumulator();
         // Set the carry flag if bit 7 is set
         ( accumulator & 0b10000000 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
@@ -1909,9 +1895,7 @@ void CPU::ASL( u16 address )
 
         // Set the new accumulator value
         SetAccumulator( accumulator );
-    }
-    else
-    {
+    } else {
         u8 const value = ReadAndTick( address );
 
         Tick(); // simulate dummy write
@@ -1942,8 +1926,7 @@ void CPU::LSR( u16 address )
      *   LSR Absolute X: 5E(7)
      */
 
-    if ( _addr_mode == "IMP" )
-    {
+    if ( _addrMode == "IMP" ) {
         u8 accumulator = GetAccumulator();
         // Set the carry flag if bit 0 is set
         ( accumulator & 0b00000001 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
@@ -1956,9 +1939,7 @@ void CPU::LSR( u16 address )
 
         // Set the new accumulator value
         SetAccumulator( accumulator );
-    }
-    else
-    {
+    } else {
         u8 const value = ReadAndTick( address );
         Tick(); // simulate dummy write
 
@@ -1989,8 +1970,7 @@ void CPU::ROL( u16 address )
      */
 
     const u8 carry = IsFlagSet( Status::Carry ) ? 1 : 0;
-    if ( _addr_mode == "IMP" )
-    {
+    if ( _addrMode == "IMP" ) {
         u8 accumulator = GetAccumulator();
 
         // Set the carry flag if bit 7 is set
@@ -2007,9 +1987,7 @@ void CPU::ROL( u16 address )
 
         // Set the new accumulator value
         SetAccumulator( accumulator );
-    }
-    else
-    {
+    } else {
         u8 const value = ReadAndTick( address );
         Tick(); // dummy write
 
@@ -2042,8 +2020,7 @@ void CPU::ROR( u16 address )
 
     const u8 carry = IsFlagSet( Status::Carry ) ? 1 : 0;
 
-    if ( _addr_mode == "IMP" )
-    { // implied mode
+    if ( _addrMode == "IMP" ) { // implied mode
         u8 accumulator = GetAccumulator();
 
         // Set the carry flag if bit 0 is set
@@ -2060,9 +2037,7 @@ void CPU::ROR( u16 address )
 
         // Set the new accumulator value
         SetAccumulator( accumulator );
-    }
-    else
-    { // Memory mode
+    } else { // Memory mode
         u8 const value = ReadAndTick( address );
         Tick(); // simulate dummy write
 
@@ -2100,10 +2075,10 @@ void CPU::JSR( u16 address )
      *   Usage and cycles:
      *   JSR Absolute: 20(6)
      */
-    u16 const return_address = _pc - 1;
+    u16 const returnAddress = _pc - 1;
     Tick(); // Additional read here, probably for timing purposes
-    StackPush( ( return_address >> 8 ) & 0xFF );
-    StackPush( return_address & 0xFF );
+    StackPush( ( returnAddress >> 8 ) & 0xFF );
+    StackPush( returnAddress & 0xFF );
     _pc = address;
 }
 
@@ -2356,8 +2331,7 @@ void CPU::JAM( const u16 address ) // NOLINT
      * Tom Harte tests include these, though, so for completeness, we'll add them
      */
     (void) address;
-    for ( int i = 0; i < 9; i++ )
-    {
+    for ( int i = 0; i < 9; i++ ) {
         Tick();
     }
 }
@@ -2407,10 +2381,10 @@ void CPU::LXA( const u16 address )
      *   LXA Immediate: AB(2)
      */
 
-    u8 const magic_constant = 0xEE;
+    u8 const magicConstant = 0xEE;
     u8 const value = ReadAndTick( address );
 
-    u8 const result = ( ( _a | magic_constant ) & value );
+    u8 const result = ( ( _a | magicConstant ) & value );
     _a = result;
     _x = result;
     SetZeroAndNegativeFlags( _a );
@@ -2448,8 +2422,8 @@ void CPU::ARR( const u16 address )
     u8 value = _a & ReadAndTick( address );
 
     // ROR
-    u8 const carry_in = IsFlagSet( Status::Carry ) ? 0x80 : 0x00;
-    value = ( value >> 1 ) | carry_in;
+    u8 const carryIn = IsFlagSet( Status::Carry ) ? 0x80 : 0x00;
+    value = ( value >> 1 ) | carryIn;
 
     _a = value;
 
@@ -2461,8 +2435,8 @@ void CPU::ARR( const u16 address )
     ( _a & 0x40 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
 
     // V = bit 5 XOR bit 6
-    bool const is_overflow = ( ( _a & 0x40 ) != 0 ) ^ ( ( _a & 0x20 ) != 0 );
-    ( is_overflow ) ? SetFlags( Status::Overflow ) : ClearFlags( Status::Overflow );
+    bool const isOverflow = ( ( _a & 0x40 ) != 0 ) ^ ( ( _a & 0x20 ) != 0 );
+    ( isOverflow ) ? SetFlags( Status::Overflow ) : ClearFlags( Status::Overflow );
 }
 
 void CPU::ALR( const u16 address )

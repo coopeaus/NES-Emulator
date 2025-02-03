@@ -9,18 +9,15 @@
      * for 16 KiB cartridges, the second half is a mirror of the first half.
      */
 
-    if ( address >= 0x8000 && address <= 0xFFFF )
-    {
+    if ( address >= 0x8000 && address <= 0xFFFF ) {
         // 32 KiB PRG ROM
-        if ( GetPrgBankCount() == 2 )
-        {
+        if ( GetPrgBankCount() == 2 ) {
             // Map directly to PRG ROM, starting at 0x0000
             return address - 0x8000;
         }
 
         // 16 KiB PRG ROM
-        if ( GetPrgBankCount() == 1 )
-        {
+        if ( GetPrgBankCount() == 1 ) {
             // Map to 0, with mirroring after 16 KiB
             return ( address - 0x8000 ) % ( 16 * 1024 );
         }
@@ -36,8 +33,7 @@
     /**
      * @brief Translate PPU address. Mapper 0 doesn't redirect PPU address in any way
      */
-    if ( address >= 0x0000 && address <= 0x1FFF )
-    {
+    if ( address >= 0x0000 && address <= 0x1FFF ) {
         return address;
     }
     return 0xFF;

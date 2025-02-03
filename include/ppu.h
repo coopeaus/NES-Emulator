@@ -108,44 +108,38 @@ class PPU
     ################################
     */
 
-    union PPUCTRL
-    {
-        struct
-        {
-            u8 nametable_x : 1;
-            u8 nametable_y : 1;
-            u8 vram_increment : 1;
-            u8 pattern_sprite : 1;
-            u8 pattern_background : 1;
-            u8 sprite_size : 1;
-            u8 slave_mode : 1; // unused
-            u8 nmi_enable : 1;
+    union PPUCTRL {
+        struct {
+            u8 nametableX : 1;
+            u8 nametableY : 1;
+            u8 vramIncrement : 1;
+            u8 patternSprite : 1;
+            u8 patternBackground : 1;
+            u8 spriteSize : 1;
+            u8 slaveMode : 1; // unused
+            u8 nmiEnable : 1;
         } bit;
         u8 value = 0x00;
     };
-    union PPUMASK
-    {
-        struct
-        {
+    union PPUMASK {
+        struct {
             u8 grayscale : 1;
-            u8 render_background_left : 1;
-            u8 render_sprites_left : 1;
-            u8 render_background : 1;
-            u8 render_sprites : 1;
-            u8 enhance_red : 1;
-            u8 enhance_green : 1;
-            u8 enhance_blue : 1;
+            u8 renderBackgroundLeft : 1;
+            u8 renderSpritesLeft : 1;
+            u8 renderBackground : 1;
+            u8 renderSprites : 1;
+            u8 enhanceRed : 1;
+            u8 enhanceGreen : 1;
+            u8 enhanceBlue : 1;
         } bit;
         u8 value = 0x00;
     };
-    union PPUSTATUS
-    {
-        struct
-        {
+    union PPUSTATUS {
+        struct {
             u8 unused : 5;
-            u8 sprite_overflow : 1;
-            u8 sprite_zero_hit : 1;
-            u8 vertical_blank : 1;
+            u8 spriteOverflow : 1;
+            u8 spriteZeroHit : 1;
+            u8 verticalBlank : 1;
         } bit;
         u8 value = 0x00;
     };
@@ -165,15 +159,13 @@ class PPU
     ||                     Internal Registers                     ||
     ################################################################
     */
-    union LoopyRegister
-    {
-        struct
-        {
-            u16 coarse_x : 5;
-            u16 coarse_y : 5;
-            u16 nametable_x : 1;
-            u16 nametable_y : 1;
-            u16 fine_y : 3;
+    union LoopyRegister {
+        struct {
+            u16 coarseX : 5;
+            u16 coarseY : 5;
+            u16 nametableX : 1;
+            u16 nametableY : 1;
+            u16 fineY : 3;
             u16 unused : 1;
         } bit;
         u16 value = 0x00;

@@ -3,7 +3,9 @@
 #include "cartridge.h" // NOLINT
 #include "mappers/mapper-base.h"
 
-PPU::PPU( Bus *bus ) : _bus( bus ) {}
+PPU::PPU( Bus *bus ) : _bus( bus )
+{
+}
 
 /*
 ################################
@@ -12,8 +14,14 @@ PPU::PPU( Bus *bus ) : _bus( bus ) {}
 ||                            ||
 ################################
 */
-[[nodiscard]] s16 PPU::GetScanline() const { return _scanline; }
-[[nodiscard]] u16 PPU::GetCycles() const { return _cycle; }
+[[nodiscard]] s16 PPU::GetScanline() const
+{
+    return _scanline;
+}
+[[nodiscard]] u16 PPU::GetCycles() const
+{
+    return _cycle;
+}
 
 /*
 ################################
@@ -22,9 +30,18 @@ PPU::PPU( Bus *bus ) : _bus( bus ) {}
 ||                            ||
 ################################
 */
-void PPU::SetScanline( s16 scanline ) { _scanline = scanline; }
-void PPU::SetCycles( u16 cycles ) { _cycle = cycles; }
-void PPU::SetIsCpuReadingPpuStatus( bool isReading ) { _isCpuReadingPpuStatus = isReading; }
+void PPU::SetScanline( s16 scanline )
+{
+    _scanline = scanline;
+}
+void PPU::SetCycles( u16 cycles )
+{
+    _cycle = cycles;
+}
+void PPU::SetIsCpuReadingPpuStatus( bool isReading )
+{
+    _isCpuReadingPpuStatus = isReading;
+}
 
 /*
 ################################
@@ -43,14 +60,12 @@ void PPU::SetIsCpuReadingPpuStatus( bool isReading ) { _isCpuReadingPpuStatus = 
     // Non-readable registers: 2000 (PPUCTRL), 2001 (PPUMASK), 2003 (OAMADDR), 2005 (PPUSCROLL),
     // 2006 (PPUADDR)
     if ( _isDisabled || address == 0x2000 || address == 0x2001 || address == 0x2003 || address == 0x2005 ||
-         address == 0x2006 )
-    {
+         address == 0x2006 ) {
         return 0xFF;
     }
 
     // 2002: PPU Status Register
-    if ( address == 0x2002 )
-    {
+    if ( address == 0x2002 ) {
         /*
          * Side Effects of Reading:
          *   1. Clears the vertical blank flag (Bit 7).
@@ -63,28 +78,25 @@ void PPU::SetIsCpuReadingPpuStatus( bool isReading ) { _isCpuReadingPpuStatus = 
         u8 const status = _ppuStatus.value & 0xE0;
         u8 const noise = _ppuStatus.value & 0x1F;
         u8 const data = status | noise;
-        _ppuStatus.bit.vertical_blank = 0;
+        _ppuStatus.bit.verticalBlank = 0;
         _addrLatch = false;
         return data;
     }
     // 2004: OAM Data
-    if ( address == 0x2004 )
-    {
+    if ( address == 0x2004 ) {
         /*
            Return the contents of _oam[_oamaddr]
            If called while _renderingEnabled and in visible scanline range (0-239),
            Returns corrupted data (0xFF)
         */
-        if ( _isRenderingEnabled && _scanline >= 0 && _scanline <= 239 )
-        {
+        if ( _isRenderingEnabled && _scanline >= 0 && _scanline <= 239 ) {
             return 0xFF;
         }
         return _oam[_oamAddr];
     }
 
     // 2007: PPU Data
-    if ( address == 0x2007 )
-    {
+    if ( address == 0x2007 ) {
         /*
           Reads the data at the current _vramAddr
           When reading from palette memory, (0x3F00-0x3FFF), direct data is returned
@@ -94,15 +106,14 @@ void PPU::SetIsCpuReadingPpuStatus( bool isReading ) { _isCpuReadingPpuStatus = 
           The _ppuDataBuffer is then updated with the data at the new _vramAddr, in preparation
           for the next non-palette memory read.
          */
-        if ( _vramAddr.value >= 0x3F00 && _vramAddr.value <= 0x3FFF )
-        {
+        if ( _vramAddr.value >= 0x3F00 && _vramAddr.value <= 0x3FFF ) {
             return Read( _vramAddr.value );
         }
 
         u8 const data = _ppuDataBuffer;
         _ppuDataBuffer = Read( _vramAddr.value );
 
-        _vramAddr.value += _ppuCtrl.bit.vram_increment ? 32 : 1;
+        _vramAddr.value += _ppuCtrl.bit.vramIncrement ? 32 : 1;
         return data;
     }
     return 0xFF;
@@ -120,15 +131,13 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
 {
     /* @brief: CPU writes to the PPU
      */
-    if ( _isDisabled )
-    {
+    if ( _isDisabled ) {
         return;
     }
 
     (void) data; // NOTE: Remove after using data
 
-    switch ( address )
-    {
+    switch ( address ) {
         // 2000: PPUCTRL
         case 0x2000: // NOLINT
         {
@@ -143,8 +152,7 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
             break;
         }
         // 2001: PPUMASK
-        case 0x2001:
-        {
+        case 0x2001: {
             /*
               Sets _ppuMask to data
               _isRenderingEnabled can be determined here based on whether
@@ -166,16 +174,14 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
             break;
         }
         // 2004: OAMDATA
-        case 0x2004:
-        {
+        case 0x2004: {
             /*
               Writes data to _oam[_oamAddr]
               Increments _oamAddr
               If _isRenderingEnabled and in visible scanline range (0-239),
               Ignore the write
              */
-            if ( _isRenderingEnabled && _scanline >= 0 && _scanline <= 239 )
-            {
+            if ( _isRenderingEnabled && _scanline >= 0 && _scanline <= 239 ) {
                 return;
             }
             _oam[_oamAddr] = data;
@@ -198,9 +204,7 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                   Toggles _addrLatch
                  */
                 // TODO: Implement
-            }
-            else
-            {
+            } else {
                 /* Second Write
                   Sets _tempAddr fine y from bits 0-2 of data (data & 0b00000111)
                   Sets _tempAddr coarse y from bits 3-7 of data (data & 0b11111000)
@@ -211,8 +215,7 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
             break;
         }
         // 2006: PPUADDR
-        case 0x2006:
-        {
+        case 0x2006: {
             /*
               Updates the high and low byte of the _tempAddr in two writes
               High byte is written first
@@ -226,9 +229,7 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                    The _addrLatch is toggled
                  */
                 // TODO: Implement
-            }
-            else
-            {
+            } else {
                 /* Second Write
                    The entire data byte is the _tempAddr low byte
                    _tempAddr low byte is updated with the data byte
@@ -240,8 +241,7 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
             break;
         }
         // 2007: PPU Data
-        case 0x2007:
-        {
+        case 0x2007: {
             /*
                data is written to the current _vramAddr
               _vramAddr is then incremented by 1 or 32.
@@ -297,15 +297,13 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
      */
 
     // $0000-$1FFF: Pattern Tables
-    if ( address >= 0x0000 && address <= 0x1FFF )
-    {
+    if ( address >= 0x0000 && address <= 0x1FFF ) {
         /* Pattern table data is read from the cartridge */
         // TODO: Implement
     }
 
     // $2000-$3EFF: Name Tables
-    if ( address >= 0x2000 && address <= 0x3EFF )
-    {
+    if ( address >= 0x2000 && address <= 0x3EFF ) {
         /*
            Name table data is read from _nameTables
           _nameTables is a 2KiB array, with each name table taking up 1KiB
@@ -323,8 +321,7 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
     }
 
     // $3F00-$3FFF: Palettes
-    if ( address >= 0x3F00 && address <= 0x3FFF )
-    {
+    if ( address >= 0x3F00 && address <= 0x3FFF ) {
         /*
         Background Palettes
         Palette 0: $3F00 (bg color), $3F01, $3F02, $3F03.
@@ -362,13 +359,11 @@ void PPU::Write( u16 address, u8 data ) // NOLINT
     (void) data;
     address &= 0x3FFF;
 
-    if ( address >= 0x0000 && address <= 0x1FFF )
-    {
+    if ( address >= 0x0000 && address <= 0x1FFF ) {
         /* Pattern table data is written to the cartridge */
         // TODO: Implement
     }
-    if ( address >= 0x2000 && address <= 0x2FFF )
-    {
+    if ( address >= 0x2000 && address <= 0x2FFF ) {
 
         /*
            Name table data is written to _nameTables
@@ -384,8 +379,7 @@ void PPU::Write( u16 address, u8 data ) // NOLINT
     }
 
     // $3F00-$3FFF: Palettes
-    if ( address >= 0x3F00 && address <= 0x3FFF )
-    {
+    if ( address >= 0x3F00 && address <= 0x3FFF ) {
 
         /* The address is masked to 32 bytes.
         Addresses 3F10, 3F14, 3F18 and 3F1C mirror 3F00, 3F04, 3F08 and 3F0C respectively
@@ -403,8 +397,7 @@ void PPU::Write( u16 address, u8 data ) // NOLINT
 */
 void PPU::Tick() // NOLINT
 {
-    if ( _isDisabled || _bus->IsTestMode() )
-    {
+    if ( _isDisabled || _bus->IsTestMode() ) {
         return;
     }
 
@@ -427,13 +420,11 @@ void PPU::Tick() // NOLINT
     ||       End Of Scanline      ||
     ################################
     */
-    if ( _cycle > 340 )
-    {
+    if ( _cycle > 340 ) {
         _cycle = 0;
         _scanline++;
 
-        if ( _scanline > 260 )
-        {
+        if ( _scanline > 260 ) {
             _scanline = -1;
             _frame++;
         }
@@ -466,8 +457,7 @@ void PPU::Tick() // NOLINT
     ################################
     */
 
-    if ( _scanline < 0 || _scanline > 239 )
-    {
+    if ( _scanline < 0 || _scanline > 239 ) {
         return;
     }
 
@@ -475,12 +465,10 @@ void PPU::Tick() // NOLINT
 
     // Cycles 1-256: Tile and Pixel Rendering
     // Cycles 321-336 are beyond the visible scanline, but continue for the next scanline
-    if ( ( _cycle >= 1 && _cycle <= 256 ) || ( _cycle >= 321 && _cycle <= 336 ) )
-    {
+    if ( ( _cycle >= 1 && _cycle <= 256 ) || ( _cycle >= 321 && _cycle <= 336 ) ) {
         u8 const stage = ( _cycle - 1 ) & 0x07;
 
-        switch ( stage )
-        {
+        switch ( stage ) {
             // 0-1 fetch the nametable byte
             case 1:
                 // Grab the first 12 bits of the vram address
@@ -542,8 +530,7 @@ void PPU::Tick() // NOLINT
                 break;
             }
             // 4-5 fetch pattern table plane 0
-            case 5:
-            {
+            case 5: {
                 /*
                   If the name tables provide the "which tile" and "which palette",
                   the pattern table byte provides the "which pixel" and the "which palette color"
@@ -571,8 +558,7 @@ void PPU::Tick() // NOLINT
             // 6-7 fetch pattern table plane 1
             // 7: Increment scroll x
             // 7: Increment scroll y on cycle 256
-            case 7:
-            {
+            case 7: {
                 // TODO: Implement
                 break;
             }
@@ -606,10 +592,9 @@ void PPU::Tick() // NOLINT
 
 u16 PPU::ResolveNameTableAddress( u16 addr )
 {
-    MirrorMode const mirror_mode = _bus->cartridge->GetMirrorMode();
+    MirrorMode const mirrorMode = _bus->cartridge->GetMirrorMode();
 
-    switch ( mirror_mode )
-    {
+    switch ( mirrorMode ) {
         case MirrorMode::SingleUpper: // NOLINT
             // All addresses fall within 2000-23FF, nametable 0
             // TODO: Implement

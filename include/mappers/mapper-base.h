@@ -7,14 +7,7 @@ using u16 = uint16_t;
 using u32 = uint32_t;
 using u64 = uint64_t;
 
-enum class MirrorMode : u8
-{
-    Horizontal,
-    Vertical,
-    SingleLower,
-    SingleUpper,
-    FourScreen
-};
+enum class MirrorMode : u8 { Horizontal, Vertical, SingleLower, SingleUpper, FourScreen };
 
 class Mapper
 {
@@ -23,10 +16,7 @@ class Mapper
      * All other mappers will inherit from this class
      */
   public:
-    Mapper( u8 prg_rom_banks, u8 chr_rom_banks )
-        : _prg_rom_banks( prg_rom_banks ), _chr_rom_banks( chr_rom_banks )
-    {
-    }
+    Mapper( u8 prgRomBanks, u8 chrRomBanks ) : _prgRomBanks( prgRomBanks ), _chrRomBanks( chrRomBanks ) {}
 
     // Delete the copy constructor
     // Prevents creating a new Mapper by copying an existing one
@@ -49,8 +39,8 @@ class Mapper
     virtual ~Mapper() = default;
 
     // Getters
-    [[nodiscard]] size_t GetPrgBankCount() const { return _prg_rom_banks; }
-    [[nodiscard]] size_t GetChrBankCount() const { return _chr_rom_banks; }
+    [[nodiscard]] size_t GetPrgBankCount() const { return _prgRomBanks; }
+    [[nodiscard]] size_t GetChrBankCount() const { return _chrRomBanks; }
 
     // Base methods
     virtual u32  TranslateCPUAddress( u16 address ) = 0;
@@ -64,6 +54,6 @@ class Mapper
     [[nodiscard]] virtual MirrorMode GetMirrorMode() = 0;
 
   private:
-    u8 _prg_rom_banks;
-    u8 _chr_rom_banks;
+    u8 _prgRomBanks;
+    u8 _chrRomBanks;
 };
