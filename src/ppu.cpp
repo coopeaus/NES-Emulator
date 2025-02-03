@@ -386,15 +386,28 @@ void PPU::Write( u16 address, u8 data ) // NOLINT
     // $3F00-$3FFF: Palettes
     if ( address >= 0x3F00 && address <= 0x3FFF )
     {
-        u16 paletteAddr = address & 0x1F;
-        
+        // Mask the address to 32 bytes (0x1F)
+        u16 palette_addr = address & 0x1F;
+
         // Handle mirroring of sprite palette addresses to background palette addresses
-        if (paletteAddr == 0x10) paletteAddr = 0x00;
-        if (paletteAddr == 0x14) paletteAddr = 0x04;
-        if (paletteAddr == 0x18) paletteAddr = 0x08;
-        if (paletteAddr == 0x1C) paletteAddr = 0x0C;
-        
-        _paletteMemory[paletteAddr] = data;
+        if ( palette_addr == 0x10 )
+        {
+            palette_addr = 0x00;
+        }
+        if ( palette_addr == 0x14 )
+        {
+            palette_addr = 0x04;
+        }
+        if ( palette_addr == 0x18 )
+        {
+            palette_addr = 0x08;
+        }
+        if ( palette_addr == 0x1C )
+        {
+            palette_addr = 0x0C;
+        }
+
+        _paletteMemory[palette_addr] = data;
     }
 }
 
