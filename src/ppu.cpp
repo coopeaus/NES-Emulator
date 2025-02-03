@@ -364,11 +364,15 @@ void PPU::Write( u16 address, u8 data ) // NOLINT
     // $3F00-$3FFF: Palettes
     if ( address >= 0x3F00 && address <= 0x3FFF )
     {
-
-        /* The address is masked to 32 bytes.
-        Addresses 3F10, 3F14, 3F18 and 3F1C mirror 3F00, 3F04, 3F08 and 3F0C respectively
-        */
-        // TODO: Implement
+        u16 paletteAddr = address & 0x1F;
+        
+        // Handle mirroring of sprite palette addresses to background palette addresses
+        if (paletteAddr == 0x10) paletteAddr = 0x00;
+        if (paletteAddr == 0x14) paletteAddr = 0x04;
+        if (paletteAddr == 0x18) paletteAddr = 0x08;
+        if (paletteAddr == 0x1C) paletteAddr = 0x0C;
+        
+        _paletteMemory[paletteAddr] = data;
     }
 }
 
