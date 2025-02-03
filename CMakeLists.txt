@@ -51,6 +51,18 @@ add_executable(emu
         src/mappers/mapper1.cpp
 )
 
+# Copy roms to build directory, for testing purposes
+add_custom_command(TARGET emu POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/tests/roms ${CMAKE_BINARY_DIR}/tests/roms
+)
+
+# Copy palettes directory to build directory
+add_custom_target(copy_palettes ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/palettes ${CMAKE_BINARY_DIR}/palettes
+)
+
 # Apply compiler options to emu target
 if(MSVC)
   target_compile_options(emu PRIVATE /W4 /WX)
