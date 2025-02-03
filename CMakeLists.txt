@@ -55,7 +55,9 @@ add_executable(emu
 if(MSVC)
   target_compile_options(emu PRIVATE /W4 /WX)
 else()
-  target_compile_options(emu PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  # Leave commented out for debugging purposes, for easy switching
+  # target_compile_options(emu PRIVATE -Wall -Wextra -Wpedantic -Werror)
+  target_compile_options(emu PRIVATE -Wall -Wextra -Wpedantic -Werror -O2)
 endif()
 
 # ----------------------- LIBRARIES -----------------------
@@ -159,6 +161,9 @@ add_executable(cpu_test
         src/mappers/mapper1.cpp
         src/utils.cpp
 )
+
+# target_compile_options(emu PRIVATE -Wall -Wextra -Wpedantic -Werror)
+target_compile_options(cpu_test PRIVATE -Wall -Wextra -Wpedantic -Werror -O2 )
 
 add_executable(rom_test
   tests/rom_test.cpp
