@@ -1,46 +1,16 @@
 #include "ppu.h"
 #include "bus.h"
+#include "utils.h"
 #include "cartridge.h" // NOLINT
 #include "mappers/mapper-base.h"
 
 PPU::PPU( Bus *bus ) : _bus( bus )
 {
-}
-
-/*
-################################
-||                            ||
-||           Getters          ||
-||                            ||
-################################
-*/
-[[nodiscard]] s16 PPU::GetScanline() const
-{
-    return _scanline;
-}
-[[nodiscard]] u16 PPU::GetCycles() const
-{
-    return _cycle;
-}
-
-/*
-################################
-||                            ||
-||           Setters          ||
-||                            ||
-################################
-*/
-void PPU::SetScanline( s16 scanline )
-{
-    _scanline = scanline;
-}
-void PPU::SetCycles( u16 cycles )
-{
-    _cycle = cycles;
-}
-void PPU::SetIsCpuReadingPpuStatus( bool isReading )
-{
-    _isCpuReadingPpuStatus = isReading;
+    try {
+        _nesPaletteRgbValues = utils::readPalette( "palettes/palette1.pal" );
+    } catch ( std::exception &e ) {
+        exit( EXIT_FAILURE );
+    }
 }
 
 /*
