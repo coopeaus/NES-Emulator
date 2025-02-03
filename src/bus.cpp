@@ -6,8 +6,10 @@
 #include <utility>
 
 // Constructor to initialize the bus with a flat memory model
-Bus::Bus() : cpu( this ), ppu( this )
+Bus::Bus( const bool use_flat_memory ) : cpu( this ), ppu( this ), _use_flat_memory( use_flat_memory )
 {
+    _ram.fill( 0 );
+    _apu_io_memory.fill( 0 );
 }
 
 /*
@@ -17,31 +19,36 @@ Bus::Bus() : cpu( this ), ppu( this )
 */
 u8 Bus::Read( const u16 address )
 {
-    if ( _useFlatMemory ) {
-        return _flatMemory[address];
+    if ( _use_flat_memory )
+    {
+        return _flat_memory[address];
     }
 
     // System RAM: 0x0000 - 0x1FFF (mirrored every 2KB)
-    if ( address >= 0x0000 && address <= 0x1FFF ) {
+    if ( address >= 0x0000 && address <= 0x1FFF )
+    {
         return _ram[address & 0x07FF];
     }
 
     // PPU Registers: 0x2000 - 0x3FFF (mirrored every 8 bytes)
-    if ( address >= 0x2000 && address <= 0x3FFF ) {
+    if ( address >= 0x2000 && address <= 0x3FFF )
+    {
         // ppu read will go here. For now, return from temp private member of bus
-        const u16 ppuRegister = 0x2000 + ( address & 0x0007 );
-        return ppu.HandleCpuRead( ppuRegister );
+        const u16 ppu_register = 0x2000 + ( address & 0x0007 );
+        return ppu.HandleCpuRead( ppu_register );
     }
 
     // APU and I/O Registers: 0x4000 - 0x401F
-    if ( address >= 0x4000 && address <= 0x401F ) {
+    if ( address >= 0x4000 && address <= 0x401F )
+    {
         // Handle reads from controller ports and other I/O
         // apu read will go here. For now, return from temp private member of bus
-        return _apuIoMemory[address & 0x001F];
+        return _apu_io_memory[address & 0x001F];
     }
 
     // 4020 and up is cartridge territory
-    if ( address >= 0x4020 && address <= 0xFFFF ) {
+    if ( address >= 0x4020 && address <= 0xFFFF )
+    {
         return cartridge->Read( address );
     }
 
@@ -57,38 +64,44 @@ u8 Bus::Read( const u16 address )
 */
 void Bus::Write( const u16 address, const u8 data )
 {
-    if ( _useFlatMemory ) {
-        _flatMemory[address] = data;
+    if ( _use_flat_memory )
+    {
+        _flat_memory[address] = data;
         return;
     }
 
     // System RAM: 0x0000 - 0x1FFF (mirrored every 2KB)
-    if ( address >= 0x0000 && address <= 0x1FFF ) {
+    if ( address >= 0x0000 && address <= 0x1FFF )
+    {
         _ram[address & 0x07FF] = data;
         return;
     }
 
     // PPU Registers: 0x2000 - 0x3FFF (mirrored every 8 bytes)
-    if ( address >= 0x2000 && address <= 0x3FFF ) {
-        const u16 ppuRegister = 0x2000 + ( address & 0x0007 );
-        ppu.HandleCpuWrite( ppuRegister, data );
+    if ( address >= 0x2000 && address <= 0x3FFF )
+    {
+        const u16 ppu_register = 0x2000 + ( address & 0x0007 );
+        ppu.HandleCpuWrite( ppu_register, data );
         return;
     }
 
     // APU and I/O Registers: 0x4000 - 0x401F
-    if ( address >= 0x4000 && address <= 0x401F ) {
-        _apuIoMemory[address & 0x001F] = data; // temp
+    if ( address >= 0x4000 && address <= 0x401F )
+    {
+        _apu_io_memory[address & 0x001F] = data; // temp
         return;
     }
 
     // PPU DMA: 0x4014
-    if ( address == 0x4014 ) {
+    if ( address == 0x4014 )
+    {
         ppu.DmaTransfer( data );
         return;
     }
 
     // 4020 and up is cartridge territory
-    if ( address >= 0x4020 && address <= 0xFFFF ) {
+    if ( address >= 0x4020 && address <= 0xFFFF )
+    {
         cartridge->Write( address, data );
         return;
     }
@@ -102,9 +115,9 @@ void Bus::Write( const u16 address, const u8 data )
 ||       Load Cartridge       ||
 ################################
 */
-void Bus::LoadCartridge( std::shared_ptr<Cartridge> loadedCartridge )
+void Bus::LoadCartridge( std::shared_ptr<Cartridge> loaded_cartridge )
 {
-    cartridge = std::move( loadedCartridge );
+    cartridge = std::move( loaded_cartridge );
 }
 
 /*
@@ -112,7 +125,4 @@ void Bus::LoadCartridge( std::shared_ptr<Cartridge> loadedCartridge )
 ||        Debug Methods       ||
 ################################
 */
-[[nodiscard]] bool Bus::IsTestMode() const
-{
-    return _useFlatMemory;
-}
+[[nodiscard]] bool Bus::IsTestMode() const { return _use_flat_memory; }

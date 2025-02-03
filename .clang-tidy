@@ -19,7 +19,6 @@ Checks: >
   ,-misc-non-private-member-variables-in-classes
   ,-cppcoreguidelines-non-private-member-variables-in-classes
   ,-cppcoreguidelines-pro-type-union-access
-  ,-modernize-use-nodiscard
 CheckOptions:
   # Standardized naming conventions:
   - key: readability-identifier-naming.ClassCase
@@ -35,19 +34,10 @@ CheckOptions:
     value: "CamelCase" # Method names (e.g., myMethod)
 
   - key: readability-identifier-naming.VariableCase
-    value: "camelBack"
+    value: "lower_case" # Variable names (e.g., my_variable)
 
   - key: readability-identifier-naming.PrivateMemberPrefix
-    value: "_"
-
-  - key: readability-identifier-naming.PrivateMemberCase
-    value: "camelBack"
-
-  - key: readability-identifier-naming.PublicMemberCase
-    value: "camelBack"
-
-  - key: readability-identifier-naming.ParameterCase
-    value: "camelBack"
+    value: "_" # Private member variables should have underscores (e.g., _my_variable)
 
   # Enforce initialization of all member variables in constructors
   - key: cppcoreguidelines-pro-type-member-init.HaltOnMissingMemberInit

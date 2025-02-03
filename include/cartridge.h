@@ -11,7 +11,7 @@ using namespace std;
 class Cartridge
 {
   public:
-    Cartridge( const string &filePath );
+    Cartridge( const string &file_path );
 
     /*
     ################################
@@ -69,7 +69,7 @@ class Cartridge
       The iNes header specifies how many PRG ROM banks are provided, so we
       can define _prg_rom as a vector and resize it during ROM initialization
     */
-    vector<u8> _prgRom;
+    vector<u8> _prg_rom;
 
     /* CHR ROM and RAM
       Character Read-Only Memory and Character Random Access Memory
@@ -90,23 +90,23 @@ class Cartridge
       table data dynamically. Having dynamic pattern tables allowed devs to
       create dynamic tiles.
     */
-    vector<u8>        _chrRom;   // Sized based on the number of CHR ROM banks
-    array<u8, 0x1FFF> _chrRam{}; // 8192 bytes (8 KiB)
+    vector<u8>        _chr_rom;   // Sized based on the number of CHR ROM banks
+    array<u8, 0x1FFF> _chr_ram{}; // 8192 bytes (8 KiB)
 
     // PRG RAM: Program RAM, also known as Save RAM (SRAM) or Work RAM sometimes
     // Its usage is determined by the mapper
-    array<u8, 0x1FFF> _prgRam{}; // 8KiB PRG RAM, also known as Save RAM (SRAM) or Work RAM sometimes
+    array<u8, 0x1FFF> _prg_ram{}; // 8KiB PRG RAM, also known as Save RAM (SRAM) or Work RAM sometimes
 
     // Expansion ROM
     // Almost never used, but here it is anyway.
     // Can be both ROM or RAM, determined by the mapper
-    array<u8, 0x1FFF> _expansionMemory{};
+    array<u8, 0x1FFF> _expansion_memory{};
 
     // Cartrdige VRAM
     // The PPU has 2KiB of vram for nametables (background layout information).
     // Some cartridges provided 2Kib extra which allowed for four unique
     // nametables without mirroring. Nametables are documented in the PPU class.
-    array<u8, 2048> _cartridgeVram{};
+    array<u8, 2048> _cartridge_vram{};
 
     /*
     ################################
@@ -114,9 +114,9 @@ class Cartridge
     ################################
     */
     shared_ptr<Mapper> _mapper;
-    u8                 _mapperNumber = 0;
-    u8                 _hasBattery = 0;
-    bool               _fourScreenMode = false;
-    MirrorMode         _mirrorMode = MirrorMode::Vertical;
-    bool               _usesChrRam = false;
+    u8                 _mapper_number = 0;
+    u8                 _has_battery = 0;
+    bool               _four_screen_mode = false;
+    MirrorMode         _mirror_mode = MirrorMode::Vertical;
+    bool               _uses_chr_ram = false;
 };
