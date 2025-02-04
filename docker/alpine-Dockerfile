@@ -9,8 +9,6 @@ RUN apk add --no-cache \
     cmake \
     git \
     ca-certificates \
-    sdl2 \
-    sdl2-dev \
     bash \
     file \
     && rm -rf /var/cache/apk/*
