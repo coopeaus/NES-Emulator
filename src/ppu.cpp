@@ -183,14 +183,18 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                   Sets _fineX from bits 0-2 of data (data & 0b00000111)
                   Toggles _addrLatch
                  */
-                // TODO: Implement
+                _tempAddr.bit.coarseX = ( data & 0xF8 ) >> 3; // bit to 7, using loopy register
+                _fineX = data & 0x07;                         // bit 0-2
+                _addrLatch = true;                            // toggle
             } else {
                 /* Second Write
                   Sets _tempAddr fine y from bits 0-2 of data (data & 0b00000111)
                   Sets _tempAddr coarse y from bits 3-7 of data (data & 0b11111000)
                   Toggles _addrLatch
                  */
-                // TODO: Implement
+                _tempAddr.bit.coarseY = ( data & 0xF8 ) >> 3; // bit to 7
+                _tempAddr.bit.fineY = data & 0x07;            // bit 0-2, using loopy register
+                _addrLatch = false;                           // toggle
             }
             break;
         }
@@ -406,7 +410,13 @@ void PPU::Tick() // NOLINT
         ||    Odd Frame Cycle Skip    ||
         ################################
         */
-        // TODO: Implement
+        if ( _cycle == 339 && ( _frame % 2 == 1 ) && _isRenderingEnabled ) {
+
+            // skip by resetting scanline and cycle early
+            _cycle = 0;
+            _scanline = 0;
+            return;
+        }
 
         /*
         ################################
