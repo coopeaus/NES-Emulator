@@ -399,7 +399,7 @@ void PPU::Tick() // NOLINT
         ||    Odd Frame Cycle Skip    ||
         ################################
         */
-        if ( _cycle == 339( _frame % 2 == 1 ) && _isRenderingEnabled ) {
+        if ( _cycle == 339 && ( _frame % 2 == 1 ) && _isRenderingEnabled ) {
 
             // skip by resetting scanline and cycle early
             _cycle = 0;
