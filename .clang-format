@@ -21,12 +21,11 @@ AlignTrailingComments: true
 # float b = 10.0;   // Variable b
 # char  c = 'c';    // Variable c
 
-BreakBeforeBraces: Allman
+BreakBeforeBraces: Linux
 # Example:
 # void Function()
 # {
-#     if (condition)
-#     {
+#     if (condition) {
 #         // Do something
 #     }
 # }
@@ -38,7 +37,7 @@ AlignConsecutiveDeclarations: true
 # char   c   = 'c';
 # double pi  = 3.14159;
 
-AllowShortFunctionsOnASingleLine: All
+AllowShortFunctionsOnASingleLine: InlineOnly
 # Allows all short functions to be on a single line.
 # Example:
 # int getValue() { return 42; }

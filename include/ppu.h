@@ -13,25 +13,25 @@ using namespace std;
 class PPU
 {
   public:
-    PPU( Bus *bus, bool isDisabled = false );
+    PPU( Bus *bus );
 
     /*
     ################################
     ||           Getters          ||
     ################################
     */
-    [[nodiscard]] s16        GetScanline() const;
-    [[nodiscard]] u16        GetCycles() const;
     [[nodiscard]] MirrorMode GetMirrorMode();
+    [[nodiscard]] s16        GetScanline() const { return _scanline; }
+    [[nodiscard]] u16        GetCycles() const { return _cycle; }
+    [[nodiscard]] u16        GetFrame() const { return _frame; }
 
     /*
     ################################
     ||           Setters          ||
     ################################
     */
-    void SetScanline( s16 scanline );
-    void SetCycles( u16 cycles );
-    void SetIsCpuReadingPpuStatus( bool isReading );
+    void SetScanline( s16 scanline ) { _scanline = scanline; }
+    void SetCycles( u16 cycles ) { _cycle = cycles; }
 
     /*
     ################################
@@ -67,6 +67,35 @@ class PPU
     void DmaTransfer( u8 data );
     u16  ResolveNameTableAddress( u16 addr );
     void Tick();
+    void LoadNextBgShiftRegisters();
+    void UpdateShiftRegisters();
+    void LoadNametableByte();
+    void LoadAttributeByte();
+    void LoadPatternPlane0Byte();
+    void LoadPatternPlane1Byte();
+    void IncrementScrollX();
+    void IncrementScrollY();
+    u8   GetBgPalette();
+    u8   GetSpritePalette();
+    u8   GetBgPixel();
+    u8   GetSpritePixel();
+    u32  GetOutputPixel( u8 bgPixel, u8 spritePixel, u8 bgPalette, u8 spritePalette );
+    void TriggerNmi();
+
+    /*
+    ################################
+    ||        SDL Callback        ||
+    ################################
+    */
+    void ( *onFrameReady )( const u32 *frameBuffer ) = nullptr;
+
+    /*
+    ################################
+    ||        Debug Methods       ||
+    ################################
+    */
+    void EnableJsonTestMode() { _isDisabled = true; }
+    void DisableJsonTestMode() { _isDisabled = false; }
 
   private:
     /*
@@ -74,11 +103,19 @@ class PPU
     ||      Global Variables      ||
     ################################
     */
-    s16  _scanline = 0;
-    u16  _cycle = 4;
-    u64  _frame = 1;
-    bool _isRenderingEnabled = false;
-    bool _isCpuReadingPpuStatus = false;
+    s16            _scanline = 0;
+    u16            _cycle = 4;
+    u64            _frame = 1;
+    bool           _isRenderingEnabled = false;
+    bool           _preventVBlank = false;
+    array<u32, 64> _nesPaletteRgbValues{};
+
+    /*
+    ################################
+    ||        SDL Variables       ||
+    ################################
+    */
+    array<u32, 61440> _frameBuffer{};
 
     /*
     ################################
@@ -86,6 +123,20 @@ class PPU
     ################################
     */
     bool _isDisabled = false;
+
+    /*
+    ######################################
+    ||  Background Rendering Variables  ||
+    ######################################
+    */
+    u8  _nametableByte = 0x00;
+    u8  _attributeByte = 0x00;
+    u8  _bgPlane0Byte = 0x00;
+    u8  _bgPlane1Byte = 0x00;
+    u16 _bgShiftPatternLow = 0x0000;
+    u16 _bgShiftPatternHigh = 0x0000;
+    u16 _bgShiftAttributeLow = 0x0000;
+    u16 _bgShiftAttributeHigh = 0x0000;
 
     /*
     ################################
@@ -100,44 +151,38 @@ class PPU
     ################################
     */
 
-    union PPUCTRL
-    {
-        struct
-        {
-            u8 nametable_x : 1;
-            u8 nametable_y : 1;
-            u8 vram_increment : 1;
-            u8 pattern_sprite : 1;
-            u8 pattern_background : 1;
-            u8 sprite_size : 1;
-            u8 slave_mode : 1; // unused
-            u8 nmi_enable : 1;
+    union PPUCTRL {
+        struct {
+            u8 nametableX : 1;
+            u8 nametableY : 1;
+            u8 vramIncrement : 1;
+            u8 patternSprite : 1;
+            u8 patternBackground : 1;
+            u8 spriteSize : 1;
+            u8 slaveMode : 1; // unused
+            u8 nmiEnable : 1;
         } bit;
         u8 value = 0x00;
     };
-    union PPUMASK
-    {
-        struct
-        {
+    union PPUMASK {
+        struct {
             u8 grayscale : 1;
-            u8 render_background_left : 1;
-            u8 render_sprites_left : 1;
-            u8 render_background : 1;
-            u8 render_sprites : 1;
-            u8 enhance_red : 1;
-            u8 enhance_green : 1;
-            u8 enhance_blue : 1;
+            u8 renderBackgroundLeft : 1;
+            u8 renderSpritesLeft : 1;
+            u8 renderBackground : 1;
+            u8 renderSprites : 1;
+            u8 enhanceRed : 1;
+            u8 enhanceGreen : 1;
+            u8 enhanceBlue : 1;
         } bit;
         u8 value = 0x00;
     };
-    union PPUSTATUS
-    {
-        struct
-        {
+    union PPUSTATUS {
+        struct {
             u8 unused : 5;
-            u8 sprite_overflow : 1;
-            u8 sprite_zero_hit : 1;
-            u8 vertical_blank : 1;
+            u8 spriteOverflow : 1;
+            u8 spriteZeroHit : 1;
+            u8 verticalBlank : 1;
         } bit;
         u8 value = 0x00;
     };
@@ -157,15 +202,13 @@ class PPU
     ||                     Internal Registers                     ||
     ################################################################
     */
-    union LoopyRegister
-    {
-        struct
-        {
-            u16 coarse_x : 5;
-            u16 coarse_y : 5;
-            u16 nametable_x : 1;
-            u16 nametable_y : 1;
-            u16 fine_y : 3;
+    union LoopyRegister {
+        struct {
+            u16 coarseX : 5;
+            u16 coarseY : 5;
+            u16 nametableX : 1;
+            u16 nametableY : 1;
+            u16 fineY : 3;
             u16 unused : 1;
         } bit;
         u16 value = 0x00;
