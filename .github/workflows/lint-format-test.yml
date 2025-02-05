@@ -3,7 +3,7 @@
 
 # The workflow is triggered on pull requests and checks for changes in C++ files.
 # If changes are detected, the workflow installs grabs the latest
-# Docker container, and runs linting/formatting tests. 
+# Docker container, and runs linting/formatting tests.
 
 # If the checks pass, the workflow will report success. If the checks fail,
 # the workflow will report failure.
@@ -46,13 +46,15 @@ jobs:
       - name: Run Linter
         if: env.files_modified == 'true'
         run: |
+          # Builds core + tests
+          docker run -e CI=${CI} -v $(pwd):/workspace -w /workspace ghcr.io/coopeaus/nes-emulator/build-lint-container:latest build
           docker run -e CI=${CI} -v $(pwd):/workspace -w /workspace ghcr.io/coopeaus/nes-emulator/build-lint-container:latest lint
-      
+
       - name: Run Nestest ROM
         if: env.files_modified == 'true'
         run: |
           mkdir ./tests/output
           touch ./tests/output/my_nestest-log.txt
           chmod ugo+rw ./tests/output/my_nestest-log.txt
-          docker run -e CI=${CI} -v $(pwd):/workspace -w /workspace ghcr.io/coopeaus/nes-emulator/build-lint-container:latest build
+          # Use the same build as the linter
           docker run -e CI=${CI} -v $(pwd):/workspace -w /workspace ghcr.io/coopeaus/nes-emulator/build-lint-container:latest test "RomTests.Nestest"

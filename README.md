@@ -33,8 +33,8 @@ Linting and formatting locally:
 
 ```bash
 # If you have clang-tidy and clang-format installed
-find src/ -name '*.cpp' -exec clang-tidy -p build -header-filter='.*' {} \\; # Linting
-find src/ -name '*.cpp' -exec clang-format -i {} \; # Apply formatting
+find core/ -name '*.cpp' -exec clang-tidy -p build -header-filter='.*' {} \\; # Linting
+find core/ -name '*.cpp' -exec clang-format -i {} \; # Apply formatting
 ```
 
 Linting and formatting with Docker
@@ -79,4 +79,3 @@ docker run -v $(pwd):/workspace -w /workspace project-linter test
 # To run an individual test, add the test name as an argument
 docker run -v $(pwd):/workspace -w /workspace project-linter test  "CPUTestFixture.IMM" # Immediate addressing test
 ```
-
