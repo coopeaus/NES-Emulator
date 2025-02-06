@@ -137,7 +137,8 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
               _isRenderingEnabled can be determined here based on whether
               bg_enabled and sprite_enabled bits are set in the _ppuMask
             */
-            // TODO: Implement
+            _ppuMask.value = data;
+            _isRenderingEnabled = _ppuMask.bit.renderBackground || _ppuMask.bit.renderSprites;
             break;
         }
         // 2002: PPUSTATUS, does nothing
@@ -230,7 +231,9 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
               _vramAddr is then incremented by 1 or 32.
               1 if _ppuCtrl increment mode is 0, 32 if 1
             */
-            // TODO: Implement
+            //
+            Write( _vramAddr.value, data );
+            _vramAddr.value += _ppuCtrl.bit.vramIncrement == 0 ? 1 : 32;
         }
         default:
             break;
