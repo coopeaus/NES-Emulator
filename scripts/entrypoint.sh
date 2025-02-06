@@ -18,113 +18,111 @@ report_failure() {
   fi
 }
 case "$1" in
-  # Handle linting
-  lint)
-    echo "Running lint/format tasks..."
+# Handle linting
+lint)
+  echo "Running lint/format tasks..."
 
-    # Check if compile_commands.json exists, if not, run cmake to generate it
-    if [ ! -f "$BUILD_DIR/compile_commands.json" ]; then
-      echo "compile_commands.json not found. Running cmake to generate it..."
-      mkdir -p "$BUILD_DIR"
-      cd "$BUILD_DIR"
-      cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. || {
-        echo "CMake configuration failed."
-        exit 1
-      }
-      cd ..
-    fi
+  # Check if compile_commands.json exists, if not, run cmake to generate it
+  if [ ! -f "$BUILD_DIR/compile_commands.json" ]; then
+    echo "compile_commands.json not found. Running cmake to generate it..."
+    mkdir -p "$BUILD_DIR"
+    cd "$BUILD_DIR"
+    cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. || {
+      echo "CMake configuration failed."
+      exit 1
+    }
+    cd ..
+  fi
 
-    # Initialize failure flags for clang-format and clang-tidy
+  # Initialize failure flags for clang-format and clang-tidy
+  format_failures=0
+  lint_failures=0
+
+  # Run clang-format on both .cpp and .h files, and check for issues
+  if [ -z "$CI" ]; then
+    # In local mode, automatically fix formatting
+    echo "Running clang-format locally and fixing formatting..."
+    for file in $(find core/ include/ -name '*.cpp' -o -name '*.h'); do
+      clang-format -i "$file"
+    done
+
+  else
+    # In CI, check formatting without fixing
+    echo "Running clang-format in CI mode (check only)..."
     format_failures=0
-    lint_failures=0
-
-    # Run clang-format on both .cpp and .h files, and check for issues
-    if [ -z "$CI" ]; then
-      # In local mode, automatically fix formatting
-      echo "Running clang-format locally and fixing formatting..."
-      for file in $(find src/ include/ -name '*.cpp' -o -name '*.h'); do
-        clang-format -i "$file"
-      done
-
-    else
-      # In CI, check formatting without fixing
-      echo "Running clang-format in CI mode (check only)..."
-      format_failures=0
-      for file in $(find src/ include/ -name '*.cpp' -o -name '*.h'); do
-        # Check if clang-format changes the file
-        if ! clang-format "$file" | diff -u "$file" - > /dev/null; then
-          echo "Formatting issues found in $file"
-          format_failures=1
-        fi
-        if [ $? -ne 0 ]; then
-          echo "Formatting issues found in $file"
-          format_failures=1
-        fi
-      done
-
-      # Report failure if formatting issues were found
-      if [ "$format_failures" -ne 0 ]; then
-        echo "clang-format detected issues. Please fix the formatting. You can run formatting automatically using the instructions in the README"
-        exit 1
-      else
-        echo "clang-format passed with no issues."
+    for file in $(find core/ include/ -name '*.cpp' -o -name '*.h'); do
+      # Check if clang-format changes the file
+      if ! clang-format "$file" | diff -u "$file" - >/dev/null; then
+        echo "Formatting issues found in $file"
+        format_failures=1
       fi
-    fi
-
-    # Report failure if clang-format found issues
-    report_failure "$format_failures" "clang-format" "formatting"
-
-    # Run clang-tidy on both .cpp and .h files, and check for issues
-    if [ -z "$CI" ]; then
-      # In local mode, automatically fix linting issues
-      echo "Running clang-tidy locally and fixing issues..."
-      for file in $(find src/ include/ -name '*.cpp' -o -name '*.h'); do
-        clang-tidy -p "$BUILD_DIR" -header-filter='.*' -fix "$file" || lint_failures=1
-      done
-    else
-      # In CI, check linting without fixing
-      echo "Running clang-tidy in CI mode (check only)..."
-      for file in $(find src/ include/ -name '*.cpp' -o -name '*.h'); do
-        clang-tidy -p "$BUILD_DIR" -header-filter='.*'  -warnings-as-errors='*' "$file" || lint_failures=1
-      done
-
-      # Report failure if linting issues were found
-      if [ "$lint_failures" -ne 0 ]; then
-        echo "clang-tidy detected issues. Please fix the linting issues. You can fix linting automatically using the instructions in the README"
-        exit 1
-      else
-        echo "clang-tidy passed with no issues."
+      if [ $? -ne 0 ]; then
+        echo "Formatting issues found in $file"
+        format_failures=1
       fi
-    fi
+    done
 
-    # Report failure if clang-tidy found issues
-    report_failure "$lint_failures" "clang-tidy" "linting"
-    ;;
-
-  # Handle building
-  build)
-    echo "Running build tasks..."
-    ./scripts/build.sh
-    ;;
-
-  # Handle testing
-  test)
-    echo "Running tests..."
-    # Check if a specific test name was passed
-    if [ -n "$2" ]; then
-      echo "Running specific test: $2"
-      ./scripts/test.sh "$2"
+    # Report failure if formatting issues were found
+    if [ "$format_failures" -ne 0 ]; then
+      echo "clang-format detected issues. Please fix the formatting. You can run formatting automatically using the instructions in the README"
+      exit 1
     else
-      echo "Running all tests..."
-      ./scripts/test.sh
+      echo "clang-format passed with no issues."
     fi
-    ;;
-  # Oops! Invalid command
-  *)
-    echo "Houston, we have a problem. Make sure to use 'lint', 'build' or 'test [test_name]'."
-    exit 1
-    ;;
-  
+  fi
 
-    
+  # Report failure if clang-format found issues
+  report_failure "$format_failures" "clang-format" "formatting"
+
+  # Run clang-tidy on both .cpp and .h files, and check for issues
+  if [ -z "$CI" ]; then
+    # In local mode, automatically fix linting issues
+    echo "Running clang-tidy locally and fixing issues..."
+    for file in $(find core/ include/ -name '*.cpp' -o -name '*.h'); do
+      clang-tidy -p "$BUILD_DIR" -header-filter='.*' -fix "$file" || lint_failures=1
+    done
+  else
+    # In CI, check linting without fixing
+    echo "Running clang-tidy in CI mode (check only)..."
+    for file in $(find core/ include/ -name '*.cpp' -o -name '*.h'); do
+      clang-tidy -p "$BUILD_DIR" -header-filter='.*' -warnings-as-errors='*' "$file" || lint_failures=1
+    done
+
+    # Report failure if linting issues were found
+    if [ "$lint_failures" -ne 0 ]; then
+      echo "clang-tidy detected issues. Please fix the linting issues. You can fix linting automatically using the instructions in the README"
+      exit 1
+    else
+      echo "clang-tidy passed with no issues."
+    fi
+  fi
+
+  # Report failure if clang-tidy found issues
+  report_failure "$lint_failures" "clang-tidy" "linting"
+  ;;
+
+# Handle building
+build)
+  echo "Running build tasks..."
+  ./scripts/build.sh tests
+  ;;
+
+# Handle testing
+test)
+  echo "Running tests..."
+  # Check if a specific test name was passed
+  if [ -n "$2" ]; then
+    echo "Running specific test: $2"
+    ./scripts/test.sh "$2"
+  else
+    echo "Running all tests..."
+    ./scripts/test.sh
+  fi
+  ;;
+# Oops! Invalid command
+*)
+  echo "Houston, we have a problem. Make sure to use 'lint', 'build' or 'test [test_name]'."
+  exit 1
+  ;;
+
 esac
