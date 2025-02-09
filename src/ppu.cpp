@@ -386,6 +386,9 @@ void PPU::Write( u16 address, u8 data ) // NOLINT
     // $3F00-$3FFF: Palettes
     if ( address >= 0x3F00 && address <= 0x3FFF )
     {
+        /* The address is masked to 32 bytes.
+        Addresses 3F10, 3F14, 3F18 and 3F1C mirror 3F00, 3F04, 3F08 and 3F0C respectively
+        */
         // Mask the address to 32 bytes (0x1F)
         u16 palette_addr = address & 0x1F;
 
