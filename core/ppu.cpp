@@ -325,6 +325,14 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
         Addresses 3F10, 3F14, 3F18 and 3F1C mirror 3F00, 3F04, 3F08 and 3F0C respectively
         */
         // TODO: Implement
+        address &= 0x1F;
+
+        // Handle mirroring of 3F10, 3F14, 3F18, 3F1C to 3F00, 3F04, 3F08, 3F0C
+        if ( address >= 0x10 && ( address & 0x03 ) == 0 ) {
+            address &= 0x0F;
+        }
+
+        return _paletteMemory[address];
     }
 
     return 0xFF;
@@ -370,7 +378,14 @@ void PPU::Write( u16 address, u8 data ) // NOLINT
         /* The address is masked to 32 bytes.
         Addresses 3F10, 3F14, 3F18 and 3F1C mirror 3F00, 3F04, 3F08 and 3F0C respectively
         */
-        // TODO: Implement
+        address &= 0x1F;
+
+        // Handle mirroring of 3F10, 3F14, 3F18, 3F1C to 3F00, 3F04, 3F08, 3F0C
+        if ( address >= 0x10 && ( address & 0x03 ) == 0 ) {
+            address &= 0x0F;
+        }
+
+        _paletteMemory[address] = data;
     }
 }
 
