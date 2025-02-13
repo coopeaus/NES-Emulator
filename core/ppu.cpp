@@ -642,10 +642,10 @@ u16 PPU::ResolveNameTableAddress( u16 addr )
     switch ( mirrorMode ) {
         case MirrorMode::SingleUpper: // NOLINT
             // All addresses fall within 2000-23FF, nametable 0
-            return 0x2000 | (addr & 0x03FF);
+            return 0x2000 | ( addr & 0x03FF );
         case MirrorMode::SingleLower:
             // All addresses fall within 2800-2BFF, nametable 2
-            return 0x2800 | (addr & 0x03FF);
+            return 0x2800 | ( addr & 0x03FF );
         case MirrorMode::Vertical:
             /* Vertical Mirroring
               The two horizontal sections are unique, but the two vertical sections are mirrored
@@ -659,7 +659,7 @@ u16 PPU::ResolveNameTableAddress( u16 addr )
               Horizontal scrolling games will use this mode. When screen data exceeds 27FF, it's
               wrapped back to 2000.
              */
-            return 0x2000 | (addr & 0x07FF);
+            return 0x2000 | ( addr & 0x07FF );
         case MirrorMode::Horizontal:
             /* Horizontal Mirroring
               The two vertical sections are unique, but the two horizontal sections are mirrored
@@ -673,10 +673,15 @@ u16 PPU::ResolveNameTableAddress( u16 addr )
 
               The first part masks the address so it is in the correct range for a nametable
               The second part shifts bit 11 to bit 10's position, to correctly mirror
-              nametable 0 to nametable 1, and nametable 2 to nametable 3
+              nametable 0 to nametable 1, and nametable 2 to nametable 3.
+
+              By shifting bit 11 to bit 10, if bit 11 is 0, the result is 0 so the nametable
+              address will resolve to something in the 0x2000-0x27FF range. If bit 11 is 1, the
+              result will be 0x0400, so the address will resolve to something in the 0x2800-0x2FFF
+              range.
              */
 
-            return 0x2000 | ((addr & 0x03FF) | ((addr & 0x800) >> 1));
+            return 0x2000 | ( ( addr & 0x03FF ) | ( ( addr & 0x800 ) >> 1 ) );
         case MirrorMode::FourScreen:
             /* Four-Screen Mirroring
                All four nametables are unique and backed by cartridge VRAM. There's no mirroring.
@@ -684,7 +689,7 @@ u16 PPU::ResolveNameTableAddress( u16 addr )
             return addr & 0x0FFF;
         default:
             // Default to vertical mirroring
-            return 0x2000 | (addr & 0x07FF);
+            return 0x2000 | ( addr & 0x07FF );
     }
     return 0xFF;
 }
