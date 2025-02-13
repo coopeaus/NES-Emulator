@@ -212,9 +212,9 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                    and is set to bits 8-14 of _tempAddr
                    The _addrLatch is toggled
                  */
-                _tempAddr.bit.coarseX = (data & 0x1F);  //shifts for high coarseX, nametablex/y
-                _tempAddr.bit.nametableX = (data & 0x40) >> 6;
-                _tempAddr.bit.nametableY = (data & 0x80) >> 7;
+                _tempAddr.bit.coarseX = ( data & 0x1F ); // shifts for high coarseX, nametablex/y
+                _tempAddr.bit.nametableX = ( data & 0x40 ) >> 6;
+                _tempAddr.bit.nametableY = ( data & 0x80 ) >> 7;
                 _addrLatch = true;
             } else {
                 /* Second Write
@@ -224,10 +224,9 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                   _addrLatch is toggled
                  */
                 _tempAddr.bit.coarseY = data & 0x1F;
-                _tempAddr.bit.fineY = (data & 0xE0) >> 5;
+                _tempAddr.bit.fineY = ( data & 0xE0 ) >> 5;
                 _vramAddr.value = _tempAddr.value;
                 _addrLatch = false;
-
             }
             break;
         }
@@ -272,17 +271,16 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
      * This is not the only way to update the OAM, registers 2004 and 2003 can be used
      * but those are slower, and are used for partial updates mostly
      */
-    u16 const sourceAddress = data << 8;
-    std::array<u16, 256> tempBuffer{};   // tempBuffer for holding
+    u16 const            sourceAddress = data << 8;
+    std::array<u16, 256> tempBuffer{}; // tempBuffer for holding
 
     // read 256 bytes in tempBuffer
-    for (u16 i = 0; i < 256; i++)
-    {
-        tempBuffer[i] = _bus->Read(sourceAddress + i);
+    for ( u16 i = 0; i < 256; i++ ) {
+        tempBuffer[i] = _bus->Read( sourceAddress + i );
     }
 
     // transfer from tempBuffer to _oam
-    std::ranges::copy(tempBuffer.begin(), tempBuffer.end(), _oam.begin());
+    std::ranges::copy( tempBuffer.begin(), tempBuffer.end(), _oam.begin() );
 }
 
 /*
