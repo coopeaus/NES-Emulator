@@ -212,7 +212,7 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                    and is set to bits 8-14 of _tempAddr
                    The _addrLatch is toggled
                  */
-                _tempAddr.bit.coarseX = ( data & 0x1F ); // shifts for high coarseX, nametablex/y
+                _tempAddr.bit.coarseX = data & 0x1F; // shifts for high coarseX, nametablex/y
                 _tempAddr.bit.nametableX = ( data & 0x40 ) >> 6;
                 _tempAddr.bit.nametableY = ( data & 0x80 ) >> 7;
                 _addrLatch = true;
