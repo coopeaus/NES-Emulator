@@ -285,7 +285,7 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
     // $0000-$1FFF: Pattern Tables
     if ( address >= 0x0000 && address <= 0x1FFF ) {
         /* Pattern table data is read from the cartridge */
-         _bgPlane0Byte = _bus->cartridge->Read(address);
+        return _bus->cartridge->Read(address);
     }
 
     // $2000-$3EFF: Name Tables
