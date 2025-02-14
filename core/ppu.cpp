@@ -671,15 +671,15 @@ u16 PPU::ResolveNameTableAddress( u16 addr )
 
               Horizontal mode is used for vertical scrolling games, like Kid Icarus.
 
-              The first part masks the address so it is in the correct range for a nametable
-              The second part shifts bit 11 to bit 10's position, to correctly mirror
-              nametable 0 to nametable 1, and nametable 2 to nametable 3.
-
-              By shifting bit 11 to bit 10, if bit 11 is 0, the result is 0 so the nametable
-              address will resolve to something in the 0x2000-0x27FF range. If bit 11 is 1, the
-              result will be 0x0400, so the address will resolve to something in the 0x2800-0x2FFF
-              range.
+             Map addresses from 2C00-2FFF to 2800-2BFF if the address is for nametable 1
+             Otherwise map addresses from 2400-27FF to 2000-23FF
              */
+
+            if ( addr & 0x800 ) {
+                return 0x2800 | ( addr & 0x03FF );
+            } else {
+                return 0x2000 | ( addr & 0x03FF );
+            }
 
             return 0x2000 | ( ( addr & 0x03FF ) | ( ( addr & 0x800 ) >> 1 ) );
         case MirrorMode::FourScreen:
