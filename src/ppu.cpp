@@ -349,7 +349,7 @@ void PPU::Write( u16 address, u8 data ) // NOLINT
     if ( address >= 0x0000 && address <= 0x1FFF ) {
         /* Pattern table data is written to the cartridge */
         _bus->cartridge->Write(address, data);
-        // TODO: Implement
+        return;
     }
     if ( address >= 0x2000 && address <= 0x2FFF ) {
 
