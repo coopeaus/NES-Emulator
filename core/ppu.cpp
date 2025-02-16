@@ -5,6 +5,7 @@
 #include "mappers/mapper-base.h"
 #include <exception>
 #include <cstdlib>
+#include <array>
 
 PPU::PPU( Bus *bus ) : _bus( bus )
 {
@@ -212,7 +213,8 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                    and is set to bits 8-14 of _tempAddr
                    The _addrLatch is toggled
                  */
-                // TODO: Implement
+                _tempAddr.value = ( _tempAddr.value & 0xFF ) | ( ( data & 0x7F ) << 8 );
+                _addrLatch = true;
             } else {
                 /* Second Write
                    The entire data byte is the _tempAddr low byte
@@ -220,7 +222,9 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                   _tempAddr is copied to _vramAddr
                   _addrLatch is toggled
                  */
-                // TODO: Implement
+                _tempAddr.value = ( _tempAddr.value & 0x7F00 ) | data;
+                _vramAddr.value = _tempAddr.value;
+                _addrLatch = false;
             }
             break;
         }
@@ -265,8 +269,11 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
      * This is not the only way to update the OAM, registers 2004 and 2003 can be used
      * but those are slower, and are used for partial updates mostly
      */
-    // TODO: Implement
-    (void) data;
+    u16 const sourceAddress = data << 8;
+    // read 256 bytes
+    for ( u16 i = 0; i < 256; i++ ) {
+        _oam[i] = _bus->Read( sourceAddress + i );
+    }
 }
 
 /*
