@@ -1,14 +1,15 @@
 #!/bin/bash
 
+# Author: Austin Cooper
 # scripts/entrypoint.sh
 # Script used to define the operations to be carried out in the Docker container.
 # This allows one container to be used for both linting and building the project.
 
 # Define container build directory
-BUILD_DIR="/workspace/build_container"
+BUILD_DIR="build"
 
 # Ensure exit on error
-set -e
+set -euo pipefail
 
 # Check if there is a failure
 report_failure() {
@@ -24,10 +25,8 @@ lint)
 
   # Check if compile_commands.json exists, if not, run cmake to generate it
   if [ ! -f "$BUILD_DIR/compile_commands.json" ]; then
-    echo "compile_commands.json not found. Running cmake to generate it..."
-    mkdir -p "$BUILD_DIR"
-    cd "$BUILD_DIR"
-    cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=YES .. || {
+    echo "compile_commands.json not found. Building project to generate it..."
+    ./scripts/build.sh || {
       echo "CMake configuration failed."
       exit 1
     }
@@ -39,7 +38,7 @@ lint)
   lint_failures=0
 
   # Run clang-format on both .cpp and .h files, and check for issues
-  if [ -z "$CI" ]; then
+  if [ -z "${CI:-}" ]; then
     # In local mode, automatically fix formatting
     echo "Running clang-format locally and fixing formatting..."
     for file in $(find core/ include/ -name '*.cpp' -o -name '*.h'); do
@@ -75,7 +74,7 @@ lint)
   report_failure "$format_failures" "clang-format" "formatting"
 
   # Run clang-tidy on both .cpp and .h files, and check for issues
-  if [ -z "$CI" ]; then
+  if [ -z "${CI:-}" ]; then
     # In local mode, automatically fix linting issues
     echo "Running clang-tidy locally and fixing issues..."
     for file in $(find core/ include/ -name '*.cpp' -o -name '*.h'); do
@@ -104,14 +103,18 @@ lint)
 # Handle building
 build)
   echo "Running build tasks..."
-  ./scripts/build.sh tests
+  if [ -n "${2:-}" ]; then
+    ./scripts/build.sh "$2"
+  else
+    ./scripts/build.sh
+  fi
   ;;
 
 # Handle testing
 test)
   echo "Running tests..."
   # Check if a specific test name was passed
-  if [ -n "$2" ]; then
+  if [ -n "${2:-}" ]; then
     echo "Running specific test: $2"
     ./scripts/test.sh "$2"
   else
