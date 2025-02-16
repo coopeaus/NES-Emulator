@@ -274,15 +274,10 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
      * but those are slower, and are used for partial updates mostly
      */
     u16 const           sourceAddress = data << 8;
-    std::array<u8, 256> tempBuffer{}; // tempBuffer for holding
-
-    // read 256 bytes in tempBuffer
+    // read 256 bytes
     for ( u16 i = 0; i < 256; i++ ) {
-        tempBuffer[i] = _bus->Read( sourceAddress + i );
+        _oam[ i ] = _bus->Read( sourceAddress + i );
     }
-
-    // transfer from tempBuffer to _oam
-    std::ranges::copy( tempBuffer.begin(), tempBuffer.end(), _oam.begin() );
 }
 
 /*
