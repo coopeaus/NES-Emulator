@@ -214,8 +214,7 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                    and is set to bits 8-14 of _tempAddr
                    The _addrLatch is toggled
                  */
-                _tempAddr.value = ( _tempAddr.value & 0xFF ) | (( data & 0x7F ) << 8 ) 
-                _addrLatch = true;
+                _tempAddr.value = ( _tempAddr.value & 0xFF ) | ( ( data & 0x7F ) << 8 ) _addrLatch = true;
             } else {
                 /* Second Write
                    The entire data byte is the _tempAddr low byte
@@ -270,10 +269,10 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
      * This is not the only way to update the OAM, registers 2004 and 2003 can be used
      * but those are slower, and are used for partial updates mostly
      */
-    u16 const           sourceAddress = data << 8;
+    u16 const sourceAddress = data << 8;
     // read 256 bytes
     for ( u16 i = 0; i < 256; i++ ) {
-        _oam[ i ] = _bus->Read( sourceAddress + i );
+        _oam[i] = _bus->Read( sourceAddress + i );
     }
 }
 
