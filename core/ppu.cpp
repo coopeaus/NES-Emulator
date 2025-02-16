@@ -281,7 +281,7 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
     }
 
     // transfer from tempBuffer to _oam
-    memcpy( _oam.data(), tempBuffer.data(), tempBuffer.size() );
+    std::ranges::copy( tempBuffer.begin(), tempBuffer.end(), _oam.begin() );
 }
 
 /*
