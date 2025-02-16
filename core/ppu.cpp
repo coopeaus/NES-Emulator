@@ -214,7 +214,8 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                    and is set to bits 8-14 of _tempAddr
                    The _addrLatch is toggled
                  */
-                _tempAddr.value = ( _tempAddr.value & 0xFF ) | ( ( data & 0x7F ) << 8 ) _addrLatch = true;
+                _tempAddr.value = ( _tempAddr.value & 0xFF ) | ( ( data & 0x7F ) << 8 );
+                _addrLatch = true;
             } else {
                 /* Second Write
                    The entire data byte is the _tempAddr low byte
