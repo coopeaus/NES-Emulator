@@ -1,78 +1,63 @@
 #!/bin/bash
 
 # scripts/build.sh
-# An optional script to create a build with CMake.
-# Usage:
-#   ./scripts/build.sh [full|core|test]
-#   - "full" (or no argument): build the full emulator (frontend + tests)
-#   - "core": build only the emulation core (backend)
-#   - "test": build only the test executables (which link against the core)
-#
-# To run, first provide permissions: chmod +x scripts/build.sh
-# Then run the script: ./scripts/build.sh [option]
+# Usage: ./scripts/build.sh
+#  -  no arg: build the full emulator (SDL frontend, core, and tests)
+#  - "tests": build core + tests locally
+#  - "ci": build ci mode (core + tests, no frontend). CI mode sources different vcpkg config.
+#  - <preset>: Any preset defined in CMakeUserPresets.json. This file is not tracked by git, you have to create your own.
+# See repo docs for more details
 
-# Determine build configuration based on command-line argument
-if [ -z "$1" ] || [ "$1" == "full" ]; then
-  echo "Configuring build for: FULL (SDL, core files, and tests)"
-  CMAKE_OPTIONS="-DBUILD_FRONTEND=ON -DBUILD_TESTS=ON"
-elif [ "$1" == "core" ]; then
-  echo "Configuring build for: CORE only (No SDL, no tests)"
-  CMAKE_OPTIONS="-DBUILD_FRONTEND=OFF -DBUILD_TESTS=OFF"
-elif [ "$1" == "tests" ]; then
-  echo "Configuring build for: TESTS only (core + tests, no frontend)"
-  CMAKE_OPTIONS="-DBUILD_FRONTEND=OFF -DBUILD_TESTS=ON"
+export BUILD_DIR="build"
+
+# Determine build configuration based on the command-line argument.
+# When running in Docker, we default to the "ci" preset.
+if [ -z "${1:-}" ]; then
+  if [ -f /.dockerenv ]; then
+    echo "Configuring build for: CI mode (core + tests, no frontend) due to Docker environment"
+    PRESET="ci"
+  else
+    echo "Configuring build for: FULL (SDL, core files, and tests)"
+    PRESET="default"
+  fi
 else
-  echo "Usage: $0 [full|core|tests]"
-  exit 1
+  PRESET="$1"
 fi
 
-# Determine if we're running inside a Docker container
-if [ -f /.dockerenv ]; then
-  # We're inside the container, use a container-specific build directory
-  BUILD_DIR="/workspace/build_container"
-  echo "Building inside Docker container. Using build directory: $BUILD_DIR"
-else
-  # We're running locally, use the local build directory
-  BUILD_DIR="build"
-  echo "Building locally. Using build directory: $BUILD_DIR"
-fi
-
-# Navigate to the project root directory
-cd "$(dirname "$0")/.." || exit 1
+# Navigate to the project root directory.
+cd "$(dirname "$BASH_SOURCE[0]")/.." || exit 1
 
 echo "Starting build process..."
 
-# Create the build directory
-echo "Creating build directory: $BUILD_DIR"
-mkdir -p "$BUILD_DIR"
+# Create the build directory (the preset's binaryDir will be set to ${sourceDir}/${BUILD_DIR}).
+echo "Creating build directory: ${BUILD_DIR}"
+mkdir -p "${BUILD_DIR}"
 
-# Navigate to the build directory
-cd "$BUILD_DIR"
-
-# Run CMake configuration to generate compile_commands.json
+# Run CMake configuration using the selected preset.
 echo "Configuring with CMake..."
-cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=YES $CMAKE_OPTIONS .. || {
+cmake --preset="${PRESET:-}" || {
   echo "CMake configuration failed."
   exit 1
 }
 
-# Run make to build the project
+# Build the project.
 echo "Building the project..."
-make || {
+cmake --build --preset="${PRESET:-}" || {
   echo "Build failed."
   exit 1
 }
 
-# Notify user of created executables
+# Notify the user of created executables.
 echo "Checking for created executable files..."
-executables=$(find . -maxdepth 1 -type f -perm +111)
+cd "${BUILD_DIR}" || exit 1
+# Use the modern -executable predicate.
+executables=$(find . -maxdepth 1 -type f \( -perm -u=x -or -perm -g=x -or -perm -o=x \))
 
 if [ -n "$executables" ]; then
   echo "Build complete. Created executables:"
   for exec in $executables; do
-    echo " - $BUILD_DIR/$(basename $exec)"
+    echo " - ${BUILD_DIR}/$(basename "$exec")"
   done
 else
   echo "No executable files were created."
 fi
-
