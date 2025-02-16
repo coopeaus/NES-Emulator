@@ -34,6 +34,8 @@ CMakeCache.txt
 cmake_install.cmake
 Makefile
 cmake-build-*
+CMakeUserPresets.json
+.cmake/
 
 # Ignore Code::Blocks workspace files
 *.depend
@@ -108,7 +110,8 @@ CTestCostData.txt
 bin/
 obj/
 fceux/
-tests/output/
+tests/output/*
+!tests/output/.gitkeep
 
 # Ignore any other common or custom build directories
 /build/
@@ -119,3 +122,7 @@ lint.sh
 format.sh
 local.sh
 list.md
+
+# vcpkg
+vcpkg_installed/
+
