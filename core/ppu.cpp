@@ -223,8 +223,7 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                   _tempAddr is copied to _vramAddr
                   _addrLatch is toggled
                  */
-                _tempAddr.bit.coarseY = data & 0x1F;
-                _tempAddr.bit.fineY = ( data & 0xE0 ) >> 5;
+                _tempAddr.value = ( _tempAddr.value & 0x7F00 ) | data;
                 _vramAddr.value = _tempAddr.value;
                 _addrLatch = false;
             }
