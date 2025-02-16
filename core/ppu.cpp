@@ -214,9 +214,7 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                    and is set to bits 8-14 of _tempAddr
                    The _addrLatch is toggled
                  */
-                _tempAddr.bit.coarseX = data & 0x1F; // shifts for high coarseX, nametablex/y
-                _tempAddr.bit.nametableX = ( data & 0x40 ) >> 6;
-                _tempAddr.bit.nametableY = ( data & 0x80 ) >> 7;
+                _tempAddr.value = ( _tempAddr.value & 0xFF ) | (( data & 0x7F ) << 8 ) 
                 _addrLatch = true;
             } else {
                 /* Second Write
@@ -225,8 +223,7 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                   _tempAddr is copied to _vramAddr
                   _addrLatch is toggled
                  */
-                _tempAddr.bit.coarseY = data & 0x1F;
-                _tempAddr.bit.fineY = ( data & 0xE0 ) >> 5;
+                _tempAddr.value = ( _tempAddr.value & 0x7F00 ) | data;
                 _vramAddr.value = _tempAddr.value;
                 _addrLatch = false;
             }
