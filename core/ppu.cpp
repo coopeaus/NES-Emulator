@@ -272,7 +272,7 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
      * This is not the only way to update the OAM, registers 2004 and 2003 can be used
      * but those are slower, and are used for partial updates mostly
      */
-    u16 const sourceAddress = data << 8;
+    u16 const           sourceAddress = data << 8;
     std::array<u8, 256> tempBuffer{}; // tempBuffer for holding
 
     // read 256 bytes in tempBuffer
@@ -281,7 +281,7 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
     }
 
     // transfer from tempBuffer to _oam
-    memcpy(_oam.data(), tempBuffer.data(), tempBuffer.size());
+    memcpy( _oam.data(), tempBuffer.data(), tempBuffer.size() );
 }
 
 /*
