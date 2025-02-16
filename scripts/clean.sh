@@ -7,21 +7,13 @@
 
 # Set the build directory (adjust if your build directory is in a different location)
 BUILD_DIR="build"
-cd "$(dirname "$0")/.." || exit 1 # run from the project root directory
+cd "$(dirname "$BASH_SOURCE[0]")/.." || exit 1
 
-echo "Cleaning CMake build files..."
-
-# Check if the build directory exists
+# Ensure the build directory exists before attempting to clean
 if [ -d "$BUILD_DIR" ]; then
-	# Remove CMake cache and generated files
-	rm -rf "$BUILD_DIR/CMakeCache.txt" "$BUILD_DIR/CMakeFiles" "$BUILD_DIR/Makefile" "$BUILD_DIR/cmake_install.cmake"
-	echo "Removed cache and generated files from $BUILD_DIR."
-
-	# Remove all executable files in the build directory
-	find "$BUILD_DIR" -type f -perm +111 -exec rm -f {} + 2>/dev/null
-	echo "Removed all executables from $BUILD_DIR."
-
-	echo "Clean complete."
+  echo "Cleaning build directory: $BUILD_DIR"
+  rm -rf "$BUILD_DIR"/* "$BUILD_DIR"/.[!.]* "$BUILD_DIR"/..?*
+  echo "Build directory cleaned."
 else
-	echo "Build directory $BUILD_DIR does not exist. Nothing to clean."
+  echo "Build directory does not exist. Nothing to clean."
 fi
