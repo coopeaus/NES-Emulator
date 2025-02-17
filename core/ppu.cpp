@@ -443,7 +443,11 @@ void PPU::Tick() // NOLINT
         ||    Transfer Y (280-340)    ||
         ################################
         */
-        // TODO: Implement
+        if ( _scanline == -1 && _cycle >= 280 && _cycle <= 304 ) {
+            _vramAddr.bit.nametableY = _tempAddr.bit.nametableY;
+            _vramAddr.bit.coarseY = _tempAddr.bit.coarseY;
+            _vramAddr.bit.fineY = _tempAddr.bit.fineY;
+        }
     }
 
     /*
@@ -520,8 +524,10 @@ void PPU::Tick() // NOLINT
             LoadNextBgShiftRegisters();
 
             // Transfer nametable and coarse X from temp to vram address
-            _vramAddr.bit.nametableX = _tempAddr.bit.nametableX;
-            _vramAddr.bit.coarseX = _tempAddr.bit.coarseX;
+            if ( _isRenderingEnabled ) {
+                _vramAddr.bit.nametableX = _tempAddr.bit.nametableX;
+                _vramAddr.bit.coarseX = _tempAddr.bit.coarseX;
+            }
         }
 
         /*
