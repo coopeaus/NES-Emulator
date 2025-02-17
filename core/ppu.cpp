@@ -292,7 +292,7 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
     // $0000-$1FFF: Pattern Tables
     if ( address >= 0x0000 && address <= 0x1FFF ) {
         /* Pattern table data is read from the cartridge */
-        // TODO: Implement
+        return _bus->cartridge->Read(address);
     }
 
     // $2000-$3EFF: Name Tables
@@ -361,7 +361,8 @@ void PPU::Write( u16 address, u8 data ) // NOLINT
 
     if ( address >= 0x0000 && address <= 0x1FFF ) {
         /* Pattern table data is written to the cartridge */
-        // TODO: Implement
+        _bus->cartridge->Write( address, data );
+        return;
     }
     if ( address >= 0x2000 && address <= 0x2FFF ) {
 
