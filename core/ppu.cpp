@@ -233,7 +233,6 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
             */
             //
             _vramAddr.value += _ppuCtrl.bit.vramIncrement == 0 ? 1 : 32;
-
         }
         default:
             break;
