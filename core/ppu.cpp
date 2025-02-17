@@ -5,6 +5,7 @@
 #include "mappers/mapper-base.h"
 #include <exception>
 #include <cstdlib>
+#include <array>
 
 PPU::PPU( Bus *bus ) : _bus( bus )
 {
@@ -212,7 +213,8 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                    and is set to bits 8-14 of _tempAddr
                    The _addrLatch is toggled
                  */
-                // TODO: Implement
+                _tempAddr.value = ( _tempAddr.value & 0xFF ) | ( ( data & 0x7F ) << 8 );
+                _addrLatch = true;
             } else {
                 /* Second Write
                    The entire data byte is the _tempAddr low byte
@@ -220,7 +222,9 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
                   _tempAddr is copied to _vramAddr
                   _addrLatch is toggled
                  */
-                // TODO: Implement
+                _tempAddr.value = ( _tempAddr.value & 0x7F00 ) | data;
+                _vramAddr.value = _tempAddr.value;
+                _addrLatch = false;
             }
             break;
         }
@@ -265,8 +269,11 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
      * This is not the only way to update the OAM, registers 2004 and 2003 can be used
      * but those are slower, and are used for partial updates mostly
      */
-    // TODO: Implement
-    (void) data;
+    u16 const sourceAddress = data << 8;
+    // read 256 bytes
+    for ( u16 i = 0; i < 256; i++ ) {
+        _oam[i] = _bus->Read( sourceAddress + i );
+    }
 }
 
 /*
@@ -285,7 +292,7 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
     // $0000-$1FFF: Pattern Tables
     if ( address >= 0x0000 && address <= 0x1FFF ) {
         /* Pattern table data is read from the cartridge */
-        // TODO: Implement
+        return _bus->cartridge->Read( address );
     }
 
     // $2000-$3EFF: Name Tables
@@ -354,7 +361,8 @@ void PPU::Write( u16 address, u8 data ) // NOLINT
 
     if ( address >= 0x0000 && address <= 0x1FFF ) {
         /* Pattern table data is written to the cartridge */
-        // TODO: Implement
+        _bus->cartridge->Write( address, data );
+        return;
     }
     if ( address >= 0x2000 && address <= 0x2FFF ) {
 
@@ -436,7 +444,11 @@ void PPU::Tick() // NOLINT
         ||    Transfer Y (280-340)    ||
         ################################
         */
-        // TODO: Implement
+        if ( _scanline == -1 && _cycle >= 280 && _cycle <= 304 ) {
+            _vramAddr.bit.nametableY = _tempAddr.bit.nametableY;
+            _vramAddr.bit.coarseY = _tempAddr.bit.coarseY;
+            _vramAddr.bit.fineY = _tempAddr.bit.fineY;
+        }
     }
 
     /*
@@ -513,8 +525,10 @@ void PPU::Tick() // NOLINT
             LoadNextBgShiftRegisters();
 
             // Transfer nametable and coarse X from temp to vram address
-            _vramAddr.bit.nametableX = _tempAddr.bit.nametableX;
-            _vramAddr.bit.coarseX = _tempAddr.bit.coarseX;
+            if ( _isRenderingEnabled ) {
+                _vramAddr.bit.nametableX = _tempAddr.bit.nametableX;
+                _vramAddr.bit.coarseX = _tempAddr.bit.coarseX;
+            }
         }
 
         /*
