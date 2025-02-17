@@ -9,7 +9,7 @@
 PPU::PPU( Bus *bus ) : _bus( bus )
 {
     try {
-        _nesPaletteRgbValues = utils::readPalette( "palettes/palette1.pal" );
+        _nesPaletteRgbValues = utils::readPalette( "../palettes/palette1.pal" );
     } catch ( std::exception &e ) {
         exit( EXIT_FAILURE );
     }
@@ -138,7 +138,7 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
               bg_enabled and sprite_enabled bits are set in the _ppuMask
             */
             _ppuMask.value = data;
-            _isRenderingEnabled = _ppuMask.bit.render_background || _ppuMask.bit.render_sprites;
+            _isRenderingEnabled = _ppuMask.bit.renderBackground || _ppuMask.bit.renderSprites;
             break;
         }
         // 2002: PPUSTATUS, does nothing
@@ -232,7 +232,7 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
               1 if _ppuCtrl increment mode is 0, 32 if 1
             */
             //
-            _vramAddr.value += _ppuCtrl.bit.vram_increment == 0 ? 1 : 32;
+            _vramAddr.value += _ppuCtrl.bit.vramIncrement == 0 ? 1 : 32;
 
         }
         default:
