@@ -58,5 +58,5 @@ jobs:
             --rm -v "$(pwd):/workspace" \
             -v build:/workspace/build \
             -v docker-vcpkg:/workspace/docker-vcpkg \
-            -w /workspace ghcr.io/bgevko/nes-emu/build-lint-container:latest \
+            -w /workspace ghcr.io/coopeaus/nes-emulator/build-lint-container:latest \
             test "RomTests.Nestest"
