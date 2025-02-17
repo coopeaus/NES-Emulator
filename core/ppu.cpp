@@ -524,7 +524,7 @@ void PPU::Tick() // NOLINT
             LoadNextBgShiftRegisters();
 
             // Transfer nametable and coarse X from temp to vram address
-            if (_isRenderingEnabled) {
+            if ( _isRenderingEnabled ) {
                 _vramAddr.bit.nametableX = _tempAddr.bit.nametableX;
                 _vramAddr.bit.coarseX = _tempAddr.bit.coarseX;
             }
