@@ -9,7 +9,7 @@
 PPU::PPU( Bus *bus ) : _bus( bus )
 {
     try {
-        _nesPaletteRgbValues = utils::readPalette( "../palettes/palette1.pal" );
+        _nesPaletteRgbValues = utils::readPalette( "palettes/palette1.pal" );
     } catch ( std::exception &e ) {
         exit( EXIT_FAILURE );
     }
