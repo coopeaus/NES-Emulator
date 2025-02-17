@@ -1,0 +1,119 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 3
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "generator": "Ninja",
+      "description": "Base settings common to all builds.",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_INSTALLED_DIR": "${sourceDir}/vcpkg_installed",
+        "VCPKG_MANIFEST_DIR": "${sourceDir}/vcpkg.json",
+        "VCPKG_MANIFEST_INSTALL": "OFF",
+        "BUILD_FRONTEND": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "BUILD_TESTS": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "CMAKE_BUILD_TYPE": {
+          "type": "STRING",
+          "value": "Release"
+        },
+        "CMAKE_THREAD_LIBS_INIT": {
+          "type": "STRING",
+          "value": "-pthread"
+        },
+        "THREADS_PREFER_PTHREAD_FLAG": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      },
+      "environment": {
+        "VCPKG_ROOT": "$penv{VCPKG_ROOT}"
+      }
+    },
+    {
+      "name": "tests",
+      "description": "Builds core + tests, no frontend.",
+      "inherits": "default",
+      "cacheVariables": {
+        "BUILD_FRONTEND": {
+          "type": "BOOL",
+          "value": "OFF"
+        },
+        "CMAKE_CXX_FLAGS": {
+          "type": "STRING",
+          "value": "-Werror"
+        }
+      }
+    },
+    {
+      "name": "ci",
+      "description": "CI pipeline build, no frontend.",
+      "inherits": "default",
+      "cacheVariables": {
+        "VCPKG_INSTALLED_DIR": "${sourceDir}/docker-vcpkg/vcpkg_installed",
+        "VCPKG_MANIFEST_DIR": "${sourceDir}/docker-vcpkg/vcpkg.json",
+        "BUILD_FRONTEND": {
+          "type": "BOOL",
+          "value": "OFF"
+        },
+        "CMAKE_CXX_FLAGS": {
+          "type": "STRING",
+          "value": "-Werror"
+        },
+        "CMAKE_CXX_COMPILER": {
+          "type": "STRING",
+          "value": "/usr/bin/clang++"
+        }
+      }
+    },
+    {
+      "name": "debug",
+      "description": "Debug build",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "type": "STRING",
+          "value": "Debug"
+        },
+        "CMAKE_CXX_FLAGS": {
+          "type": "STRING",
+          "value": "-Werror"
+        }
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default"
+    },
+    {
+      "name": "ci",
+      "configurePreset": "ci",
+      "jobs": 2
+    },
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default",
+      "output": { "outputOnFailure": true },
+      "execution": { "stopOnFailure": true }
+    }
+  ]
+}

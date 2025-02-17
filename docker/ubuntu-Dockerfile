@@ -1,0 +1,61 @@
+FROM ubuntu:latest
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    wget \
+    libssl-dev \
+    ninja-build \
+    cmake \
+    pkg-config \
+    clang-19 \
+    clang-tools-19 \
+    clang-format-19 \
+    clang-tidy-19 \
+    lld-19 \
+    git \
+    ca-certificates \
+    bash \
+    file \
+    curl \
+    zip \
+    unzip \
+    tar \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s /usr/bin/clang-19 /usr/bin/clang \
+    && ln -s /usr/bin/clang++-19 /usr/bin/clang++ \
+    && ln -s /usr/bin/clang-tools-19 /usr/bin/clang-tools \
+    && ln -s /usr/bin/clang-format-19 /usr/bin/clang-format \
+    && ln -s /usr/bin/clang-tidy-19 /usr/bin/clang-tidy
+
+# Set environment variables for compilers and tools
+ENV CMAKE_C_COMPILER=/usr/bin/clang-19
+ENV CMAKE_CXX_COMPILER=/usr/bin/clang++-19
+ENV CMAKE_MAKE_PROGRAM=/usr/bin/ninja
+ENV CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS=/usr/bin/clang-scan-deps-19
+ENV VCPKG_ROOT=/root/vcpkg
+ENV PATH="$VCPKG_ROOT:$PATH"
+
+# Set the working directory
+WORKDIR /workspace
+
+# Copy Vcpkg
+COPY docker-vcpkg/vcpkg.json /workspace/docker-vcpkg/vcpkg.json
+
+# Volumes
+VOLUME ["/workspace"]
+VOLUME ["/workspace/build"]
+VOLUME ["/workspace/docker-vcpkg"]
+
+# Install vcpkg and dependencies
+RUN mkdir "$VCPKG_ROOT" && git clone https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT" && \ 
+  "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics && cd /workspace/docker-vcpkg && \
+  vcpkg install
+
+# Copy entrypoint
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
