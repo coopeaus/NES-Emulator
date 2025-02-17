@@ -11,7 +11,7 @@ docker rmi project-linter
 Install the new image:
 
 ```bash
-docker build --no-cache -t project-linter2 -f docker/ubuntu-Dockerfile .
+docker build --no-cache -t project-linter -f docker/ubuntu-Dockerfile .
 ```
 
 Subsequent rebuilds can be done without the `--no-cache` flag.
