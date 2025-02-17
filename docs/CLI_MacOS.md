@@ -3,7 +3,7 @@ This is a guide for setting up a CLI development environment on Mac OS
 
 From the root of the project, run the setup script
 ```bash
-chmod +x .script/env-check.sh
+chmod +x ./scripts/env-check.sh
 .scripts/env-check.sh
 ```
 
