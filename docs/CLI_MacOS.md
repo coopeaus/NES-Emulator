@@ -27,7 +27,7 @@ cd ~/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics
 
 Add the `VCPKG_ROOT` to your environment variables and your PATH variable. I recommend adding it to your shell profile for persistence.
 ```bash
-export VCPKG_ROOT=~/vcpkg
+export VCPKG_ROOT="$HOME/vcpkg"
 export PATH=$VCPKG_ROOT:$PATH
 ```
 
