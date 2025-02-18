@@ -288,6 +288,9 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
 {
     /*@brief: Internal PPU reads to the cartridge
      */
+    if ( _bus->cartridge == nullptr ) {
+        return 0xFF;
+    }
 
     // $0000-$1FFF: Pattern Tables
     if ( address >= 0x0000 && address <= 0x1FFF ) {
@@ -355,6 +358,10 @@ void PPU::Write( u16 address, u8 data ) // NOLINT
 {
     /*@brief: Internal PPU reads to the cartridge
      */
+
+    if ( _bus->cartridge == nullptr ) {
+        return;
+    }
 
     (void) data;
     address &= 0x3FFF;
