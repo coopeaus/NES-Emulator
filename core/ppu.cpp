@@ -437,7 +437,12 @@ void PPU::Tick() // NOLINT
         ||         Vblank End         ||
         ################################
         */
-        // TODO: Implement
+        // Reset top 3 bits of _ppuStatus register,
+        // and set _vramAddr to _tempAddr
+        if ( _cycle == 1 ) {
+            _ppuStatus.value &= 0b00011111;
+            _vramAddr.value = _tempAddr.value;
+        }
 
         /*
         ################################
