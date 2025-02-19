@@ -63,6 +63,7 @@ if(BUILD_FRONTEND)
 
   # OpenGL
   find_package(glad CONFIG REQUIRED)
+  target_link_libraries(emu PRIVATE glad::glad)
   if(APPLE)
     target_link_libraries(emu PRIVATE "-framework OpenGL")
   else()
