@@ -26,6 +26,7 @@ void UI::Render()
         }
         ImGui::SameLine();
         ImGui::Text( "counter = %d", counter );
+        ImGui::Text( "CPU Cycle: %lld", renderer->bus.cpu.GetCycles() );
         ImGui::Text( "Application average %.3f ms/frame (%.1f FPS)", 1000.0f / renderer->io->Framerate,
                      renderer->io->Framerate );
         ImGui::End();
