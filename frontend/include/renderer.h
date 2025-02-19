@@ -1,31 +1,53 @@
 #pragma once
 
-#include "renderer-base.h"
-
 #include <glad/glad.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
-
-#include <iostream>
-#include "imgui.h"
+#include <imgui.h>
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
+#include "bus.h"
+#include "cartridge.h"
+#include "ui.h"
+#include <SDL_stdinc.h>
+#include <SDL_timer.h>
+#include <cstdint>
+#include <fmt/core.h>
+#include <iostream>
+#include <csignal>
 
-class OpenGL3Renderer : public Renderer
+using u32 = uint32_t;
+using u64 = uint64_t;
+
+class UI;
+
+class Renderer
 {
   public:
+    int           nesWidth = 256;
+    int           nesHeight = 240;
+    int           bufferSize = nesWidth * nesHeight;
+    std::string   windowTitle = "NES Emulator";
+    int           windowWidth = nesWidth * 2;
+    int           windowHeight = nesHeight * 2;
+    bool          running = true;
+    Bus           bus;
+    u16           fps = 0;
+    u64           frameCount = 0;
     SDL_Window   *window = nullptr;
     SDL_GLContext glContext = nullptr;
     GLuint        emulatorTexture = 0;
     GLuint        shaderProgram = 0;
     GLuint        vao = 0;
     GLuint        vbo = 0;
+    ImGuiIO      *io{};
+    ImVec4        clearColor = ImVec4( 0.00F, 0.00F, 0.00F, 1.00F );
+    bool          showDemoWindow = true;
+    bool          showAnotherWindow = false;
 
-    // ImGui
-    ImGuiIO *io;
-    ImVec4   clearColor = ImVec4( 0.00F, 0.00F, 0.00F, 1.00F );
-    bool     showDemoWindow = true;
-    bool     showAnotherWindow = false;
+    UI ui;
+
+    Renderer() : ui( this ) { InitEmulator(); }
 
     /*
     ################################
@@ -34,7 +56,7 @@ class OpenGL3Renderer : public Renderer
     #                              #
     ################################
     */
-    bool Setup() override
+    bool Setup()
     {
         // Initialize SDL Video subsystem.
         if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER ) != 0 ) {
@@ -211,7 +233,7 @@ class OpenGL3Renderer : public Renderer
         return true;
     }
 
-    void Teardown() override
+    void Teardown()
     {
         // Cleanup ImGui
         ImGui_ImplOpenGL3_Shutdown();
@@ -242,23 +264,23 @@ class OpenGL3Renderer : public Renderer
         SDL_Quit();
     }
 
-    void PollEvents() override
+    void PollEvents()
     {
         SDL_Event event;
         while ( SDL_PollEvent( &event ) ) {
             ImGui_ImplSDL2_ProcessEvent( &event );
             if ( event.type == SDL_QUIT ) {
                 running = false;
-                renderDebugWindows = false;
+                ui.renderDebugWindows = false;
             }
             if ( event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE &&
                  event.window.windowID == SDL_GetWindowID( window ) ) {
-                renderDebugWindows = false;
+                ui.renderDebugWindows = false;
             }
         }
     }
 
-    void ProcessPpuFrameBuffer( const u32 *frameBuffer ) override
+    void ProcessPpuFrameBuffer( const u32 *frameBuffer ) // NOLINT
     {
         // Update the OpenGL texture with the new framebuffer data.
         glBindTexture( GL_TEXTURE_2D, emulatorTexture );
@@ -268,20 +290,14 @@ class OpenGL3Renderer : public Renderer
         glBindTexture( GL_TEXTURE_2D, 0 );
     }
 
-    void RenderFrame() override
+    void RenderFrame()
     {
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
-        // Render ImGui overlay if active.
-        if ( renderDebugWindows ) {
-
-            if ( showDemoWindow ) {
-                ImGui::ShowDemoWindow( &showDemoWindow );
-            }
-        }
+        ui.Render();
 
         ImGui::Render();
         glViewport( 0, 0, windowWidth, windowHeight );
@@ -310,6 +326,79 @@ class OpenGL3Renderer : public Renderer
         }
 
         SDL_GL_SwapWindow( window );
+    }
+
+    void InitEmulator()
+    {
+        auto cartridge = std::make_shared<Cartridge>( "tests/roms/mario.nes" );
+        bus.LoadCartridge( cartridge );
+        bus.cpu.Reset();
+        bus.ppu.onFrameReady = [this]( const u32 *frameBuffer ) {
+            this->ProcessPpuFrameBuffer( frameBuffer );
+        };
+    }
+
+    void Run()
+    {
+        std::signal( SIGSEGV, SignalHandler );
+
+        // Target frame time in milliseconds (~16.67ms for 60 FPS)
+        const double targetFrameTimeMs = 1000.0 / 60.0;
+        const u64    freq = SDL_GetPerformanceFrequency();
+        u64          secondStart = SDL_GetPerformanceCounter();
+
+        while ( running ) {
+            u64 frameStart = SDL_GetPerformanceCounter();
+
+            bus.cpu.ExecuteFrame();
+            PollEvents();
+            RenderFrame();
+
+            u64    frameEnd = SDL_GetPerformanceCounter();
+            double frameTimeMs =
+                ( static_cast<double>( frameEnd - frameStart ) ) * 1000.0 / static_cast<double>( freq );
+
+            // Calculate the remaining time for this frame.
+            double delayTimeMs = targetFrameTimeMs - frameTimeMs;
+            if ( delayTimeMs > 0 ) {
+                // If there's more than ~1ms left, sleep for most of it.
+                if ( delayTimeMs > 1.0 ) {
+                    SDL_Delay( static_cast<Uint32>( delayTimeMs - 1.0 ) );
+                }
+                // Busy-wait until the target frame time has elapsed.
+                while ( ( ( static_cast<double>( SDL_GetPerformanceCounter() - frameStart ) ) * 1000.0 /
+                          static_cast<double>( freq ) ) < targetFrameTimeMs ) {
+                }
+            }
+
+            // FPS reporting every second.
+            u64    now = SDL_GetPerformanceCounter();
+            double secondElapsed =
+                ( static_cast<double>( now - secondStart ) ) * 1000.0 / static_cast<double>( freq );
+            if ( secondElapsed >= 1000.0 ) {
+                CalculateFps();
+                RenderFps();
+                secondStart = SDL_GetPerformanceCounter();
+            }
+        }
+    }
+
+    void CalculateFps()
+    {
+        u64 framesRendered = bus.ppu.GetFrame();
+        u16 framesThisSecond = framesRendered - frameCount;
+        frameCount = framesRendered;
+        fps = framesThisSecond;
+    }
+
+    void RenderFps() { fmt::print( "FPS: {}\n", fps ); }
+
+    static void SignalHandler( int signal )
+    {
+        if ( signal == SIGSEGV ) {
+            std::cerr << "Segmentation Fault Detected (SIGSEGV)!\n";
+            std::exit( EXIT_FAILURE );
+        }
     }
 
     static const char *GetVertexShaderSource()

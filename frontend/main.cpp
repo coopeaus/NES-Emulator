@@ -1,10 +1,10 @@
-#include "renderer-sdl2opengl3.h"
+#include "renderer.h"
 #include <iostream>
 #include <fmt/core.h>
 
 int main()
 {
-    OpenGL3Renderer renderer = OpenGL3Renderer();
+    Renderer renderer = Renderer();
     try {
         renderer.Setup();
         renderer.Run();

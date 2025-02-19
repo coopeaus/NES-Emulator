@@ -44,7 +44,10 @@ target_link_libraries(emu_core PRIVATE fmt::fmt)
 ################################################
 ]]
 if(BUILD_FRONTEND)
-  add_executable(emu frontend/main.cpp)
+  add_executable(emu
+    frontend/main.cpp
+    frontend/ui.cpp
+  )
   target_include_directories(emu PRIVATE ${CORE_INCLUDES})
   target_include_directories(emu PRIVATE ${FRONTEND_INCLUDES})
   target_link_libraries(emu PRIVATE emu_core)

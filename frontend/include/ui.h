@@ -1,21 +1,20 @@
 #pragma once
 
+#include <SDL_stdinc.h>
 #include <imgui.h>
+
+// Forward declaration of Renderer.
+class Renderer;
 
 class UI
 {
   public:
-    virtual ~UI() = default;
-    UI();
+    bool renderDebugWindows = true;
+    bool showDemoWindow = true;
+    bool showAnotherWindow = true;
 
-    // Rule of 5
-    UI( const UI & ) = delete;            // No copy constructor
-    UI( UI && ) = delete;                 // No move constructor
-    UI &operator=( const UI & ) = delete; // No copy assignment
-    UI &operator=( UI && ) = delete;      // No move assignment
+    Renderer *renderer;
+    UI( Renderer *renderer ) : renderer( renderer ) {}
 
-    void         Init();
-    virtual void Update();
-    void         Render();
-    void         Shutdown();
+    void Render();
 };
