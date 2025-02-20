@@ -3,6 +3,7 @@
 #include "mappers/mapper-base.h"
 #include <cstdint>
 #include <array>
+#include <functional>
 
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
@@ -23,7 +24,7 @@ class PPU
     [[nodiscard]] MirrorMode GetMirrorMode();
     [[nodiscard]] s16        GetScanline() const { return _scanline; }
     [[nodiscard]] u16        GetCycles() const { return _cycle; }
-    [[nodiscard]] u16        GetFrame() const { return _frame; }
+    [[nodiscard]] u64        GetFrame() const { return _frame; }
 
     /*
     ################################
@@ -87,7 +88,8 @@ class PPU
     ||        SDL Callback        ||
     ################################
     */
-    void ( *onFrameReady )( const u32 *frameBuffer ) = nullptr;
+    // void ( *onFrameReady )( const u32 *frameBuffer ) = nullptr;
+    std::function<void( const u32 * )> onFrameReady = nullptr;
 
     /*
     ################################

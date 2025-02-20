@@ -10,6 +10,7 @@ project( nes_emu VERSION 0.1 LANGUAGES CXX )
 
 # Includes
 set(CORE_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(FRONTEND_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/frontend/include)
 set(TEST_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
 
 #[[
@@ -43,8 +44,12 @@ target_link_libraries(emu_core PRIVATE fmt::fmt)
 ################################################
 ]]
 if(BUILD_FRONTEND)
-  add_executable(emu frontend/main.cpp)
+  add_executable(emu
+    frontend/main.cpp
+    frontend/ui.cpp
+  )
   target_include_directories(emu PRIVATE ${CORE_INCLUDES})
+  target_include_directories(emu PRIVATE ${FRONTEND_INCLUDES})
   target_link_libraries(emu PRIVATE emu_core)
 
   # SDL
@@ -54,6 +59,19 @@ if(BUILD_FRONTEND)
         $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
         $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
     )
+
+  # Imgui
+  find_package(imgui CONFIG REQUIRED)
+  target_link_libraries(emu PRIVATE imgui::imgui)
+
+  # OpenGL
+  find_package(glad CONFIG REQUIRED)
+  target_link_libraries(emu PRIVATE glad::glad)
+  if(APPLE)
+    target_link_libraries(emu PRIVATE "-framework OpenGL")
+  else()
+    target_link_libraries(emu PRIVATE OpenGL::GL)
+  endif()
 
   # Copy roms to build directory, for testing purposes
   add_custom_command(TARGET emu POST_BUILD

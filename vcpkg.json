@@ -1,3 +1,13 @@
 {
-  "dependencies": ["fmt", "gtest", "sdl2"]
+  "name": "nes-emulator",
+  "dependencies": [
+    {
+      "name": "imgui",
+      "features": ["sdl2-binding", "opengl3-binding", "docking-experimental"]
+    },
+    "fmt",
+    "gtest",
+    "sdl2",
+    "glad"
+  ]
 }
