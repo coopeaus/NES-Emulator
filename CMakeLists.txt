@@ -86,6 +86,12 @@ if(BUILD_FRONTEND)
       COMMAND ${CMAKE_COMMAND} -E copy_directory
       ${CMAKE_SOURCE_DIR}/palettes ${CMAKE_BINARY_DIR}/palettes
   )
+
+  # Copy fonts directory to build directory
+  add_custom_command(TARGET emu POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory
+      ${CMAKE_SOURCE_DIR}/fonts ${CMAKE_BINARY_DIR}/fonts
+  )
 endif()
 
 #[[
