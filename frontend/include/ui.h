@@ -1,6 +1,5 @@
 #pragma once
 
-#include <SDL_stdinc.h>
 #include <imgui.h>
 
 // Forward declaration of Renderer.
@@ -9,12 +8,18 @@ class Renderer;
 class UI
 {
   public:
-    bool renderDebugWindows = true;
-    bool showDemoWindow = true;
-    bool showAnotherWindow = true;
+    // Rule of 5
+    UI( const UI & ) = delete;
+    UI( UI && ) = delete;
+    UI &operator=( const UI & ) = delete;
+    UI &operator=( UI && ) = delete;
+    virtual ~UI() = default;
 
-    Renderer *renderer;
     UI( Renderer *renderer ) : renderer( renderer ) {}
 
-    void Render();
+    bool renderDebugWindows = true;
+    bool showDemoWindow = true;
+
+    Renderer *renderer;
+    void      Render();
 };

@@ -20,20 +20,26 @@ using u32 = uint32_t;
 using u64 = uint64_t;
 
 class UI;
-
 class Renderer
 {
   public:
-    int           nesWidth = 256;
-    int           nesHeight = 240;
-    int           bufferSize = nesWidth * nesHeight;
-    std::string   windowTitle = "NES Emulator";
-    int           windowWidth = nesWidth * 2;
-    int           windowHeight = nesHeight * 2;
-    bool          running = true;
-    Bus           bus;
-    u16           fps = 0;
-    u64           frameCount = 0;
+    /*
+    ################################
+    #          window info         #
+    ################################
+    */
+    int         nesWidth = 256;
+    int         nesHeight = 240;
+    int         windowWidth = nesWidth * 2;
+    int         windowHeight = nesHeight * 2;
+    int         bufferSize = nesWidth * nesHeight;
+    std::string windowTitle = "NES Emulator";
+
+    /*
+    ################################
+    #       Render Variables       #
+    ################################
+    */
     SDL_Window   *window = nullptr;
     SDL_GLContext glContext = nullptr;
     GLuint        emulatorTexture = 0;
@@ -42,10 +48,23 @@ class Renderer
     GLuint        vbo = 0;
     ImGuiIO      *io{};
     ImVec4        clearColor = ImVec4( 0.00F, 0.00F, 0.00F, 1.00F );
-    bool          showDemoWindow = true;
-    bool          showAnotherWindow = false;
 
-    UI ui;
+    /*
+    ################################
+    #       global variables       #
+    ################################
+    */
+    bool running = true;
+    u16  fps = 0;
+    u64  frameCount = 0;
+
+    /*
+    ################################
+    #          peripherals         #
+    ################################
+    */
+    UI  ui;
+    Bus bus;
 
     Renderer() : ui( this ) { InitEmulator(); }
 
@@ -56,6 +75,17 @@ class Renderer
     #                              #
     ################################
     */
+
+    void InitEmulator()
+    {
+        auto cartridge = std::make_shared<Cartridge>( "tests/roms/mario.nes" );
+        bus.LoadCartridge( cartridge );
+        bus.cpu.Reset();
+        bus.ppu.onFrameReady = [this]( const u32 *frameBuffer ) {
+            this->ProcessPpuFrameBuffer( frameBuffer );
+        };
+    }
+
     bool Setup()
     {
         // Initialize SDL Video subsystem.
@@ -233,111 +263,13 @@ class Renderer
         return true;
     }
 
-    void Teardown()
-    {
-        // Cleanup ImGui
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplSDL2_Shutdown();
-        ImGui::DestroyContext();
-
-        // Delete our OpenGL texture.
-        if ( emulatorTexture ) {
-            glDeleteTextures( 1, &emulatorTexture );
-            emulatorTexture = 0;
-        }
-        if ( vao ) {
-            glDeleteVertexArrays( 1, &vao );
-            vao = 0;
-        }
-        if ( vbo ) {
-            glDeleteBuffers( 1, &vbo );
-            vbo = 0;
-        }
-        if ( shaderProgram ) {
-            glDeleteProgram( shaderProgram );
-            shaderProgram = 0;
-        }
-
-        // Destroy the OpenGL context and window.
-        SDL_GL_DeleteContext( glContext );
-        SDL_DestroyWindow( window );
-        SDL_Quit();
-    }
-
-    void PollEvents()
-    {
-        SDL_Event event;
-        while ( SDL_PollEvent( &event ) ) {
-            ImGui_ImplSDL2_ProcessEvent( &event );
-            if ( event.type == SDL_QUIT ) {
-                running = false;
-                ui.renderDebugWindows = false;
-            }
-            if ( event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE &&
-                 event.window.windowID == SDL_GetWindowID( window ) ) {
-                ui.renderDebugWindows = false;
-            }
-        }
-    }
-
-    void ProcessPpuFrameBuffer( const u32 *frameBuffer ) // NOLINT
-    {
-        // Update the OpenGL texture with the new framebuffer data.
-        glBindTexture( GL_TEXTURE_2D, emulatorTexture );
-        glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
-        glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, nesWidth, nesHeight, GL_RGBA, GL_UNSIGNED_BYTE,
-                         frameBuffer );
-        glBindTexture( GL_TEXTURE_2D, 0 );
-    }
-
-    void RenderFrame()
-    {
-
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplSDL2_NewFrame();
-        ImGui::NewFrame();
-
-        ui.Render();
-
-        ImGui::Render();
-        glViewport( 0, 0, windowWidth, windowHeight );
-        glClearColor( clearColor.x, clearColor.y, clearColor.z, clearColor.w );
-        glClear( GL_COLOR_BUFFER_BIT );
-
-        // Render the 2d emulator texture
-        glUseProgram( shaderProgram );
-        glActiveTexture( GL_TEXTURE0 );
-        glBindTexture( GL_TEXTURE_2D, emulatorTexture );
-        glUniform1i( glGetUniformLocation( shaderProgram, "u_texture" ), 0 );
-        glBindVertexArray( vao );
-        glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
-        glBindVertexArray( 0 );
-        glBindTexture( GL_TEXTURE_2D, 0 );
-        glUseProgram( 0 );
-        ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
-
-        // Update and Render additional Platform Windows
-        if ( io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable ) {
-            SDL_Window   *backupCurrentWindow = SDL_GL_GetCurrentWindow();
-            SDL_GLContext backupCurrentContext = SDL_GL_GetCurrentContext();
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-            SDL_GL_MakeCurrent( backupCurrentWindow, backupCurrentContext );
-        }
-
-        SDL_GL_SwapWindow( window );
-    }
-
-    void InitEmulator()
-    {
-        auto cartridge = std::make_shared<Cartridge>( "tests/roms/mario.nes" );
-        bus.LoadCartridge( cartridge );
-        bus.cpu.Reset();
-        bus.ppu.onFrameReady = [this]( const u32 *frameBuffer ) {
-            this->ProcessPpuFrameBuffer( frameBuffer );
-        };
-    }
-
+    /*
+    ################################
+    #                              #
+    #      Main Emulation Loop     #
+    #                              #
+    ################################
+    */
     void Run()
     {
         std::signal( SIGSEGV, SignalHandler );
@@ -381,6 +313,130 @@ class Renderer
                 secondStart = SDL_GetPerformanceCounter();
             }
         }
+    }
+
+    /*
+    ################################
+    #                              #
+    #            Cleanup           #
+    #                              #
+    ################################
+    */
+    void Teardown()
+    {
+        // Cleanup ImGui
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplSDL2_Shutdown();
+        ImGui::DestroyContext();
+
+        // Delete our OpenGL texture.
+        if ( emulatorTexture ) {
+            glDeleteTextures( 1, &emulatorTexture );
+            emulatorTexture = 0;
+        }
+        if ( vao ) {
+            glDeleteVertexArrays( 1, &vao );
+            vao = 0;
+        }
+        if ( vbo ) {
+            glDeleteBuffers( 1, &vbo );
+            vbo = 0;
+        }
+        if ( shaderProgram ) {
+            glDeleteProgram( shaderProgram );
+            shaderProgram = 0;
+        }
+
+        // Destroy the OpenGL context and window.
+        SDL_GL_DeleteContext( glContext );
+        SDL_DestroyWindow( window );
+        SDL_Quit();
+    }
+
+    /*
+    ################################
+    #                              #
+    #         Event Polling        #
+    #                              #
+    ################################
+    */
+    void PollEvents()
+    {
+        SDL_Event event;
+        while ( SDL_PollEvent( &event ) ) {
+            ImGui_ImplSDL2_ProcessEvent( &event );
+            if ( event.type == SDL_QUIT ) {
+                running = false;
+                ui.renderDebugWindows = false;
+            }
+            if ( event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE &&
+                 event.window.windowID == SDL_GetWindowID( window ) ) {
+                ui.renderDebugWindows = false;
+            }
+        }
+    }
+
+    /*
+    ################################
+    #                              #
+    #            Render            #
+    #                              #
+    ################################
+    */
+
+    void RenderFrame()
+    {
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL2_NewFrame();
+        ImGui::NewFrame();
+
+        ui.Render();
+
+        ImGui::Render();
+        glViewport( 0, 0, windowWidth, windowHeight );
+        glClearColor( clearColor.x, clearColor.y, clearColor.z, clearColor.w );
+        glClear( GL_COLOR_BUFFER_BIT );
+
+        // Render the 2d emulator texture
+        glUseProgram( shaderProgram );
+        glActiveTexture( GL_TEXTURE0 );
+        glBindTexture( GL_TEXTURE_2D, emulatorTexture );
+        glUniform1i( glGetUniformLocation( shaderProgram, "u_texture" ), 0 );
+        glBindVertexArray( vao );
+        glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
+        glBindVertexArray( 0 );
+        glBindTexture( GL_TEXTURE_2D, 0 );
+        glUseProgram( 0 );
+        ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
+
+        // Update and Render additional Platform Windows
+        if ( io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable ) {
+            SDL_Window   *backupCurrentWindow = SDL_GL_GetCurrentWindow();
+            SDL_GLContext backupCurrentContext = SDL_GL_GetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            SDL_GL_MakeCurrent( backupCurrentWindow, backupCurrentContext );
+        }
+
+        SDL_GL_SwapWindow( window );
+    }
+
+    /*
+    ################################
+    #                              #
+    #            Helpers           #
+    #                              #
+    ################################
+    */
+    void ProcessPpuFrameBuffer( const u32 *frameBuffer ) // NOLINT
+    {
+        // Update the OpenGL texture with the new framebuffer data.
+        glBindTexture( GL_TEXTURE_2D, emulatorTexture );
+        glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+        glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, nesWidth, nesHeight, GL_RGBA, GL_UNSIGNED_BYTE,
+                         frameBuffer );
+        glBindTexture( GL_TEXTURE_2D, 0 );
     }
 
     void CalculateFps()
