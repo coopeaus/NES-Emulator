@@ -11,6 +11,7 @@ project( nes_emu VERSION 0.1 LANGUAGES CXX )
 # Includes
 set(CORE_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(FRONTEND_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/frontend/include)
+set(UI_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/frontend/ui)
 set(TEST_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
 
 #[[
@@ -50,6 +51,7 @@ if(BUILD_FRONTEND)
   )
   target_include_directories(emu PRIVATE ${CORE_INCLUDES})
   target_include_directories(emu PRIVATE ${FRONTEND_INCLUDES})
+  target_include_directories(emu PRIVATE ${UI_INCLUDES})
   target_link_libraries(emu PRIVATE emu_core)
 
   # SDL
