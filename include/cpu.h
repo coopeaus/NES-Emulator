@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <deque>
 #include <cstdint>
 #include <string>
 
@@ -64,19 +65,29 @@ class CPU
     void WriteAndTick( u16 address, u8 data );
     void NMI();
     void IRQ();
-    void ExecuteFrame();
+    void ExecuteFrame( bool *isPaused );
 
     /*
     ################################
     ||        Debug Methods       ||
     ################################
     */
-    std::string LogLineAtPC( bool verbose = true );
-    std::string GetTrace() const { return _trace; }
-    void        EnableTracelog() { _traceEnabled = true; }
-    void        DisableTracelog() { _traceEnabled = false; }
-    void        EnableJsonTestMode() { _isTestMode = true; }
-    void        DisableJsonTestMode() { _isTestMode = false; }
+    std::string             LogLineAtPC( bool verbose = true );
+    std::deque<std::string> GetTracelog() const { return _traceLog; }
+    void                    EnableTracelog() { _traceEnabled = true; }
+    void                    DisableTracelog() { _traceEnabled = false; }
+    void                    EnableJsonTestMode() { _isTestMode = true; }
+    void                    DisableJsonTestMode() { _isTestMode = false; }
+    void                    AddTraceLog( const std::string &log )
+    {
+        if ( _traceEnabled ) {
+            _traceLog.push_back( log );
+            if ( _traceLog.size() > _traceSize ) {
+                _traceLog.pop_front();
+            }
+        }
+    }
+    void ClearTracelog() { _traceLog.clear(); }
 
   private:
     friend class CPUTestFixture; // Sometimes used for testing private methods
@@ -112,10 +123,13 @@ class CPU
     ||       Debug Variables      ||
     ################################
     */
-    bool        _isTestMode = false;
-    bool        _traceEnabled = false;
-    bool        _didTrace = false;
-    std::string _trace;
+    bool _isTestMode = false;
+    bool _traceEnabled = true;
+    bool _didTrace = false;
+    bool _isPaused = false;
+
+    u16                     _traceSize = 10000;
+    std::deque<std::string> _traceLog;
 
     /*
     ################################

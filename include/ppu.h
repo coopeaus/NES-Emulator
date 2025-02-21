@@ -82,6 +82,12 @@ class PPU
     u8   GetSpritePixel();
     u32  GetOutputPixel( u8 bgPixel, u8 spritePixel, u8 bgPalette, u8 spritePalette );
     void TriggerNmi();
+    void Reset()
+    {
+        _scanline = 0;
+        _cycle = 4;
+        _frame = 1;
+    }
 
     /*
     ################################
