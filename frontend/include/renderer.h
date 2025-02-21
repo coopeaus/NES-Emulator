@@ -48,6 +48,8 @@ class Renderer
     GLuint        vbo = 0;
     ImGuiIO      *io{};
     ImVec4        clearColor = ImVec4( 0.00F, 0.00F, 0.00F, 1.00F );
+    ImFont       *fontMenu = nullptr;
+    ImFont       *fontMono = nullptr;
 
     /*
     ################################
@@ -140,7 +142,7 @@ class Renderer
         SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 24 );
         SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 8 );
 
-        SDL_WindowFlags windowFlags = (SDL_WindowFlags) ( SDL_WINDOW_OPENGL );
+        SDL_WindowFlags windowFlags = (SDL_WindowFlags) ( SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI );
         window = SDL_CreateWindow( windowTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                    windowWidth, windowHeight, windowFlags );
 
@@ -243,8 +245,13 @@ class Renderer
         io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
         io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
         io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport / Platform Windows
-        // io->Fonts->AddFontFromFileTTF( "fonts/font.otf", 16 );
-        io->Fonts->AddFontFromFileTTF( "fonts/font2.ttf", 16 );
+
+        // Font setup
+        ImFontConfig fontConfig;
+        fontConfig.RasterizerDensity = 4.0F;
+        float fontSize = 16.0F;
+        fontMenu = io->Fonts->AddFontFromFileTTF( "fonts/font-menu.otf", fontSize, &fontConfig );
+        fontMono = io->Fonts->AddFontFromFileTTF( "fonts/font-mono.ttf", fontSize, &fontConfig );
 
         // Setup Dear ImGui style
         ImGui::StyleColorsLight();
@@ -310,7 +317,6 @@ class Renderer
                 ( static_cast<double>( now - secondStart ) ) * 1000.0 / static_cast<double>( freq );
             if ( secondElapsed >= 1000.0 ) {
                 CalculateFps();
-                RenderFps();
                 secondStart = SDL_GetPerformanceCounter();
             }
         }
@@ -395,7 +401,12 @@ class Renderer
         ui.Render();
 
         ImGui::Render();
-        glViewport( 0, 0, windowWidth, windowHeight );
+
+        int displayW = 0;
+        int displayH = 0;
+        SDL_GL_GetDrawableSize( window, &displayW, &displayH );
+        glViewport( 0, 0, displayW, displayH );
+
         glClearColor( clearColor.x, clearColor.y, clearColor.z, clearColor.w );
         glClear( GL_COLOR_BUFFER_BIT );
 
@@ -448,7 +459,7 @@ class Renderer
         fps = framesThisSecond;
     }
 
-    void RenderFps() { fmt::print( "FPS: {}\n", fps ); }
+    void PrintFps() { fmt::print( "FPS: {}\n", fps ); }
 
     static void SignalHandler( int signal )
     {
