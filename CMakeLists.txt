@@ -22,15 +22,9 @@ set(TEST_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
 ################################################
 ]]
 # All emulation functionality is built as a static library.
-add_library(emu_core STATIC
-  core/cpu.cpp
-  core/bus.cpp
-  core/cartridge.cpp
-  core/ppu.cpp
-  core/mappers/mapper0.cpp
-  core/mappers/mapper1.cpp
-  core/utils.cpp
-)
+file(GLOB CORE_SOURCES "core/*.cpp" "core/mappers/*.cpp")
+add_library(emu_core STATIC ${CORE_SOURCES})
+
 target_include_directories(emu_core PUBLIC ${CORE_INCLUDES})
 
 # Fmt library
@@ -45,10 +39,10 @@ target_link_libraries(emu_core PRIVATE fmt::fmt)
 ################################################
 ]]
 if(BUILD_FRONTEND)
-  add_executable(emu
-    frontend/main.cpp
-    frontend/ui.cpp
-  )
+
+  file(GLOB FRONTEND_SOURCES "frontend/*.cpp" "frontend/ui/*.cpp")
+  add_executable(emu ${FRONTEND_SOURCES})
+
   target_include_directories(emu PRIVATE ${CORE_INCLUDES})
   target_include_directories(emu PRIVATE ${FRONTEND_INCLUDES})
   target_include_directories(emu PRIVATE ${UI_INCLUDES})
