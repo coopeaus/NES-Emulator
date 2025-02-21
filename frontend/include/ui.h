@@ -8,10 +8,12 @@ class Renderer;
 class UI
 {
   public:
-    UI( Renderer *renderer ) : renderer( renderer ) {}
+    UI( Renderer *renderer );
 
     bool renderDebugWindows = true;
-    bool showDemoWindow = true;
+    bool showMainMenuBar = true;
+    bool showOverlay = true;
+    bool showDemoWindow = false;
 
     Renderer *renderer;
     void      Render();
