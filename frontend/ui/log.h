@@ -39,7 +39,6 @@ class LogWindow : public UIComponent // NOLINT
         if ( currentCycle != lastCpuCycleLogged ) {
             lastCpuCycleLogged = currentCycle;
             for ( const auto &line : renderer->bus.cpu.GetTracelog() ) {
-                std::cout << "Logging CPU trace log\n";
                 AddLog( "%s\n", line.c_str() );
             }
         }
