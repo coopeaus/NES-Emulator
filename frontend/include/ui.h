@@ -14,6 +14,7 @@ class UI
     bool showMainMenuBar = true;
     bool showOverlay = true;
     bool showDemoWindow = false;
+    bool showDebugger = false;
 
     Renderer *renderer;
     void      Render();

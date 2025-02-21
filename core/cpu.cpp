@@ -594,7 +594,7 @@ void CPU::Tick()
      */
     if ( !_didTrace && _traceEnabled ) {
         _pc--;
-        _trace = LogLineAtPC( true );
+        AddTraceLog( LogLineAtPC( true ) );
         _pc++;
         _didTrace = true;
     }
@@ -741,10 +741,14 @@ void CPU::DecodeExecute()
     }
 }
 
-void CPU::ExecuteFrame()
+void CPU::ExecuteFrame( bool *isPaused ) // NOLINT
 {
+    _isPaused = *isPaused;
     u16 const currentFrame = _bus->ppu.GetFrame();
     while ( currentFrame == _bus->ppu.GetFrame() ) {
+        if ( _isPaused ) {
+            break;
+        }
         DecodeExecute();
     }
 }

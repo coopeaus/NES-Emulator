@@ -116,3 +116,9 @@ void Bus::LoadCartridge( std::shared_ptr<Cartridge> loadedCartridge )
 {
     return _useFlatMemory;
 }
+void Bus::DebugReset()
+{
+    cpu.SetCycles( 0 );
+    cpu.Reset();
+    ppu.Reset();
+}

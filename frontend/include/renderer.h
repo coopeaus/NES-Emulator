@@ -8,7 +8,8 @@
 #include "imgui_impl_opengl3.h"
 #include "bus.h"
 #include "cartridge.h"
-#include "ui.h"
+#include "ui-component.h"
+#include "ui-manager.h"
 #include <SDL_stdinc.h>
 #include <SDL_timer.h>
 #include <cstdint>
@@ -57,6 +58,7 @@ class Renderer
     ################################
     */
     bool running = true;
+    bool paused = false;
     u16  fps = 0;
     u64  frameCount = 0;
 
@@ -65,8 +67,8 @@ class Renderer
     #          peripherals         #
     ################################
     */
-    UI  ui;
-    Bus bus;
+    UIManager ui;
+    Bus       bus;
 
     Renderer() : ui( this ) { InitEmulator(); }
 
@@ -290,7 +292,7 @@ class Renderer
         while ( running ) {
             u64 frameStart = SDL_GetPerformanceCounter();
 
-            bus.cpu.ExecuteFrame();
+            bus.cpu.ExecuteFrame( &paused );
             PollEvents();
             RenderFrame();
 
@@ -374,11 +376,12 @@ class Renderer
             ImGui_ImplSDL2_ProcessEvent( &event );
             if ( event.type == SDL_QUIT ) {
                 running = false;
-                ui.renderDebugWindows = false;
+                ui.willRender = false;
             }
             if ( event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE &&
                  event.window.windowID == SDL_GetWindowID( window ) ) {
-                ui.renderDebugWindows = false;
+                ui.willRender = false;
+                running = false;
             }
         }
     }
