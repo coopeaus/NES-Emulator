@@ -7,7 +7,7 @@
 class MemoryDisplayWindow : public UIComponent
 {
   public:
-    MemoryDisplayWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = false; }
+    MemoryDisplayWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = true; }
 
     void RenderSelf() override
     {
