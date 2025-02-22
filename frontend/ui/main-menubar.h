@@ -39,7 +39,7 @@ class MainMenuBar : public UIComponent
                 if ( auto *logWindow = ui->GetComponent<LogWindow>() ) {
                     ImGui::MenuItem( "Trace Log", nullptr, &logWindow->visible );
                 }
-                
+
                 if ( auto *memoryDisplayWindow = ui->GetComponent<MemoryDisplayWindow>() ) {
                     ImGui::MenuItem( "Memory Display", nullptr, &memoryDisplayWindow->visible );
                 }
