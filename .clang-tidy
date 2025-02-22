@@ -20,6 +20,11 @@ Checks: >
   ,-cppcoreguidelines-non-private-member-variables-in-classes
   ,-cppcoreguidelines-pro-type-union-access
   ,-modernize-use-nodiscard
+  ,-cppcoreguidelines-pro-type-vararg
+  ,-readability-identifier-length
+  ,-readability-uppercase-literal-suffix
+  ,-cppcoreguidelines-avoid-c-arrays
+  ,-modernize-avoid-c-arrays
 CheckOptions:
   # Standardized naming conventions:
   - key: readability-identifier-naming.ClassCase

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <SDL_stdinc.h>
 #include <imgui.h>
 
 // Forward declaration of Renderer.
@@ -9,12 +8,14 @@ class Renderer;
 class UI
 {
   public:
+    UI( Renderer *renderer );
+
     bool renderDebugWindows = true;
-    bool showDemoWindow = true;
-    bool showAnotherWindow = true;
+    bool showMainMenuBar = true;
+    bool showOverlay = true;
+    bool showDemoWindow = false;
+    bool showDebugger = false;
 
     Renderer *renderer;
-    UI( Renderer *renderer ) : renderer( renderer ) {}
-
-    void Render();
+    void      Render();
 };

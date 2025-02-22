@@ -45,8 +45,9 @@ class Bus
     ################################
     */
     [[nodiscard]] bool IsTestMode() const;
+    void               DebugReset();
     void               EnableJsonTestMode() { _useFlatMemory = true; }
-    void               DisableJsonTesetMode() { _useFlatMemory = false; }
+    void               DisableJsonTestMode() { _useFlatMemory = false; }
 
   private:
     /*

@@ -8,7 +8,8 @@
 #include "imgui_impl_opengl3.h"
 #include "bus.h"
 #include "cartridge.h"
-#include "ui.h"
+#include "ui-component.h"
+#include "ui-manager.h"
 #include <SDL_stdinc.h>
 #include <SDL_timer.h>
 #include <cstdint>
@@ -20,20 +21,26 @@ using u32 = uint32_t;
 using u64 = uint64_t;
 
 class UI;
-
 class Renderer
 {
   public:
-    int           nesWidth = 256;
-    int           nesHeight = 240;
-    int           bufferSize = nesWidth * nesHeight;
-    std::string   windowTitle = "NES Emulator";
-    int           windowWidth = nesWidth * 2;
-    int           windowHeight = nesHeight * 2;
-    bool          running = true;
-    Bus           bus;
-    u16           fps = 0;
-    u64           frameCount = 0;
+    /*
+    ################################
+    #          window info         #
+    ################################
+    */
+    int         nesWidth = 256;
+    int         nesHeight = 240;
+    int         windowWidth = nesWidth * 2;
+    int         windowHeight = nesHeight * 2;
+    int         bufferSize = nesWidth * nesHeight;
+    std::string windowTitle = "NES Emulator";
+
+    /*
+    ################################
+    #       Render Variables       #
+    ################################
+    */
     SDL_Window   *window = nullptr;
     SDL_GLContext glContext = nullptr;
     GLuint        emulatorTexture = 0;
@@ -42,10 +49,26 @@ class Renderer
     GLuint        vbo = 0;
     ImGuiIO      *io{};
     ImVec4        clearColor = ImVec4( 0.00F, 0.00F, 0.00F, 1.00F );
-    bool          showDemoWindow = true;
-    bool          showAnotherWindow = false;
+    ImFont       *fontMenu = nullptr;
+    ImFont       *fontMono = nullptr;
 
-    UI ui;
+    /*
+    ################################
+    #       global variables       #
+    ################################
+    */
+    bool running = true;
+    bool paused = false;
+    u16  fps = 0;
+    u64  frameCount = 0;
+
+    /*
+    ################################
+    #          peripherals         #
+    ################################
+    */
+    UIManager ui;
+    Bus       bus;
 
     Renderer() : ui( this ) { InitEmulator(); }
 
@@ -56,6 +79,17 @@ class Renderer
     #                              #
     ################################
     */
+
+    void InitEmulator()
+    {
+        auto cartridge = std::make_shared<Cartridge>( "tests/roms/mario.nes" );
+        bus.LoadCartridge( cartridge );
+        bus.cpu.Reset();
+        bus.ppu.onFrameReady = [this]( const u32 *frameBuffer ) {
+            this->ProcessPpuFrameBuffer( frameBuffer );
+        };
+    }
+
     bool Setup()
     {
         // Initialize SDL Video subsystem.
@@ -110,7 +144,7 @@ class Renderer
         SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 24 );
         SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 8 );
 
-        SDL_WindowFlags windowFlags = (SDL_WindowFlags) ( SDL_WINDOW_OPENGL );
+        SDL_WindowFlags windowFlags = (SDL_WindowFlags) ( SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI );
         window = SDL_CreateWindow( windowTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                    windowWidth, windowHeight, windowFlags );
 
@@ -212,8 +246,14 @@ class Renderer
         (void) io;
         io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
         io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-        // io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
-        io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
+        io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport / Platform Windows
+
+        // Font setup
+        ImFontConfig fontConfig;
+        fontConfig.RasterizerDensity = 4.0F;
+        float fontSize = 16.0F;
+        fontMenu = io->Fonts->AddFontFromFileTTF( "fonts/font-menu.otf", fontSize, &fontConfig );
+        fontMono = io->Fonts->AddFontFromFileTTF( "fonts/font-mono.ttf", fontSize, &fontConfig );
 
         // Setup Dear ImGui style
         ImGui::StyleColorsLight();
@@ -233,6 +273,64 @@ class Renderer
         return true;
     }
 
+    /*
+    ################################
+    #                              #
+    #      Main Emulation Loop     #
+    #                              #
+    ################################
+    */
+    void Run()
+    {
+        std::signal( SIGSEGV, SignalHandler );
+
+        // Target frame time in milliseconds (~16.67ms for 60 FPS)
+        const double targetFrameTimeMs = 1000.0 / 60.0;
+        const u64    freq = SDL_GetPerformanceFrequency();
+        u64          secondStart = SDL_GetPerformanceCounter();
+
+        while ( running ) {
+            u64 frameStart = SDL_GetPerformanceCounter();
+
+            bus.cpu.ExecuteFrame( &paused );
+            PollEvents();
+            RenderFrame();
+
+            u64    frameEnd = SDL_GetPerformanceCounter();
+            double frameTimeMs =
+                ( static_cast<double>( frameEnd - frameStart ) ) * 1000.0 / static_cast<double>( freq );
+
+            // Calculate the remaining time for this frame.
+            double delayTimeMs = targetFrameTimeMs - frameTimeMs;
+            if ( delayTimeMs > 0 ) {
+                // If there's more than ~1ms left, sleep for most of it.
+                if ( delayTimeMs > 1.0 ) {
+                    SDL_Delay( static_cast<Uint32>( delayTimeMs - 1.0 ) );
+                }
+                // Busy-wait until the target frame time has elapsed.
+                while ( ( ( static_cast<double>( SDL_GetPerformanceCounter() - frameStart ) ) * 1000.0 /
+                          static_cast<double>( freq ) ) < targetFrameTimeMs ) {
+                }
+            }
+
+            // FPS reporting every second.
+            u64    now = SDL_GetPerformanceCounter();
+            double secondElapsed =
+                ( static_cast<double>( now - secondStart ) ) * 1000.0 / static_cast<double>( freq );
+            if ( secondElapsed >= 1000.0 ) {
+                CalculateFps();
+                secondStart = SDL_GetPerformanceCounter();
+            }
+        }
+    }
+
+    /*
+    ################################
+    #                              #
+    #            Cleanup           #
+    #                              #
+    ################################
+    */
     void Teardown()
     {
         // Cleanup ImGui
@@ -264,6 +362,13 @@ class Renderer
         SDL_Quit();
     }
 
+    /*
+    ################################
+    #                              #
+    #         Event Polling        #
+    #                              #
+    ################################
+    */
     void PollEvents()
     {
         SDL_Event event;
@@ -271,24 +376,23 @@ class Renderer
             ImGui_ImplSDL2_ProcessEvent( &event );
             if ( event.type == SDL_QUIT ) {
                 running = false;
-                ui.renderDebugWindows = false;
+                ui.willRender = false;
             }
             if ( event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE &&
                  event.window.windowID == SDL_GetWindowID( window ) ) {
-                ui.renderDebugWindows = false;
+                ui.willRender = false;
+                running = false;
             }
         }
     }
 
-    void ProcessPpuFrameBuffer( const u32 *frameBuffer ) // NOLINT
-    {
-        // Update the OpenGL texture with the new framebuffer data.
-        glBindTexture( GL_TEXTURE_2D, emulatorTexture );
-        glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
-        glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, nesWidth, nesHeight, GL_RGBA, GL_UNSIGNED_BYTE,
-                         frameBuffer );
-        glBindTexture( GL_TEXTURE_2D, 0 );
-    }
+    /*
+    ################################
+    #                              #
+    #            Render            #
+    #                              #
+    ################################
+    */
 
     void RenderFrame()
     {
@@ -300,7 +404,12 @@ class Renderer
         ui.Render();
 
         ImGui::Render();
-        glViewport( 0, 0, windowWidth, windowHeight );
+
+        int displayW = 0;
+        int displayH = 0;
+        SDL_GL_GetDrawableSize( window, &displayW, &displayH );
+        glViewport( 0, 0, displayW, displayH );
+
         glClearColor( clearColor.x, clearColor.y, clearColor.z, clearColor.w );
         glClear( GL_COLOR_BUFFER_BIT );
 
@@ -328,59 +437,21 @@ class Renderer
         SDL_GL_SwapWindow( window );
     }
 
-    void InitEmulator()
+    /*
+    ################################
+    #                              #
+    #            Helpers           #
+    #                              #
+    ################################
+    */
+    void ProcessPpuFrameBuffer( const u32 *frameBuffer ) // NOLINT
     {
-        auto cartridge = std::make_shared<Cartridge>( "tests/roms/mario.nes" );
-        bus.LoadCartridge( cartridge );
-        bus.cpu.Reset();
-        bus.ppu.onFrameReady = [this]( const u32 *frameBuffer ) {
-            this->ProcessPpuFrameBuffer( frameBuffer );
-        };
-    }
-
-    void Run()
-    {
-        std::signal( SIGSEGV, SignalHandler );
-
-        // Target frame time in milliseconds (~16.67ms for 60 FPS)
-        const double targetFrameTimeMs = 1000.0 / 60.0;
-        const u64    freq = SDL_GetPerformanceFrequency();
-        u64          secondStart = SDL_GetPerformanceCounter();
-
-        while ( running ) {
-            u64 frameStart = SDL_GetPerformanceCounter();
-
-            bus.cpu.ExecuteFrame();
-            PollEvents();
-            RenderFrame();
-
-            u64    frameEnd = SDL_GetPerformanceCounter();
-            double frameTimeMs =
-                ( static_cast<double>( frameEnd - frameStart ) ) * 1000.0 / static_cast<double>( freq );
-
-            // Calculate the remaining time for this frame.
-            double delayTimeMs = targetFrameTimeMs - frameTimeMs;
-            if ( delayTimeMs > 0 ) {
-                // If there's more than ~1ms left, sleep for most of it.
-                if ( delayTimeMs > 1.0 ) {
-                    SDL_Delay( static_cast<Uint32>( delayTimeMs - 1.0 ) );
-                }
-                // Busy-wait until the target frame time has elapsed.
-                while ( ( ( static_cast<double>( SDL_GetPerformanceCounter() - frameStart ) ) * 1000.0 /
-                          static_cast<double>( freq ) ) < targetFrameTimeMs ) {
-                }
-            }
-
-            // FPS reporting every second.
-            u64    now = SDL_GetPerformanceCounter();
-            double secondElapsed =
-                ( static_cast<double>( now - secondStart ) ) * 1000.0 / static_cast<double>( freq );
-            if ( secondElapsed >= 1000.0 ) {
-                CalculateFps();
-                RenderFps();
-                secondStart = SDL_GetPerformanceCounter();
-            }
-        }
+        // Update the OpenGL texture with the new framebuffer data.
+        glBindTexture( GL_TEXTURE_2D, emulatorTexture );
+        glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+        glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, nesWidth, nesHeight, GL_RGBA, GL_UNSIGNED_BYTE,
+                         frameBuffer );
+        glBindTexture( GL_TEXTURE_2D, 0 );
     }
 
     void CalculateFps()
@@ -391,7 +462,7 @@ class Renderer
         fps = framesThisSecond;
     }
 
-    void RenderFps() { fmt::print( "FPS: {}\n", fps ); }
+    void PrintFps() { fmt::print( "FPS: {}\n", fps ); }
 
     static void SignalHandler( int signal )
     {
