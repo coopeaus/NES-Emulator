@@ -90,17 +90,17 @@ class Cartridge
       table data dynamically. Having dynamic pattern tables allowed devs to
       create dynamic tiles.
     */
-    vector<u8>        _chrRom;   // Sized based on the number of CHR ROM banks
-    array<u8, 0x1FFF> _chrRam{}; // 8192 bytes (8 KiB)
+    vector<u8>      _chrRom;   // Sized based on the number of CHR ROM banks
+    array<u8, 8192> _chrRam{}; // 8192 bytes (8 KiB)
 
     // PRG RAM: Program RAM, also known as Save RAM (SRAM) or Work RAM sometimes
     // Its usage is determined by the mapper
-    array<u8, 0x1FFF> _prgRam{}; // 8KiB PRG RAM, also known as Save RAM (SRAM) or Work RAM sometimes
+    array<u8, 8192> _prgRam{}; // 8KiB PRG RAM, also known as Save RAM (SRAM) or Work RAM sometimes
 
     // Expansion ROM
     // Almost never used, but here it is anyway.
     // Can be both ROM or RAM, determined by the mapper
-    array<u8, 0x1FFF> _expansionMemory{};
+    array<u8, 8192> _expansionMemory{};
 
     // Cartrdige VRAM
     // The PPU has 2KiB of vram for nametables (background layout information).

@@ -293,7 +293,7 @@ class PPU
       as transparent.
     */
     // Default boot palette, will get changed by the cartridge
-    array<u8, 0x20> _paletteMemory = {
+    array<u8, 32> _paletteMemory = {
         0x09, 0x01, 0x00, 0x01, // Palette 0
         0x00, 0x02, 0x02, 0x0D, // Palette 1
         0x08, 0x10, 0x08, 0x24, // Palette 2
