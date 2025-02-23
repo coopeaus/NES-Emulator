@@ -536,9 +536,9 @@ std::string CPU::LogLineAtPC( bool verbose ) // NOLINT
 */
 
 // Pass off reads and writes to the bus
-auto CPU::Read( u16 address ) const -> u8
+auto CPU::Read( u16 address, bool debugMode ) const -> u8
 {
-    return _bus->Read( address );
+    return _bus->Read( address, debugMode );
 }
 void CPU::Write( u16 address, u8 data ) const
 {
@@ -586,19 +586,6 @@ void CPU::Tick()
     _cycles++;
     _bus->ppu.Tick();
     _bus->ppu.Tick();
-
-    /*
-       Saves cpu state after 2 ppu cycles of the first cpu cycle.
-       Used for creating a trace log that matches Mesen. This is
-       a costly operation, so it's only used for debugging
-     */
-    if ( !_didTrace && _traceEnabled ) {
-        _pc--;
-        AddTraceLog( LogLineAtPC( true ) );
-        _pc++;
-        _didTrace = true;
-    }
-
     _bus->ppu.Tick();
 }
 
@@ -701,7 +688,9 @@ void CPU::DecodeExecute()
      * If the opcode is invalid, an error message is printed to stderr.
      */
 
-    _didTrace = false;
+    if ( _traceEnabled ) {
+        AddTraceLog( LogLineAtPC( true ) );
+    }
 
     // Fetch the next opcode and increment the program counter
     u8 const opcode = Fetch();
@@ -734,7 +723,6 @@ void CPU::DecodeExecute()
 
         // Reset flags
         _isWriteModify = false;
-        _didTrace = false;
     } else {
         // Houston, we have a problem. No opcode was found.
         std::cerr << "Bad opcode: " << std::hex << static_cast<int>( opcode ) << '\n';

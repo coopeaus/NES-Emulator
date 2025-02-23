@@ -16,6 +16,7 @@
 #include <fmt/core.h>
 #include <iostream>
 #include <csignal>
+#include "theme.h"
 
 using u32 = uint32_t;
 using u64 = uint64_t;
@@ -51,6 +52,7 @@ class Renderer
     ImVec4        clearColor = ImVec4( 0.00F, 0.00F, 0.00F, 1.00F );
     ImFont       *fontMenu = nullptr;
     ImFont       *fontMono = nullptr;
+    ImFont       *fontMonoBold = nullptr;
 
     /*
     ################################
@@ -254,17 +256,21 @@ class Renderer
         float fontSize = 16.0F;
         fontMenu = io->Fonts->AddFontFromFileTTF( "fonts/font-menu.otf", fontSize, &fontConfig );
         fontMono = io->Fonts->AddFontFromFileTTF( "fonts/font-mono.ttf", fontSize, &fontConfig );
+        fontMonoBold = io->Fonts->AddFontFromFileTTF( "fonts/font-mono-bold.ttf", fontSize, &fontConfig );
 
         // Setup Dear ImGui style
         ImGui::StyleColorsLight();
 
+        // Override specified settings, defined in theme.h
+        CustomTheme::Style();
+
         // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical
         // to regular ones.
-        ImGuiStyle &style = ImGui::GetStyle();
-        if ( io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable ) {
-            style.WindowRounding = 0.0F;
-            style.Colors[ImGuiCol_WindowBg].w = 1.0F;
-        }
+        // ImGuiStyle &style = ImGui::GetStyle();
+        // if ( io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable ) {
+        //     // style.WindowRounding = 0.0F;
+        //     style.Colors[ImGuiCol_WindowBg].w = 1.0F;
+        // }
 
         // Setup Platform/Renderer backends for SDL2 + OpenGL3.
         ImGui_ImplSDL2_InitForOpenGL( window, glContext );

@@ -3,12 +3,15 @@
 #include "renderer.h"
 #include <imgui.h>
 #include <functional>
+#include "log.h"
 
 class MemoryDisplayWindow : public UIComponent
 {
   public:
-    MemoryDisplayWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = true; }
+    MemoryDisplayWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = false; }
 
+    void OnVisible() override {}
+    void OnHidden() override {}
     void RenderSelf() override
     {
         ImGuiWindowFlags windowFlags =
@@ -18,7 +21,6 @@ class MemoryDisplayWindow : public UIComponent
 
         if ( ImGui::Begin( "Memory Viewer", &visible, windowFlags ) ) {
 
-            // Used Bogdan's code for the continue/pause/reset logic as well as CPU cycle tracking
             RenderMenuBar();
             bool isPaused = renderer->paused;
 
@@ -41,6 +43,9 @@ class MemoryDisplayWindow : public UIComponent
 
             if ( ImGui::Button( "Reset" ) ) {
                 renderer->bus.DebugReset();
+                if ( auto *logWindow = renderer->ui.GetComponent<LogWindow>() ) {
+                    logWindow->Clear();
+                }
             }
 
             ImGui::SameLine();
@@ -51,26 +56,26 @@ class MemoryDisplayWindow : public UIComponent
             const char *items[] = { "CPU Memory", "PPU Memory" };
 
             // Default to CPU Memory parameters
-            static int         item_selected_idx = 0;
+            static int         itemSelectedIdx = 0;
             static const char *header = "CPU Memory:";
-            static const char *child_name = "CPU Memory";
-            static int         lower_bound = 0;
-            static int         upper_bound = 0xFFFF;
+            static const char *childName = "CPU Memory";
+            static int         lowerBound = 0;
+            static int         upperBound = 0xFFFF;
             static int         step = 16;
             // Use a lambda to capture the renderer instance
-            static std::function<uint8_t( int )> read_func = [&]( int address ) -> uint8_t {
+            static std::function<uint8_t( int )> readFunc = [&]( int address ) -> uint8_t {
                 return renderer->bus.cpu.Read( address );
             };
 
             // Build the ComboBox
-            const char *combo_preview = items[item_selected_idx];
-            if ( ImGui::BeginCombo( "Memory Type", combo_preview ) ) {
+            const char *comboPreview = items[itemSelectedIdx];
+            if ( ImGui::BeginCombo( "Memory Type", comboPreview ) ) {
                 for ( int n = 0; n < IM_ARRAYSIZE( items ); n++ ) {
-                    const bool is_selected = ( item_selected_idx == n );
-                    if ( ImGui::Selectable( items[n], is_selected ) ) {
-                        item_selected_idx = n;
+                    const bool isSelected = ( itemSelectedIdx == n );
+                    if ( ImGui::Selectable( items[n], isSelected ) ) {
+                        itemSelectedIdx = n;
                     }
-                    if ( is_selected ) {
+                    if ( isSelected ) {
                         ImGui::SetItemDefaultFocus();
                     }
                 }
@@ -78,29 +83,31 @@ class MemoryDisplayWindow : public UIComponent
             }
 
             // Assign parameters here for different memory types
-            switch ( item_selected_idx ) {
+            switch ( itemSelectedIdx ) {
                 case 0:
                     header = "CPU Memory:";
-                    child_name = "CPU Memory";
-                    lower_bound = 0x0000;
-                    upper_bound = 0xFFFF;
+                    childName = "CPU Memory";
+                    lowerBound = 0x0000;
+                    upperBound = 0xFFFF;
                     step = 16;
-                    read_func = [&]( int address ) -> uint8_t { return renderer->bus.cpu.Read( address ); };
+                    readFunc = [&]( int address ) -> uint8_t {
+                        return renderer->bus.cpu.Read( address, true );
+                    };
                     break;
                 case 1:
                     header = "PPU Memory:";
-                    child_name = "PPU Memory";
-                    lower_bound = 0x0000;
-                    upper_bound = 0x3FFF;
+                    childName = "PPU Memory";
+                    lowerBound = 0x0000;
+                    upperBound = 0x3FFF;
                     step = 16;
-                    read_func = [&]( int address ) -> uint8_t { return renderer->bus.ppu.Read( address ); };
+                    readFunc = [&]( int address ) -> uint8_t { return renderer->bus.ppu.Read( address ); };
                     break;
                 default:
                     break;
             }
 
             // Render the table using the above parameters
-            RenderTable( header, child_name, lower_bound, upper_bound, step, read_func );
+            RenderTable( header, childName, lowerBound, upperBound, step, readFunc );
         }
 
         ImGui::End();
@@ -117,8 +124,9 @@ class MemoryDisplayWindow : public UIComponent
                 }
                 ImGui::EndMenu();
             }
-            ImGui::EndMenuBar();
         }
+
+        ImGui::EndMenuBar();
     }
 
     /**
@@ -128,45 +136,59 @@ class MemoryDisplayWindow : public UIComponent
      * The table includes a header, a child window, and columns for each byte.
      *
      * @param header The header text to display above the table.
-     * @param child_name The name of the child window.
-     * @param lower_bound The starting address of the memory range to display.
-     * @param upper_bound The ending address of the memory range to display.
+     * @param childName The name of the child window.
+     * @param lowerBound The starting address of the memory range to display.
+     * @param upperBound The ending address of the memory range to display.
      * @param step The step size between memory addresses.
-     * @param read_func A function that reads a byte from a given memory address.
+     * @param readFunc A function that reads a byte from a given memory address.
      */
-    void RenderTable( const char *header, const char *child_name, int lower_bound, int upper_bound, int step,
-                      std::function<uint8_t( int )> read_func )
+    void RenderTable( const char *header, const char *childName, int lowerBound, int upperBound, int step,
+                      const std::function<uint8_t( int )> &readFunc )
     {
-        ImGui::Text( "%s", header );
-        ImGui::BeginChild( child_name, ImVec2( 0, 300 ), true );
+
+        // TODO: Delete if not desired
+        (void) header;
+        // ImGui::Text( "%s", header );
+
+        ImGui::BeginChild( childName, ImVec2( 0, 300 ), true );
 
         // Use ImGui table to enforce column alignment
         if ( ImGui::BeginTable( "MemoryTable", 17, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg ) ) {
             ImGui::TableSetupColumn( "", ImGuiTableColumnFlags_WidthFixed, 40 );
 
             // One column for each byte
+            ImGui::PushFont( renderer->fontMonoBold );
+
+            // Set the background color for the header row
             for ( int j = 0; j < 16; j++ ) {
                 char colName[4];
                 snprintf( colName, sizeof( colName ), "%02X", j );
                 ImGui::TableSetupColumn( colName, ImGuiTableColumnFlags_WidthFixed, 20 );
             }
             ImGui::TableHeadersRow();
+            ImGui::PopFont();
 
             // Memory display
-            for ( int i = lower_bound; i <= upper_bound; i += step ) {
+            for ( int i = lowerBound; i <= upperBound; i += step ) {
                 ImGui::TableNextRow();
 
                 // Address column
                 ImGui::TableSetColumnIndex( 0 );
+                ImGui::PushFont( renderer->fontMonoBold );
                 ImGui::Text( "%04X", i );
+                ImGui::PopFont();
 
                 // Hex byte columns
+                ImGui::PushFont( renderer->fontMono );
+                ImGui::PushStyleColor( ImGuiCol_Text, IM_COL32( 100, 100, 100, 255 ) );
                 for ( int j = 0; j < 16; j++ ) {
-                    uint8_t byte = read_func( i + j );
+                    uint8_t byte = readFunc( i + j );
 
                     ImGui::TableSetColumnIndex( j + 1 );
                     ImGui::Text( "%02X", byte );
                 }
+                ImGui::PopStyleColor();
+                ImGui::PopFont();
             }
 
             ImGui::EndTable();

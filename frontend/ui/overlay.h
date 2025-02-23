@@ -8,6 +8,9 @@ class OverlayWindow : public UIComponent
   public:
     OverlayWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = true; }
 
+    void OnVisible() override {}
+    void OnHidden() override {}
+
     void RenderSelf() override
     {
         ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking |

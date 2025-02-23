@@ -25,6 +25,7 @@ Checks: >
   ,-readability-uppercase-literal-suffix
   ,-cppcoreguidelines-avoid-c-arrays
   ,-modernize-avoid-c-arrays
+  ,-cppcoreguidelines-pro-bounds-pointer-arithmetic
 CheckOptions:
   # Standardized naming conventions:
   - key: readability-identifier-naming.ClassCase

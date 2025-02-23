@@ -17,6 +17,9 @@ class MainMenuBar : public UIComponent
 
     MainMenuBar( Renderer *renderer ) : UIComponent( renderer ), ui( &renderer->ui ) { visible = true; }
 
+    void OnVisible() override {}
+    void OnHidden() override {}
+
     void RenderSelf() override
     {
         if ( ImGui::BeginMainMenuBar() ) {

@@ -23,7 +23,7 @@ PPU::PPU( Bus *bus ) : _bus( bus )
 ||                            ||
 ################################
 */
-[[nodiscard]] u8 PPU::HandleCpuRead( u16 address ) // NOLINT
+[[nodiscard]] u8 PPU::HandleCpuRead( u16 address, bool debugMode ) // NOLINT
 {
 
     /* @brief: CPU reads to the PPU
@@ -48,6 +48,12 @@ PPU::PPU( Bus *bus ) : _bus( bus )
          * blank flag is cleared after constructing the return value, ensuring the
          * CPU sees the state before the read's side effects.
          */
+
+        // Debug mode doesn't have side effects
+        if ( debugMode ) {
+            return _ppuStatus.value;
+        }
+
         u8 const status = _ppuStatus.value & 0xE0;
         u8 const noise = _ppuStatus.value & 0x1F;
         u8 const data = status | noise;
@@ -67,7 +73,7 @@ PPU::PPU( Bus *bus ) : _bus( bus )
         if ( _isRenderingEnabled && _scanline >= 0 && _scanline <= 239 ) {
             return 0xFF;
         }
-        return _oam[_oamAddr];
+        return _oam.at( _oamAddr & 0xFF );
     }
 
     // 2007: PPU Data
@@ -83,6 +89,11 @@ PPU::PPU( Bus *bus ) : _bus( bus )
          */
         if ( _vramAddr.value >= 0x3F00 && _vramAddr.value <= 0x3FFF ) {
             return Read( _vramAddr.value );
+        }
+
+        // Debug mode has no side effects
+        if ( debugMode ) {
+            return _ppuDataBuffer;
         }
 
         u8 const data = _ppuDataBuffer;
@@ -148,10 +159,7 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
         // 2003: OAMADDR
         case 0x2003: // NOLINT
         {
-            /*
-              Sets _oamAddr to data
-             */
-            // TODO: Implement
+            _oamAddr = data;
             break;
         }
         // 2004: OAMDATA
@@ -165,9 +173,9 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
             if ( _isRenderingEnabled && _scanline >= 0 && _scanline <= 239 ) {
                 return;
             }
-            _oam[_oamAddr] = data;
+            _oam.at( _oamAddr & 0xFF ) = data;
             _oamAddr = ( _oamAddr + 1 ) & 0xFF;
-            return;
+            break;
         }
         // 2005: PPUSCROLL
         case 0x2005: // NOLINT
@@ -311,9 +319,15 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
           additional name table space. It's not necessary to emulate it this
           way, but it's a more accurate paradigm because that's how the hardware
           handles it.
-
-          // TODO: Implement
         */
+        address &= 0x2FFF;
+
+        if ( _bus->cartridge->GetMirrorMode() == MirrorMode::FourScreen && address >= 0x2800 ) {
+            return _bus->cartridge->ReadCartridgeVRAM( address );
+        }
+
+        u16 const nametableAddr = ResolveNameTableAddress( address );
+        return _nameTables.at( nametableAddr & 0x07FF );
     }
 
     // $3F00-$3FFF: Palettes
@@ -341,7 +355,7 @@ void PPU::DmaTransfer( u8 data ) // NOLINT
             address &= 0x0F;
         }
 
-        return _paletteMemory[address];
+        return _paletteMemory.at( address ) & 0x3F;
     }
 
     return 0xFF;
@@ -383,7 +397,15 @@ void PPU::Write( u16 address, u8 data ) // NOLINT
           above 0x2800 must be directed to the cartridge, which provides the
           additional name table space.
         */
-        // TODO: Implement
+
+        address &= 0x2FFF;
+        if ( _bus->cartridge->GetMirrorMode() == MirrorMode::FourScreen && address >= 0x2800 ) {
+            _bus->cartridge->WriteCartridgeVRAM( address, data );
+            return;
+        }
+        u16 const nametableAddr = ResolveNameTableAddress( address );
+        _nameTables.at( nametableAddr & 0x07FF ) = data;
+        return;
     }
 
     // $3F00-$3FFF: Palettes
@@ -399,7 +421,7 @@ void PPU::Write( u16 address, u8 data ) // NOLINT
             address &= 0x0F;
         }
 
-        _paletteMemory[address] = data;
+        _paletteMemory.at( address ) = data;
     }
 }
 
@@ -630,13 +652,6 @@ void PPU::Tick() // NOLINT
             _frame++;
         }
     }
-
-    /*
-    ################################
-    ||        Vblank Start        ||
-    ################################
-    */
-    // TODO: Implement
 }
 
 /*
@@ -997,8 +1012,17 @@ void PPU::LoadPatternPlane1Byte()
 
 u8 PPU::GetBgPalette() // NOLINT
 {
-    // TODO: Implement
-    return 0x00;
+    if ( _ppuMask.bit.renderBackground == 0 ) {
+        return 0x00;
+    }
+
+    if ( _ppuMask.bit.renderBackgroundLeft == 0 && _cycle < 9 ) {
+        return 0x00;
+    }
+    // Compute a bitmask to select the correct bit for the current pixel
+    u16 const mask = 0x8000 >> _fineX;
+    // Combining them yields a 2-bit pixel index (0-3).
+    return ( ( _bgShiftAttributeHigh & mask ) ? 0b10 : 0 ) | ( ( _bgShiftAttributeLow & mask ) ? 0b01 : 0 );
 }
 
 u8 PPU::GetSpritePalette() // NOLINT

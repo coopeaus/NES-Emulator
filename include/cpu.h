@@ -59,7 +59,7 @@ class CPU
     u8   Fetch();
     void DecodeExecute();
     void Tick();
-    auto Read( u16 address ) const -> u8;
+    auto Read( u16 address, bool debugMode = false ) const -> u8;
     auto ReadAndTick( u16 address ) -> u8;
     void Write( u16 address, u8 data ) const;
     void WriteAndTick( u16 address, u8 data );
@@ -78,11 +78,13 @@ class CPU
     void                    DisableTracelog() { _traceEnabled = false; }
     void                    EnableJsonTestMode() { _isTestMode = true; }
     void                    DisableJsonTestMode() { _isTestMode = false; }
-    void                    AddTraceLog( const std::string &log )
+
+    u16  traceSize = 1000;
+    void AddTraceLog( const std::string &log )
     {
         if ( _traceEnabled ) {
             _traceLog.push_back( log );
-            if ( _traceLog.size() > _traceSize ) {
+            if ( _traceLog.size() > traceSize ) {
                 _traceLog.pop_front();
             }
         }
@@ -124,11 +126,9 @@ class CPU
     ################################
     */
     bool _isTestMode = false;
-    bool _traceEnabled = true;
-    bool _didTrace = false;
+    bool _traceEnabled = false;
     bool _isPaused = false;
 
-    u16                     _traceSize = 10000;
     std::deque<std::string> _traceLog;
 
     /*
