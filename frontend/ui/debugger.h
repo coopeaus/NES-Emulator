@@ -1,6 +1,7 @@
 #pragma once
 #include "ui-component.h"
 #include "renderer.h"
+#include "log.h"
 #include <imgui.h>
 
 class DebuggerWindow : public UIComponent
@@ -10,6 +11,7 @@ class DebuggerWindow : public UIComponent
 
     void OnVisible() override {}
     void OnHidden() override {}
+
     void RenderSelf() override
     {
         ImGuiWindowFlags windowFlags =
@@ -39,6 +41,9 @@ class DebuggerWindow : public UIComponent
             ImGui::SameLine();
 
             if ( ImGui::Button( "Reset" ) ) {
+                if ( auto *logWindow = renderer->ui.GetComponent<LogWindow>() ) {
+                    logWindow->Clear();
+                }
                 renderer->bus.DebugReset();
             }
 
