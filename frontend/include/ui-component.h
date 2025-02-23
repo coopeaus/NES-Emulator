@@ -14,6 +14,8 @@ class UIComponent
 
     UIComponent( Renderer *renderer ) : renderer( renderer ) {}
 
+    virtual void OnVisible() = 0;
+    virtual void OnHidden() = 0;
     virtual void RenderSelf() = 0;
 
     void Show() { visible = true; }

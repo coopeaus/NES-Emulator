@@ -24,7 +24,10 @@ void UIManager::Render()
     // Render all visible components
     for ( auto &comp : _components ) {
         if ( comp->visible ) {
+            comp->OnVisible();
             comp->RenderSelf();
+        } else {
+            comp->OnHidden();
         }
     }
 }

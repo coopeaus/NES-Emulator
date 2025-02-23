@@ -8,6 +8,8 @@ class DebuggerWindow : public UIComponent
   public:
     DebuggerWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = true; }
 
+    void OnVisible() override {}
+    void OnHidden() override {}
     void RenderSelf() override
     {
         ImGuiWindowFlags windowFlags =
