@@ -35,7 +35,7 @@ class Bus
     ||         Bus Methods        ||
     ################################
     */
-    [[nodiscard]] u8 Read( uint16_t address );
+    [[nodiscard]] u8 Read( uint16_t address, bool debugMode = false );
     void             Write( u16 address, u8 data );
     void             LoadCartridge( std::shared_ptr<Cartridge> cartridge );
 
@@ -55,7 +55,7 @@ class Bus
     ||           CPU RAM          ||
     ################################
     */
-    std::array<u8, 0x0800> _ram{}; // 2KB internal cpu RAM
+    std::array<u8, 2048> _ram{}; // 2KB internal cpu RAM
 
     /*
     ################################
@@ -70,5 +70,5 @@ class Bus
     ||       Temporary Stubs      ||
     ################################
     */
-    std::array<u8, 0x0020> _apuIoMemory{}; // 32 bytes APU and I/O registers
+    std::array<u8, 32> _apuIoMemory{}; // 32 bytes APU and I/O registers
 };

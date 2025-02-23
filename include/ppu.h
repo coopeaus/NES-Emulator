@@ -39,7 +39,7 @@ class PPU
     ||      CPU Read / Write      ||
     ################################
     */
-    [[nodiscard]] u8 HandleCpuRead( u16 address );
+    [[nodiscard]] u8 HandleCpuRead( u16 address, bool debugMode = false );
     void             HandleCpuWrite( u16 address, u8 data );
 
     /*

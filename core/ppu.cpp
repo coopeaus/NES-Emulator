@@ -23,7 +23,7 @@ PPU::PPU( Bus *bus ) : _bus( bus )
 ||                            ||
 ################################
 */
-[[nodiscard]] u8 PPU::HandleCpuRead( u16 address ) // NOLINT
+[[nodiscard]] u8 PPU::HandleCpuRead( u16 address, bool debugMode ) // NOLINT
 {
 
     /* @brief: CPU reads to the PPU
@@ -48,6 +48,12 @@ PPU::PPU( Bus *bus ) : _bus( bus )
          * blank flag is cleared after constructing the return value, ensuring the
          * CPU sees the state before the read's side effects.
          */
+
+        // Debug mode doesn't have side effects
+        if ( debugMode ) {
+            return _ppuStatus.value;
+        }
+
         u8 const status = _ppuStatus.value & 0xE0;
         u8 const noise = _ppuStatus.value & 0x1F;
         u8 const data = status | noise;
@@ -83,6 +89,11 @@ PPU::PPU( Bus *bus ) : _bus( bus )
          */
         if ( _vramAddr.value >= 0x3F00 && _vramAddr.value <= 0x3FFF ) {
             return Read( _vramAddr.value );
+        }
+
+        // Debug mode has no side effects
+        if ( debugMode ) {
+            return _ppuDataBuffer;
         }
 
         u8 const data = _ppuDataBuffer;

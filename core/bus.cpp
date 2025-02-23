@@ -15,7 +15,7 @@ Bus::Bus() : cpu( this ), ppu( this )
 ||          CPU Read          ||
 ################################
 */
-u8 Bus::Read( const u16 address )
+u8 Bus::Read( const u16 address, bool debugMode )
 {
     if ( _useFlatMemory ) {
         return _flatMemory[address];
@@ -30,7 +30,7 @@ u8 Bus::Read( const u16 address )
     if ( address >= 0x2000 && address <= 0x3FFF ) {
         // ppu read will go here. For now, return from temp private member of bus
         const u16 ppuRegister = 0x2000 + ( address & 0x0007 );
-        return ppu.HandleCpuRead( ppuRegister );
+        return ppu.HandleCpuRead( ppuRegister, debugMode );
     }
 
     // APU and I/O Registers: 0x4000 - 0x401F
