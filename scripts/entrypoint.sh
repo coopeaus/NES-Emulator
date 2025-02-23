@@ -41,7 +41,7 @@ lint)
   if [ -z "${CI:-}" ]; then
     # In local mode, automatically fix formatting
     echo "Running clang-format locally and fixing formatting..."
-    for file in $(find core/ include/ -name '*.cpp' -o -name '*.h'); do
+    for file in $(find core/ include/ frontend/ -name '*.cpp' -o -name '*.h'); do
       clang-format -i "$file"
     done
 
@@ -49,7 +49,7 @@ lint)
     # In CI, check formatting without fixing
     echo "Running clang-format in CI mode (check only)..."
     format_failures=0
-    for file in $(find core/ include/ -name '*.cpp' -o -name '*.h'); do
+    for file in $(find core/ include/ frontend/ -name '*.cpp' -o -name '*.h'); do
       # Check if clang-format changes the file
       if ! clang-format "$file" | diff -u "$file" - >/dev/null; then
         echo "Formatting issues found in $file"

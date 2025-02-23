@@ -7,6 +7,7 @@
 #include "overlay.h"
 #include "debugger.h"
 #include "log.h"
+#include "memory-display.h"
 
 UIManager::UIManager( Renderer *renderer )
 {
@@ -15,6 +16,7 @@ UIManager::UIManager( Renderer *renderer )
     AddComponent<DemoWindow>( renderer );
     AddComponent<DebuggerWindow>( renderer );
     AddComponent<LogWindow>( renderer );
+    AddComponent<MemoryDisplayWindow>( renderer );
 }
 
 void UIManager::Render()
