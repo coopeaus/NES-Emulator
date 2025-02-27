@@ -153,7 +153,8 @@ class Renderer
         SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 24 );
         SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 8 );
 
-        SDL_WindowFlags const windowFlags = (SDL_WindowFlags) ( SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI );
+        SDL_WindowFlags const windowFlags =
+            (SDL_WindowFlags) ( SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE );
         window = SDL_CreateWindow( windowTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                    windowWidth, windowHeight, windowFlags );
 
@@ -309,7 +310,7 @@ class Renderer
             PollEvents();
             RenderFrame();
 
-            u64    const frameEnd = SDL_GetPerformanceCounter();
+            u64 const    frameEnd = SDL_GetPerformanceCounter();
             double const frameTimeMs =
                 ( static_cast<double>( frameEnd - frameStart ) ) * 1000.0 / static_cast<double>( freq );
 
@@ -327,7 +328,7 @@ class Renderer
             }
 
             // FPS reporting every second.
-            u64    const now = SDL_GetPerformanceCounter();
+            u64 const    now = SDL_GetPerformanceCounter();
             double const secondElapsed =
                 ( static_cast<double>( now - secondStart ) ) * 1000.0 / static_cast<double>( freq );
             if ( secondElapsed >= 1000.0 ) {
@@ -420,8 +421,11 @@ class Renderer
 
         int displayW = 0;
         int displayH = 0;
+        int viewportX = 0;
+        int viewportY = 0;
         SDL_GL_GetDrawableSize( window, &displayW, &displayH );
-        glViewport( 0, 0, displayW, displayH );
+        ClampToAspectRatio( &viewportX, &viewportY, &displayW, &displayH );
+        glViewport( viewportX, viewportY, displayW, displayH );
 
         glClearColor( clearColor.x, clearColor.y, clearColor.z, clearColor.w );
         glClear( GL_COLOR_BUFFER_BIT );
@@ -448,6 +452,30 @@ class Renderer
         }
 
         SDL_GL_SwapWindow( window );
+    }
+
+    static void ClampToAspectRatio( int *x, int *y, int *width, int *height )
+    {
+        float targetAspect = 256.0F / 240.0F;
+        float windowAspect = static_cast<float>( *width ) / static_cast<float>( *height );
+        int   newWidth = 0;
+        int   newHeight = 0;
+        int   viewportX = 0;
+        int   viewportY = 0;
+        if ( windowAspect > targetAspect ) {
+            newHeight = *height;
+            newWidth = static_cast<int>( static_cast<float>( *height ) * targetAspect );
+            viewportX = ( *width - newWidth ) / 2;
+        } else {
+            newWidth = *width;
+            newHeight = static_cast<int>( static_cast<float>( *width ) / targetAspect );
+            viewportY = ( *height - newHeight ) / 2;
+        }
+
+        *x = viewportX;
+        *y = viewportY;
+        *width = newWidth;
+        *height = newHeight;
     }
 
     /*

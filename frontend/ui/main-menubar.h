@@ -30,7 +30,7 @@ class MainMenuBar : public UIComponent
                 }
                 ImGui::EndMenu();
             }
-            if ( ImGui::BeginMenu( "Windows" ) ) {
+            if ( ImGui::BeginMenu( "Debug" ) ) {
 
                 if ( auto *demoWindow = ui->GetComponent<DemoWindow>() ) {
                     ImGui::MenuItem( "UI Demo", nullptr, &demoWindow->visible );
