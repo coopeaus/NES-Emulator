@@ -6,6 +6,7 @@
 #include <exception>
 #include <cstdlib>
 #include <array>
+#include <iostream>
 
 PPU::PPU( Bus *bus ) : _bus( bus )
 {

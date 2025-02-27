@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <array>
 #include <functional>
+#include <string>
 
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
@@ -130,7 +131,7 @@ class PPU
 
     void LoadSystemPalette( int paletteIdx = 0 )
     {
-        std::string palettePath = systemPalettePaths.at( paletteIdx );
+        std::string const palettePath = systemPalettePaths.at( paletteIdx );
         _nesPaletteRgbValues = utils::readPalette( palettePath );
     }
     u8  GetPpuPaletteValue( u8 index ) { return _paletteMemory.at( index ); }

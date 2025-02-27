@@ -2,6 +2,7 @@
 #include "ui-component.h"
 #include "renderer.h"
 #include "log.h"
+#include <cstdint>
 #include <imgui.h>
 
 class DebuggerWindow : public UIComponent
@@ -14,14 +15,14 @@ class DebuggerWindow : public UIComponent
 
     void RenderSelf() override
     {
-        ImGuiWindowFlags windowFlags =
+        ImGuiWindowFlags const windowFlags =
             ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize;
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
         ImGui::SetNextWindowSizeConstraints( ImVec2( 300, -1 ), ImVec2( 400, -1 ) );
 
         if ( ImGui::Begin( "Debugger", &visible, windowFlags ) ) {
             RenderMenuBar();
-            bool isPaused = renderer->paused;
+            bool const isPaused = renderer->paused;
 
             ImGui::BeginDisabled( !isPaused );
             ImGui::PushItemWidth( 140 );
@@ -71,7 +72,7 @@ class DebuggerWindow : public UIComponent
             if ( ImGui::Button( "Go" ) ) {
                 renderer->paused = true;
                 if ( item == 0 ) {
-                    uint64_t target = renderer->bus.cpu.GetCycles() + i0;
+                    uint64_t const target = renderer->bus.cpu.GetCycles() + i0;
                     while ( renderer->bus.cpu.GetCycles() < target ) {
                         renderer->bus.cpu.DecodeExecute();
                     }

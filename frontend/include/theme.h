@@ -70,8 +70,8 @@ ImU32 contrastColor( ImU32 color );
 
 inline void selectableColor( ImU32 color )
 {
-    ImVec2 pMin = ImGui::GetItemRectMin();
-    ImVec2 pMax = ImGui::GetItemRectMax();
+    ImVec2 const pMin = ImGui::GetItemRectMin();
+    ImVec2 const pMax = ImGui::GetItemRectMax();
     ImGui::GetWindowDrawList()->AddRectFilled( pMin, pMax, color );
 }
 
@@ -90,7 +90,7 @@ inline bool customSelectable( const char *label, bool *pSelected, ImU32 bgColor,
     ImGui::PushStyleColor( ImGuiCol_HeaderHovered, bgColor );
     ImGui::PushStyleColor( ImGuiCol_HeaderActive, bgColor );
 
-    bool result = ImGui::Selectable( "", pSelected, flags, sizeArg );
+    bool const result = ImGui::Selectable( "", pSelected, flags, sizeArg );
 
     ImGui::PopStyleColor( 3 );
 
@@ -101,17 +101,17 @@ inline bool customSelectable( const char *label, bool *pSelected, ImU32 bgColor,
     // Draw border for selected
     drawList->ChannelsSetCurrent( 1 );
     if ( *pSelected ) {
-        ImVec2 pMin = ImGui::GetItemRectMin();
-        ImVec2 pMax = ImGui::GetItemRectMax();
-        ImU32  borderColor = contrastColor( bgColor );
+        ImVec2 const pMin = ImGui::GetItemRectMin();
+        ImVec2 const pMax = ImGui::GetItemRectMax();
+        ImU32  const borderColor = contrastColor( bgColor );
         drawList->AddRect( pMin, pMax, borderColor, 0.0f, 0.0f, 1.0f );
     }
 
     // Draw label
-    ImVec2 pMin = ImGui::GetItemRectMin();
-    ImVec2 pMax = ImGui::GetItemRectMax();
-    ImU32  textColor = contrastColor( bgColor );
-    ImVec2 textPos = ImVec2( pMin.x + 4, pMin.y + 2 );
+    ImVec2 const pMin = ImGui::GetItemRectMin();
+    ImVec2 const pMax = ImGui::GetItemRectMax();
+    ImU32  const textColor = contrastColor( bgColor );
+    ImVec2 const textPos = ImVec2( pMin.x + 4, pMin.y + 2 );
     drawList->AddText( textPos, textColor, label );
 
     // Commit changes.
@@ -122,8 +122,8 @@ inline bool customSelectable( const char *label, bool *pSelected, ImU32 bgColor,
 // Helpers
 inline ImU32 contrastColor( ImU32 color )
 {
-    ImVec4 bgColorVec = ColorConvertU32ToFloat4( color );
-    float  luminance = 0.299f * bgColorVec.x + 0.587f * bgColorVec.y + 0.114f * bgColorVec.z;
+    ImVec4 const bgColorVec = ColorConvertU32ToFloat4( color );
+    float  const luminance = (0.299f * bgColorVec.x) + (0.587f * bgColorVec.y) + (0.114f * bgColorVec.z);
     return luminance > 0.5f ? IM_COL32_BLACK : IM_COL32_WHITE;
 }
 

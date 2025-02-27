@@ -19,10 +19,10 @@ class OverlayWindow : public UIComponent
 
         const float          pad = 10.0f;
         const ImGuiViewport *viewport = ImGui::GetMainViewport();
-        ImVec2               workPos = viewport->WorkPos;
-        ImVec2               workSize = viewport->WorkSize;
-        ImVec2               windowPos = ImVec2( workPos.x + workSize.x - pad, workPos.y + pad );
-        ImVec2               windowPosPivot = ImVec2( 1.0f, 0.0f );
+        ImVec2               const workPos = viewport->WorkPos;
+        ImVec2               const workSize = viewport->WorkSize;
+        ImVec2               const windowPos = ImVec2( workPos.x + workSize.x - pad, workPos.y + pad );
+        ImVec2               const windowPosPivot = ImVec2( 1.0f, 0.0f );
         ImGui::SetNextWindowPos( windowPos, ImGuiCond_Always, windowPosPivot );
         ImGui::SetNextWindowViewport( viewport->ID );
         windowFlags |= ImGuiWindowFlags_NoMove;

@@ -1,6 +1,8 @@
 #pragma once
 #include "ui-component.h"
 #include "renderer.h"
+#include <cstdint>
+#include <cstdio>
 #include <imgui.h>
 #include <functional>
 #include "log.h"
@@ -14,7 +16,7 @@ class MemoryDisplayWindow : public UIComponent
     void OnHidden() override {}
     void RenderSelf() override
     {
-        ImGuiWindowFlags windowFlags =
+        ImGuiWindowFlags const windowFlags =
             ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize;
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
         ImGui::SetNextWindowSizeConstraints( ImVec2( 600, -1 ), ImVec2( 800, -1 ) );
@@ -22,7 +24,7 @@ class MemoryDisplayWindow : public UIComponent
         if ( ImGui::Begin( "Memory Viewer", &visible, windowFlags ) ) {
 
             RenderMenuBar();
-            bool isPaused = renderer->paused;
+            bool const isPaused = renderer->paused;
 
             ImGui::BeginDisabled( !isPaused );
             ImGui::PushItemWidth( 140 );
@@ -182,7 +184,7 @@ class MemoryDisplayWindow : public UIComponent
                 ImGui::PushFont( renderer->fontMono );
                 ImGui::PushStyleColor( ImGuiCol_Text, IM_COL32( 100, 100, 100, 255 ) );
                 for ( int j = 0; j < 16; j++ ) {
-                    uint8_t byte = readFunc( i + j );
+                    uint8_t const byte = readFunc( i + j );
 
                     ImGui::TableSetColumnIndex( j + 1 );
                     ImGui::Text( "%02X", byte );

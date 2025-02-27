@@ -1,9 +1,12 @@
 #pragma once
+#include "bus.h"
 #include "ui-component.h"
 #include "renderer.h"
+#include <cstdio>
 #include <imgui.h>
 #include "theme.h"
 #include <imgui-spectrum.h>
+#include <string>
 
 class PaletteWindow : public UIComponent
 {
@@ -34,7 +37,7 @@ class PaletteWindow : public UIComponent
 
     void RenderSelf() override
     {
-        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar;
+        ImGuiWindowFlags const windowFlags = ImGuiWindowFlags_MenuBar;
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
         ImGui::SetNextWindowSizeConstraints( ImVec2( 620, 400 ), ImVec2( 1000, 600 ) );
 
@@ -124,10 +127,10 @@ class PaletteWindow : public UIComponent
         ImGui::Text( "Color (RGB)" );
         ImGui::SameLine();
         ImGui::Indent( indentSpacing );
-        u32 colorInt = renderer->bus.ppu.GetMasterPaletteColor( targetId );
-        u8  r = static_cast<u8>( colorInt & 0xFF );
-        u8  g = static_cast<u8>( colorInt >> 8 ) & 0xFF;
-        u8  b = static_cast<u8>( colorInt >> 16 ) & 0xFF;
+        u32 const colorInt = renderer->bus.ppu.GetMasterPaletteColor( targetId );
+        u8  const r = static_cast<u8>( colorInt & 0xFF );
+        u8  const g = static_cast<u8>( colorInt >> 8 ) & 0xFF;
+        u8  const b = static_cast<u8>( colorInt >> 16 ) & 0xFF;
         ImGui::Text( "(%d, %d, %d)", r, g, b );
 
         ImGui::EndGroup();
@@ -137,8 +140,8 @@ class PaletteWindow : public UIComponent
     {
         {
             ImGui::BeginGroup();
-            u16 paletteAddress = 0x3F00 + targetId;
-            u8  colorIndex = renderer->bus.ppu.Read( paletteAddress );
+            u16 const paletteAddress = 0x3F00 + targetId;
+            u8  const colorIndex = renderer->bus.ppu.Read( paletteAddress );
 
             ImGui::Text( "Index" );
             ImGui::SameLine();
@@ -167,10 +170,10 @@ class PaletteWindow : public UIComponent
             ImGui::Text( "Color (RGB)" );
             ImGui::SameLine();
             ImGui::Indent( indentSpacing );
-            u32 colorInt = renderer->bus.ppu.GetMasterPaletteColor( colorIndex );
-            u8  r = static_cast<u8>( colorInt & 0xFF );
-            u8  g = static_cast<u8>( colorInt >> 8 ) & 0xFF;
-            u8  b = static_cast<u8>( colorInt >> 16 ) & 0xFF;
+            u32 const colorInt = renderer->bus.ppu.GetMasterPaletteColor( colorIndex );
+            u8  const r = static_cast<u8>( colorInt & 0xFF );
+            u8  const g = static_cast<u8>( colorInt >> 8 ) & 0xFF;
+            u8  const b = static_cast<u8>( colorInt >> 16 ) & 0xFF;
             ImGui::Text( "(%d, %d, %d)", r, g, b );
 
             ImGui::EndGroup();
@@ -178,7 +181,7 @@ class PaletteWindow : public UIComponent
     }
     void RenderTabs()
     {
-        ImGuiTabBarFlags tabBarFlags = ImGuiTabBarFlags_None;
+        ImGuiTabBarFlags const tabBarFlags = ImGuiTabBarFlags_None;
 
         if ( ImGui::BeginTabBar( "PaletteTabs", tabBarFlags ) ) {
 
@@ -189,9 +192,9 @@ class PaletteWindow : public UIComponent
                     ImGui::Dummy( ImVec2( 0, 0 ) );
                     for ( int cell = 0; cell < 4; cell++ ) {
                         ImGui::SameLine();
-                        u16  paletteAddress = 0x3F00 + rowStart + cell;
-                        u8   colorIndex = renderer->bus.ppu.Read( paletteAddress );
-                        u32  paletteColor = renderer->bus.ppu.GetMasterPaletteColor( colorIndex );
+                        u16  const paletteAddress = 0x3F00 + rowStart + cell;
+                        u8   const colorIndex = renderer->bus.ppu.Read( paletteAddress );
+                        u32  const paletteColor = renderer->bus.ppu.GetMasterPaletteColor( colorIndex );
                         char label[3];
                         snprintf( label, sizeof( label ), "%02X", colorIndex );
                         bool isSelected = ppuColorSelected == rowStart + cell;
@@ -207,7 +210,7 @@ class PaletteWindow : public UIComponent
                 for ( int rowStart = 0; rowStart < 64; rowStart += 8 ) {
                     ImGui::Dummy( ImVec2( 0, 0 ) );
                     for ( int cell = 0; cell < 8; cell++ ) {
-                        u32 paletteColor = renderer->bus.ppu.GetMasterPaletteColor( rowStart + cell );
+                        u32 const paletteColor = renderer->bus.ppu.GetMasterPaletteColor( rowStart + cell );
                         ImGui::SameLine();
                         char label[3];
                         snprintf( label, sizeof( label ), "%02X", rowStart + cell );
@@ -223,9 +226,9 @@ class PaletteWindow : public UIComponent
 
     void PaletteBox( int id, const char *label, bool *isSelected, u32 rgba32Color, float hw = 30.0 )
     {
-        ImColor color = Rgba32ToImColor( rgba32Color );
+        ImColor const color = Rgba32ToImColor( rgba32Color );
         ImGui::PushID( id );
-        ImVec2 size = ImVec2( hw, hw );
+        ImVec2 const size = ImVec2( hw, hw );
 
         if ( CustomTheme::customSelectable( label, isSelected, rgba32Color, ImGuiSelectableFlags_None,
                                             size ) ) {
@@ -259,17 +262,17 @@ class PaletteWindow : public UIComponent
 
     static ImColor Rgba32ToImColor( u32 color )
     {
-        int r = static_cast<int>( color & 0xFF );
-        int g = static_cast<int>( color >> 8 ) & 0xFF;
-        int b = static_cast<int>( color >> 16 ) & 0xFF;
+        int const r = static_cast<int>( color & 0xFF );
+        int const g = static_cast<int>( color >> 8 ) & 0xFF;
+        int const b = static_cast<int>( color >> 16 ) & 0xFF;
         return { r, g, b };
     }
 
     static const char *Rgba32ToHexString( u32 color )
     {
-        u8 r = static_cast<u8>( color & 0xFF );
-        u8 g = static_cast<u8>( color >> 8 ) & 0xFF;
-        u8 b = static_cast<u8>( color >> 16 ) & 0xFF;
+        u8 const r = static_cast<u8>( color & 0xFF );
+        u8 const g = static_cast<u8>( color >> 8 ) & 0xFF;
+        u8 const b = static_cast<u8>( color >> 16 ) & 0xFF;
 
         static char hexString[8]; // 1 hash, 6 hex digits, 1 null terminator
         snprintf( hexString, sizeof( hexString ), "$%02X%02X%02X", r, g, b );
