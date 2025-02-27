@@ -27,6 +27,9 @@ inline void Style()
     colors[ImGuiCol_TitleBg] = ColorConvertU32ToFloat4( Spectrum::Static::WHITE );
     colors[ImGuiCol_TitleBgActive] = ColorConvertU32ToFloat4( Spectrum::Static::WHITE );
     colors[ImGuiCol_TitleBgCollapsed] = ColorConvertU32ToFloat4( Spectrum::Static::WHITE );
+    colors[ImGuiCol_Tab] = ColorConvertU32ToFloat4( Spectrum::GRAY300 );
+    colors[ImGuiCol_TabHovered] = ColorConvertU32ToFloat4( Spectrum::GRAY400 );
+    colors[ImGuiCol_TabSelected] = ColorConvertU32ToFloat4( Spectrum::GRAY400 );
     // colors[ImGuiCol_MenuBarBg] = ColorConvertU32ToFloat4( Spectrum::GRAY200 );
     // colors[ImGuiCol_ScrollbarBg] = ColorConvertU32ToFloat4( Spectrum::GRAY100 );
     // colors[ImGuiCol_ScrollbarGrab] = ColorConvertU32ToFloat4( Spectrum::GRAY400 );
@@ -58,7 +61,6 @@ inline void Style()
     // colors[ImGuiCol_NavWindowingDimBg] = ImVec4( 0.80f, 0.80f, 0.80f, 0.20f );
     // colors[ImGuiCol_ModalWindowDimBg] = ImVec4( 0.20f, 0.20f, 0.20f, 0.35f );
 }
-} // namespace CustomTheme
-
 // clang-format on
+
 // NOLINTEND
