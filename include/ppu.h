@@ -89,6 +89,23 @@ class PPU
         _scanline = 0;
         _cycle = 4;
         _frame = 1;
+        _isRenderingEnabled = false;
+        _preventVBlank = false;
+        _ppuCtrl.value = 0x00;
+        _ppuMask.value = 0x00;
+        _ppuStatus.value = 0x00;
+        _oamAddr = 0x00;
+        _oamData = 0x00;
+        _ppuScroll = 0x00;
+        _ppuAddr = 0x00;
+        _ppuData = 0x00;
+        _addrLatch = false;
+        _ppuDataBuffer = 0x00;
+        _vramAddr.value = 0x0000;
+        _tempAddr.value = 0x0000;
+        _fineX = 0x00;
+        _nameTables.fill( 0x00 );
+        _paletteMemory = _defaultPalette;
     }
     void IncrementSystemPalette()
     {
