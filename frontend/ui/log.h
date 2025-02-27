@@ -9,7 +9,7 @@ class LogWindow : public UIComponent // NOLINT
 {
   public:
     uint64_t lastCpuCycleLogged = 0;
-    LogWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = true; }
+    LogWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = false; }
 
     void OnVisible() override { renderer->bus.cpu.EnableTracelog(); }
     void OnHidden() override { renderer->bus.cpu.DisableTracelog(); }
@@ -177,7 +177,7 @@ class LogWindow : public UIComponent // NOLINT
     {
         if ( ImGui::BeginMenuBar() ) {
             if ( ImGui::BeginMenu( "File" ) ) {
-                if ( ImGui::MenuItem( "Exit" ) ) {
+                if ( ImGui::MenuItem( "Close" ) ) {
                     visible = false;
                 }
                 ImGui::EndMenu();

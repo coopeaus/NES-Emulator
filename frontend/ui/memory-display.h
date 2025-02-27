@@ -119,7 +119,7 @@ class MemoryDisplayWindow : public UIComponent
     {
         if ( ImGui::BeginMenuBar() ) {
             if ( ImGui::BeginMenu( "File" ) ) {
-                if ( ImGui::MenuItem( "Exit" ) ) {
+                if ( ImGui::MenuItem( "Close" ) ) {
                     visible = false;
                 }
                 ImGui::EndMenu();
