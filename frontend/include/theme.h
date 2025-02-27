@@ -64,3 +64,67 @@ inline void Style()
 // clang-format on
 
 // NOLINTEND
+
+// Forward declarations
+ImU32 contrastColor( ImU32 color );
+
+inline void selectableColor( ImU32 color )
+{
+    ImVec2 pMin = ImGui::GetItemRectMin();
+    ImVec2 pMax = ImGui::GetItemRectMax();
+    ImGui::GetWindowDrawList()->AddRectFilled( pMin, pMax, color );
+}
+
+inline bool customSelectable( const char *label, bool *pSelected, ImU32 bgColor, ImGuiSelectableFlags flags,
+                              const ImVec2 &sizeArg )
+{
+    ImDrawList *drawList = ImGui::GetWindowDrawList();
+    drawList->ChannelsSplit( 2 );
+
+    // Channel number is like z-order. Widgets in higher channels are rendered above widgets in lower
+    // channels.
+    drawList->ChannelsSetCurrent( 1 );
+
+    // Disable the default highlight, hover, active
+    ImGui::PushStyleColor( ImGuiCol_Header, bgColor );
+    ImGui::PushStyleColor( ImGuiCol_HeaderHovered, bgColor );
+    ImGui::PushStyleColor( ImGuiCol_HeaderActive, bgColor );
+
+    bool result = ImGui::Selectable( "", pSelected, flags, sizeArg );
+
+    ImGui::PopStyleColor( 3 );
+
+    // Draw background
+    drawList->ChannelsSetCurrent( 0 );
+    selectableColor( bgColor );
+
+    // Draw border for selected
+    drawList->ChannelsSetCurrent( 1 );
+    if ( *pSelected ) {
+        ImVec2 pMin = ImGui::GetItemRectMin();
+        ImVec2 pMax = ImGui::GetItemRectMax();
+        ImU32  borderColor = contrastColor( bgColor );
+        drawList->AddRect( pMin, pMax, borderColor, 0.0f, 0.0f, 1.0f );
+    }
+
+    // Draw label
+    ImVec2 pMin = ImGui::GetItemRectMin();
+    ImVec2 pMax = ImGui::GetItemRectMax();
+    ImU32  textColor = contrastColor( bgColor );
+    ImVec2 textPos = ImVec2( pMin.x + 4, pMin.y + 2 );
+    drawList->AddText( textPos, textColor, label );
+
+    // Commit changes.
+    drawList->ChannelsMerge();
+    return result;
+}
+
+// Helpers
+inline ImU32 contrastColor( ImU32 color )
+{
+    ImVec4 bgColorVec = ColorConvertU32ToFloat4( color );
+    float  luminance = 0.299f * bgColorVec.x + 0.587f * bgColorVec.y + 0.114f * bgColorVec.z;
+    return luminance > 0.5f ? IM_COL32_BLACK : IM_COL32_WHITE;
+}
+
+} // namespace CustomTheme
