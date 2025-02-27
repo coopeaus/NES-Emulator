@@ -84,7 +84,7 @@ class Renderer
 
     void InitEmulator()
     {
-        auto cartridge = std::make_shared<Cartridge>( "tests/roms/mario.nes" );
+        auto cartridge = std::make_shared<Cartridge>( "tests/roms/palette.nes" );
         bus.LoadCartridge( cartridge );
         bus.cpu.Reset();
         bus.ppu.onFrameReady = [this]( const u32 *frameBuffer ) {
