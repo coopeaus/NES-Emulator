@@ -60,8 +60,8 @@ class LogWindow : public UIComponent // NOLINT
             ImGui::PushItemWidth( 120 );
             static int inputSize = renderer->bus.cpu.traceSize;
             if ( ImGui::InputInt( "Max Lines", &inputSize ) ) {
-                inputSize = std::max(inputSize, 1);
-                inputSize = std::min(inputSize, 10000);
+                inputSize = std::max( inputSize, 1 );
+                inputSize = std::min( inputSize, 10000 );
                 renderer->bus.cpu.traceSize = inputSize;
             }
             ImGui::PopItemWidth();

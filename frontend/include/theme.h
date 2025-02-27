@@ -103,14 +103,14 @@ inline bool customSelectable( const char *label, bool *pSelected, ImU32 bgColor,
     if ( *pSelected ) {
         ImVec2 const pMin = ImGui::GetItemRectMin();
         ImVec2 const pMax = ImGui::GetItemRectMax();
-        ImU32  const borderColor = contrastColor( bgColor );
+        ImU32 const  borderColor = contrastColor( bgColor );
         drawList->AddRect( pMin, pMax, borderColor, 0.0f, 0.0f, 1.0f );
     }
 
     // Draw label
     ImVec2 const pMin = ImGui::GetItemRectMin();
     ImVec2 const pMax = ImGui::GetItemRectMax();
-    ImU32  const textColor = contrastColor( bgColor );
+    ImU32 const  textColor = contrastColor( bgColor );
     ImVec2 const textPos = ImVec2( pMin.x + 4, pMin.y + 2 );
     drawList->AddText( textPos, textColor, label );
 
@@ -123,7 +123,7 @@ inline bool customSelectable( const char *label, bool *pSelected, ImU32 bgColor,
 inline ImU32 contrastColor( ImU32 color )
 {
     ImVec4 const bgColorVec = ColorConvertU32ToFloat4( color );
-    float  const luminance = (0.299f * bgColorVec.x) + (0.587f * bgColorVec.y) + (0.114f * bgColorVec.z);
+    float const luminance = ( 0.299f * bgColorVec.x ) + ( 0.587f * bgColorVec.y ) + ( 0.114f * bgColorVec.z );
     return luminance > 0.5f ? IM_COL32_BLACK : IM_COL32_WHITE;
 }
 

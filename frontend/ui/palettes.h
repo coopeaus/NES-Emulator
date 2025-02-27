@@ -99,12 +99,10 @@ class PaletteWindow : public UIComponent
         ImGui::Text( "%d", renderer->bus.ppu.systemPaletteIdx );
         if ( ImGui::Button( "<" ) ) {
             renderer->bus.ppu.DecrementSystemPalette();
-            renderer->bus.ppu.LoadSystemPalette( renderer->bus.ppu.systemPaletteIdx );
         }
         ImGui::SameLine();
         if ( ImGui::Button( ">" ) ) {
             renderer->bus.ppu.IncrementSystemPalette();
-            renderer->bus.ppu.LoadSystemPalette( renderer->bus.ppu.systemPaletteIdx );
         }
         ImGui::EndDisabled();
     }
@@ -128,9 +126,9 @@ class PaletteWindow : public UIComponent
         ImGui::SameLine();
         ImGui::Indent( indentSpacing );
         u32 const colorInt = renderer->bus.ppu.GetMasterPaletteColor( targetId );
-        u8  const r = static_cast<u8>( colorInt & 0xFF );
-        u8  const g = static_cast<u8>( colorInt >> 8 ) & 0xFF;
-        u8  const b = static_cast<u8>( colorInt >> 16 ) & 0xFF;
+        u8 const  r = static_cast<u8>( colorInt & 0xFF );
+        u8 const  g = static_cast<u8>( colorInt >> 8 ) & 0xFF;
+        u8 const  b = static_cast<u8>( colorInt >> 16 ) & 0xFF;
         ImGui::Text( "(%d, %d, %d)", r, g, b );
 
         ImGui::EndGroup();
@@ -141,7 +139,7 @@ class PaletteWindow : public UIComponent
         {
             ImGui::BeginGroup();
             u16 const paletteAddress = 0x3F00 + targetId;
-            u8  const colorIndex = renderer->bus.ppu.Read( paletteAddress );
+            u8 const  colorIndex = renderer->bus.ppu.Read( paletteAddress );
 
             ImGui::Text( "Index" );
             ImGui::SameLine();
@@ -171,9 +169,9 @@ class PaletteWindow : public UIComponent
             ImGui::SameLine();
             ImGui::Indent( indentSpacing );
             u32 const colorInt = renderer->bus.ppu.GetMasterPaletteColor( colorIndex );
-            u8  const r = static_cast<u8>( colorInt & 0xFF );
-            u8  const g = static_cast<u8>( colorInt >> 8 ) & 0xFF;
-            u8  const b = static_cast<u8>( colorInt >> 16 ) & 0xFF;
+            u8 const  r = static_cast<u8>( colorInt & 0xFF );
+            u8 const  g = static_cast<u8>( colorInt >> 8 ) & 0xFF;
+            u8 const  b = static_cast<u8>( colorInt >> 16 ) & 0xFF;
             ImGui::Text( "(%d, %d, %d)", r, g, b );
 
             ImGui::EndGroup();
@@ -192,10 +190,10 @@ class PaletteWindow : public UIComponent
                     ImGui::Dummy( ImVec2( 0, 0 ) );
                     for ( int cell = 0; cell < 4; cell++ ) {
                         ImGui::SameLine();
-                        u16  const paletteAddress = 0x3F00 + rowStart + cell;
-                        u8   const colorIndex = renderer->bus.ppu.Read( paletteAddress );
-                        u32  const paletteColor = renderer->bus.ppu.GetMasterPaletteColor( colorIndex );
-                        char label[3];
+                        u16 const paletteAddress = 0x3F00 + rowStart + cell;
+                        u8 const  colorIndex = renderer->bus.ppu.Read( paletteAddress );
+                        u32 const paletteColor = renderer->bus.ppu.GetMasterPaletteColor( colorIndex );
+                        char      label[3];
                         snprintf( label, sizeof( label ), "%02X", colorIndex );
                         bool isSelected = ppuColorSelected == rowStart + cell;
                         PaletteBox( rowStart + cell, label, &isSelected, paletteColor );
