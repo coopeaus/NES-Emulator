@@ -1,4 +1,5 @@
 #include "renderer.h"
+#include <exception>
 #include <iostream>
 #include <fmt/core.h>
 

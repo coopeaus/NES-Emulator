@@ -1,8 +1,13 @@
 #pragma once
 
+#include <SDL_video.h>
+#include <SDL_error.h>
+#include <SDL_hints.h>
+#include <SDL_events.h>
+#include <fmt/base.h>
+#include <cstdlib>
 #include <glad/glad.h>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
 #include <imgui.h>
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
@@ -16,6 +21,8 @@
 #include <fmt/core.h>
 #include <iostream>
 #include <csignal>
+#include <string>
+#include <memory>
 #include "theme.h"
 
 using u32 = uint32_t;
@@ -84,7 +91,7 @@ class Renderer
 
     void InitEmulator()
     {
-        auto cartridge = std::make_shared<Cartridge>( "tests/roms/mario.nes" );
+        auto cartridge = std::make_shared<Cartridge>( "tests/roms/palette.nes" );
         bus.LoadCartridge( cartridge );
         bus.cpu.Reset();
         bus.ppu.onFrameReady = [this]( const u32 *frameBuffer ) {
@@ -146,7 +153,8 @@ class Renderer
         SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 24 );
         SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 8 );
 
-        SDL_WindowFlags windowFlags = (SDL_WindowFlags) ( SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI );
+        SDL_WindowFlags const windowFlags =
+            (SDL_WindowFlags) ( SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE );
         window = SDL_CreateWindow( windowTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                    windowWidth, windowHeight, windowFlags );
 
@@ -193,13 +201,13 @@ class Renderer
         const char *fragmentShaderSource = GetFragmentShaderSource();
 
         // Vertex shader
-        GLuint vertexShader = glCreateShader( GL_VERTEX_SHADER );
+        GLuint const vertexShader = glCreateShader( GL_VERTEX_SHADER );
         glShaderSource( vertexShader, 1, &vertexShaderSource, nullptr );
         glCompileShader( vertexShader );
         CheckShaderCompileError( vertexShader );
 
         // Fragment shader
-        GLuint fragmentShader = glCreateShader( GL_FRAGMENT_SHADER );
+        GLuint const fragmentShader = glCreateShader( GL_FRAGMENT_SHADER );
         glShaderSource( fragmentShader, 1, &fragmentShaderSource, nullptr );
         glCompileShader( fragmentShader );
         CheckShaderCompileError( fragmentShader );
@@ -253,7 +261,7 @@ class Renderer
         // Font setup
         ImFontConfig fontConfig;
         fontConfig.RasterizerDensity = 4.0F;
-        float fontSize = 16.0F;
+        float const fontSize = 16.0F;
         fontMenu = io->Fonts->AddFontFromFileTTF( "fonts/font-menu.otf", fontSize, &fontConfig );
         fontMono = io->Fonts->AddFontFromFileTTF( "fonts/font-mono.ttf", fontSize, &fontConfig );
         fontMonoBold = io->Fonts->AddFontFromFileTTF( "fonts/font-mono-bold.ttf", fontSize, &fontConfig );
@@ -296,18 +304,18 @@ class Renderer
         u64          secondStart = SDL_GetPerformanceCounter();
 
         while ( running ) {
-            u64 frameStart = SDL_GetPerformanceCounter();
+            u64 const frameStart = SDL_GetPerformanceCounter();
 
             bus.cpu.ExecuteFrame( &paused );
             PollEvents();
             RenderFrame();
 
-            u64    frameEnd = SDL_GetPerformanceCounter();
-            double frameTimeMs =
+            u64 const    frameEnd = SDL_GetPerformanceCounter();
+            double const frameTimeMs =
                 ( static_cast<double>( frameEnd - frameStart ) ) * 1000.0 / static_cast<double>( freq );
 
             // Calculate the remaining time for this frame.
-            double delayTimeMs = targetFrameTimeMs - frameTimeMs;
+            double const delayTimeMs = targetFrameTimeMs - frameTimeMs;
             if ( delayTimeMs > 0 ) {
                 // If there's more than ~1ms left, sleep for most of it.
                 if ( delayTimeMs > 1.0 ) {
@@ -320,8 +328,8 @@ class Renderer
             }
 
             // FPS reporting every second.
-            u64    now = SDL_GetPerformanceCounter();
-            double secondElapsed =
+            u64 const    now = SDL_GetPerformanceCounter();
+            double const secondElapsed =
                 ( static_cast<double>( now - secondStart ) ) * 1000.0 / static_cast<double>( freq );
             if ( secondElapsed >= 1000.0 ) {
                 CalculateFps();
@@ -413,8 +421,11 @@ class Renderer
 
         int displayW = 0;
         int displayH = 0;
+        int viewportX = 0;
+        int viewportY = 0;
         SDL_GL_GetDrawableSize( window, &displayW, &displayH );
-        glViewport( 0, 0, displayW, displayH );
+        ClampToAspectRatio( &viewportX, &viewportY, &displayW, &displayH );
+        glViewport( viewportX, viewportY, displayW, displayH );
 
         glClearColor( clearColor.x, clearColor.y, clearColor.z, clearColor.w );
         glClear( GL_COLOR_BUFFER_BIT );
@@ -443,6 +454,30 @@ class Renderer
         SDL_GL_SwapWindow( window );
     }
 
+    static void ClampToAspectRatio( int *x, int *y, int *width, int *height )
+    {
+        float targetAspect = 256.0F / 240.0F;
+        float windowAspect = static_cast<float>( *width ) / static_cast<float>( *height );
+        int   newWidth = 0;
+        int   newHeight = 0;
+        int   viewportX = 0;
+        int   viewportY = 0;
+        if ( windowAspect > targetAspect ) {
+            newHeight = *height;
+            newWidth = static_cast<int>( static_cast<float>( *height ) * targetAspect );
+            viewportX = ( *width - newWidth ) / 2;
+        } else {
+            newWidth = *width;
+            newHeight = static_cast<int>( static_cast<float>( *width ) / targetAspect );
+            viewportY = ( *height - newHeight ) / 2;
+        }
+
+        *x = viewportX;
+        *y = viewportY;
+        *width = newWidth;
+        *height = newHeight;
+    }
+
     /*
     ################################
     #                              #
@@ -462,8 +497,8 @@ class Renderer
 
     void CalculateFps()
     {
-        u64 framesRendered = bus.ppu.GetFrame();
-        u16 framesThisSecond = framesRendered - frameCount;
+        u64 const framesRendered = bus.ppu.GetFrame();
+        u16 const framesThisSecond = framesRendered - frameCount;
         frameCount = framesRendered;
         fps = framesThisSecond;
     }

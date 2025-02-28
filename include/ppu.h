@@ -1,9 +1,11 @@
 #pragma once
 #include "cpu.h"
 #include "mappers/mapper-base.h"
+#include "utils.h"
 #include <cstdint>
 #include <array>
 #include <functional>
+#include <string>
 
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
@@ -25,6 +27,7 @@ class PPU
     [[nodiscard]] s16        GetScanline() const { return _scanline; }
     [[nodiscard]] u16        GetCycles() const { return _cycle; }
     [[nodiscard]] u64        GetFrame() const { return _frame; }
+    [[nodiscard]] u32 GetMasterPaletteColor( u8 index ) const { return _nesPaletteRgbValues.at( index ); }
 
     /*
     ################################
@@ -87,6 +90,67 @@ class PPU
         _scanline = 0;
         _cycle = 4;
         _frame = 1;
+        _isRenderingEnabled = false;
+        _preventVBlank = false;
+        _ppuCtrl.value = 0x00;
+        _ppuMask.value = 0x00;
+        _ppuStatus.value = 0x00;
+        _oamAddr = 0x00;
+        _oamData = 0x00;
+        _ppuScroll = 0x00;
+        _ppuAddr = 0x00;
+        _ppuData = 0x00;
+        _addrLatch = false;
+        _ppuDataBuffer = 0x00;
+        _vramAddr.value = 0x0000;
+        _tempAddr.value = 0x0000;
+        _fineX = 0x00;
+        _nameTables.fill( 0x00 );
+        _paletteMemory = _defaultPalette;
+    }
+    void IncrementSystemPalette()
+    {
+        if ( failedPaletteRead ) {
+            return;
+        }
+        systemPaletteIdx = ( systemPaletteIdx + 1 ) % maxSystemPalettes;
+        LoadSystemPalette( systemPaletteIdx );
+    }
+    void DecrementSystemPalette()
+    {
+        if ( failedPaletteRead ) {
+            return;
+        }
+        int newIdx = systemPaletteIdx - 1;
+        if ( newIdx < 0 ) {
+            newIdx = maxSystemPalettes - 1;
+        }
+        systemPaletteIdx = newIdx;
+        LoadSystemPalette( systemPaletteIdx );
+    }
+
+    void LoadSystemPalette( int paletteIdx = 0 )
+    {
+        std::string const palettePath = systemPalettePaths.at( paletteIdx );
+        _nesPaletteRgbValues = utils::readPalette( palettePath );
+    }
+    u8  GetPpuPaletteValue( u8 index ) { return _paletteMemory.at( index ); }
+    u32 GetPpuPaletteColor( u8 index ) { return _nesPaletteRgbValues.at( _paletteMemory.at( index ) ); }
+
+    void LoadDefaultSystemPalette()
+    {
+        // clang-format off
+        _nesPaletteRgbValues = {
+            0xFF606060, 0xFF7B2100, 0xFF9C0000, 0xFF8B0031, 0xFF6F0059, 0xFF31006F, 0xFF000064, 0xFF00114F,
+            0xFF00192F, 0xFF002927, 0xFF004400, 0xFF373900, 0xFF4F3900, 0xFF000000, 0xFF0C0C0C, 0xFF0C0C0C,
+            0xFFAEAEAE, 0xFFCE5610, 0xFFFF2C1B, 0xFFEC2060, 0xFFBF00A9, 0xFF5416CA, 0xFF0800CA, 0xFF043A9E,
+            0xFF005167, 0xFF006143, 0xFF007C00, 0xFF537100, 0xFF877100, 0xFF0C0C0C, 0xFF0C0C0C, 0xFF0C0C0C,
+            0xFFFFFFFF, 0xFFFE9E44, 0xFFFF6C5C, 0xFFFF6699, 0xFFFF60D7, 0xFF9562FF, 0xFF5364FF, 0xFF3094F4,
+            0xFF00ACC2, 0xFF14C490, 0xFF28D252, 0xFF92C620, 0xFFD2BA18, 0xFF4C4C4C, 0xFF0C0C0C, 0xFF0C0C0C,
+            0xFFFFFFFF, 0xFFFFCCA3, 0xFFFFB4A4, 0xFFFFB6C1, 0xFFFFB7E0, 0xFFC5C0FF, 0xFFABBCFF, 0xFF9FD0FF,
+            0xFF90E0FC, 0xFF98EAE2, 0xFFA0F2CA, 0xFFE2EAA0, 0xFFFAE2A0, 0xFFB6B6B6, 0xFF0C0C0C, 0xFF0C0C0C
+        };
+        // clang-format on
     }
 
     /*
@@ -104,6 +168,18 @@ class PPU
     */
     void EnableJsonTestMode() { _isDisabled = true; }
     void DisableJsonTestMode() { _isDisabled = false; }
+
+    /*
+    ################################
+    ||      Global Variables      ||
+    ################################
+    */
+    bool failedPaletteRead = false;
+    int  systemPaletteIdx = 0;
+    int  maxSystemPalettes = 3;
+
+    std::array<std::string, 3> systemPalettePaths = { "palettes/palette1.pal", "palettes/palette2.pal",
+                                                      "palettes/palette3.pal" };
 
   private:
     /*
@@ -293,16 +369,19 @@ class PPU
       as transparent.
     */
     // Default boot palette, will get changed by the cartridge
-    array<u8, 32> _paletteMemory = {
-        0x09, 0x01, 0x00, 0x01, // Palette 0
-        0x00, 0x02, 0x02, 0x0D, // Palette 1
-        0x08, 0x10, 0x08, 0x24, // Palette 2
-        0x00, 0x00, 0x04, 0x2C, // Palette 3
-        0x09, 0x01, 0x34, 0x03, // Palette 4
-        0x00, 0x04, 0x00, 0x14, // Palette 5
-        0x08, 0x3A, 0x00, 0x02, // Palette 6
-        0x00, 0x20, 0x2C, 0x08  // Palette 7
+    // clang-format off
+    array<u8, 32> _defaultPalette = {
+        0x09, 0x01, 0x00, 0x01, 
+        0x00, 0x02, 0x02, 0x0D,
+        0x08, 0x10, 0x08, 0x24,
+        0x00, 0x00, 0x04, 0x2C,
+        0x09, 0x01, 0x34, 0x03,
+        0x00, 0x04, 0x00, 0x14,
+        0x08, 0x3A, 0x00, 0x02,
+        0x00, 0x20, 0x2C, 0x08 
     };
+    // clang-format on
+    array<u8, 32> _paletteMemory = _defaultPalette;
 
     /* Object Attribute Memory (OAM)
        This is a 256 byte region internal to the PPU
