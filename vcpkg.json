@@ -8,6 +8,9 @@
     "fmt",
     "gtest",
     "sdl2",
-    "glad"
+    "glad", {
+      "name": "opengl",
+      "version>=" : "2022-12-04#3"
+    }
   ]
 }
