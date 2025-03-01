@@ -68,6 +68,7 @@ if(BUILD_FRONTEND)
   elseif(WIN32)
     target_link_libraries(emu PRIVATE ${OpenGL_GL_LIBRARY})
   else()
+      find_package(OpenGL REQUIRED)
     target_link_libraries(emu PRIVATE OpenGL::GL)
   endif()
 
