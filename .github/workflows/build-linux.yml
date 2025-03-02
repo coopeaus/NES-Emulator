@@ -52,7 +52,7 @@ jobs:
           echo "CMAKE_C_COMPILER=/usr/bin/clang-19" >> $GITHUB_ENV
           echo "CMAKE_CXX_COMPILER=/usr/bin/clang++-19" >> $GITHUB_ENV
           echo "CMAKE_MAKE_PROGRAM=/usr/bin/ninja" >> $GITHUB_ENV
-          echo "M4_PATTERN_ALLOW=true" >> $GITHUB_ENV
+          echo "CMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
 
       - name: Cache vcpkg dependencies
         uses: actions/cache@v4
