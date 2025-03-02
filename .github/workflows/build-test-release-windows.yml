@@ -1,8 +1,18 @@
-name: build-test-release-windows
+name: build-windows
 
 on:
-  [workflow_dispatch, pull_request]
-
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build'
+        required: true
+        default: 'main'
+        type: string
+      commit:
+        description: 'Shortform commit hash to build'
+        required: true
+        default: 'HEAD'
+        type: string
 
 jobs:
   build:
@@ -11,6 +21,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Checkout specific commit (if provided)
+        if: ${{ github.event.inputs.commit != 'HEAD' }}
+        run: |
+          git fetch --depth=1 origin ${{ github.event.inputs.commit }}
+          git checkout ${{ github.event.inputs.commit }}
 
       - name: Set up environment variables
         run: |
