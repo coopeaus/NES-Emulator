@@ -40,7 +40,7 @@ jobs:
       - name: Install dependencies with vcpkg
         run: |
           mkdir C:\vcpkg_cache -ErrorAction SilentlyContinue
-          cd $env:GITHUB_WORKSPACE  # Ensure we are in the project directory
+          cd $env:GITHUB_WORKSPACE
           echo "VCPKG_FEATURE_FLAGS=manifests" | Out-File -FilePath $env:GITHUB_ENV -Append
           C:/vcpkg/vcpkg.exe install --recurse
 
@@ -54,7 +54,8 @@ jobs:
                 -DCMAKE_CXX_COMPILER=clang++ `
                 -DCMAKE_CXX_FLAGS="/utf-8 /EHsc" `
                 -DCMAKE_BUILD_TYPE=Release `
-                -DBUILD_FRONTEND=ON
+                -DBUILD_FRONTEND=ON `
+                -DBUILD_TESTS=ON
     
       - name: List build directory contents
         run: |
@@ -65,8 +66,14 @@ jobs:
         run: |
           cmake --build build --config Release
       
+      - name: Copy files to Release directory
+        run: |
+          cp -r build/fonts build/Release/
+          cp -r build/palettes build/Release/
+          cp -r build/tests build/Release/
+
       - name: Upload build directory
         uses: actions/upload-artifact@v4
         with:
-          name: NES-Emulator-Build
+          name: Windows-x86-64
           path: build/

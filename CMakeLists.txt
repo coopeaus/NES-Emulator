@@ -85,7 +85,7 @@ if(BUILD_FRONTEND)
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/palettes ${CMAKE_BINARY_DIR}/palettes
     )
   else()
-    message(WARNING "❌ WARNING: Palettes directory NOT found!")
+    message(WARNING "WARNING: Palettes directory NOT found!")
   endif()
 
   if(EXISTS "${CMAKE_SOURCE_DIR}/fonts")
@@ -93,7 +93,7 @@ if(BUILD_FRONTEND)
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/fonts ${CMAKE_BINARY_DIR}/fonts
     )
   else()
-    message(WARNING "❌ WARNING: Fonts directory NOT found!")
+    message(WARNING "WARNING: Fonts directory NOT found!")
   endif()
 
   if(EXISTS "${CMAKE_SOURCE_DIR}/tests/roms")
@@ -101,7 +101,7 @@ if(BUILD_FRONTEND)
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/tests/roms ${CMAKE_BINARY_DIR}/tests/roms
     )
   else()
-    message(WARNING "❌ WARNING: Tests/Roms directory NOT found!")
+    message(WARNING "WARNING: Tests/Roms directory NOT found!")
   endif()
 
   # Force asset copy by adding a target
