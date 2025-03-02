@@ -10,7 +10,7 @@
 
 name: lint-format-test
 
-on: pull_request
+on: [pull_request]
 
 jobs:
   lint-format-test:

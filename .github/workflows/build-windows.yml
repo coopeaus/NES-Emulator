@@ -48,13 +48,6 @@ jobs:
             choco install llvm -y
             echo "C:\Program Files\LLVM\bin" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
     
-      - name: Reset vcpkg to required version
-        run: |
-          cd C:/vcpkg
-          git fetch origin
-          git checkout d5ec528843d29e3a52d745a64b469f810b2cedbf
-          .\bootstrap-vcpkg.bat
-    
       - name: Install dependencies with vcpkg
         run: |
           mkdir C:\vcpkg_cache -ErrorAction SilentlyContinue
