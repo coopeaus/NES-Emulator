@@ -55,20 +55,18 @@ jobs:
                 -DCMAKE_CXX_FLAGS="/utf-8 /EHsc" `
                 -DCMAKE_BUILD_TYPE=Release `
                 -DBUILD_FRONTEND=ON
+    
+      - name: List build directory contents
+        run: |
+            echo "---- Build Directory Contents ----"
+            Get-ChildItem -Path build -Recurse | Format-Table -AutoSize
 
       - name: Build Project
         run: |
           cmake --build build --config Release
       
-      - name: Upload build artifact
+      - name: Upload build directory
         uses: actions/upload-artifact@v4
         with:
           name: NES-Emulator-Build
-          path: |
-            build/Release/*.exe
-            build/Release/*.dll
-            build/Release/*.lib
-    
-      - name: List Build Artifacts
-        run: |
-            Get-ChildItem -Recurse build/Release
+          path: build/
