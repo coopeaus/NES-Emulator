@@ -73,7 +73,7 @@ jobs:
         run: |
           mkdir -p $HOME/vcpkg_cache
           export VCPKG_FEATURE_FLAGS=manifests
-          ./vcpkg/vcpkg install --recurse
+          /usr/local/share/vcpkg/vcpkg install --recurse
 
       - name: Run build script
         run: |
