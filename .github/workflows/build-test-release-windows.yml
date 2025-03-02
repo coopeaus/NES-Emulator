@@ -28,7 +28,7 @@ jobs:
         run: |
             choco uninstall llvm -y
             choco install llvm -y
-            refreshenv
+            echo "C:\Program Files\LLVM\bin" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
     
       - name: Reset vcpkg to required version
         run: |
