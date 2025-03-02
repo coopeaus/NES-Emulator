@@ -56,11 +56,6 @@ jobs:
                 -DCMAKE_BUILD_TYPE=Release `
                 -DBUILD_FRONTEND=ON `
                 -DBUILD_TESTS=ON
-    
-      - name: List build directory contents
-        run: |
-            echo "---- Build Directory Contents ----"
-            Get-ChildItem -Path build -Recurse | Format-Table -AutoSize
 
       - name: Build Project
         run: |
@@ -76,4 +71,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Windows-x86-64
-          path: build/
+          path: build/Release
