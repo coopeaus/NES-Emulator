@@ -53,6 +53,7 @@ jobs:
           echo "CMAKE_C_COMPILER=/usr/bin/clang-19" >> $GITHUB_ENV
           echo "CMAKE_CXX_COMPILER=/usr/bin/clang++-19" >> $GITHUB_ENV
           echo "CMAKE_MAKE_PROGRAM=/usr/bin/ninja" >> $GITHUB_ENV
+          echo "M4_PATTERN_ALLOW=true" >> $GITHUB_ENV
 
       - name: Cache vcpkg dependencies
         uses: actions/cache@v4
@@ -65,7 +66,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y clang-19 lldb-19 lld-19 ninja-build autoconf
+          sudo apt install -y clang-19 lldb-19 lld-19 ninja-build
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
 
