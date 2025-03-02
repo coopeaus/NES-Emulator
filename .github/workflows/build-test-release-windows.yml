@@ -15,6 +15,7 @@ jobs:
       - name: Set up environment variables
         run: |
           echo "VCPKG_DEFAULT_BINARY_CACHE=C:/vcpkg_cache" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "VCPKG_FEATURE_FLAGS=manifests" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Cache vcpkg dependencies
         uses: actions/cache@v4
