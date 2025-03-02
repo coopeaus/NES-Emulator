@@ -36,19 +36,16 @@ jobs:
           git fetch origin
           git checkout d5ec528843d29e3a52d745a64b469f810b2cedbf
           .\bootstrap-vcpkg.bat
-          refreshenv
     
       - name: Install dependencies with vcpkg
         run: |
           mkdir C:\vcpkg_cache -ErrorAction SilentlyContinue
           cd C:/vcpkg
           .\vcpkg.exe install --recurse
-          refreshenv
 
       - name: Configure CMake
         run: |
           cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
-          refreshenv
 
       - name: Build Project
         run: |
