@@ -46,7 +46,12 @@ jobs:
 
       - name: Configure CMake
         run: |
-            cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DBUILD_FRONTEND=ON
+            cmake -B build -S . ^
+            -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake ^
+            -DCMAKE_C_COMPILER=clang ^
+            -DCMAKE_CXX_COMPILER=clang++ ^
+            -DCMAKE_BUILD_TYPE=Release ^
+            -DBUILD_FRONTEND=ON ^
 
       - name: Build Project
         run: |
