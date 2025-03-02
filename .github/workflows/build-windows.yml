@@ -13,6 +13,22 @@ on:
         required: true
         default: 'HEAD'
         type: string
+  workflow_call:
+    inputs:
+      branch:
+        description: 'Branch to build'
+        required: true
+        default: 'main'
+        type: string
+      commit:
+        description: 'Shortform commit hash to build'
+        required: true
+        default: 'HEAD'
+        type: string
+    outputs:
+      artifact_name:
+        description: 'Name of the artifact to upload'
+        value: 'Windows-x86-64'
 
 jobs:
   build:

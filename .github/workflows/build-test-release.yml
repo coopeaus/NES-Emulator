@@ -41,35 +41,44 @@ jobs:
         needs: versioning
         strategy:
             matrix:
-                # Build natively in: x64 Linux, x64 Windows, arm64 macOS
-                os: [ubuntu-latest, windows-latest, macos-latest]
-        
-        runs-on: ${{ matrix.os }}
-
+                os: [windows-x86-64, linux-x86-64, macos-arm64]
+        # This workflow only runs on ubuntu-latest. Building will be performed
+        # in a reusable workflow that will be called for each OS.
+        runs-on: ubuntu-latest
         steps:
-            - name: Checkout
-              uses: actions/checkout@v4
 
             - name: Build x64 Linux
-              if: matrix.os == 'ubuntu-latest'
+              if: ${{ matrix.os == 'linux-x86-64' }}
               run: |
-                echo "Building for x64 Linux"
-                docker build -t nes-emulator:latest -f docker/ubuntu-Dockerfile .
+                echo "Building for x64 Linux not supported yet"
             
             - name: Build arm64 macOS
-              if: matrix.os == 'macos-latest'
+              if: ${{ matrix.os == 'macos-arm64' }}
               run: |
-                echo "Building for arm64 macOS"
-                brew install llvm cmake pkg-config ninja
-                git clone https://github.com/microsoft/vcpkg.git ~/vcpkg
-                cd ~/vcpkg && ./bootstrap-vcpkg.sh -disableMetrics
-                export VCPKG_ROOT="$HOME/vcpkg"
-                export PATH=$VCPKG_ROOT:$PATH
-                
+                echo "Building for arm64 macOS not supported yet"
 
-            - name: Build x64 Windows
-              if: matrix.os == 'windows-latest'
-              run: |
-                echo "Building for x64 Windows"
-                
-
+            - name: Call build-windows workflow
+              if: ${{ matrix.os == 'windows-x86-64' }}
+              uses: ./.github/workflows/build-windows.yml
+              with:
+                  branch: main
+                  commit: HEAD
+    
+    release:
+      needs: [build, versioning]
+      runs-on: ubuntu-latest
+      steps:
+        - name: Get Windows artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: Windows-x86-64
+            path: release/Windows
+        
+        - name: Create Release
+          uses: softprops/action-gh-release@v2
+          with:
+            tag_name: ${{ needs.versioning.outputs.version }}
+            files: release/Windows/*
+            body: "Release ${{ needs.versioning.outputs.version }}"
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
