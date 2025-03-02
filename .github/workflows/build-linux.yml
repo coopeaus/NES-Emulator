@@ -54,6 +54,7 @@ jobs:
           echo "CMAKE_MAKE_PROGRAM=/usr/bin/ninja" >> $GITHUB_ENV
           echo "CMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
           echo "VCPKG_ROOT=/usr/local/share/vcpkg" >> $GITHUB_ENV
+          echo "VCPKG_INSTALLED_DIR=/usr/local/share/vcpkg/packages" >> $GITHUB_ENV
 
       - name: Cache vcpkg dependencies
         uses: actions/cache@v4
@@ -75,6 +76,22 @@ jobs:
           mkdir -p $HOME/vcpkg_cache
           export VCPKG_FEATURE_FLAGS=manifests
           /usr/local/share/vcpkg/vcpkg install --recurse
+      
+      # Check if envrionment variables are set correctly and OpenGL is installed
+      - name: Check environment variables and OpenGL
+        run: |
+          echo "VCPKG_ROOT: $VCPKG_ROOT"
+          echo "VCPKG_INSTALLED_DIR: $VCPKG_INSTALLED_DIR"
+          echo "CMAKE_TOOLCHAIN_FILE: $CMAKE_TOOLCHAIN_FILE"
+          echo "CMAKE_CXX_COMPILER: $CMAKE_CXX_COMPILER"
+          echo "CMAKE_MAKE_PROGRAM: $CMAKE_MAKE_PROGRAM"
+          if [ -d "$VCPKG_INSTALLED_DIR/opengl_x64-linux" ]; then
+            echo "OpenGL found in vcpkg!"
+          else
+            echo "OpenGL not found in vcpkg!"
+            exit 1
+          fi
+          cmake -DCMAKE_TOOLCHAIN_FILE=$CMAKE_TOOLCHAIN_FILE -P cmake/check_opengl.cmake
 
       - name: Run build script
         run: |
