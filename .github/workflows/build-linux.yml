@@ -46,13 +46,6 @@ jobs:
       #     git fetch --depth=1 origin ${{ github.event.inputs.commit }}
       #     git checkout ${{ github.event.inputs.commit }}
 
-      
-      - name: Checkout specified vcpkg commit
-        run: |
-          cd /usr/local/share/vcpkg
-          git fetch
-          git checkout d5ec528843d29e3a52d745a64b469f810b2cedbf
-
       - name: Set up environment variables
         run: |
           echo "VCPKG_DEFAULT_BINARY_CACHE=$HOME/vcpkg_cache" >> $GITHUB_ENV
@@ -72,7 +65,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y clang-19 lldb-19 lld-19 ninja-build
+          sudo apt install -y clang-19 lldb-19 lld-19 ninja-build libtool libltdl-dev
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
 
