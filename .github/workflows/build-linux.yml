@@ -66,7 +66,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y clang-19 lldb-19 lld-19 ninja-build libtool libltdl-dev libgl1-mesa-dev libglu1-mesa-dev
+          sudo apt install -y clang-19 lldb-19 lld-19 ninja-build libtool libltdl-dev
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
 

@@ -69,8 +69,10 @@ if(BUILD_FRONTEND)
   elseif(WIN32)
     target_link_libraries(emu PRIVATE ${OpenGL_GL_LIBRARY})
   else()
-      find_package(OpenGL REQUIRED)
+    find_package(OpenGL REQUIRED)
     target_link_libraries(emu PRIVATE OpenGL::GL)
+    target_link_libraries(emu PRIVATE OpenGL::GLU)
+    target_link_libraries(emu PRIVATE OpenGL::GLX)
   endif()
 
   # Debugging asset paths
