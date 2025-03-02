@@ -47,6 +47,12 @@ jobs:
       #     git checkout ${{ github.event.inputs.commit }}
 
       
+      - name: Checkout specified vcpkg commit
+        run: |
+          cd /usr/local/share/vcpkg
+          git fetch
+          git checkout d5ec528843d29e3a52d745a64b469f810b2cedbf
+
       - name: Set up environment variables
         run: |
           echo "VCPKG_DEFAULT_BINARY_CACHE=$HOME/vcpkg_cache" >> $GITHUB_ENV
