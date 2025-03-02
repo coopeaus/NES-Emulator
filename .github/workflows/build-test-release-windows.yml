@@ -14,9 +14,7 @@ jobs:
 
       - name: Set up environment variables
         run: |
-          echo "VCPKG_ROOT=C:/vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append
           echo "VCPKG_DEFAULT_BINARY_CACHE=C:/vcpkg_cache" | Out-File -FilePath $env:GITHUB_ENV -Append
-
 
       - name: Cache vcpkg dependencies
         uses: actions/cache@v4
@@ -26,27 +24,20 @@ jobs:
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
-      - name: Install Chocolatey
+      - name: Upgrade LLVM
         run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-          refreshenv
-
-      - name: Install build dependencies
+            choco uninstall llvm -y
+            choco install llvm -y
+            refreshenv
+    
+      - name: Reset vcpkg to required version
         run: |
-          choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=System'
-          choco install -y git llvm curl powershell-core
-          refreshenv
-
-      - name: Install vcpkg
-        run: |
-          git clone https://github.com/microsoft/vcpkg.git C:/vcpkg --no-single-branch
           cd C:/vcpkg
+          git fetch origin
           git checkout d5ec528843d29e3a52d745a64b469f810b2cedbf
           .\bootstrap-vcpkg.bat
           refreshenv
-
+    
       - name: Install dependencies with vcpkg
         run: |
           mkdir C:\vcpkg_cache -ErrorAction SilentlyContinue
