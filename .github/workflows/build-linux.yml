@@ -1,0 +1,87 @@
+name: build-linux
+
+on: pull_request
+
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       branch:
+#         description: 'Branch to build'
+#         required: true
+#         default: 'main'
+#         type: string
+#       commit:
+#         description: 'Shortform commit hash to build'
+#         required: true
+#         default: 'HEAD'
+#         type: string
+#   workflow_call:
+#     inputs:
+#       branch:
+#         description: 'Branch to build'
+#         required: true
+#         default: 'main'
+#         type: string
+#       commit:
+#         description: 'Shortform commit hash to build'
+#         required: true
+#         default: 'HEAD'
+#         type: string
+#     outputs:
+#       artifact_name:
+#         description: 'Name of the artifact to upload'
+#         value: 'Linux-x86-64'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # - name: Checkout specific commit (if provided)
+      #   if: ${{ github.event.inputs.commit != 'HEAD' }}
+      #   run: |
+      #     git fetch --depth=1 origin ${{ github.event.inputs.commit }}
+      #     git checkout ${{ github.event.inputs.commit }}
+
+      
+      - name: Set up environment variables
+        run: |
+          echo "VCPKG_DEFAULT_BINARY_CACHE=$HOME/vcpkg_cache" >> $GITHUB_ENV
+          echo "CMAKE_C_COMPILER=/usr/bin/clang-19" >> $GITHUB_ENV
+          echo "CMAKE_CXX_COMPILER=/usr/bin/clang++-19" >> $GITHUB_ENV
+          echo "CMAKE_MAKE_PROGRAM=/usr/bin/ninja" >> $GITHUB_ENV
+
+      - name: Cache vcpkg dependencies
+        uses: actions/cache@v4
+        with:
+          path: $HOME/vcpkg_cache
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y clang-19 lldb-19 lld-19 ninja-build
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
+
+      - name: Install dependencies with vcpkg
+        run: |
+          mkdir -p $HOME/vcpkg_cache
+          export VCPKG_FEATURE_FLAGS=manifests
+          ./vcpkg/vcpkg install --recurse
+
+      - name: Run build script
+        run: |
+          chmod +x scripts/build.sh
+          ./scripts/build.sh
+
+      - name: Upload build directory
+        uses: actions/upload-artifact@v4
+        with:
+          name: Linux-x86-64
+          path: build
