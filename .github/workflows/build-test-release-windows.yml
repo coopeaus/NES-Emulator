@@ -1,0 +1,69 @@
+name: build-test-release-windows
+
+on:
+  workflow_dispatch
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up environment variables
+        run: |
+          echo "VCPKG_ROOT=C:/vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "VCPKG_DEFAULT_BINARY_CACHE=C:/vcpkg_cache" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+
+      - name: Cache vcpkg dependencies
+        uses: actions/cache@v4
+        with:
+          path: C:/vcpkg_cache
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
+      - name: Install Chocolatey
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+          refreshenv
+
+      - name: Install build dependencies
+        run: |
+          choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+          choco install -y git llvm curl powershell-core
+          refreshenv
+
+      - name: Install vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git C:/vcpkg --no-single-branch
+          cd C:/vcpkg
+          git checkout d5ec528843d29e3a52d745a64b469f810b2cedbf
+          .\bootstrap-vcpkg.bat
+          refreshenv
+
+      - name: Install dependencies with vcpkg
+        run: |
+          mkdir C:\vcpkg_cache -ErrorAction SilentlyContinue
+          cd C:/vcpkg
+          .\vcpkg.exe install --recurse
+          refreshenv
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+          refreshenv
+
+      - name: Build Project
+        run: |
+          cmake --build build --config Release
+      
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NES-Emulator-Build
+          path: build/Release/
