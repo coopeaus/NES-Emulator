@@ -49,8 +49,10 @@ jobs:
 
             - name: Build x64 Linux
               if: ${{ matrix.os == 'linux-x86-64' }}
-              run: |
-                echo "Building for x64 Linux not supported yet"
+              uses: ./github/workflows/build-linux.yml
+              with:
+                  branch: main
+                  commit: HEAD
             
             - name: Build arm64 macOS
               if: ${{ matrix.os == 'macos-arm64' }}
@@ -74,11 +76,26 @@ jobs:
             name: Windows-x86-64
             path: release/Windows
         
-        - name: Create Release
+        - name: Get Linux artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: Linux-x86-64
+            path: release/Linux
+
+        - name: Create Release Windows
           uses: softprops/action-gh-release@v2
           with:
             tag_name: ${{ needs.versioning.outputs.version }}
             files: release/Windows/*
+            body: "Release ${{ needs.versioning.outputs.version }}"
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+        - name: Create Release Linux
+          uses: softprops/action-gh-release@v2
+          with:
+            tag_name: ${{ needs.versioning.outputs.version }}
+            files: release/Linux/*
             body: "Release ${{ needs.versioning.outputs.version }}"
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

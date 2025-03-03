@@ -64,41 +64,18 @@ jobs:
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
-      - name: Install dependencies
+      - name: Install basic dependencies
         run: |
           sudo apt update
           sudo apt install -y clang-19 lldb-19 lld-19 ninja-build libtool libltdl-dev
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
 
-      - name: Install dependencies with vcpkg
+      - name: Install vcpkg dependencies
         run: |
           mkdir -p $HOME/vcpkg_cache
           export VCPKG_FEATURE_FLAGS=manifests
           /usr/local/share/vcpkg/vcpkg install --recurse
-      
-      # Check if envrionment variables are set correctly and OpenGL is installed
-      - name: Check environment variables and OpenGL
-        run: |
-          echo "VCPKG_ROOT: $VCPKG_ROOT"
-          echo "VCPKG_INSTALLED_DIR: $VCPKG_INSTALLED_DIR"
-          echo "CMAKE_TOOLCHAIN_FILE: $CMAKE_TOOLCHAIN_FILE"
-          echo "CMAKE_CXX_COMPILER: $CMAKE_CXX_COMPILER"
-          echo "CMAKE_MAKE_PROGRAM: $CMAKE_MAKE_PROGRAM"
-          if [ -d "$VCPKG_INSTALLED_DIR/opengl_x64-linux" ]; then
-            echo "OpenGL found in vcpkg!"
-          else
-            echo "OpenGL not found in vcpkg!"
-            exit 1
-          fi
-          cmake --version
-          cmake -DCMAKE_TOOLCHAIN_FILE=$CMAKE_TOOLCHAIN_FILE -L .
-          if [ $? -eq 0 ]; then
-            echo "CMake check passed!"
-          else
-            echo "CMake check failed!"
-            exit 1
-          fi
 
       # For some reason, installing these before vcpkg causes vcpkg to break?
       - name: Install OpenGL dependencies

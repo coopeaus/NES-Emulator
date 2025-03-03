@@ -71,8 +71,6 @@ if(BUILD_FRONTEND)
   else()
     find_package(OpenGL REQUIRED)
     target_link_libraries(emu PRIVATE OpenGL::GL)
-    target_link_libraries(emu PRIVATE OpenGL::GLU)
-    target_link_libraries(emu PRIVATE OpenGL::GLX)
   endif()
 
   # Debugging asset paths
