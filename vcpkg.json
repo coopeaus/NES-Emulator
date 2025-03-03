@@ -8,6 +8,7 @@
     "fmt",
     "gtest",
     "sdl2",
-    "glad"
+    "glad",
+    "opengl"
   ]
 }

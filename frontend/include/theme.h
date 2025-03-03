@@ -119,6 +119,54 @@ inline bool customSelectable( const char *label, bool *pSelected, ImU32 bgColor,
     return result;
 }
 
+inline bool selectableTransparent( bool *pSelected, ImGuiSelectableFlags flags, const ImVec2 &sizeArg,
+                                   const char *label = nullptr )
+{
+    // Remove extra padding so our cell matches exactly sizeArg.
+    ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0.0f, 0.0f ) );
+    ImGui::PushStyleVar( ImGuiStyleVar_FramePadding, ImVec2( 0.0f, 0.0f ) );
+
+    ImDrawList *drawList = ImGui::GetWindowDrawList();
+    drawList->ChannelsSplit( 2 );
+    drawList->ChannelsSetCurrent( 1 );
+
+    // Make the selectable background completely transparent.
+    ImGui::PushStyleColor( ImGuiCol_Header, ImVec4( 0, 0, 0, 0 ) );
+    ImGui::PushStyleColor( ImGuiCol_HeaderHovered, ImVec4( 0, 0, 0, 0 ) );
+    ImGui::PushStyleColor( ImGuiCol_HeaderActive, ImVec4( 0, 0, 0, 0 ) );
+
+    bool const result = ImGui::Selectable( "", pSelected, flags, sizeArg );
+
+    ImGui::PopStyleColor( 3 );
+
+    drawList->ChannelsSetCurrent( 0 );
+    // (Optional) If you have any background drawing, call it here.
+    // selectableColor(IM_COL32(0, 0, 0, 0)); // Not needed if you want transparency.
+
+    drawList->ChannelsSetCurrent( 1 );
+    if ( *pSelected ) {
+        ImVec2 const pMin = ImGui::GetItemRectMin();
+        ImVec2 const pMax = ImGui::GetItemRectMax();
+        ImU32 const  borderColor = IM_COL32( 255, 255, 255, 255 );
+        // Draw a faint white fill and a solid black border when selected.
+        drawList->AddRectFilled( pMin, pMax, IM_COL32( 255, 255, 255, 10 ) );
+        drawList->AddRect( pMin, pMax, borderColor, 0.0f, 0, 1.0f );
+    }
+
+    if ( label ) {
+        ImVec2 const pMin = ImGui::GetItemRectMin();
+        ImU32 const  textColor = IM_COL32( 0, 0, 0, 255 );
+        // Position the label with a slight offset.
+        ImVec2 const textPos = ImVec2( pMin.x + 4, pMin.y + 2 );
+        drawList->AddText( textPos, textColor, label );
+    }
+
+    // Pop both style variables.
+    ImGui::PopStyleVar( 2 );
+    drawList->ChannelsMerge();
+    return result;
+}
+
 // Helpers
 inline ImU32 contrastColor( ImU32 color )
 {

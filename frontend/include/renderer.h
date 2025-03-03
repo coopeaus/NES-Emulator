@@ -51,15 +51,18 @@ class Renderer
     */
     SDL_Window   *window = nullptr;
     SDL_GLContext glContext = nullptr;
-    GLuint        emulatorTexture = 0;
-    GLuint        shaderProgram = 0;
-    GLuint        vao = 0;
-    GLuint        vbo = 0;
     ImGuiIO      *io{};
     ImVec4        clearColor = ImVec4( 0.00F, 0.00F, 0.00F, 1.00F );
     ImFont       *fontMenu = nullptr;
     ImFont       *fontMono = nullptr;
     ImFont       *fontMonoBold = nullptr;
+    GLuint        emuScreenTexture = 0;
+    GLuint        emuScreenShaderProgram = 0;
+    GLuint        emuScreenVAO = 0;
+    GLuint        emuScreenVBO = 0;
+
+    GLuint patternTable0Texture = 0;
+    GLuint patternTable1Texture = 0;
 
     /*
     ################################
@@ -68,8 +71,12 @@ class Renderer
     */
     bool running = true;
     bool paused = false;
+    bool updatePatternTables = false;
     u16  fps = 0;
     u64  frameCount = 0;
+
+    std::array<u32, 16384> patternTable0Buffer{};
+    std::array<u32, 16384> patternTable1Buffer{};
 
     /*
     ################################
@@ -183,9 +190,29 @@ class Renderer
         #            Texture           #
         ################################
         */
-        glGenTextures( 1, &emulatorTexture );
-        glBindTexture( GL_TEXTURE_2D, emulatorTexture );
+        // Emulator screen
+        glGenTextures( 1, &emuScreenTexture );
+        glBindTexture( GL_TEXTURE_2D, emuScreenTexture );
         glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, nesWidth, nesHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr );
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+        glBindTexture( GL_TEXTURE_2D, 0 );
+
+        // Pattern table textures, used for debugging
+        glGenTextures( 1, &patternTable0Texture );
+        glBindTexture( GL_TEXTURE_2D, patternTable0Texture );
+        glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr );
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+        glBindTexture( GL_TEXTURE_2D, 0 );
+
+        glGenTextures( 1, &patternTable1Texture );
+        glBindTexture( GL_TEXTURE_2D, patternTable1Texture );
+        glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr );
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
         glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
@@ -212,13 +239,13 @@ class Renderer
         glCompileShader( fragmentShader );
         CheckShaderCompileError( fragmentShader );
 
-        shaderProgram = glCreateProgram();
-        glAttachShader( shaderProgram, vertexShader );
-        glAttachShader( shaderProgram, fragmentShader );
-        glBindAttribLocation( shaderProgram, 0, "a_position" );
-        glBindAttribLocation( shaderProgram, 1, "a_texcoord" );
-        glLinkProgram( shaderProgram );
-        CheckShaderLinkingError( shaderProgram );
+        emuScreenShaderProgram = glCreateProgram();
+        glAttachShader( emuScreenShaderProgram, vertexShader );
+        glAttachShader( emuScreenShaderProgram, fragmentShader );
+        glBindAttribLocation( emuScreenShaderProgram, 0, "a_position" );
+        glBindAttribLocation( emuScreenShaderProgram, 1, "a_texcoord" );
+        glLinkProgram( emuScreenShaderProgram );
+        CheckShaderLinkingError( emuScreenShaderProgram );
 
         glDeleteShader( vertexShader );
         glDeleteShader( fragmentShader );
@@ -232,10 +259,10 @@ class Renderer
              1.0F,  1.0F,   1.0F, 0.0F, // top-right
              1.0F, -1.0F,   1.0F, 1.0F  // bottom-right
         };
-        glGenVertexArrays( 1, &vao );
-        glGenBuffers( 1, &vbo );
-        glBindVertexArray( vao );
-        glBindBuffer( GL_ARRAY_BUFFER, vbo );
+        glGenVertexArrays( 1, &emuScreenVAO );
+        glGenBuffers( 1, &emuScreenVBO );
+        glBindVertexArray( emuScreenVAO );
+        glBindBuffer( GL_ARRAY_BUFFER, emuScreenVBO );
         glBufferData( GL_ARRAY_BUFFER, sizeof( quadVertices ), quadVertices, GL_STATIC_DRAW );
         glEnableVertexAttribArray( 0 );
         glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof( float ), nullptr );
@@ -309,6 +336,7 @@ class Renderer
             bus.cpu.ExecuteFrame( &paused );
             PollEvents();
             RenderFrame();
+            UpdatePatternTableTextures();
 
             u64 const    frameEnd = SDL_GetPerformanceCounter();
             double const frameTimeMs =
@@ -353,21 +381,21 @@ class Renderer
         ImGui::DestroyContext();
 
         // Delete our OpenGL texture.
-        if ( emulatorTexture ) {
-            glDeleteTextures( 1, &emulatorTexture );
-            emulatorTexture = 0;
+        if ( emuScreenTexture ) {
+            glDeleteTextures( 1, &emuScreenTexture );
+            emuScreenTexture = 0;
         }
-        if ( vao ) {
-            glDeleteVertexArrays( 1, &vao );
-            vao = 0;
+        if ( emuScreenVAO ) {
+            glDeleteVertexArrays( 1, &emuScreenVAO );
+            emuScreenVAO = 0;
         }
-        if ( vbo ) {
-            glDeleteBuffers( 1, &vbo );
-            vbo = 0;
+        if ( emuScreenVBO ) {
+            glDeleteBuffers( 1, &emuScreenVBO );
+            emuScreenVBO = 0;
         }
-        if ( shaderProgram ) {
-            glDeleteProgram( shaderProgram );
-            shaderProgram = 0;
+        if ( emuScreenShaderProgram ) {
+            glDeleteProgram( emuScreenShaderProgram );
+            emuScreenShaderProgram = 0;
         }
 
         // Destroy the OpenGL context and window.
@@ -431,11 +459,11 @@ class Renderer
         glClear( GL_COLOR_BUFFER_BIT );
 
         // Render the 2d emulator texture
-        glUseProgram( shaderProgram );
+        glUseProgram( emuScreenShaderProgram );
         glActiveTexture( GL_TEXTURE0 );
-        glBindTexture( GL_TEXTURE_2D, emulatorTexture );
-        glUniform1i( glGetUniformLocation( shaderProgram, "u_texture" ), 0 );
-        glBindVertexArray( vao );
+        glBindTexture( GL_TEXTURE_2D, emuScreenTexture );
+        glUniform1i( glGetUniformLocation( emuScreenShaderProgram, "u_texture" ), 0 );
+        glBindVertexArray( emuScreenVAO );
         glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
         glBindVertexArray( 0 );
         glBindTexture( GL_TEXTURE_2D, 0 );
@@ -485,10 +513,37 @@ class Renderer
     #                              #
     ################################
     */
-    void ProcessPpuFrameBuffer( const u32 *frameBuffer ) // NOLINT
+
+    void UpdatePatternTableTextures()
+    {
+        if ( updatePatternTables ) {
+            patternTable0Buffer = bus.ppu.GetPatternTable( 0 );
+            patternTable1Buffer = bus.ppu.GetPatternTable( 1 );
+        }
+    }
+
+    GLuint GrabPatternTableTextureHandle( int tableIdx )
+    {
+        /*
+           @brief: Updates pattern table textures, read by the cartridge from the PPU. Used by pattern table
+           debug window.
+        */
+
+        GLuint                  texture = tableIdx == 0 ? patternTable0Texture : patternTable1Texture;
+        std::array<u32, 16384> *frameBuffer = tableIdx == 0 ? &patternTable0Buffer : &patternTable1Buffer;
+
+        glBindTexture( GL_TEXTURE_2D, texture );
+        glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+        glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, 128, 128, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer->data() );
+        glBindTexture( GL_TEXTURE_2D, 0 );
+
+        return texture;
+    }
+
+    void ProcessPpuFrameBuffer( const u32 *frameBuffer ) const
     {
         // Update the OpenGL texture with the new framebuffer data.
-        glBindTexture( GL_TEXTURE_2D, emulatorTexture );
+        glBindTexture( GL_TEXTURE_2D, emuScreenTexture );
         glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
         glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, nesWidth, nesHeight, GL_RGBA, GL_UNSIGNED_BYTE,
                          frameBuffer );
@@ -629,13 +684,13 @@ class Renderer
         }
     }
 
-    static void CheckShaderLinkingError( GLuint shaderProgram )
+    static void CheckShaderLinkingError( GLuint emuScreenShaderProgram )
     {
         GLint success = 0;
-        glGetProgramiv( shaderProgram, GL_LINK_STATUS, &success );
+        glGetProgramiv( emuScreenShaderProgram, GL_LINK_STATUS, &success );
         if ( !success ) {
             GLchar infoLog[512]; // NOLINT
-            glGetProgramInfoLog( shaderProgram, 512, nullptr, infoLog );
+            glGetProgramInfoLog( emuScreenShaderProgram, 512, nullptr, infoLog );
             std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << '\n';
         }
     }

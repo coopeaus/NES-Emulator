@@ -9,6 +9,7 @@
 #include "log.h"
 #include "memory-display.h"
 #include "palettes.h"
+#include "pattern-tables.h"
 
 UIManager::UIManager( Renderer *renderer )
 {
@@ -19,6 +20,7 @@ UIManager::UIManager( Renderer *renderer )
     AddComponent<LogWindow>( renderer );
     AddComponent<MemoryDisplayWindow>( renderer );
     AddComponent<PaletteWindow>( renderer );
+    AddComponent<PatternTablesWindow>( renderer );
 }
 
 void UIManager::Render()
