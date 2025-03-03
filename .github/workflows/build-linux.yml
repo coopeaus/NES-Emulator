@@ -101,6 +101,7 @@ jobs:
           git fetch
           git checkout d5ec528843d29e3a52d745a64b469f810b2cedbf
           ./bootstrap-vcpkg.sh -disableMetrics
+          cd $GITHUB_WORKSPACE
           mkdir -p $HOME/vcpkg_cache
           export VCPKG_FEATURE_FLAGS=manifests
           /usr/local/share/vcpkg/vcpkg install --recurse
