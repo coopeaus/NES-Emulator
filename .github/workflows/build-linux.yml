@@ -100,6 +100,12 @@ jobs:
             exit 1
           fi
 
+      # For some reason, installing these before vcpkg causes vcpkg to break?
+      - name: Install OpenGL dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libgl1-mesa-dev libx11-dev xorg-dev
+      
       - name: Run build script
         run: |
           chmod +x scripts/build.sh
