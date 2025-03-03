@@ -190,7 +190,7 @@ class LogWindow : public UIComponent // NOLINT
     void AddLog( const char *fmt, ... ) IM_FMTARGS( 2 )
     {
         int     oldSize = _buf.size();
-        va_list args = nullptr;
+        va_list args;
         va_start( args, fmt );
         _buf.appendfv( fmt, args );
         va_end( args );

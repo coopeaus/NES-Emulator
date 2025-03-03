@@ -51,7 +51,7 @@ class MemoryDisplayWindow : public UIComponent
             }
 
             ImGui::SameLine();
-            ImGui::Text( "CPU Cycle: %lld", renderer->bus.cpu.GetCycles() );
+            ImGui::Text( "CPU Cycle: " U64_FORMAT_SPECIFIER, renderer->bus.cpu.GetCycles() );
             ImGui::PopItemWidth();
 
             // Add new items here
