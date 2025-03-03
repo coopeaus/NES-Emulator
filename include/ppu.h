@@ -51,8 +51,6 @@ class PPU
     ################################
     */
     [[nodiscard]] u8 Read( u16 addr );
-    [[nodiscard]] u8 ReadPatternTable( u16 addr );
-    [[nodiscard]] u8 ReadNameTable( u16 addr );
 
     /*
     ################################
@@ -60,8 +58,6 @@ class PPU
     ################################
     */
     void Write( u16 addr, u8 data );
-    void WritePatternTable( u16 addr, u8 data );
-    void WriteNameTable( u16 addr, u8 data );
 
     /*
     ################################
@@ -168,6 +164,41 @@ class PPU
     */
     void EnableJsonTestMode() { _isDisabled = true; }
     void DisableJsonTestMode() { _isDisabled = false; }
+
+    std::array<u32, 16384> GetPatternTable( int tableIdx )
+    {
+        std::array<u32, 16384> buffer{};
+        u16 const              baseAddr = tableIdx == 0 ? 0x0000 : 0x1000;
+
+        // 256 tiles in a pattern table
+        for ( int tile = 0; tile < 256; tile++ ) {
+            int const tileX = tile % 16;
+            int const tileY = tile / 16;
+
+            // 16 bytes per tile, split into two bit planes
+            u16 const tileAddr = baseAddr + ( tile * 16 );
+
+            // Each tile is 8x8 pixels
+            for ( int row = 0; row < 8; row++ ) {
+                u8 const plane0Byte = Read( tileAddr + row );
+                u8 const plane1Byte = Read( tileAddr + row + 8 );
+                for ( int bit = 7; bit >= 0; bit-- ) {
+                    u8 const plane0Bit = ( plane0Byte >> bit ) & 0x01;
+                    u8 const plane1Bit = ( plane1Byte >> bit ) & 0x01;
+                    u8 const colorIdx = ( plane1Bit << 1 ) | plane0Bit;
+
+                    // Calculate the buffer index (pixel position)
+                    int const localX = 7 - bit;
+                    int const globalX = ( tileX * 8 ) + localX;
+                    int const globalY = ( tileY * 8 ) + row;
+                    int const bufferIdx = ( globalY * 128 ) + globalX;
+                    buffer.at( bufferIdx ) = GetPpuPaletteColor( colorIdx );
+                }
+            }
+        }
+
+        return buffer;
+    }
 
     /*
     ################################
