@@ -9,6 +9,7 @@
 #include "overlay.h"
 #include "log.h"
 #include "memory-display.h"
+#include "palettes.h"
 
 class MainMenuBar : public UIComponent
 {
@@ -20,7 +21,7 @@ class MainMenuBar : public UIComponent
     void OnVisible() override {}
     void OnHidden() override {}
 
-    void RenderSelf() override
+    void RenderSelf() override // NOLINT
     {
         if ( ImGui::BeginMainMenuBar() ) {
             if ( ImGui::BeginMenu( "File" ) ) {
@@ -29,7 +30,7 @@ class MainMenuBar : public UIComponent
                 }
                 ImGui::EndMenu();
             }
-            if ( ImGui::BeginMenu( "Windows" ) ) {
+            if ( ImGui::BeginMenu( "Debug" ) ) {
 
                 if ( auto *demoWindow = ui->GetComponent<DemoWindow>() ) {
                     ImGui::MenuItem( "UI Demo", nullptr, &demoWindow->visible );
@@ -45,6 +46,10 @@ class MainMenuBar : public UIComponent
 
                 if ( auto *memoryDisplayWindow = ui->GetComponent<MemoryDisplayWindow>() ) {
                     ImGui::MenuItem( "Memory Display", nullptr, &memoryDisplayWindow->visible );
+                }
+
+                if ( auto *paletteWindow = ui->GetComponent<PaletteWindow>() ) {
+                    ImGui::MenuItem( "Palettes", nullptr, &paletteWindow->visible );
                 }
 
                 ImGui::EndMenu();

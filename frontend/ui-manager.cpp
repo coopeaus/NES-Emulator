@@ -1,3 +1,5 @@
+#define SDL_MAIN_HANDLED
+
 #include "ui-manager.h"
 #include "ui-component.h"
 
@@ -8,6 +10,7 @@
 #include "debugger.h"
 #include "log.h"
 #include "memory-display.h"
+#include "palettes.h"
 
 UIManager::UIManager( Renderer *renderer )
 {
@@ -17,6 +20,7 @@ UIManager::UIManager( Renderer *renderer )
     AddComponent<DebuggerWindow>( renderer );
     AddComponent<LogWindow>( renderer );
     AddComponent<MemoryDisplayWindow>( renderer );
+    AddComponent<PaletteWindow>( renderer );
 }
 
 void UIManager::Render()

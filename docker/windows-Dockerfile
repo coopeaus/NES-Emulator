@@ -1,0 +1,90 @@
+# ==========================
+# STAGE 1: Build base container with chocolatey.
+# ==========================
+
+# Use Windows Server as base
+FROM mcr.microsoft.com/windows/server:ltsc2022 AS base
+
+# Set environment variables
+ENV VCPKG_ROOT="C:/vcpkg"
+ENV VCPKG_DEFAULT_BINARY_CACHE="C:/vcpkg_cache"
+ENV CMAKE_ROOT="C:/Program Files/CMake"
+
+# Add installations to PATH
+ENV PATH="C:/vcpkg;$PATH"
+ENV PATH="C:/Windows/System32/WindowsPowerShell/v1.0;$PATH"
+ENV PATH="C:/ProgramData/chocolatey/bin;$PATH"
+
+SHELL ["cmd", "/S", "/C"]
+
+# Install Chocolatey for package management
+RUN powershell -NoProfile -Command \
+    Set-ExecutionPolicy Bypass -Scope Process -Force; \
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; \
+    iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+# ==========================
+# STAGE 2: Install build tools and dependencies
+# ==========================	
+
+from base AS buildtools
+
+# Install Visual Studio Build Tools
+RUN choco install visualstudio2022buildtools --package-parameters \
+    "--add Microsoft.VisualStudio.Workload.VCTools \
+          --add Microsoft.VisualStudio.Component.VC.CMake.Project \
+          --includeRecommended --quiet --norestart" -y
+
+# Install dependencies
+RUN choco install -y \
+	cmake --installargs 'ADD_CMAKE_TO_PATH=System' \
+	git \
+    llvm \
+	powershell-core 
+
+RUN if exist C:\ProgramData\chocolatey\lib rmdir /S /Q C:\ProgramData\chocolatey\lib && if exist C:\ProgramData\chocolatey\bin rmdir /S /Q C:\ProgramData\chocolatey\bin && if exist C:\ProgramData\chocolatey\cache rmdir /S /Q C:\ProgramData\chocolatey\cache
+
+	
+ENV PATH="C:/Program Files/CMake/bin;$PATH"
+ENV PATH="C:/Program Files/Git/bin;$PATH"
+ENV PATH="C:/Program Files/LLVM/bin;$PATH"
+ENV PATH="C:/Program Files/Powershell/7;$PATH"
+
+# ==========================
+# STAGE 3: Install vcpkg and pre-cache dependencies
+# ==========================
+
+FROM buildtools AS vcpkg_setup
+
+# Install vcpkg
+RUN git clone https://github.com/microsoft/vcpkg.git C:/vcpkg --no-single-branch
+RUN cd C:/vcpkg && git checkout d5ec528843d29e3a52d745a64b469f810b2cedbf
+RUN powershell -Command "& 'C:/vcpkg/bootstrap-vcpkg.bat'"
+
+# Fetch vcpkg.json from the repo
+RUN powershell -Command "& { Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/coopeaus/NES-Emulator/main/vcpkg.json' -OutFile 'C:/vcpkg/vcpkg.json' }"
+
+# Ensure vcpkg.json will be used at runtime
+ENV VCPKG_FEATURE_FLAGS="manifests"
+ENV VCPKG_ROOT="C:/vcpkg"
+#ENV VCPKG_FORCE_SYSTEM_BINARIES=1
+
+RUN if not exist C:\vcpkg_cache mkdir C:\vcpkg_cache
+
+# Install project dependencies using vcpkg
+RUN cd C:\\vcpkg && C:\\vcpkg\\vcpkg.exe install --recurse
+
+# Cleanup to reduce image size
+RUN if exist C:\vcpkg\downloads rmdir /S /Q C:\vcpkg\downloads if exist C:\Windows\Temp rmdir /S /Q C:\Windows\Temp
+
+# ==========================
+# STAGE 4: Build Environment
+# ==========================
+FROM vcpkg_setup AS final
+
+# Set Clang as the compiler
+ENV CC=clang
+ENV CXX=clang++
+
+# Default command
+CMD [ "cmd.exe" ]

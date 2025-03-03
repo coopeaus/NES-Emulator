@@ -1,0 +1,101 @@
+name: build-test-release
+
+# This should only be manually triggered for now, as new releases
+# should be infrequent while we are still developing core features.
+on:
+  workflow_dispatch:
+
+    # Allow the workflow dispatcher to specify whether major, minor, or patch
+    # should be incremented.
+    inputs:
+        version_bump:
+            description: 'The type of version bump to perform.'
+            required: true
+            default: 'patch'
+            type: choice
+            options:
+                - 'major'
+                - 'minor'
+                - 'patch'
+
+jobs:
+    versioning:
+        runs-on: ubuntu-latest
+        outputs:
+            version: ${{ steps.new_version.outputs.new_tag }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            
+            # Uses a handy marketplace action for bumping the version number
+            # using semantic versioning.
+            - name: auto-inc version
+              id: new_version
+              uses: anothrNick/github-tag-action@1.71.0
+              env: 
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  DEFAULT_BUMP: ${{ github.event.inputs.version_bump }}
+                  WITH_V: true
+
+    build:
+        needs: versioning
+        strategy:
+            matrix:
+                os: [windows-x86-64, linux-x86-64, macos-arm64]
+        # This workflow only runs on ubuntu-latest. Building will be performed
+        # in a reusable workflow that will be called for each OS.
+        runs-on: ubuntu-latest
+        steps:
+
+            - name: Build x64 Linux
+              if: ${{ matrix.os == 'linux-x86-64' }}
+              uses: ./github/workflows/build-linux.yml
+              with:
+                  branch: main
+                  commit: HEAD
+            
+            - name: Build arm64 macOS
+              if: ${{ matrix.os == 'macos-arm64' }}
+              run: |
+                echo "Building for arm64 macOS not supported yet"
+
+            - name: Call build-windows workflow
+              if: ${{ matrix.os == 'windows-x86-64' }}
+              uses: ./.github/workflows/build-windows.yml
+              with:
+                  branch: main
+                  commit: HEAD
+    
+    release:
+      needs: [build, versioning]
+      runs-on: ubuntu-latest
+      steps:
+        - name: Get Windows artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: Windows-x86-64
+            path: release/Windows
+        
+        - name: Get Linux artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: Linux-x86-64
+            path: release/Linux
+
+        - name: Create Release Windows
+          uses: softprops/action-gh-release@v2
+          with:
+            tag_name: ${{ needs.versioning.outputs.version }}
+            files: release/Windows/*
+            body: "Release ${{ needs.versioning.outputs.version }}"
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+        - name: Create Release Linux
+          uses: softprops/action-gh-release@v2
+          with:
+            tag_name: ${{ needs.versioning.outputs.version }}
+            files: release/Linux/*
+            body: "Release ${{ needs.versioning.outputs.version }}"
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

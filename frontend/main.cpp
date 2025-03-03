@@ -1,4 +1,7 @@
+#define SDL_MAIN_HANDLED
+
 #include "renderer.h"
+#include <exception>
 #include <iostream>
 #include <fmt/core.h>
 

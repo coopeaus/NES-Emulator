@@ -1,7 +1,11 @@
 #pragma once
 #include "ui-component.h"
 #include "renderer.h"
+#include <cstdint>
+#include <cstdarg>
 #include <imgui.h>
+
+#include <algorithm>
 
 struct ExampleAppLog;
 
@@ -9,13 +13,13 @@ class LogWindow : public UIComponent // NOLINT
 {
   public:
     uint64_t lastCpuCycleLogged = 0;
-    LogWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = true; }
+    LogWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = false; }
 
     void OnVisible() override { renderer->bus.cpu.EnableTracelog(); }
     void OnHidden() override { renderer->bus.cpu.DisableTracelog(); }
     void RenderSelf() override // NOLINT
     {
-        ImGuiWindowFlags windowFlags =
+        ImGuiWindowFlags const windowFlags =
             ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize;
 
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
@@ -27,7 +31,7 @@ class LogWindow : public UIComponent // NOLINT
 
             // Grab the trace log as long as not on the same cycle.
             // We can debounce this more if necessary.
-            uint64_t currentCycle = renderer->bus.cpu.GetCycles();
+            uint64_t const currentCycle = renderer->bus.cpu.GetCycles();
             if ( currentCycle != lastCpuCycleLogged ) {
                 _buf.clear();
                 _lineOffsets.clear();
@@ -49,19 +53,15 @@ class LogWindow : public UIComponent // NOLINT
                 ImGui::OpenPopup( "Options" );
             }
             ImGui::SameLine();
-            bool clear = ImGui::Button( "Clear" );
+            bool const clear = ImGui::Button( "Clear" );
             ImGui::SameLine();
-            bool copy = ImGui::Button( "Copy" );
+            bool const copy = ImGui::Button( "Copy" );
             ImGui::SameLine();
             ImGui::PushItemWidth( 120 );
             static int inputSize = renderer->bus.cpu.traceSize;
             if ( ImGui::InputInt( "Max Lines", &inputSize ) ) {
-                if ( inputSize < 1 ) {
-                    inputSize = 1;
-                }
-                if ( inputSize > 10000 ) {
-                    inputSize = 10000;
-                }
+                inputSize = std::max( inputSize, 1 );
+                inputSize = std::min( inputSize, 10000 );
                 renderer->bus.cpu.traceSize = inputSize;
             }
             ImGui::PopItemWidth();
@@ -145,7 +145,7 @@ class LogWindow : public UIComponent // NOLINT
     void DebugControls()
     {
         // Debug transport controls
-        bool isPaused = renderer->paused;
+        bool const isPaused = renderer->paused;
 
         ImGui::BeginDisabled( !isPaused );
         ImGui::PushItemWidth( 140 );
@@ -177,7 +177,7 @@ class LogWindow : public UIComponent // NOLINT
     {
         if ( ImGui::BeginMenuBar() ) {
             if ( ImGui::BeginMenu( "File" ) ) {
-                if ( ImGui::MenuItem( "Exit" ) ) {
+                if ( ImGui::MenuItem( "Close" ) ) {
                     visible = false;
                 }
                 ImGui::EndMenu();
@@ -190,11 +190,11 @@ class LogWindow : public UIComponent // NOLINT
     void AddLog( const char *fmt, ... ) IM_FMTARGS( 2 )
     {
         int     oldSize = _buf.size();
-        va_list args = nullptr;
+        va_list args;
         va_start( args, fmt );
         _buf.appendfv( fmt, args );
         va_end( args );
-        for ( int newSize = _buf.size(); oldSize < newSize; oldSize++ ) {
+        for ( int const newSize = _buf.size(); oldSize < newSize; oldSize++ ) {
             if ( _buf[oldSize] == '\n' ) {
                 _lineOffsets.push_back( oldSize + 1 );
             }

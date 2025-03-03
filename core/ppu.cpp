@@ -6,13 +6,18 @@
 #include <exception>
 #include <cstdlib>
 #include <array>
+#include <iostream>
 
 PPU::PPU( Bus *bus ) : _bus( bus )
 {
     try {
-        _nesPaletteRgbValues = utils::readPalette( "palettes/palette1.pal" );
+        LoadSystemPalette();
     } catch ( std::exception &e ) {
-        exit( EXIT_FAILURE );
+        std::cerr << e.what() << '\n';
+        std::cout << "Failed to load system palette from file.\n";
+        std::cout << "Using default palette.\n";
+        failedPaletteRead = true;
+        LoadDefaultSystemPalette();
     }
 }
 
