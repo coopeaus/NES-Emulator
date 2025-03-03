@@ -1,36 +1,34 @@
 name: build-linux
 
-on: pull_request
-
-# on:
-#   workflow_dispatch:
-#     inputs:
-#       branch:
-#         description: 'Branch to build'
-#         required: true
-#         default: 'main'
-#         type: string
-#       commit:
-#         description: 'Shortform commit hash to build'
-#         required: true
-#         default: 'HEAD'
-#         type: string
-#   workflow_call:
-#     inputs:
-#       branch:
-#         description: 'Branch to build'
-#         required: true
-#         default: 'main'
-#         type: string
-#       commit:
-#         description: 'Shortform commit hash to build'
-#         required: true
-#         default: 'HEAD'
-#         type: string
-#     outputs:
-#       artifact_name:
-#         description: 'Name of the artifact to upload'
-#         value: 'Linux-x86-64'
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build'
+        required: true
+        default: 'main'
+        type: string
+      commit:
+        description: 'Shortform commit hash to build'
+        required: true
+        default: 'HEAD'
+        type: string
+  workflow_call:
+    inputs:
+      branch:
+        description: 'Branch to build'
+        required: true
+        default: 'main'
+        type: string
+      commit:
+        description: 'Shortform commit hash to build'
+        required: true
+        default: 'HEAD'
+        type: string
+    outputs:
+      artifact_name:
+        description: 'Name of the artifact to upload'
+        value: 'Linux-x86-64'
 
 jobs:
   build:

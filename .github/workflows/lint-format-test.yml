@@ -10,7 +10,7 @@
 
 name: lint-format-test
 
-on: [workflow_dispatch]
+on: [pull_request]
 
 jobs:
   lint-format-test:
