@@ -104,7 +104,6 @@ jobs:
 
       - name: Build
         run: |
-          mkdir build
           cmake --build build --config Release
 
       - name: Upload build directory
