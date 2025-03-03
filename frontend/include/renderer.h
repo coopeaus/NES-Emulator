@@ -4,6 +4,7 @@
 #include <SDL_error.h>
 #include <SDL_hints.h>
 #include <SDL_events.h>
+#include <array>
 #include <fmt/base.h>
 #include <cstdlib>
 #include <glad/glad.h>
@@ -484,12 +485,12 @@ class Renderer
 
     static void ClampToAspectRatio( int *x, int *y, int *width, int *height )
     {
-        float targetAspect = 256.0F / 240.0F;
-        float windowAspect = static_cast<float>( *width ) / static_cast<float>( *height );
-        int   newWidth = 0;
-        int   newHeight = 0;
-        int   viewportX = 0;
-        int   viewportY = 0;
+        float const targetAspect = 256.0F / 240.0F;
+        float const windowAspect = static_cast<float>( *width ) / static_cast<float>( *height );
+        int         newWidth = 0;
+        int         newHeight = 0;
+        int         viewportX = 0;
+        int         viewportY = 0;
         if ( windowAspect > targetAspect ) {
             newHeight = *height;
             newWidth = static_cast<int>( static_cast<float>( *height ) * targetAspect );
@@ -529,7 +530,7 @@ class Renderer
            debug window.
         */
 
-        GLuint                  texture = tableIdx == 0 ? patternTable0Texture : patternTable1Texture;
+        GLuint const            texture = tableIdx == 0 ? patternTable0Texture : patternTable1Texture;
         std::array<u32, 16384> *frameBuffer = tableIdx == 0 ? &patternTable0Buffer : &patternTable1Buffer;
 
         glBindTexture( GL_TEXTURE_2D, texture );

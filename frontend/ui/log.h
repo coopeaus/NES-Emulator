@@ -192,7 +192,7 @@ class LogWindow : public UIComponent // NOLINT
         int oldSize = _buf.size();
         _buf.append( str );
         // Process new lines or any additional logic
-        for ( int newSize = _buf.size(); oldSize < newSize; oldSize++ ) {
+        for ( int const newSize = _buf.size(); oldSize < newSize; oldSize++ ) {
             if ( _buf[oldSize] == '\n' ) {
                 _lineOffsets.push_back( oldSize + 1 );
             }

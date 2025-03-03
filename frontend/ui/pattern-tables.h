@@ -1,8 +1,13 @@
 #pragma once
-#include "custom-components.h"
+#include "bus.h"
+#include "imgui-spectrum.h"
 #include "ui-component.h"
 #include "renderer.h"
+#include <cstdio>
+#include <cstdint>
+#include <cmath>
 #include <imgui.h>
+#include <string>
 
 class PatternTablesWindow : public UIComponent
 {
@@ -112,19 +117,19 @@ class PatternTablesWindow : public UIComponent
         ImGui::BeginChild( childName, windowSize, 0, windowFlags );
 
         // Grab texture
-        GLuint textureHandle = renderer->GrabPatternTableTextureHandle( tableIdx );
+        GLuint const textureHandle = renderer->GrabPatternTableTextureHandle( tableIdx );
         ImGui::Image( (ImTextureID) (intptr_t) textureHandle, tilesetSize );
 
         // Save the current cursor position, for later restoring it.
-        ImVec2 currentCursorPos = ImGui::GetCursorScreenPos();
-        ImVec2 gridStartPos = ImGui::GetWindowPos();
+        ImVec2 const currentCursorPos = ImGui::GetCursorScreenPos();
+        ImVec2 const gridStartPos = ImGui::GetWindowPos();
         ImGui::SetCursorScreenPos( gridStartPos );
 
         ImDrawList *drawList = ImGui::GetWindowDrawList();
 
         for ( int rowStart = 0; rowStart < 256; rowStart += 16 ) {
             for ( int cellIdx = 0; cellIdx < 16; cellIdx++ ) {
-                int idx = ( rowStart + cellIdx + idOffset ) * 16;
+                int const idx = ( rowStart + cellIdx + idOffset ) * 16;
                 GridCell( idx, cellSize, selectCell );
                 if ( cellIdx < 15 ) {
                     ImGui::SameLine( 0.0f, 0.0f );
@@ -140,7 +145,7 @@ class PatternTablesWindow : public UIComponent
 
     bool GridCell( int cellIdx, const ImVec2 cellSize, int *currentSelection )
     {
-        bool isSelected = ( *currentSelection == cellIdx );
+        bool const isSelected = ( *currentSelection == cellIdx );
         ImGui::PushID( cellIdx );
 
         // Override styles
@@ -149,7 +154,7 @@ class PatternTablesWindow : public UIComponent
         ImGui::PushStyleColor( ImGuiCol_ButtonActive, ImVec4( 0.4f, 0.6f, 0.9f, 0.7f ) );
         ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 0, 0 ) );
 
-        bool clicked = ImGui::Button( "##cell", cellSize );
+        bool const clicked = ImGui::Button( "##cell", cellSize );
 
         ImGui::PopStyleColor( 3 );
         ImGui::PopStyleVar();
@@ -159,26 +164,27 @@ class PatternTablesWindow : public UIComponent
         }
 
         if ( isSelected ) {
-            float t = static_cast<float>( ImGui::GetTime() );
-            float delta = 0.5f + 0.5f * sinf( t * 5.0f );
+            float const t = static_cast<float>( ImGui::GetTime() );
+            float const delta = 0.5f + ( 0.5f * sinf( t * 5.0f ) );
 
             // Get button rect
-            ImVec2 pMin = ImGui::GetItemRectMin();
-            ImVec2 pMax = ImGui::GetItemRectMax();
+            ImVec2 const pMin = ImGui::GetItemRectMin();
+            ImVec2 const pMax = ImGui::GetItemRectMax();
             // Get a slightly smaller rect
-            ImVec2 pInnerMin = ImVec2( pMin.x + 2, pMin.y + 2 );
-            ImVec2 pInnerMax = ImVec2( pMax.x - 2, pMax.y - 2 );
+            ImVec2 const pInnerMin = ImVec2( pMin.x + 2, pMin.y + 2 );
+            ImVec2 const pInnerMax = ImVec2( pMax.x - 2, pMax.y - 2 );
 
             // Interpolate between two colors, for easier visibility when selected
-            ImVec4 colorA = ImVec4( 1.0f, 1.0f, 1.0f, 1.0f );
-            ImVec4 colorB = ImVec4( 0.5f, 0.5f, 0.5f, 1.0f );
-            ImVec4 tweenedColor;
+            ImVec4 const colorA = ImVec4( 1.0f, 1.0f, 1.0f, 1.0f );
+            ImVec4 const colorB = ImVec4( 0.5f, 0.5f, 0.5f, 1.0f );
+            ImVec4       tweenedColor;
             tweenedColor.x = colorA.x * ( 1.0f - delta ) + colorB.x * delta;
             tweenedColor.y = colorA.y * ( 1.0f - delta ) + colorB.y * delta;
             tweenedColor.z = colorA.z * ( 1.0f - delta ) + colorB.z * delta;
             tweenedColor.w = colorA.w * ( 1.0f - delta ) + colorB.w * delta;
-            ImU32 tweenedColor32 = IM_COL32( (int) ( tweenedColor.x * 255 ), (int) ( tweenedColor.y * 255 ),
-                                             (int) ( tweenedColor.z * 255 ), (int) ( tweenedColor.w * 255 ) );
+            ImU32 const tweenedColor32 =
+                IM_COL32( (int) ( tweenedColor.x * 255 ), (int) ( tweenedColor.y * 255 ),
+                          (int) ( tweenedColor.z * 255 ), (int) ( tweenedColor.w * 255 ) );
 
             ImDrawList *drawList = ImGui::GetWindowDrawList();
             drawList->AddRect( pMin, pMax, IM_COL32( 0, 0, 0, 255 ), 0.0f, 0, 4.0f );
@@ -216,7 +222,7 @@ class PatternTablesWindow : public UIComponent
         ImGui::Text( "Tile Index" );
         ImGui::SameLine();
         ImGui::Indent( indentSpacing );
-        int tileIndex = targetId / 16;
+        int const tileIndex = targetId / 16;
         ImGui::Text( "$%02X (%d)", tileIndex, tileIndex );
 
         // Spacing();
@@ -233,9 +239,9 @@ class PatternTablesWindow : public UIComponent
             ImGui::Dummy( ImVec2( 0, 0 ) );
             for ( int cell = 0; cell < 4; cell++ ) {
                 ImGui::SameLine();
-                u32 const colorIndex = rowStart + cell;
-                u32 const paletteColor = renderer->bus.ppu.GetPpuPaletteColor( colorIndex );
-                bool      isSelected = paletteCellSelected == rowStart + cell;
+                u32 const  colorIndex = rowStart + cell;
+                u32 const  paletteColor = renderer->bus.ppu.GetPpuPaletteColor( colorIndex );
+                bool const isSelected = paletteCellSelected == rowStart + cell;
                 // TODO: Add palettes
             }
         }
