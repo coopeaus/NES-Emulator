@@ -91,7 +91,14 @@ jobs:
             echo "OpenGL not found in vcpkg!"
             exit 1
           fi
-          cmake -DCMAKE_TOOLCHAIN_FILE=$CMAKE_TOOLCHAIN_FILE -P cmake/check_opengl.cmake
+          cmake --version
+          cmake -DCMAKE_TOOLCHAIN_FILE=$CMAKE_TOOLCHAIN_FILE -L .
+          if [ $? -eq 0 ]; then
+            echo "CMake check passed!"
+          else
+            echo "CMake check failed!"
+            exit 1
+          fi
 
       - name: Run build script
         run: |
