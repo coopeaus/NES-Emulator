@@ -221,7 +221,7 @@ void Cartridge::Write( u16 address, u8 data )
      */
     if ( address >= 0x8000 && address <= 0xFFFF ) {
         u32 const translatedAddress = _mapper->TranslateCPUAddress( address );
-        return _prgRom[translatedAddress];
+        return _prgRom.at(translatedAddress & 0xFFFF);
     }
     return 0xFF;
 }
@@ -233,7 +233,7 @@ void Cartridge::Write( u16 address, u8 data )
      */
     if ( address >= 0x0000 && address <= 0x1FFF ) {
         u32 const translatedAddress = _mapper->TranslatePPUAddress( address );
-        return _chrRom[translatedAddress];
+        return _chrRom.at(translatedAddress & 0x1FFF);
     }
     return 0xFF;
 }
@@ -247,7 +247,7 @@ void Cartridge::Write( u16 address, u8 data )
      * a game uses PRG RAM or not will be determined by the mapper.
      */
     if ( address >= 0x6000 && address <= 0x7FFF && _mapper->SupportsPrgRam() ) {
-        return _prgRam[address - 0x6000];
+        return _prgRam.at((address - 0x6000) & 0x7FFF);
     }
     return 0xFF;
 }
@@ -258,7 +258,7 @@ void Cartridge::Write( u16 address, u8 data )
      * Expansion ROM is rarely used, but when it is, it's used for additional program data
      */
     if ( address >= 0x4020 && address <= 0x5FFF && _mapper->HasExpansionRom() ) {
-        return _expansionMemory[address - 0x4020];
+        return _expansionMemory.at(address - 0x4020);
     }
     return 0xFF;
 }
@@ -269,7 +269,7 @@ void Cartridge::Write( u16 address, u8 data )
      * This is used by the PPU in four-screen mode
      */
     if ( address >= 0x2800 && address <= 0x2FFF ) {
-        return _cartridgeVram[address & 0x07FF]; // Mask to 2Kib
+        return _cartridgeVram.at(address & 0x07FF); // Mask to 2Kib
     }
     return 0xFF;
 }
@@ -316,7 +316,7 @@ void Cartridge::WriteChrRAM( u16 address, u8 data )
      */
     if ( _usesChrRam && address >= 0x0000 && address <= 0x1FFF ) {
         u16 const translatedAddress = _mapper->TranslatePPUAddress( address );
-        _chrRam[translatedAddress] = data;
+        _chrRam.at(translatedAddress & 0x1FFF) = data;
     }
 }
 
@@ -329,7 +329,8 @@ void Cartridge::WritePrgRAM( u16 address, u8 data )
      * a game uses PRG RAM or not will be determined by the mapper.
      */
     if ( address >= 0x6000 && address <= 0x7FFF && _mapper->SupportsPrgRam() ) {
-        _prgRam[address - 0x6000] = data;
+
+        _prgRam.at((address - 0x6000) & 0x7FFF) = data;
     }
 }
 
@@ -339,7 +340,7 @@ void Cartridge::WriteExpansionRAM( u16 address, u8 data )
      * Expansion ROM is rarely used, but when it is, it's used for additional program data
      */
     if ( address >= 0x4020 && address <= 0x5FFF && _mapper->HasExpansionRam() ) {
-        _expansionMemory[address - 0x4020] = data;
+        _expansionMemory.at((address - 0x4020) & 0x5FFF) = data;
     }
 }
 
@@ -349,7 +350,7 @@ void Cartridge::WriteCartridgeVRAM( u16 address, u8 data )
      * This is used by the PPU in four-screen mode
      */
     if ( address >= 0x2800 && address <= 0x2FFF ) {
-        _cartridgeVram[address & 0x07FF] = data;
+        _cartridgeVram.at(address & 0x07FF) = data;
     }
 }
 
