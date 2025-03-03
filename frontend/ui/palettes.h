@@ -70,8 +70,6 @@ class PaletteWindow : public UIComponent
     }
     void RightPanel()
     {
-        ImGui::BeginChild( "right panel", ImVec2( 0, 0 ) );
-
         ImGui::PushFont( renderer->fontMonoBold );
         ImGui::Text( "Properties" );
         ImGui::PopFont();
