@@ -39,6 +39,7 @@ target_link_libraries(emu_core PRIVATE fmt::fmt)
 ################################################
 ]]
 if(BUILD_FRONTEND)
+  message(STATUS "BUILD_FRONTEND is enabled. Configuring frontend...")
 
   file(GLOB FRONTEND_SOURCES "frontend/*.cpp" "frontend/ui/*.cpp")
   add_executable(emu ${FRONTEND_SOURCES})
@@ -65,27 +66,48 @@ if(BUILD_FRONTEND)
   target_link_libraries(emu PRIVATE glad::glad)
   if(APPLE)
     target_link_libraries(emu PRIVATE "-framework OpenGL")
+  elseif(WIN32)
+    target_link_libraries(emu PRIVATE ${OpenGL_GL_LIBRARY})
   else()
+    find_package(OpenGL REQUIRED)
     target_link_libraries(emu PRIVATE OpenGL::GL)
   endif()
 
-  # Copy roms to build directory, for testing purposes
-  add_custom_command(TARGET emu POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_directory
-      ${CMAKE_SOURCE_DIR}/tests/roms ${CMAKE_BINARY_DIR}/tests/roms
-  )
+  # Debugging asset paths
+  message(STATUS "Checking asset paths:")
+  message(STATUS "Palettes: ${CMAKE_SOURCE_DIR}/palettes -> ${CMAKE_BINARY_DIR}/palettes")
+  message(STATUS "Fonts: ${CMAKE_SOURCE_DIR}/fonts -> ${CMAKE_BINARY_DIR}/fonts")
+  message(STATUS "Tests/Roms: ${CMAKE_SOURCE_DIR}/tests/roms -> ${CMAKE_BINARY_DIR}/tests/roms")
 
-  # Copy palettes directory to build directory
-  add_custom_command(TARGET emu POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_directory
-      ${CMAKE_SOURCE_DIR}/palettes ${CMAKE_BINARY_DIR}/palettes
-  )
+  # Copy assets only if they exist
+  if(EXISTS "${CMAKE_SOURCE_DIR}/palettes")
+    add_custom_command(TARGET emu POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/palettes ${CMAKE_BINARY_DIR}/palettes
+    )
+  else()
+    message(WARNING "WARNING: Palettes directory NOT found!")
+  endif()
 
-  # Copy fonts directory to build directory
-  add_custom_command(TARGET emu POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_directory
-      ${CMAKE_SOURCE_DIR}/fonts ${CMAKE_BINARY_DIR}/fonts
-  )
+  if(EXISTS "${CMAKE_SOURCE_DIR}/fonts")
+    add_custom_command(TARGET emu POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/fonts ${CMAKE_BINARY_DIR}/fonts
+    )
+  else()
+    message(WARNING "WARNING: Fonts directory NOT found!")
+  endif()
+
+  if(EXISTS "${CMAKE_SOURCE_DIR}/tests/roms")
+    add_custom_command(TARGET emu POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/tests/roms ${CMAKE_BINARY_DIR}/tests/roms
+    )
+  else()
+    message(WARNING "WARNING: Tests/Roms directory NOT found!")
+  endif()
+
+  # Force asset copy by adding a target
+  add_custom_target(copy_assets ALL DEPENDS emu)
+  add_dependencies(copy_assets emu)
+
 endif()
 
 #[[
