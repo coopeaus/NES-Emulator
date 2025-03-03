@@ -83,10 +83,9 @@ jobs:
           sudo apt update
           sudo apt install -y libgl1-mesa-dev libx11-dev xorg-dev
       
-      - name: Run build script
+      - name: Build
         run: |
-          chmod +x scripts/build.sh
-          ./scripts/build.sh
+          cmake --build build --config Release
 
       - name: Upload build directory
         uses: actions/upload-artifact@v4
