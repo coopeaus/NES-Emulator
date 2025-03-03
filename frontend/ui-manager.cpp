@@ -1,3 +1,5 @@
+#define SDL_MAIN_HANDLED
+
 #include "ui-manager.h"
 #include "ui-component.h"
 

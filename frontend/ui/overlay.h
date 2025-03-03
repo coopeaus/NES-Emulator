@@ -30,7 +30,7 @@ class OverlayWindow : public UIComponent
 
         if ( ImGui::Begin( "Overlay", &visible, windowFlags ) ) {
             ImGui::PushFont( renderer->fontMono );
-            ImGui::Text( "CPU Cycle: %lld", renderer->bus.cpu.GetCycles() );
+            ImGui::Text( "CPU Cycle: " U64_FORMAT_SPECIFIER, renderer->bus.cpu.GetCycles() );
             ImGui::Text( "FPS(%.1f FPS)", renderer->io->Framerate );
             ImGui::PopFont();
         }
