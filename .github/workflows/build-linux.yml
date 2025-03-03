@@ -67,9 +67,16 @@ jobs:
       - name: Install basic dependencies
         run: |
           sudo apt update
-          sudo apt install -y clang-19 lldb-19 lld-19 ninja-build libtool libltdl-dev
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
-          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
+          sudo apt install -y clang-19 clang-tools-19 lldb-19 lld-19 ninja-build libtool libltdl-dev
+          sudo ln -s /usr/bin/clang-19 /usr/bin/clang
+          sudo ln -s /usr/bin/clang++-19 /usr/bin/clang++
+      
+      - name: Check clang version
+        run: |
+          which clang
+          which clang++
+          clang --version
+          clang++ --version
 
       - name: Install vcpkg dependencies
         run: |
