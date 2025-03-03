@@ -38,7 +38,7 @@ class LogWindow : public UIComponent // NOLINT
                 _lineOffsets.push_back( 0 );
                 lastCpuCycleLogged = currentCycle;
                 for ( const auto &line : renderer->bus.cpu.GetTracelog() ) {
-                    AddLog( "%s\n", line.c_str() );
+                    AddLog( line.c_str() );
                 }
             }
 
@@ -187,20 +187,15 @@ class LogWindow : public UIComponent // NOLINT
         ImGui::EndMenuBar();
     }
 
-    void AddLog( const char *fmt, ... ) IM_FMTARGS( 2 )
+    void AddLog( const char *str )
     {
-        int     oldSize = _buf.size();
-        va_list args;
-        va_start( args, fmt );
-        _buf.appendfv( fmt, args );
-        va_end( args );
-        for ( int const newSize = _buf.size(); oldSize < newSize; oldSize++ ) {
+        int oldSize = _buf.size();
+        _buf.append( str );
+        // Process new lines or any additional logic
+        for ( int newSize = _buf.size(); oldSize < newSize; oldSize++ ) {
             if ( _buf[oldSize] == '\n' ) {
                 _lineOffsets.push_back( oldSize + 1 );
             }
-        }
-
-        if ( _buf.size() > renderer->bus.cpu.GetTracelog().size() ) {
         }
     }
 };

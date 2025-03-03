@@ -83,7 +83,7 @@ class CPU
     void AddTraceLog( const std::string &log )
     {
         if ( _traceEnabled ) {
-            _traceLog.push_back( log );
+            _traceLog.push_back( log + "\n" );
             if ( _traceLog.size() > traceSize ) {
                 _traceLog.pop_front();
             }
