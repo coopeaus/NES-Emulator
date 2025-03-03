@@ -98,7 +98,7 @@ class Renderer
 
     void InitEmulator()
     {
-        auto cartridge = std::make_shared<Cartridge>( "tests/roms/palette.nes" );
+        auto cartridge = std::make_shared<Cartridge>( "tests/roms/nestest.nes" );
         bus.LoadCartridge( cartridge );
         bus.cpu.Reset();
         bus.ppu.onFrameReady = [this]( const u32 *frameBuffer ) {
