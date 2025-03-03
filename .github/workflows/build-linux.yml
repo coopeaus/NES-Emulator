@@ -83,6 +83,18 @@ jobs:
           sudo apt update
           sudo apt install -y libgl1-mesa-dev libx11-dev xorg-dev
       
+      - name: Configure CMake
+        run: |
+          cmake -B build -S . \
+            -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+            -DCMAKE_C_COMPILER="/usr/bin/clang-19" \
+            -DCMAKE_CXX_COMPILER="/usr/bin/clang++-19" \
+            -DCMAKE_CXX_FLAGS="-stdlib=libc++" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_FRONTEND=ON \
+            -DBUILD_TESTS=ON             
+
       - name: Build
         run: |
           mkdir build
