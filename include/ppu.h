@@ -168,7 +168,6 @@ class PPU
     std::array<u32, 16384> GetPatternTable( int tableIdx )
     {
         std::array<u32, 16384> buffer{};
-        int                    bufferIdx = 0;
         u16                    baseAddr = tableIdx == 0 ? 0x0000 : 0x1000;
 
         // 256 tiles in a pattern table
