@@ -11,6 +11,7 @@
 #include "log.h"
 #include "memory-display.h"
 #include "palettes.h"
+#include "register-viewer.h"
 #include "pattern-tables.h"
 
 UIManager::UIManager( Renderer *renderer )
@@ -23,6 +24,7 @@ UIManager::UIManager( Renderer *renderer )
     AddComponent<MemoryDisplayWindow>( renderer );
     AddComponent<PaletteWindow>( renderer );
     AddComponent<PatternTablesWindow>( renderer );
+    AddComponent<RegisterViewerWindow>( renderer );
 }
 
 void UIManager::Render()

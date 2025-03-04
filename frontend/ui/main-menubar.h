@@ -10,6 +10,7 @@
 #include "log.h"
 #include "memory-display.h"
 #include "palettes.h"
+#include "register-viewer.h"
 #include "pattern-tables.h"
 
 class MainMenuBar : public UIComponent
@@ -51,6 +52,10 @@ class MainMenuBar : public UIComponent
 
                 if ( auto *paletteWindow = ui->GetComponent<PaletteWindow>() ) {
                     ImGui::MenuItem( "Palettes", nullptr, &paletteWindow->visible );
+                }
+
+                if ( auto *registerViewer = ui->GetComponent<RegisterViewerWindow>() ) {
+                    ImGui::MenuItem( "Register Viewer", nullptr, &registerViewer->visible );
                 }
 
                 if ( auto *patternTablesWindow = ui->GetComponent<PatternTablesWindow>() ) {
