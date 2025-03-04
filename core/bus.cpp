@@ -18,7 +18,7 @@ Bus::Bus() : cpu( this ), ppu( this )
 u8 Bus::Read( const u16 address, bool debugMode )
 {
     if ( _useFlatMemory ) {
-        return _flatMemory[address];
+        return _flatMemory.at( address );
     }
 
     // System RAM: 0x0000 - 0x1FFF (mirrored every 2KB)
