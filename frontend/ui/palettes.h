@@ -4,7 +4,7 @@
 #include "renderer.h"
 #include <cstdio>
 #include <imgui.h>
-#include "theme.h"
+#include "custom-components.h"
 #include <imgui-spectrum.h>
 #include <string>
 
@@ -70,8 +70,6 @@ class PaletteWindow : public UIComponent
     }
     void RightPanel()
     {
-        ImGui::BeginChild( "right panel", ImVec2( 0, 0 ) );
-
         ImGui::PushFont( renderer->fontMonoBold );
         ImGui::Text( "Properties" );
         ImGui::PopFont();
@@ -228,8 +226,8 @@ class PaletteWindow : public UIComponent
         ImGui::PushID( id );
         ImVec2 const size = ImVec2( hw, hw );
 
-        if ( CustomTheme::customSelectable( label, isSelected, rgba32Color, ImGuiSelectableFlags_None,
-                                            size ) ) {
+        if ( CustomComponents::selectable( label, isSelected, rgba32Color, ImGuiSelectableFlags_None,
+                                           size ) ) {
 
             if ( tabSelected == SYSTEM ) {
                 systemColorSelected = id;
