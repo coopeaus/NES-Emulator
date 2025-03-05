@@ -204,10 +204,6 @@ class PaletteWindow : public UIComponent
             ImGui::Dummy( ImVec2( 0, 0 ) );
             for ( int cell = 0; cell < 4; cell++ ) {
                 ImGui::SameLine( 0.0f, 0.0f );
-                int    cellIdx = rowStart + cell;
-                u16    paletteAddress = 0x3F00 + cellIdx;
-                u8     colorIndex = renderer->bus.ppu.Read( paletteAddress );
-                ImVec4 paletteColor = Rgba32ToImVec4( renderer->bus.ppu.GetMasterPaletteColor( colorIndex ) );
                 char   label[3];
                 snprintf( label, sizeof( label ), "%02X", colorIndex );
 

@@ -76,6 +76,7 @@ class Renderer
     u16  fps = 0;
     u64  frameCount = 0;
 
+    u64 currentFrame = 0;
     std::array<u32, 16384> patternTable0Buffer{};
     std::array<u32, 16384> patternTable1Buffer{};
 
@@ -105,6 +106,7 @@ class Renderer
         bus.ppu.onFrameReady = [this]( const u32 *frameBuffer ) {
             this->ProcessPpuFrameBuffer( frameBuffer );
         };
+        currentFrame = bus.ppu.GetFrame();
     }
 
     bool Setup()
@@ -334,7 +336,7 @@ class Renderer
         while ( running ) {
             u64 const frameStart = SDL_GetPerformanceCounter();
 
-            bus.cpu.ExecuteFrame( &paused );
+            ExecuteFrame();
             PollEvents();
             RenderFrame();
             UpdatePatternTableTextures();
@@ -514,7 +516,18 @@ class Renderer
     #                              #
     ################################
     */
+    void ExecuteFrame()
+    {
+        while ( currentFrame == bus.ppu.GetFrame() ) {
+            if ( paused ) {
+                break;
+            }
+            bus.cpu.DecodeExecute();
+        }
+        currentFrame = bus.ppu.GetFrame();
+    }
 
+    void UpdateUiWindows() {}
     void UpdatePatternTableTextures()
     {
         if ( updatePatternTables ) {
