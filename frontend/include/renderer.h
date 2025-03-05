@@ -76,7 +76,7 @@ class Renderer
     u16  fps = 0;
     u64  frameCount = 0;
 
-    u64 currentFrame = 0;
+    u64                    currentFrame = 0;
     std::array<u32, 16384> patternTable0Buffer{};
     std::array<u32, 16384> patternTable1Buffer{};
 
