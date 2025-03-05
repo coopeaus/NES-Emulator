@@ -7,98 +7,247 @@
 class RegisterViewerWindow : public UIComponent
 {
   public:
-    RegisterViewerWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = false; }
+    CPU &cpu; // NOLINT
+    RegisterViewerWindow( Renderer *renderer ) : UIComponent( renderer ), cpu( renderer->bus.cpu )
+    {
+        visible = true;
+    }
 
+    /*
+    ################################
+    #           Variables          #
+    ################################
+    */
+    enum TabType : int { CPU, PPU };
+    int tabSelected = CPU;
+
+    /*
+    ################################
+    #            Methods           #
+    ################################
+    */
     void OnVisible() override {}
     void OnHidden() override {}
 
     void RenderSelf() override
     {
-        constexpr ImGuiWindowFlags windowFlags =
-            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize;
+        constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_MenuBar;
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
-        ImGui::SetNextWindowSizeConstraints( ImVec2( 300, -1 ), ImVec2( 400, -1 ) );
+        ImGui::SetNextWindowSizeConstraints( ImVec2( 300, 400 ), ImVec2( 400, 500 ) );
 
         if ( ImGui::Begin( "Register Viewer", &visible, windowFlags ) ) {
-            auto &cpu = renderer->bus.cpu;
+            RenderMenuBar();
+            DebugControls();
+            ImGui::Spacing();
+            ImGui::PushFont( renderer->fontMono );
 
-            bool const isPaused = renderer->paused;
+            ImGuiTabBarFlags const tabBarFlags = ImGuiTabBarFlags_None;
+            if ( ImGui::BeginTabBar( "Register Tabs", tabBarFlags ) ) {
 
-            ImGui::BeginDisabled( !isPaused );
-            if ( ImGui::Button( "Continue" ) ) {
-                renderer->paused = false;
-            }
-            ImGui::EndDisabled();
-
-            ImGui::SameLine();
-
-            ImGui::BeginDisabled( isPaused );
-            if ( ImGui::Button( "Pause" ) ) {
-                renderer->paused = true;
-            }
-            ImGui::EndDisabled();
-
-            ImGui::SameLine();
-
-            if ( ImGui::Button( "Reset" ) ) {
-                renderer->bus.DebugReset();
-                if ( auto *logWindow = renderer->ui.GetComponent<LogWindow>() ) {
-                    logWindow->Clear();
+                if ( ImGui::BeginTabItem( "CPU" ) ) {
+                    tabSelected = CPU;
+                    CpuRegisters();
+                    CpuStatus();
+                    ImGui::EndTabItem();
                 }
+
+                if ( ImGui::BeginTabItem( "PPU" ) ) {
+                    tabSelected = PPU;
+
+                    // TODO: Implement PPU status viewer
+                    ImGui::EndTabItem();
+                }
+                ImGui::EndTabBar();
             }
 
-            // display the registers types accordingly
-            ImGui::Text( "A:  %02X", cpu.GetAccumulator() );
-            ImGui::Text( "X:  %02X", cpu.GetXRegister() );
-            ImGui::Text( "Y:  %02X", cpu.GetYRegister() );
-            ImGui::Text( "SP: %02X", cpu.GetStackPointer() );
-            ImGui::Text( "P:  %02X", cpu.GetStatusRegister() );
+            ImGui::Spacing();
 
-            ImGui::Text( "PC: %04X", cpu.GetProgramCounter() );
-            ImGui::Text( "Cycle: " U64_FORMAT_SPECIFIER, cpu.GetCycles() );
-
-            // defined here due to being unable to access CPU declarations
-            constexpr u8 carry = 1 << 0;
-            constexpr u8 zero = 1 << 1;
-            constexpr u8 decimal = 1 << 3;
-            constexpr u8 brk = 1 << 4;
-            constexpr u8 unused = 1 << 5;
-            constexpr u8 overflow = 1 << 6;
-            constexpr u8 negative = 1 << 7;
-
-            // get status value
-            u8 const status = cpu.GetStatusRegister();
-
-            // check each flag
-            bool carryBool = ( status & carry ) != 0;
-            bool zeroBool = ( status & zero ) != 0;
-            bool decimalBool = ( status & decimal ) != 0;
-            bool brkBool = ( status & brk ) != 0;
-            bool unusedBool = ( status & unused ) != 0;
-            bool overflowBool = ( status & overflow ) != 0;
-            bool negativeBool = ( status & negative ) != 0;
-
-            // status check boxes
-            ImGui::Checkbox( "Carry", &carryBool );
-            ImGui::SameLine( 100 );
-
-            ImGui::Checkbox( "Zero", &zeroBool );
-            ImGui::SameLine( 200 );
-
-            ImGui::Checkbox( "Decimal", &decimalBool );
-
-            ImGui::Checkbox( "Break", &brkBool );
-            ImGui::SameLine( 100 );
-
-            ImGui::Checkbox( "Unused", &unusedBool );
-            ImGui::SameLine( 200 );
-
-            ImGui::Checkbox( "Overflow", &overflowBool );
-
-            ImGui::Checkbox( "Negative", &negativeBool );
-            ImGui::SameLine( 100 );
+            ImGui::PopFont();
         }
         ImGui::End();
         ImGui::PopStyleVar();
+    }
+
+    void DebugControls()
+    {
+        bool const isPaused = renderer->paused;
+
+        ImGui::BeginDisabled( !isPaused );
+        if ( ImGui::Button( "Continue" ) ) {
+            renderer->paused = false;
+        }
+        ImGui::EndDisabled();
+
+        ImGui::SameLine();
+
+        ImGui::BeginDisabled( isPaused );
+        if ( ImGui::Button( "Pause" ) ) {
+            renderer->paused = true;
+        }
+        ImGui::EndDisabled();
+
+        ImGui::SameLine();
+
+        if ( ImGui::Button( "Reset" ) ) {
+            renderer->bus.DebugReset();
+            if ( auto *logWindow = renderer->ui.GetComponent<LogWindow>() ) {
+                logWindow->Clear();
+            }
+        }
+    }
+
+    void CpuRegisters()
+    {
+        ImGui::PushStyleColor( ImGuiCol_ChildBg, ImVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
+        ImGui::BeginChild( "registers", ImVec2( 0, 150 ), ImGuiChildFlags_Borders );
+        ImGui::PushFont( renderer->fontMonoBold );
+        ImGui::Text( "Cycle: " );
+        ImGui::PopFont();
+        ImGui::SameLine();
+        ImGui::Text( U64_FORMAT_SPECIFIER, cpu.GetCycles() );
+        ImGui::Spacing();
+
+        float innerSpacing = 25.0f;
+        float outerSpacing = 45.0f;
+
+        // display the registers types accordingly
+        ImGui::BeginGroup();
+        ImGui::PushFont( renderer->fontMonoBold );
+        ImGui::Text( "A:" );
+        ImGui::PopFont();
+        ImGui::SameLine();
+        ImGui::Indent( innerSpacing );
+        ImGui::Text( "%02X", cpu.GetAccumulator() );
+
+        ImGui::SameLine();
+        ImGui::Indent( outerSpacing );
+        ImGui::PushFont( renderer->fontMonoBold );
+        ImGui::Text( "X:" );
+        ImGui::PopFont();
+        ImGui::SameLine();
+        ImGui::Indent( innerSpacing );
+        ImGui::Text( "%02X", cpu.GetXRegister() );
+
+        ImGui::SameLine();
+        ImGui::Indent( outerSpacing );
+        ImGui::PushFont( renderer->fontMonoBold );
+        ImGui::Text( "Y:" );
+        ImGui::PopFont();
+        ImGui::SameLine();
+        ImGui::Indent( innerSpacing );
+        ImGui::Text( "%02X", cpu.GetYRegister() );
+
+        ImGui::EndGroup();
+
+        // New row
+        ImGui::BeginGroup();
+
+        ImGui::PushFont( renderer->fontMonoBold );
+        ImGui::Text( "PC:" );
+        ImGui::PopFont();
+        ImGui::SameLine();
+        ImGui::Indent( innerSpacing );
+        ImGui::Text( "%02X", cpu.GetProgramCounter() );
+
+        ImGui::SameLine();
+        ImGui::Indent( outerSpacing );
+        ImGui::PushFont( renderer->fontMonoBold );
+        ImGui::Text( "SP:" );
+        ImGui::PopFont();
+        ImGui::SameLine();
+        ImGui::Indent( innerSpacing );
+        ImGui::Text( "%02X", cpu.GetStackPointer() );
+
+        ImGui::SameLine();
+        ImGui::Indent( outerSpacing );
+        ImGui::PushFont( renderer->fontMonoBold );
+        ImGui::Text( "P:" );
+        ImGui::PopFont();
+        ImGui::SameLine();
+        ImGui::Indent( innerSpacing );
+        ImGui::Text( "%02X", cpu.GetStatusRegister() );
+        ImGui::EndGroup();
+
+        ImGui::PopStyleColor();
+        ImGui::EndChild();
+    }
+
+    void CpuStatus() const
+    {
+
+        ImGui::SeparatorText( "Status" );
+
+        // get status value
+        u8 const status = cpu.GetStatusRegister();
+
+        // check each flag
+        bool carryBool = ( status & CPU::Status::Carry ) != 0;
+        bool zeroBool = ( status & CPU::Status::Zero ) != 0;
+        bool interruptBool = ( status & CPU::Status::InterruptDisable ) != 0;
+        bool decimalBool = ( status & CPU::Status::Decimal ) != 0;
+        bool brkBool = ( status & CPU::Status::Break ) != 0;
+        bool unusedBool = ( status & CPU::Status::Unused ) != 0;
+        bool overflowBool = ( status & CPU::Status::Overflow ) != 0;
+        bool negativeBool = ( status & CPU::Status::Negative ) != 0;
+
+        float statusSpacing = 140.0f;
+
+        // status check boxes
+        ImGui::BeginGroup();
+        ImGui::BeginDisabled( !carryBool );
+        ImGui::Checkbox( "Carry", &carryBool );
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        ImGui::Indent( statusSpacing );
+        ImGui::BeginDisabled( !zeroBool );
+        ImGui::Checkbox( "Zero", &zeroBool );
+        ImGui::EndDisabled();
+        ImGui::EndGroup();
+
+        ImGui::BeginGroup();
+        ImGui::BeginDisabled( !interruptBool );
+        ImGui::Checkbox( "Interrupt", &interruptBool );
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        ImGui::Indent( statusSpacing );
+        ImGui::BeginDisabled( !decimalBool );
+        ImGui::Checkbox( "Decimal", &decimalBool );
+        ImGui::EndDisabled();
+        ImGui::EndGroup();
+
+        ImGui::BeginGroup();
+        ImGui::BeginDisabled( !brkBool );
+        ImGui::Checkbox( "Break", &brkBool );
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        ImGui::Indent( statusSpacing );
+        ImGui::BeginDisabled( !unusedBool );
+        ImGui::Checkbox( "Unused", &unusedBool );
+        ImGui::EndDisabled();
+        ImGui::EndGroup();
+
+        ImGui::BeginGroup();
+        ImGui::BeginDisabled( !overflowBool );
+        ImGui::Checkbox( "Overflow", &overflowBool );
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        ImGui::Indent( statusSpacing );
+        ImGui::BeginDisabled( !negativeBool );
+        ImGui::Checkbox( "Negative", &negativeBool );
+        ImGui::EndDisabled();
+        ImGui::EndGroup();
+    }
+
+    void RenderMenuBar()
+    {
+        if ( ImGui::BeginMenuBar() ) {
+            if ( ImGui::BeginMenu( "File" ) ) {
+                if ( ImGui::MenuItem( "Close" ) ) {
+                    visible = false;
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndMenuBar();
+        }
     }
 };
