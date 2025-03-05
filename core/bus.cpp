@@ -23,7 +23,7 @@ u8 Bus::Read( const u16 address, bool debugMode )
 
     // System RAM: 0x0000 - 0x1FFF (mirrored every 2KB)
     if ( address >= 0x0000 && address <= 0x1FFF ) {
-        return _ram.at(address & 0x07FF);
+        return _ram.at( address & 0x07FF );
     }
 
     // PPU Registers: 0x2000 - 0x3FFF (mirrored every 8 bytes)
@@ -37,7 +37,7 @@ u8 Bus::Read( const u16 address, bool debugMode )
     if ( address >= 0x4000 && address <= 0x401F ) {
         // Handle reads from controller ports and other I/O
         // apu read will go here. For now, return from temp private member of bus
-        return _apuIoMemory.at(address & 0x001F);
+        return _apuIoMemory.at( address & 0x001F );
     }
 
     // 4020 and up is cartridge territory
@@ -58,13 +58,13 @@ u8 Bus::Read( const u16 address, bool debugMode )
 void Bus::Write( const u16 address, const u8 data )
 {
     if ( _useFlatMemory ) {
-        _flatMemory.at(address) = data;
+        _flatMemory.at( address ) = data;
         return;
     }
 
     // System RAM: 0x0000 - 0x1FFF (mirrored every 2KB)
     if ( address >= 0x0000 && address <= 0x1FFF ) {
-        _ram.at(address & 0x07FF) = data;
+        _ram.at( address & 0x07FF ) = data;
         return;
     }
 
@@ -77,7 +77,7 @@ void Bus::Write( const u16 address, const u8 data )
 
     // APU and I/O Registers: 0x4000 - 0x401F
     if ( address >= 0x4000 && address <= 0x401F ) {
-        _apuIoMemory.at(address & 0x001F) = data; // temp
+        _apuIoMemory.at( address & 0x001F ) = data; // temp
         return;
     }
 
