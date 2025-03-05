@@ -1,8 +1,10 @@
 #pragma once
+#include "bus.h"
 #include "ui-component.h"
 #include "renderer.h"
 #include <imgui.h>
 #include "log.h"
+#include <inttypes.h>
 
 class RegisterViewerWindow : public UIComponent
 {
@@ -33,7 +35,7 @@ class RegisterViewerWindow : public UIComponent
     {
         constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_MenuBar;
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
-        ImGui::SetNextWindowSizeConstraints( ImVec2( 300, 400 ), ImVec2( 400, 500 ) );
+        ImGui::SetNextWindowSizeConstraints( ImVec2( 300, 420 ), ImVec2( 400, 500 ) );
 
         if ( ImGui::Begin( "Register Viewer", &visible, windowFlags ) ) {
             RenderMenuBar();
@@ -99,16 +101,10 @@ class RegisterViewerWindow : public UIComponent
     void CpuRegisters()
     {
         ImGui::PushStyleColor( ImGuiCol_ChildBg, ImVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
-        ImGui::BeginChild( "registers", ImVec2( 0, 150 ), ImGuiChildFlags_Borders );
-        ImGui::PushFont( renderer->fontMonoBold );
-        ImGui::Text( "Cycle: " );
-        ImGui::PopFont();
-        ImGui::SameLine();
-        ImGui::Text( U64_FORMAT_SPECIFIER, cpu.GetCycles() );
-        ImGui::Spacing();
+        ImGui::BeginChild( "registers", ImVec2( 0, 160 ), ImGuiChildFlags_Borders );
 
-        float innerSpacing = 25.0f;
-        float outerSpacing = 45.0f;
+        float const innerSpacing = 25.0f;
+        float const outerSpacing = 45.0f;
 
         // display the registers types accordingly
         ImGui::BeginGroup();
@@ -168,6 +164,45 @@ class RegisterViewerWindow : public UIComponent
         ImGui::Text( "%02X", cpu.GetStatusRegister() );
         ImGui::EndGroup();
 
+        ImGui::Dummy( ImVec2( 10, 10 ) );
+        ImGui::Separator();
+
+        ImGui::BeginGroup();
+        ImGui::PushFont( renderer->fontMonoBold );
+        ImGui::Text( "CPU Cycle: " );
+        ImGui::PopFont();
+        ImGui::SameLine();
+        ImGui::Indent( 100 );
+        ImGui::Text( U64_FORMAT_SPECIFIER, cpu.GetCycles() );
+        ImGui::EndGroup();
+
+        ImGui::BeginGroup();
+        ImGui::PushFont( renderer->fontMonoBold );
+        ImGui::Text( "PPU Cycle: " );
+        ImGui::PopFont();
+        ImGui::SameLine();
+        ImGui::Indent( 100 );
+        ImGui::Text( "%" PRIu16, renderer->bus.ppu.GetCycles() );
+        ImGui::EndGroup();
+
+        ImGui::BeginGroup();
+        ImGui::PushFont( renderer->fontMonoBold );
+        ImGui::Text( "Scanline:" );
+        ImGui::PopFont();
+        ImGui::SameLine();
+        ImGui::Indent( 100 );
+        ImGui::Text( "%" PRId16, renderer->bus.ppu.GetScanline() );
+        ImGui::EndGroup();
+
+        ImGui::BeginGroup();
+        ImGui::PushFont( renderer->fontMonoBold );
+        ImGui::Text( "Frame:" );
+        ImGui::PopFont();
+        ImGui::SameLine();
+        ImGui::Indent( 100 );
+        ImGui::Text( "%" PRIu64, renderer->bus.ppu.GetFrame() );
+        ImGui::EndGroup();
+
         ImGui::PopStyleColor();
         ImGui::EndChild();
     }
@@ -190,7 +225,7 @@ class RegisterViewerWindow : public UIComponent
         bool overflowBool = ( status & CPU::Status::Overflow ) != 0;
         bool negativeBool = ( status & CPU::Status::Negative ) != 0;
 
-        float statusSpacing = 140.0f;
+        float const statusSpacing = 140.0f;
 
         // status check boxes
         ImGui::BeginGroup();
