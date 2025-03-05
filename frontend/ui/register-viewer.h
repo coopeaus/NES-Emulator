@@ -55,7 +55,7 @@ class RegisterViewerWindow : public UIComponent
             ImGui::Text( "P:  %02X", cpu.GetStatusRegister() );
 
             ImGui::Text( "PC: %04X", cpu.GetProgramCounter() );
-            ImGui::Text( "Cycle: %llu", cpu.GetCycles() );
+            ImGui::Text( "Cycle: " U64_FORMAT_SPECIFIER, cpu.GetCycles() );
 
             // defined here due to being unable to access CPU declarations
             constexpr u8 carry = 1 << 0;
