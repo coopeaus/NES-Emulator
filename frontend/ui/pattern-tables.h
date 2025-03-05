@@ -130,7 +130,7 @@ class PatternTablesWindow : public UIComponent
 
         for ( int rowStart = 0; rowStart < 256; rowStart += 16 ) {
             for ( int cellIdx = 0; cellIdx < 16; cellIdx++ ) {
-                int idx = ( rowStart + cellIdx + idOffset ) * 16;
+                int const idx = ( rowStart + cellIdx + idOffset ) * 16;
 
                 auto onHover = [&]() {
                     ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );

@@ -204,7 +204,12 @@ class PaletteWindow : public UIComponent
             ImGui::Dummy( ImVec2( 0, 0 ) );
             for ( int cell = 0; cell < 4; cell++ ) {
                 ImGui::SameLine( 0.0f, 0.0f );
-                char   label[3];
+                int const    cellIdx = rowStart + cell;
+                u16 const    paletteAddress = 0x3F00 + cellIdx;
+                u8 const     colorIndex = renderer->bus.ppu.Read( paletteAddress );
+                ImVec4 const paletteColor =
+                    Rgba32ToImVec4( renderer->bus.ppu.GetMasterPaletteColor( colorIndex ) );
+                char label[3];
                 snprintf( label, sizeof( label ), "%02X", colorIndex );
 
                 auto onHover = [&]() {
@@ -228,7 +233,8 @@ class PaletteWindow : public UIComponent
 
     static ImVec4 HighlightColor( ImVec4 color, float factor )
     {
-        float luminance = static_cast<float>( 0.299 * color.x + 0.587 * color.y + 0.114 * color.z );
+        float const luminance =
+            static_cast<float>( ( 0.299 * color.x ) + ( 0.587 * color.y ) + ( 0.114 * color.z ) );
 
         // darken or lighten based on luminance
         if ( luminance > 0.5f ) {
@@ -251,7 +257,7 @@ class PaletteWindow : public UIComponent
             ImGui::Dummy( ImVec2( 0, 0 ) );
             for ( int cell = 0; cell < 8; cell++ ) {
                 ImGui::SameLine( 0.0f, 0.0f );
-                int cellIdx = rowStart + cell;
+                int const cellIdx = rowStart + cell;
 
                 auto onHover = [&]() {
                     ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
@@ -264,7 +270,7 @@ class PaletteWindow : public UIComponent
 
                 char label[3];
                 snprintf( label, sizeof( label ), "%02X", rowStart + cell );
-                ImVec4 paletteColor =
+                ImVec4 const paletteColor =
                     Rgba32ToImVec4( renderer->bus.ppu.GetMasterPaletteColor( rowStart + cell ) );
 
                 // clang-format off
@@ -287,9 +293,9 @@ class PaletteWindow : public UIComponent
 
     static ImVec4 Rgba32ToImVec4( u32 color )
     {
-        float r = static_cast<float>( color & 0xFF ) / 255.0f;
-        float g = static_cast<float>( ( color >> 8 ) & 0xFF ) / 255.0f;
-        float b = static_cast<float>( ( color >> 16 ) & 0xFF ) / 255.0f;
+        float const r = static_cast<float>( color & 0xFF ) / 255.0f;
+        float const g = static_cast<float>( ( color >> 8 ) & 0xFF ) / 255.0f;
+        float const b = static_cast<float>( ( color >> 16 ) & 0xFF ) / 255.0f;
 
         return { r, g, b, 255 };
     }
