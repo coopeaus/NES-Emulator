@@ -4,7 +4,7 @@
 #include "renderer.h"
 #include <imgui.h>
 #include "log.h"
-#include <inttypes.h>
+#include <cinttypes>
 
 class RegisterViewerWindow : public UIComponent
 {
@@ -12,7 +12,7 @@ class RegisterViewerWindow : public UIComponent
     CPU &cpu; // NOLINT
     RegisterViewerWindow( Renderer *renderer ) : UIComponent( renderer ), cpu( renderer->bus.cpu )
     {
-        visible = true;
+        visible = false;
     }
 
     /*

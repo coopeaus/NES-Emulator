@@ -62,8 +62,15 @@ class Renderer
     GLuint        emuScreenVAO = 0;
     GLuint        emuScreenVBO = 0;
 
+    // Pattern tables
     GLuint patternTable0Texture = 0;
     GLuint patternTable1Texture = 0;
+
+    // Nametables
+    GLuint nametable0Texture = 0;
+    GLuint nametable1Texture = 0;
+    GLuint nametable2Texture = 0;
+    GLuint nametable3Texture = 0;
 
     /*
     ################################
@@ -73,12 +80,17 @@ class Renderer
     bool running = true;
     bool paused = false;
     bool updatePatternTables = false;
+    bool updateNametables = false;
     u16  fps = 0;
     u64  frameCount = 0;
 
     u64                    currentFrame = 0;
     std::array<u32, 16384> patternTable0Buffer{};
     std::array<u32, 16384> patternTable1Buffer{};
+    std::array<u32, 61440> nametable0Buffer{};
+    std::array<u32, 61440> nametable1Buffer{};
+    std::array<u32, 61440> nametable2Buffer{};
+    std::array<u32, 61440> nametable3Buffer{};
 
     /*
     ################################
@@ -100,7 +112,7 @@ class Renderer
 
     void InitEmulator()
     {
-        auto cartridge = std::make_shared<Cartridge>( "tests/roms/nestest.nes" );
+        auto cartridge = std::make_shared<Cartridge>( "tests/roms/palette.nes" );
         bus.LoadCartridge( cartridge );
         bus.cpu.Reset();
         bus.ppu.onFrameReady = [this]( const u32 *frameBuffer ) {
@@ -190,37 +202,16 @@ class Renderer
 
         /*
         ################################
-        #            Texture           #
+        #            Textures          #
         ################################
         */
-        // Emulator screen
-        glGenTextures( 1, &emuScreenTexture );
-        glBindTexture( GL_TEXTURE_2D, emuScreenTexture );
-        glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, nesWidth, nesHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr );
-        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-        glBindTexture( GL_TEXTURE_2D, 0 );
-
-        // Pattern table textures, used for debugging
-        glGenTextures( 1, &patternTable0Texture );
-        glBindTexture( GL_TEXTURE_2D, patternTable0Texture );
-        glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr );
-        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-        glBindTexture( GL_TEXTURE_2D, 0 );
-
-        glGenTextures( 1, &patternTable1Texture );
-        glBindTexture( GL_TEXTURE_2D, patternTable1Texture );
-        glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr );
-        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-        glBindTexture( GL_TEXTURE_2D, 0 );
+        emuScreenTexture = CreateTexture( nesWidth, nesHeight );
+        patternTable0Texture = CreateTexture( 128, 128 );
+        patternTable1Texture = CreateTexture( 128, 128 );
+        nametable0Texture = CreateTexture( 256, 240 );
+        nametable1Texture = CreateTexture( 256, 240 );
+        nametable2Texture = CreateTexture( 256, 240 );
+        nametable3Texture = CreateTexture( 256, 240 );
 
         /*
         ################################
@@ -340,6 +331,7 @@ class Renderer
             PollEvents();
             RenderFrame();
             UpdatePatternTableTextures();
+            UpdateNametableTextures();
 
             u64 const    frameEnd = SDL_GetPerformanceCounter();
             double const frameTimeMs =
@@ -536,6 +528,16 @@ class Renderer
         }
     }
 
+    void UpdateNametableTextures()
+    {
+        if ( updateNametables ) {
+            nametable0Buffer = bus.ppu.GetNametable( 0 );
+            nametable1Buffer = bus.ppu.GetNametable( 1 );
+            nametable2Buffer = bus.ppu.GetNametable( 2 );
+            nametable3Buffer = bus.ppu.GetNametable( 3 );
+        }
+    }
+
     GLuint GrabPatternTableTextureHandle( int tableIdx )
     {
         /*
@@ -551,6 +553,29 @@ class Renderer
         glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, 128, 128, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer->data() );
         glBindTexture( GL_TEXTURE_2D, 0 );
 
+        return texture;
+    }
+
+    GLuint GrabNametableTextureHandle( int tableIdx )
+    {
+        /*
+           @brief: Updates nametable textures, read by the cartridge from the PPU. Used by nametable debug
+           window.
+        */
+        GLuint const texture = tableIdx == 0   ? nametable0Texture
+                               : tableIdx == 1 ? nametable1Texture
+                               : tableIdx == 2 ? nametable2Texture
+                                               : nametable3Texture;
+
+        std::array<u32, 61440> *frameBuffer = tableIdx == 0   ? &nametable0Buffer
+                                              : tableIdx == 1 ? &nametable1Buffer
+                                              : tableIdx == 2 ? &nametable2Buffer
+                                                              : &nametable3Buffer;
+
+        glBindTexture( GL_TEXTURE_2D, texture );
+        glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+        glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, 256, 240, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer->data() );
+        glBindTexture( GL_TEXTURE_2D, 0 );
         return texture;
     }
 
@@ -573,6 +598,27 @@ class Renderer
     }
 
     void PrintFps() { fmt::print( "FPS: {}\n", fps ); }
+
+    static GLuint CreateTexture( int width, int height )
+    {
+        GLuint textureID = 0;
+        glGenTextures( 1, &textureID );
+        glBindTexture( GL_TEXTURE_2D, textureID );
+
+        // Allocate the texture storage with no initial data.
+        glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr );
+
+        // Set texture filtering and wrapping options.
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+
+        // Unbind the texture.
+        glBindTexture( GL_TEXTURE_2D, 0 );
+
+        return textureID;
+    }
 
     static void SignalHandler( int signal )
     {

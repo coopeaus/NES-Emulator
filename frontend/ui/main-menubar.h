@@ -12,6 +12,7 @@
 #include "palettes.h"
 #include "register-viewer.h"
 #include "pattern-tables.h"
+#include "nametable.h"
 
 class MainMenuBar : public UIComponent
 {
@@ -60,6 +61,10 @@ class MainMenuBar : public UIComponent
 
                 if ( auto *patternTablesWindow = ui->GetComponent<PatternTablesWindow>() ) {
                     ImGui::MenuItem( "Pattern Tables", nullptr, &patternTablesWindow->visible );
+                }
+
+                if ( auto *nametableWindow = ui->GetComponent<NametableWindow>() ) {
+                    ImGui::MenuItem( "Nametables", nullptr, &nametableWindow->visible );
                 }
 
                 ImGui::EndMenu();

@@ -13,6 +13,7 @@
 #include "palettes.h"
 #include "register-viewer.h"
 #include "pattern-tables.h"
+#include "nametable.h"
 
 UIManager::UIManager( Renderer *renderer )
 {
@@ -25,6 +26,7 @@ UIManager::UIManager( Renderer *renderer )
     AddComponent<PaletteWindow>( renderer );
     AddComponent<PatternTablesWindow>( renderer );
     AddComponent<RegisterViewerWindow>( renderer );
+    AddComponent<NametableWindow>( renderer );
 }
 
 void UIManager::Render()

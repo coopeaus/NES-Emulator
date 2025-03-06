@@ -23,7 +23,7 @@ class PPU
     ||           Getters          ||
     ################################
     */
-    [[nodiscard]] MirrorMode GetMirrorMode();
+    [[nodiscard]] MirrorMode GetMirrorMode() const;
     [[nodiscard]] s16        GetScanline() const { return _scanline; }
     [[nodiscard]] u16        GetCycles() const { return _cycle; }
     [[nodiscard]] u64        GetFrame() const { return _frame; }
@@ -165,6 +165,7 @@ class PPU
     void EnableJsonTestMode() { _isDisabled = true; }
     void DisableJsonTestMode() { _isDisabled = false; }
 
+    // Get pattern table data, used in debugging (pattern-tables.h)
     std::array<u32, 16384> GetPatternTable( int tableIdx )
     {
         std::array<u32, 16384> buffer{};
@@ -197,6 +198,99 @@ class PPU
             }
         }
 
+        return buffer;
+    }
+
+    // Nametable data, used in debugging (nametables.h)
+    std::array<u32, 61440> GetNametable( int nametableIdx )
+    {
+        std::array<u32, 61440> buffer{};
+
+        u16 vramStart = 0x2000;
+        switch ( nametableIdx ) {
+            case 0:
+                vramStart = 0x2000;
+                break;
+            case 1:
+                vramStart = 0x2400;
+                break;
+            case 2:
+                vramStart = 0x2800;
+                break;
+            case 3:
+                vramStart = 0x2C00;
+                break;
+            default:
+                break;
+        }
+
+        /* Vram Structure, for reference
+        yyy NN YYYYY XXXXX
+        ||| || ||||| +++++-- tile X (coarse X scroll)
+        ||| || +++++-------- tile Y (coarse Y scroll)
+        ||| ++-------------- nametable 0-3
+        +++----------------- fine Y scroll
+        */
+
+        u16 vramEnd = vramStart + 960;
+        u16 attrBase = vramStart + 960;
+
+        for ( int vramAddr = vramStart; vramAddr < vramEnd; vramAddr++ ) {
+
+            // Determines which 8x8 tile is being processed, which is info provided by the vram addr
+            const int tileX = vramAddr & 0x1F;
+            const int tileY = ( vramAddr >> 5 ) & 0x1F;
+
+            // Bit 4 from ctrl registers determines the pattern table
+            u16 const patternTableBaseAddr = _ppuCtrl.bit.patternBackground ? 0x1000 : 0x0000;
+
+            // Vram address determines which tile index to use from the pattern table (0-255)
+            u8 const tileIndex = Read( vramAddr );
+
+            // Combining the two gives the pattern table address
+            u16 const tileAddr = patternTableBaseAddr + ( tileIndex * 16 );
+
+            // Grab the attribute byte, which covers a 32x32 area
+            u8 const  attrX = tileX / 4;
+            u8 const  attrY = tileY / 4;
+            u16 const attrAddr = attrBase + attrY * 8 + attrX;
+            u8 const  attributeByte = Read( attrAddr );
+
+            // Determine which 4x4 quadrant the tile is in
+            u8 const attrQuadX = ( tileX % 4 ) >> 1;
+            u8 const attrQuadY = ( tileY % 4 ) >> 1;
+            // (0,0) -> 0, (0,1) -> 1, (1,0) -> 2, (1,1) -> 3
+            u8 const quadrant = ( attrQuadY << 1 ) | attrQuadX;
+
+            // Extract the palette index from the attribute byte
+            /*
+                7654 3210
+                |||| ||++- Color bits 3-2 for top left quadrant
+                |||| ++--- Color bits 3-2 for top right quadrant
+                ||++------ Color bits 3-2 for bottom left quadrant
+                ++-------- Color bits 3-2 for bottom right quadrant
+            */
+            u8 const paletteIdx = ( attributeByte >> ( 2 * quadrant ) ) & 0x03;
+
+            // Now, combining all the tile data and adding it to the correct location in the buffer
+            for ( int pixelRow = 0; pixelRow < 8; pixelRow++ ) {
+                u8 const plane0Byte = Read( tileAddr + pixelRow );
+                u8 const plane1Byte = Read( tileAddr + pixelRow + 8 );
+                for ( int bit = 7; bit >= 0; bit-- ) {
+                    u8 const plane0Bit = ( plane0Byte >> bit ) & 0x01;
+                    u8 const plane1Bit = ( plane1Byte >> bit ) & 0x01;
+                    u8 const colorIdx = ( plane1Bit << 1 ) | plane0Bit;
+
+                    // Calculate the buffer index (final pixel position)
+                    int const tilePixelX = 7 - bit;
+                    int const screenPixelX = ( tileX * 8 ) + tilePixelX;
+                    int const screenPixelY = ( tileY * 8 ) + pixelRow;
+                    int const bufferIdx = ( screenPixelY * 256 ) + screenPixelX;
+                    u8 const  finalColorIdx = paletteIdx * 4 + colorIdx;
+                    buffer.at( bufferIdx ) = GetPpuPaletteColor( finalColorIdx );
+                }
+            }
+        }
         return buffer;
     }
 
