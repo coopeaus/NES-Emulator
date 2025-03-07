@@ -6,11 +6,11 @@
 #include "log.h"
 #include <cinttypes>
 
-class RegisterViewerWindow : public UIComponent
+class CpuViewerWindow : public UIComponent
 {
   public:
     CPU &cpu; // NOLINT
-    RegisterViewerWindow( Renderer *renderer ) : UIComponent( renderer ), cpu( renderer->bus.cpu )
+    CpuViewerWindow( Renderer *renderer ) : UIComponent( renderer ), cpu( renderer->bus.cpu )
     {
         visible = false;
     }
@@ -20,8 +20,6 @@ class RegisterViewerWindow : public UIComponent
     #           Variables          #
     ################################
     */
-    enum TabType : int { CPU, PPU };
-    int tabSelected = CPU;
 
     /*
     ################################
@@ -37,30 +35,14 @@ class RegisterViewerWindow : public UIComponent
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
         ImGui::SetNextWindowSizeConstraints( ImVec2( 300, 420 ), ImVec2( 400, 500 ) );
 
-        if ( ImGui::Begin( "Register Viewer", &visible, windowFlags ) ) {
+        if ( ImGui::Begin( "CPU Viewer", &visible, windowFlags ) ) {
             RenderMenuBar();
             DebugControls();
             ImGui::Spacing();
             ImGui::PushFont( renderer->fontMono );
 
-            ImGuiTabBarFlags const tabBarFlags = ImGuiTabBarFlags_None;
-            if ( ImGui::BeginTabBar( "Register Tabs", tabBarFlags ) ) {
-
-                if ( ImGui::BeginTabItem( "CPU" ) ) {
-                    tabSelected = CPU;
-                    CpuRegisters();
-                    CpuStatus();
-                    ImGui::EndTabItem();
-                }
-
-                if ( ImGui::BeginTabItem( "PPU" ) ) {
-                    tabSelected = PPU;
-
-                    // TODO: Implement PPU status viewer
-                    ImGui::EndTabItem();
-                }
-                ImGui::EndTabBar();
-            }
+            CpuRegisters();
+            CpuStatus();
 
             ImGui::Spacing();
 
