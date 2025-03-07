@@ -92,6 +92,19 @@ class Renderer
     std::array<u32, 61440> nametable2Buffer{};
     std::array<u32, 61440> nametable3Buffer{};
 
+    std::array<std::string, 4> testRoms = {
+        "tests/roms/palette.nes",
+        "tests/roms/color_test.nes",
+        "tests/roms/nestest.nes",
+        "tests/roms/mario.nes",
+    };
+    enum RomSelected : u8 {
+        PALETTE,
+        COLOR_TEST,
+        NESTEST,
+        MARIO,
+    };
+
     /*
     ################################
     #          peripherals         #
@@ -112,13 +125,23 @@ class Renderer
 
     void InitEmulator()
     {
-        auto cartridge = std::make_shared<Cartridge>( "tests/roms/palette.nes" );
+        auto romFile = testRoms[RomSelected::PALETTE];
+        auto cartridge = std::make_shared<Cartridge>( romFile );
         bus.LoadCartridge( cartridge );
         bus.cpu.Reset();
         bus.ppu.onFrameReady = [this]( const u32 *frameBuffer ) {
             this->ProcessPpuFrameBuffer( frameBuffer );
         };
         currentFrame = bus.ppu.GetFrame();
+    }
+
+    void LoadNewCartridge( const std::string &newRomFile )
+    {
+        auto newCartridge = std::make_shared<Cartridge>( newRomFile );
+        bus.LoadCartridge( newCartridge );
+        bus.DebugReset();
+        currentFrame = bus.ppu.GetFrame();
+        frameCount = 0;
     }
 
     bool Setup()
