@@ -68,8 +68,10 @@ class PaletteWindow : public UIComponent
         ImGui::EndChild();
         ImGui::PopStyleColor();
     }
+
     void RightPanel()
     {
+        ImGui::BeginChild( "right panel" );
         ImGui::PushFont( renderer->fontMonoBold );
         ImGui::Text( "Properties" );
         ImGui::PopFont();
@@ -178,82 +180,107 @@ class PaletteWindow : public UIComponent
     void RenderTabs()
     {
         ImGuiTabBarFlags const tabBarFlags = ImGuiTabBarFlags_None;
-
         if ( ImGui::BeginTabBar( "PaletteTabs", tabBarFlags ) ) {
 
             if ( ImGui::BeginTabItem( "PPU" ) ) {
                 tabSelected = PPU;
-                ImGui::Dummy( ImVec2( 5, 5 ) );
-                for ( int rowStart = 0; rowStart < 32; rowStart += 4 ) {
-                    ImGui::Dummy( ImVec2( 0, 0 ) );
-                    for ( int cell = 0; cell < 4; cell++ ) {
-                        ImGui::SameLine();
-                        u16 const paletteAddress = 0x3F00 + rowStart + cell;
-                        u8 const  colorIndex = renderer->bus.ppu.Read( paletteAddress );
-                        u32 const paletteColor = renderer->bus.ppu.GetMasterPaletteColor( colorIndex );
-                        char      label[3];
-                        snprintf( label, sizeof( label ), "%02X", colorIndex );
-                        bool isSelected = ppuColorSelected == rowStart + cell;
-                        PaletteBox( rowStart + cell, label, &isSelected, paletteColor );
-                    }
-                }
+                RenderPpuPaletteGrid( ImVec2( 30, 30 ) );
                 ImGui::EndTabItem();
             }
 
             if ( ImGui::BeginTabItem( "System" ) ) {
                 tabSelected = SYSTEM;
-                ImGui::Dummy( ImVec2( 5, 5 ) );
-                for ( int rowStart = 0; rowStart < 64; rowStart += 8 ) {
-                    ImGui::Dummy( ImVec2( 0, 0 ) );
-                    for ( int cell = 0; cell < 8; cell++ ) {
-                        u32 const paletteColor = renderer->bus.ppu.GetMasterPaletteColor( rowStart + cell );
-                        ImGui::SameLine();
-                        char label[3];
-                        snprintf( label, sizeof( label ), "%02X", rowStart + cell );
-                        bool isSelected = systemColorSelected == rowStart + cell;
-                        PaletteBox( rowStart + cell, label, &isSelected, paletteColor );
-                    }
-                }
+                RenderSystemPaletteGrid( ImVec2( 30, 30 ) );
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();
         }
     }
 
-    void PaletteBox( int id, const char *label, bool *isSelected, u32 rgba32Color, float hw = 30.0 )
+    void RenderPpuPaletteGrid( ImVec2 cellSize )
     {
-        ImColor const color = Rgba32ToImColor( rgba32Color );
-        ImGui::PushID( id );
-        ImVec2 const size = ImVec2( hw, hw );
+        ImGui::Dummy( ImVec2( 5, 5 ) );
+        for ( int rowStart = 0; rowStart < 32; rowStart += 4 ) {
+            ImGui::Dummy( ImVec2( 0, 0 ) );
+            for ( int cell = 0; cell < 4; cell++ ) {
+                ImGui::SameLine( 0.0f, 0.0f );
+                int const    cellIdx = rowStart + cell;
+                u16 const    paletteAddress = 0x3F00 + cellIdx;
+                u8 const     colorIndex = renderer->bus.ppu.Read( paletteAddress );
+                ImVec4 const paletteColor =
+                    Rgba32ToImVec4( renderer->bus.ppu.GetMasterPaletteColor( colorIndex ) );
+                char label[3];
+                snprintf( label, sizeof( label ), "%02X", colorIndex );
 
-        if ( CustomComponents::selectable( label, isSelected, rgba32Color, ImGuiSelectableFlags_None,
-                                           size ) ) {
-
-            if ( tabSelected == SYSTEM ) {
-                systemColorSelected = id;
-            } else {
-                ppuColorSelected = id;
-                systemColorSelected = renderer->bus.ppu.GetPpuPaletteValue( id );
+                auto onHover = [&]() {
+                    ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
+                    if ( ImGui::BeginItemTooltip() ) {
+                        PpuProps( cellIdx, 120 );
+                        ImGui::EndTooltip();
+                    }
+                    ImGui::PopStyleVar();
+                };
+                // clang-format off
+                CustomComponents::selectable( label, cellIdx, cellSize, ppuColorSelected, ppuColorHovered,
+                                              paletteColor, 
+                                              HighlightColor( paletteColor, 0.2 ),
+                                              HighlightColor( paletteColor, 0.4 ), 
+                                              onHover );
+                // clang-format on
             }
         }
-        if ( ImGui::IsItemHovered( ImGuiHoveredFlags_DelayShort | ImGuiHoveredFlags_NoSharedDelay ) ) {
-            if ( tabSelected == SYSTEM ) {
-                systemColorHovered = id;
-            } else {
-                ppuColorHovered = id;
-            }
+    }
 
-            if ( ImGui::BeginItemTooltip() ) {
-                if ( tabSelected == SYSTEM ) {
-                    SystemProps( systemColorHovered, 100 );
-                } else {
-                    PpuProps( ppuColorHovered, 100 );
-                }
+    static ImVec4 HighlightColor( ImVec4 color, float factor )
+    {
+        float const luminance =
+            static_cast<float>( ( 0.299 * color.x ) + ( 0.587 * color.y ) + ( 0.114 * color.z ) );
 
-                ImGui::EndTooltip();
+        // darken or lighten based on luminance
+        if ( luminance > 0.5f ) {
+            color.x -= factor;
+            color.y -= factor;
+            color.z -= factor;
+        } else {
+            color.x += factor;
+            color.y += factor;
+            color.z += factor;
+        }
+
+        return color;
+    }
+
+    void RenderSystemPaletteGrid( ImVec2 cellSize )
+    {
+        ImGui::Dummy( ImVec2( 5, 5 ) );
+        for ( int rowStart = 0; rowStart < 64; rowStart += 8 ) {
+            ImGui::Dummy( ImVec2( 0, 0 ) );
+            for ( int cell = 0; cell < 8; cell++ ) {
+                ImGui::SameLine( 0.0f, 0.0f );
+                int const cellIdx = rowStart + cell;
+
+                auto onHover = [&]() {
+                    ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
+                    if ( ImGui::BeginItemTooltip() ) {
+                        SystemProps( cellIdx, 120 );
+                        ImGui::EndTooltip();
+                    }
+                    ImGui::PopStyleVar();
+                };
+
+                char label[3];
+                snprintf( label, sizeof( label ), "%02X", rowStart + cell );
+                ImVec4 const paletteColor =
+                    Rgba32ToImVec4( renderer->bus.ppu.GetMasterPaletteColor( rowStart + cell ) );
+
+                // clang-format off
+                CustomComponents::selectable( label, cellIdx, cellSize, systemColorSelected, systemColorHovered, 
+                                              paletteColor, 
+                                              HighlightColor( paletteColor, 0.2 ),
+                                              HighlightColor( paletteColor, 0.4 ), 
+                                              onHover );
             }
         }
-        ImGui::PopID();
     }
 
     static ImColor Rgba32ToImColor( u32 color )
@@ -262,6 +289,15 @@ class PaletteWindow : public UIComponent
         int const g = static_cast<int>( color >> 8 ) & 0xFF;
         int const b = static_cast<int>( color >> 16 ) & 0xFF;
         return { r, g, b };
+    }
+
+    static ImVec4 Rgba32ToImVec4( u32 color )
+    {
+        float const r = static_cast<float>( color & 0xFF ) / 255.0f;
+        float const g = static_cast<float>( ( color >> 8 ) & 0xFF ) / 255.0f;
+        float const b = static_cast<float>( ( color >> 16 ) & 0xFF ) / 255.0f;
+
+        return { r, g, b, 255 };
     }
 
     static const char *Rgba32ToHexString( u32 color )
