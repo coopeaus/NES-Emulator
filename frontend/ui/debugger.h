@@ -52,12 +52,9 @@ class DebuggerWindow : public UIComponent
             ImGui::Text( "CPU Cycle: " U64_FORMAT_SPECIFIER, renderer->bus.cpu.GetCycles() );
             ImGui::PopItemWidth();
 
-            const char *items[] = {
-                "Cycles",
-                "Instructions",
-            };
-            static int i0 = 1;
-            static int item = 0;
+            const char *items[] = { "Cycles", "Instructions", "VBlank", "Scanlines" };
+            static int  i0 = 1;
+            static int  item = 0;
 
             ImGui::Dummy( ImVec2( 0, 10 ) );
             ImGui::AlignTextToFramePadding();
@@ -71,16 +68,42 @@ class DebuggerWindow : public UIComponent
             ImGui::PopItemWidth();
             if ( ImGui::Button( "Go" ) ) {
                 renderer->paused = true;
-                if ( item == 0 ) {
-                    uint64_t const target = renderer->bus.cpu.GetCycles() + i0;
-                    while ( renderer->bus.cpu.GetCycles() < target ) {
-                        renderer->bus.cpu.DecodeExecute();
+                switch ( item ) {
+                    case 0: {
+                        auto const target = renderer->bus.cpu.GetCycles() + i0;
+                        while ( renderer->bus.cpu.GetCycles() < target ) {
+                            renderer->bus.cpu.DecodeExecute();
+                        }
+                        break;
                     }
-
-                } else if ( item == 1 ) {
-                    for ( int i = 0; i < i0; i++ ) {
-                        renderer->bus.cpu.DecodeExecute();
+                    case 1:
+                        for ( int i = 0; i < i0; i++ ) {
+                            renderer->bus.cpu.DecodeExecute();
+                        }
+                        break;
+                    case 2:
+                        if ( !renderer->bus.ppu.GetStatusVblank() ) {
+                            while ( !renderer->bus.ppu.GetStatusVblank() ) {
+                                renderer->bus.cpu.DecodeExecute();
+                            }
+                        } else {
+                            while ( renderer->bus.ppu.GetStatusVblank() ) {
+                                renderer->bus.cpu.DecodeExecute();
+                            }
+                            while ( !renderer->bus.ppu.GetStatusVblank() ) {
+                                renderer->bus.cpu.DecodeExecute();
+                            }
+                        }
+                        break;
+                    case 3: {
+                        auto const target = renderer->bus.ppu.GetScanline() + i0;
+                        while ( renderer->bus.ppu.GetScanline() < target ) {
+                            renderer->bus.cpu.DecodeExecute();
+                        }
+                        break;
                     }
+                    default:
+                        break;
                 }
             }
         }
