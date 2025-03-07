@@ -5,12 +5,13 @@
 #include "mappers/mapper-base.h"
 #include "ui-component.h"
 #include "renderer.h"
+#include "log.h"
 #include <imgui.h>
 
 class NametableWindow : public UIComponent
 {
   public:
-    NametableWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = true; }
+    NametableWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = false; }
 
     /*
     ################################
@@ -36,6 +37,7 @@ class NametableWindow : public UIComponent
 
         if ( ImGui::Begin( "Tiles", &visible, windowFlags ) ) {
             RenderMenuBar();
+            DebugControls();
 
             ImGui::PushFont( renderer->fontMono );
             LeftPanel();
@@ -193,5 +195,33 @@ class NametableWindow : public UIComponent
         }
 
         ImGui::EndGroup();
+    }
+
+    void DebugControls()
+    {
+        bool const isPaused = renderer->paused;
+
+        ImGui::BeginDisabled( !isPaused );
+        if ( ImGui::Button( "Continue" ) ) {
+            renderer->paused = false;
+        }
+        ImGui::EndDisabled();
+
+        ImGui::SameLine();
+
+        ImGui::BeginDisabled( isPaused );
+        if ( ImGui::Button( "Pause" ) ) {
+            renderer->paused = true;
+        }
+        ImGui::EndDisabled();
+
+        ImGui::SameLine();
+
+        if ( ImGui::Button( "Reset" ) ) {
+            renderer->bus.DebugReset();
+            if ( auto *logWindow = renderer->ui.GetComponent<LogWindow>() ) {
+                logWindow->Clear();
+            }
+        }
     }
 };

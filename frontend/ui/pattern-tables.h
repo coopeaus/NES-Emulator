@@ -4,6 +4,7 @@
 #include "ui-component.h"
 #include "custom-components.h"
 #include "renderer.h"
+#include "log.h"
 #include <cstdio>
 #include <cstdint>
 #include <cmath>
@@ -43,6 +44,7 @@ class PatternTablesWindow : public UIComponent
 
         if ( ImGui::Begin( "Tiles", &visible, windowFlags ) ) {
             RenderMenuBar();
+            DebugControls();
 
             ImGui::PushFont( renderer->fontMono );
             LeftPanel();
@@ -238,11 +240,6 @@ class PatternTablesWindow : public UIComponent
         int const tileIndex = targetId / 16;
         ImGui::Text( "$%02X (%d)", tileIndex, tileIndex );
 
-        // Spacing();
-        // ImGui::Unindent( indentSpacing );
-        // ImGui::Text( "Palette In PPU Memory" );
-        // Palettes();
-
         ImGui::EndGroup();
     }
 
@@ -327,6 +324,34 @@ class PatternTablesWindow : public UIComponent
                 ImGui::EndMenu();
             }
             ImGui::EndMenuBar();
+        }
+    }
+
+    void DebugControls()
+    {
+        bool const isPaused = renderer->paused;
+
+        ImGui::BeginDisabled( !isPaused );
+        if ( ImGui::Button( "Continue" ) ) {
+            renderer->paused = false;
+        }
+        ImGui::EndDisabled();
+
+        ImGui::SameLine();
+
+        ImGui::BeginDisabled( isPaused );
+        if ( ImGui::Button( "Pause" ) ) {
+            renderer->paused = true;
+        }
+        ImGui::EndDisabled();
+
+        ImGui::SameLine();
+
+        if ( ImGui::Button( "Reset" ) ) {
+            renderer->bus.DebugReset();
+            if ( auto *logWindow = renderer->ui.GetComponent<LogWindow>() ) {
+                logWindow->Clear();
+            }
         }
     }
 };

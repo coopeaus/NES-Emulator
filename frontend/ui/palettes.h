@@ -1,6 +1,7 @@
 #pragma once
 #include "bus.h"
 #include "ui-component.h"
+#include "log.h"
 #include "renderer.h"
 #include <cstdio>
 #include <imgui.h>
@@ -43,6 +44,7 @@ class PaletteWindow : public UIComponent
 
         if ( ImGui::Begin( "Palettes", &visible, windowFlags ) ) {
             RenderMenuBar();
+            DebugControls();
 
             ImGui::PushFont( renderer->fontMono );
 
@@ -321,6 +323,34 @@ class PaletteWindow : public UIComponent
                 ImGui::EndMenu();
             }
             ImGui::EndMenuBar();
+        }
+    }
+
+    void DebugControls()
+    {
+        bool const isPaused = renderer->paused;
+
+        ImGui::BeginDisabled( !isPaused );
+        if ( ImGui::Button( "Continue" ) ) {
+            renderer->paused = false;
+        }
+        ImGui::EndDisabled();
+
+        ImGui::SameLine();
+
+        ImGui::BeginDisabled( isPaused );
+        if ( ImGui::Button( "Pause" ) ) {
+            renderer->paused = true;
+        }
+        ImGui::EndDisabled();
+
+        ImGui::SameLine();
+
+        if ( ImGui::Button( "Reset" ) ) {
+            renderer->bus.DebugReset();
+            if ( auto *logWindow = renderer->ui.GetComponent<LogWindow>() ) {
+                logWindow->Clear();
+            }
         }
     }
 };
