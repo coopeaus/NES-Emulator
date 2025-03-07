@@ -23,11 +23,51 @@ class PPU
     ||           Getters          ||
     ################################
     */
-    [[nodiscard]] MirrorMode GetMirrorMode() const;
-    [[nodiscard]] s16        GetScanline() const { return _scanline; }
-    [[nodiscard]] u16        GetCycles() const { return _cycle; }
-    [[nodiscard]] u64        GetFrame() const { return _frame; }
-    [[nodiscard]] u32 GetMasterPaletteColor( u8 index ) const { return _nesPaletteRgbValues.at( index ); }
+    MirrorMode GetMirrorMode() const;
+    s16        GetScanline() const { return _scanline; }
+    u16        GetCycles() const { return _cycle; }
+    u64        GetFrame() const { return _frame; }
+    u32        GetMasterPaletteColor( u8 index ) const { return _nesPaletteRgbValues.at( index ); }
+
+    u8 GetPpuCtrl() const { return _ppuCtrl.value; }
+    u8 GetCtrlNametableX() const { return _ppuCtrl.bit.nametableX; }
+    u8 GetCtrlNametableY() const { return _ppuCtrl.bit.nametableY; }
+    u8 GetCtrlIncrementMode() const { return _ppuCtrl.bit.vramIncrement; }
+    u8 GetCtrlPatternSprite() const { return _ppuCtrl.bit.patternSprite; }
+    u8 GetCtrlPatternBackground() const { return _ppuCtrl.bit.patternBackground; }
+    u8 GetCtrlSpriteSize() const { return _ppuCtrl.bit.spriteSize; }
+    u8 GetCtrlNmiEnable() const { return _ppuCtrl.bit.nmiEnable; }
+
+    u8 GetPpuMask() const { return _ppuMask.value; }
+    u8 GetMaskGrayscale() const { return _ppuMask.bit.grayscale; }
+    u8 GetMaskShowBgLeft() const { return _ppuMask.bit.renderBackgroundLeft; }
+    u8 GetMaskShowSpritesLeft() const { return _ppuMask.bit.renderSpritesLeft; }
+    u8 GetMaskShowBg() const { return _ppuMask.bit.renderBackground; }
+    u8 GetMaskShowSprites() const { return _ppuMask.bit.renderSprites; }
+    u8 GetMaskEnhanceRed() const { return _ppuMask.bit.enhanceRed; }
+    u8 GetMaskEnhanceGreen() const { return _ppuMask.bit.enhanceGreen; }
+    u8 GetMaskEnhanceBlue() const { return _ppuMask.bit.enhanceBlue; }
+
+    u8 GetPpuStatus() const { return _ppuStatus.value; }
+    u8 GetStatusSpriteOverflow() const { return _ppuStatus.bit.spriteOverflow; }
+    u8 GetStatusSpriteZeroHit() const { return _ppuStatus.bit.spriteZeroHit; }
+    u8 GetStatusVblank() const { return _ppuStatus.bit.verticalBlank; }
+
+    u8 GetOamAddr() const { return _oamAddr; }
+    u8 GetOamData() const { return _oamData; }
+    u8 GetPpuScroll() const { return _ppuScroll; }
+    u8 GetPpuAddr() const { return _ppuAddr; }
+    u8 GetPpuData() const { return _ppuData; }
+
+    u16 GetVramAddr() const { return _vramAddr.value; }
+    u16 GetTempAddr() const { return _tempAddr.value; }
+    u8  GetFineX() const { return _fineX; }
+    u8  GetAddrLatch() const { return _addrLatch; }
+
+    u16 GetBgShiftPatternLow() const { return _bgShiftPatternLow; }
+    u16 GetBgShiftPatternHigh() const { return _bgShiftPatternHigh; }
+    u16 GetBgShiftAttributeLow() const { return _bgShiftAttributeLow; }
+    u16 GetBgShiftAttributeHigh() const { return _bgShiftAttributeHigh; }
 
     /*
     ################################
@@ -232,8 +272,8 @@ class PPU
         +++----------------- fine Y scroll
         */
 
-        u16 vramEnd = vramStart + 960;
-        u16 attrBase = vramStart + 960;
+        u16 const vramEnd = vramStart + 960;
+        u16 const attrBase = vramStart + 960;
 
         for ( int vramAddr = vramStart; vramAddr < vramEnd; vramAddr++ ) {
 
@@ -253,7 +293,7 @@ class PPU
             // Grab the attribute byte, which covers a 32x32 area
             u8 const  attrX = tileX / 4;
             u8 const  attrY = tileY / 4;
-            u16 const attrAddr = attrBase + attrY * 8 + attrX;
+            u16 const attrAddr = attrBase + (attrY * 8) + attrX;
             u8 const  attributeByte = Read( attrAddr );
 
             // Determine which 4x4 quadrant the tile is in
@@ -286,7 +326,7 @@ class PPU
                     int const screenPixelX = ( tileX * 8 ) + tilePixelX;
                     int const screenPixelY = ( tileY * 8 ) + pixelRow;
                     int const bufferIdx = ( screenPixelY * 256 ) + screenPixelX;
-                    u8 const  finalColorIdx = paletteIdx * 4 + colorIdx;
+                    u8 const  finalColorIdx = (paletteIdx * 4) + colorIdx;
                     buffer.at( bufferIdx ) = GetPpuPaletteColor( finalColorIdx );
                 }
             }
