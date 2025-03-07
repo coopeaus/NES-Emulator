@@ -2,6 +2,7 @@
 #include "bus.h"
 #include "imgui-spectrum.h"
 #include "ui-component.h"
+#include "custom-components.h"
 #include "renderer.h"
 #include <cstdio>
 #include <cstdint>
@@ -78,13 +79,13 @@ class PatternTablesWindow : public UIComponent
         ImGui::BeginChild( "left panel", panelSize, ImGuiChildFlags_Borders, windowFlags );
 
         ImGui::Text( "Pattern Table 0" );
-        RenderPatternTable( &cellSelected, 0, tilemapSize );
+        RenderPatternTable( 0, tilemapSize );
         ImGui::Separator();
 
         ImGui::Spacing();
 
         ImGui::Text( "Pattern Table 1" );
-        RenderPatternTable( &cellSelected, 1, tilemapSize, 256 );
+        RenderPatternTable( 1, tilemapSize, 256 );
 
         ImGui::EndChild();
         ImGui::PopStyleColor();
@@ -104,7 +105,7 @@ class PatternTablesWindow : public UIComponent
         ImGui::EndChild();
     }
 
-    void RenderPatternTable( int *selectCell, int tableIdx, ImVec2 parentSize, int idOffset = 0 )
+    void RenderPatternTable( int tableIdx, ImVec2 parentSize, int idOffset = 0 )
     {
         ImVec2 const           windowSize = ImVec2( parentSize.x, parentSize.y );
         ImVec2 const           tilesetSize = windowSize;
@@ -130,7 +131,19 @@ class PatternTablesWindow : public UIComponent
         for ( int rowStart = 0; rowStart < 256; rowStart += 16 ) {
             for ( int cellIdx = 0; cellIdx < 16; cellIdx++ ) {
                 int const idx = ( rowStart + cellIdx + idOffset ) * 16;
-                GridCell( idx, cellSize, selectCell );
+
+                auto onHover = [&]() {
+                    ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
+                    if ( ImGui::BeginItemTooltip() ) {
+                        PatternTableProps( cellIdx, 120 );
+                        ImGui::EndTooltip();
+                    }
+                    ImGui::PopStyleVar();
+                };
+
+                CustomComponents::selectable( nullptr, idx, cellSize, cellSelected, cellHovered,
+                                              ImVec4( 0, 0, 0, 0 ), ImVec4( 0.4f, 0.6f, 0.9f, 0.5f ),
+                                              ImVec4( 0.4f, 0.6f, 0.9f, 0.7f ), onHover );
                 if ( cellIdx < 15 ) {
                     ImGui::SameLine( 0.0f, 0.0f );
                 }
