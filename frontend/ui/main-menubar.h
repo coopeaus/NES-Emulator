@@ -10,7 +10,8 @@
 #include "log.h"
 #include "memory-display.h"
 #include "palettes.h"
-#include "register-viewer.h"
+#include "cpu-viewer.h"
+#include "ppu-viewer.h"
 #include "pattern-tables.h"
 #include "nametable.h"
 
@@ -28,6 +29,17 @@ class MainMenuBar : public UIComponent
     {
         if ( ImGui::BeginMainMenuBar() ) {
             if ( ImGui::BeginMenu( "File" ) ) {
+
+                if ( ImGui::BeginMenu( "Open Recent" ) ) {
+                    auto testRoms = renderer->testRoms;
+                    for ( auto &romPath : testRoms ) {
+                        if ( ImGui::MenuItem( romPath.c_str() ) ) {
+                            renderer->LoadNewCartridge( romPath );
+                        }
+                    }
+                    ImGui::EndMenu();
+                }
+                Separator();
                 if ( ImGui::MenuItem( "Exit" ) ) {
                     renderer->running = false;
                 }
@@ -35,28 +47,29 @@ class MainMenuBar : public UIComponent
             }
             if ( ImGui::BeginMenu( "Debug" ) ) {
 
-                if ( auto *demoWindow = ui->GetComponent<DemoWindow>() ) {
-                    ImGui::MenuItem( "UI Demo", nullptr, &demoWindow->visible );
-                }
-
                 if ( auto *debuggerWindow = ui->GetComponent<DebuggerWindow>() ) {
                     ImGui::MenuItem( "Debugger", nullptr, &debuggerWindow->visible );
-                }
-
-                if ( auto *logWindow = ui->GetComponent<LogWindow>() ) {
-                    ImGui::MenuItem( "Trace Log", nullptr, &logWindow->visible );
                 }
 
                 if ( auto *memoryDisplayWindow = ui->GetComponent<MemoryDisplayWindow>() ) {
                     ImGui::MenuItem( "Memory Display", nullptr, &memoryDisplayWindow->visible );
                 }
 
-                if ( auto *paletteWindow = ui->GetComponent<PaletteWindow>() ) {
-                    ImGui::MenuItem( "Palettes", nullptr, &paletteWindow->visible );
+                if ( auto *logWindow = ui->GetComponent<LogWindow>() ) {
+                    ImGui::MenuItem( "Trace Log", nullptr, &logWindow->visible );
+                }
+                Separator();
+                if ( auto *cpuViewer = ui->GetComponent<CpuViewerWindow>() ) {
+                    ImGui::MenuItem( "CPU", nullptr, &cpuViewer->visible );
                 }
 
-                if ( auto *registerViewer = ui->GetComponent<RegisterViewerWindow>() ) {
-                    ImGui::MenuItem( "Register Viewer", nullptr, &registerViewer->visible );
+                if ( auto *registerViewer = ui->GetComponent<PpuViewerWindow>() ) {
+                    ImGui::MenuItem( "PPU", nullptr, &registerViewer->visible );
+                }
+                Separator();
+
+                if ( auto *paletteWindow = ui->GetComponent<PaletteWindow>() ) {
+                    ImGui::MenuItem( "Palettes", nullptr, &paletteWindow->visible );
                 }
 
                 if ( auto *patternTablesWindow = ui->GetComponent<PatternTablesWindow>() ) {
@@ -74,6 +87,13 @@ class MainMenuBar : public UIComponent
 
             if ( auto *overlayWindow = ui->GetComponent<OverlayWindow>() ) {
                 ImGui::MenuItem( "Enabled", nullptr, &overlayWindow->visible );
+            }
+            ImGui::EndMenu();
+        }
+        if ( ImGui::BeginMenu( "ImGui Demo" ) ) {
+
+            if ( auto *demoWindow = ui->GetComponent<DemoWindow>() ) {
+                ImGui::MenuItem( "Show", nullptr, &demoWindow->visible );
             }
             ImGui::EndMenu();
         }
