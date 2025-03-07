@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "cartridge.h" // NOLINT
 #include "mappers/mapper-base.h"
+#include <cstdint>
 #include <exception>
 #include <cstdlib>
 #include <array>
@@ -1067,22 +1068,22 @@ u8 PPU::GetSpritePixel() // NOLINT
 
 u32 PPU::GetOutputPixel( u8 bgPixel, u8 spritePixel, u8 bgPalette, u8 spritePalette ) // NOLINT
 {
-    u8 fgPriority = 0; // TODO: Fetch from sprite
-    u8 pixel = 0x00;
-    u8 palette = 0x00;
+    u8 const fgPriority = 0; // TODO: Fetch from sprite
+    u8       pixel = 0x00;
+    u8       palette = 0x00;
     //
     // (fg_pixel != 0) yields 1 if fg_pixel is nonzero (visible).
     // (bg_pixel == 0) yields 1 if the background is transparent.
     // Their bitwise combination with fg_priority tells us if we should use fg.
-    int mask = -( ( ( bgPixel != 0 ) & ( ( spritePixel == 0 ) | fgPriority ) ) );
+    int const mask = -( ( ( bgPixel != 0 ) & ( ( spritePixel == 0 ) | fgPriority ) ) );
 
     // If mask == -1 (all ones), the foreground values are chosen.
     // If mask == 0, the background values are selected.
     pixel = (uint8_t) ( ( mask & spritePixel ) | ( ( ~mask ) & bgPixel ) );
     palette = (uint8_t) ( ( mask & spritePalette ) | ( ( ~mask ) & bgPalette ) );
 
-    u16 paletteAddr = 0x3F00 + ( palette << 2 ) + pixel;
-    u8  paletteIdx = Read( paletteAddr ) & 0x3F;
+    u16 const paletteAddr = 0x3F00 + ( palette << 2 ) + pixel;
+    u8 const  paletteIdx = Read( paletteAddr ) & 0x3F;
 
     return _nesPaletteRgbValues.at( paletteIdx );
 }

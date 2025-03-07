@@ -293,7 +293,7 @@ class PPU
             // Grab the attribute byte, which covers a 32x32 area
             u8 const  attrX = tileX / 4;
             u8 const  attrY = tileY / 4;
-            u16 const attrAddr = attrBase + (attrY * 8) + attrX;
+            u16 const attrAddr = attrBase + ( attrY * 8 ) + attrX;
             u8 const  attributeByte = Read( attrAddr );
 
             // Determine which 4x4 quadrant the tile is in
@@ -326,7 +326,7 @@ class PPU
                     int const screenPixelX = ( tileX * 8 ) + tilePixelX;
                     int const screenPixelY = ( tileY * 8 ) + pixelRow;
                     int const bufferIdx = ( screenPixelY * 256 ) + screenPixelX;
-                    u8 const  finalColorIdx = (paletteIdx * 4) + colorIdx;
+                    u8 const  finalColorIdx = ( paletteIdx * 4 ) + colorIdx;
                     buffer.at( bufferIdx ) = GetPpuPaletteColor( finalColorIdx );
                 }
             }

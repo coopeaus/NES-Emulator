@@ -125,7 +125,7 @@ class NametableWindow : public UIComponent
 
         ImDrawList *drawList = ImGui::GetWindowDrawList();
 
-        u16 baseTileAddr = 0x2000 + addrOffset;
+        u16 const baseTileAddr = 0x2000 + addrOffset;
 
         for ( int rowStart = 0; rowStart < 960; rowStart += 32 ) {
             for ( int cellIdx = 0; cellIdx < 32; cellIdx++ ) {
@@ -168,7 +168,7 @@ class NametableWindow : public UIComponent
         ImGui::Text( "Tile Index" );
         ImGui::SameLine();
         ImGui::Indent( indentSpacing );
-        int tileValue = renderer->bus.ppu.Read( targetAddr );
+        int const tileValue = renderer->bus.ppu.Read( targetAddr );
         ImGui::Text( "$%02X (%d)", tileValue, tileValue );
 
         ImGui::Unindent( indentSpacing );
