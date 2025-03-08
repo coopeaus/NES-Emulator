@@ -17,7 +17,6 @@ on:
                 - 'major'
                 - 'minor'
                 - 'patch'
-
 jobs:
     versioning:
         runs-on: ubuntu-latest
@@ -37,37 +36,30 @@ jobs:
                   DEFAULT_BUMP: ${{ github.event.inputs.version_bump }}
                   WITH_V: true
 
-    build:
-        needs: versioning
-        strategy:
-            matrix:
-                os: [windows-x86-64, linux-x86-64, macos-arm64]
-        # This workflow only runs on ubuntu-latest. Building will be performed
-        # in a reusable workflow that will be called for each OS.
-        runs-on: ubuntu-latest
-        steps:
+    build-linux:
+      needs: versioning
+      uses: coopeaus/NES-Emulator/.github/workflows/build-linux.yml@main
+      with:
+        branch: main
+        commit: HEAD
 
-            - name: Build x64 Linux
-              if: ${{ matrix.os == 'linux-x86-64' }}
-              uses: coopeaus/NES-Emulator/.github/workflows/build-linux.yml@main
-              with:
-                  branch: main
-                  commit: HEAD
-            
-            - name: Build arm64 macOS
-              if: ${{ matrix.os == 'macos-arm64' }}
-              run: |
-                echo "Building for arm64 macOS not supported yet"
-
-            - name: Call build-windows workflow
-              if: ${{ matrix.os == 'windows-x86-64' }}
-              uses: coopeaus/NES-Emulator/.github/workflows/build-windows.yml@main
-              with:
-                  branch: main
-                  commit: HEAD
+    build-windows:
+      needs: versioning
+      uses: coopeaus/NES-Emulator/.github/workflows/build-windows.yml@main
+      with:
+        branch: main
+        commit: HEAD
+  
+    build-macos:
+      needs: versioning
+      runs-on: ubuntu-latest
+      steps:
+        - name: Build arm64 macOS
+          run: |
+            echo "Building for arm64 macOS not supported yet"
     
     release:
-      needs: [build, versioning]
+      needs: [build-windows, build-linux, versioning]
       runs-on: ubuntu-latest
       steps:
         - name: Get Windows artifact
