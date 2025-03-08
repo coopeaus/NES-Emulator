@@ -27,6 +27,7 @@ Checks: >
   ,-modernize-avoid-c-arrays
   ,-cppcoreguidelines-pro-bounds-pointer-arithmetic
   ,-cppcoreguidelines-macro-usage
+  ,-readability-function-cognitive-complexity
 CheckOptions:
   # Standardized naming conventions:
   - key: readability-identifier-naming.ClassCase

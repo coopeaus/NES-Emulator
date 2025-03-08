@@ -39,10 +39,11 @@ class PatternTablesWindow : public UIComponent
     {
         ImGuiWindowFlags const windowFlags = ImGuiWindowFlags_MenuBar;
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
-        ImGui::SetNextWindowSizeConstraints( ImVec2( 400, 700 ), ImVec2( 600, 700 ) );
+        ImGui::SetNextWindowSizeConstraints( ImVec2( 400, 800 ), ImVec2( 600, 800 ) );
 
         if ( ImGui::Begin( "Tiles", &visible, windowFlags ) ) {
             RenderMenuBar();
+            DebugControls();
 
             ImGui::PushFont( renderer->fontMono );
             LeftPanel();
@@ -237,11 +238,6 @@ class PatternTablesWindow : public UIComponent
         ImGui::Indent( indentSpacing );
         int const tileIndex = targetId / 16;
         ImGui::Text( "$%02X (%d)", tileIndex, tileIndex );
-
-        // Spacing();
-        // ImGui::Unindent( indentSpacing );
-        // ImGui::Text( "Palette In PPU Memory" );
-        // Palettes();
 
         ImGui::EndGroup();
     }

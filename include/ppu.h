@@ -23,11 +23,51 @@ class PPU
     ||           Getters          ||
     ################################
     */
-    [[nodiscard]] MirrorMode GetMirrorMode();
-    [[nodiscard]] s16        GetScanline() const { return _scanline; }
-    [[nodiscard]] u16        GetCycles() const { return _cycle; }
-    [[nodiscard]] u64        GetFrame() const { return _frame; }
-    [[nodiscard]] u32 GetMasterPaletteColor( u8 index ) const { return _nesPaletteRgbValues.at( index ); }
+    MirrorMode GetMirrorMode() const;
+    s16        GetScanline() const { return _scanline; }
+    u16        GetCycles() const { return _cycle; }
+    u64        GetFrame() const { return _frame; }
+    u32        GetMasterPaletteColor( u8 index ) const { return _nesPaletteRgbValues.at( index ); }
+
+    u8 GetPpuCtrl() const { return _ppuCtrl.value; }
+    u8 GetCtrlNametableX() const { return _ppuCtrl.bit.nametableX; }
+    u8 GetCtrlNametableY() const { return _ppuCtrl.bit.nametableY; }
+    u8 GetCtrlIncrementMode() const { return _ppuCtrl.bit.vramIncrement; }
+    u8 GetCtrlPatternSprite() const { return _ppuCtrl.bit.patternSprite; }
+    u8 GetCtrlPatternBackground() const { return _ppuCtrl.bit.patternBackground; }
+    u8 GetCtrlSpriteSize() const { return _ppuCtrl.bit.spriteSize; }
+    u8 GetCtrlNmiEnable() const { return _ppuCtrl.bit.nmiEnable; }
+
+    u8 GetPpuMask() const { return _ppuMask.value; }
+    u8 GetMaskGrayscale() const { return _ppuMask.bit.grayscale; }
+    u8 GetMaskShowBgLeft() const { return _ppuMask.bit.renderBackgroundLeft; }
+    u8 GetMaskShowSpritesLeft() const { return _ppuMask.bit.renderSpritesLeft; }
+    u8 GetMaskShowBg() const { return _ppuMask.bit.renderBackground; }
+    u8 GetMaskShowSprites() const { return _ppuMask.bit.renderSprites; }
+    u8 GetMaskEnhanceRed() const { return _ppuMask.bit.enhanceRed; }
+    u8 GetMaskEnhanceGreen() const { return _ppuMask.bit.enhanceGreen; }
+    u8 GetMaskEnhanceBlue() const { return _ppuMask.bit.enhanceBlue; }
+
+    u8 GetPpuStatus() const { return _ppuStatus.value; }
+    u8 GetStatusSpriteOverflow() const { return _ppuStatus.bit.spriteOverflow; }
+    u8 GetStatusSpriteZeroHit() const { return _ppuStatus.bit.spriteZeroHit; }
+    u8 GetStatusVblank() const { return _ppuStatus.bit.verticalBlank; }
+
+    u8 GetOamAddr() const { return _oamAddr; }
+    u8 GetOamData() const { return _oamData; }
+    u8 GetPpuScroll() const { return _ppuScroll; }
+    u8 GetPpuAddr() const { return _ppuAddr; }
+    u8 GetPpuData() const { return _ppuData; }
+
+    u16 GetVramAddr() const { return _vramAddr.value; }
+    u16 GetTempAddr() const { return _tempAddr.value; }
+    u8  GetFineX() const { return _fineX; }
+    u8  GetAddrLatch() const { return _addrLatch; }
+
+    u16 GetBgShiftPatternLow() const { return _bgShiftPatternLow; }
+    u16 GetBgShiftPatternHigh() const { return _bgShiftPatternHigh; }
+    u16 GetBgShiftAttributeLow() const { return _bgShiftAttributeLow; }
+    u16 GetBgShiftAttributeHigh() const { return _bgShiftAttributeHigh; }
 
     /*
     ################################
@@ -165,6 +205,7 @@ class PPU
     void EnableJsonTestMode() { _isDisabled = true; }
     void DisableJsonTestMode() { _isDisabled = false; }
 
+    // Get pattern table data, used in debugging (pattern-tables.h)
     std::array<u32, 16384> GetPatternTable( int tableIdx )
     {
         std::array<u32, 16384> buffer{};
@@ -197,6 +238,99 @@ class PPU
             }
         }
 
+        return buffer;
+    }
+
+    // Nametable data, used in debugging (nametables.h)
+    std::array<u32, 61440> GetNametable( int nametableIdx )
+    {
+        std::array<u32, 61440> buffer{};
+
+        u16 vramStart = 0x2000;
+        switch ( nametableIdx ) {
+            case 0:
+                vramStart = 0x2000;
+                break;
+            case 1:
+                vramStart = 0x2400;
+                break;
+            case 2:
+                vramStart = 0x2800;
+                break;
+            case 3:
+                vramStart = 0x2C00;
+                break;
+            default:
+                break;
+        }
+
+        /* Vram Structure, for reference
+        yyy NN YYYYY XXXXX
+        ||| || ||||| +++++-- tile X (coarse X scroll)
+        ||| || +++++-------- tile Y (coarse Y scroll)
+        ||| ++-------------- nametable 0-3
+        +++----------------- fine Y scroll
+        */
+
+        u16 const vramEnd = vramStart + 960;
+        u16 const attrBase = vramStart + 960;
+
+        for ( int vramAddr = vramStart; vramAddr < vramEnd; vramAddr++ ) {
+
+            // Determines which 8x8 tile is being processed, which is info provided by the vram addr
+            const int tileX = vramAddr & 0x1F;
+            const int tileY = ( vramAddr >> 5 ) & 0x1F;
+
+            // Bit 4 from ctrl registers determines the pattern table
+            u16 const patternTableBaseAddr = _ppuCtrl.bit.patternBackground ? 0x1000 : 0x0000;
+
+            // Vram address determines which tile index to use from the pattern table (0-255)
+            u8 const tileIndex = Read( vramAddr );
+
+            // Combining the two gives the pattern table address
+            u16 const tileAddr = patternTableBaseAddr + ( tileIndex * 16 );
+
+            // Grab the attribute byte, which covers a 32x32 area
+            u8 const  attrX = tileX / 4;
+            u8 const  attrY = tileY / 4;
+            u16 const attrAddr = attrBase + ( attrY * 8 ) + attrX;
+            u8 const  attributeByte = Read( attrAddr );
+
+            // Determine which 4x4 quadrant the tile is in
+            u8 const attrQuadX = ( tileX % 4 ) >> 1;
+            u8 const attrQuadY = ( tileY % 4 ) >> 1;
+            // (0,0) -> 0, (0,1) -> 1, (1,0) -> 2, (1,1) -> 3
+            u8 const quadrant = ( attrQuadY << 1 ) | attrQuadX;
+
+            // Extract the palette index from the attribute byte
+            /*
+                7654 3210
+                |||| ||++- Color bits 3-2 for top left quadrant
+                |||| ++--- Color bits 3-2 for top right quadrant
+                ||++------ Color bits 3-2 for bottom left quadrant
+                ++-------- Color bits 3-2 for bottom right quadrant
+            */
+            u8 const paletteIdx = ( attributeByte >> ( 2 * quadrant ) ) & 0x03;
+
+            // Now, combining all the tile data and adding it to the correct location in the buffer
+            for ( int pixelRow = 0; pixelRow < 8; pixelRow++ ) {
+                u8 const plane0Byte = Read( tileAddr + pixelRow );
+                u8 const plane1Byte = Read( tileAddr + pixelRow + 8 );
+                for ( int bit = 7; bit >= 0; bit-- ) {
+                    u8 const plane0Bit = ( plane0Byte >> bit ) & 0x01;
+                    u8 const plane1Bit = ( plane1Byte >> bit ) & 0x01;
+                    u8 const colorIdx = ( plane1Bit << 1 ) | plane0Bit;
+
+                    // Calculate the buffer index (final pixel position)
+                    int const tilePixelX = 7 - bit;
+                    int const screenPixelX = ( tileX * 8 ) + tilePixelX;
+                    int const screenPixelY = ( tileY * 8 ) + pixelRow;
+                    int const bufferIdx = ( screenPixelY * 256 ) + screenPixelX;
+                    u8 const  finalColorIdx = ( paletteIdx * 4 ) + colorIdx;
+                    buffer.at( bufferIdx ) = GetPpuPaletteColor( finalColorIdx );
+                }
+            }
+        }
         return buffer;
     }
 

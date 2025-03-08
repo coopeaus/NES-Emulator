@@ -2,7 +2,6 @@
 #include "ui-component.h"
 #include "renderer.h"
 #include <cstdint>
-#include <cstdarg>
 #include <imgui.h>
 
 #include <algorithm>
@@ -15,19 +14,56 @@ class LogWindow : public UIComponent // NOLINT
     uint64_t lastCpuCycleLogged = 0;
     LogWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = false; }
 
-    void OnVisible() override { renderer->bus.cpu.EnableTracelog(); }
-    void OnHidden() override { renderer->bus.cpu.DisableTracelog(); }
+    void OnVisible() override
+    {
+        if ( usingLogType == NORMAL ) {
+            renderer->bus.cpu.EnableTracelog();
+        } else {
+            renderer->bus.cpu.EnableMesenFormatTraceLog();
+        }
+    }
+    void OnHidden() override
+    {
+        if ( usingLogType == NORMAL ) {
+            renderer->bus.cpu.DisableTracelog();
+        } else {
+            renderer->bus.cpu.DisableMesenFormatTraceLog();
+        }
+    }
+
+    // variables
+    enum LogType : int {
+        NORMAL, // Logs at the beginning of instruction
+        MESEN,  // Matches mesen's output, logs each cpu cycle, between ppu cycle 2 and 3
+    };
+    int                       usingLogType = NORMAL;
+    std::vector<const char *> logTypes = { "Normal", "Mesen" };
+
     void RenderSelf() override // NOLINT
     {
+        if ( debuggerStatus == RESET ) {
+            Clear();
+        }
+
         ImGuiWindowFlags const windowFlags =
             ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize;
 
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
-        ImGui::SetNextWindowSizeConstraints( ImVec2( 1000, 600 ), ImVec2( 1000, 600 ) );
+        ImGui::SetNextWindowSizeConstraints( ImVec2( 920, 700 ), ImVec2( 920, 700 ) );
         if ( ImGui::Begin( "Trace Log", &visible, windowFlags ) ) {
 
             RenderMenuBar();
             DebugControls();
+            ImGui::Dummy( ImVec2( 0, 10 ) );
+            ImGui::PushItemWidth( 120 );
+            if ( ImGui::Combo( "Log Type", &usingLogType, logTypes.data(), (int) logTypes.size() ) ) {
+                Clear();
+            };
+            ImGui::PopItemWidth();
+            ImGui::SameLine();
+            HelpMarker( "Normal: Logs at the beginning of instruction. \nMesen: Logs between PPU cycle 2 and "
+                        "3 of each instruction." );
+            ImGui::Dummy( ImVec2( 0, 10 ) );
 
             // Grab the trace log as long as not on the same cycle.
             // We can debounce this more if necessary.
@@ -37,8 +73,14 @@ class LogWindow : public UIComponent // NOLINT
                 _lineOffsets.clear();
                 _lineOffsets.push_back( 0 );
                 lastCpuCycleLogged = currentCycle;
-                for ( const auto &line : renderer->bus.cpu.GetTracelog() ) {
-                    AddLog( line.c_str() );
+                if ( usingLogType == NORMAL ) {
+                    for ( const auto &line : renderer->bus.cpu.GetTracelog() ) {
+                        AddLog( line.c_str() );
+                    }
+                } else {
+                    for ( const auto &line : renderer->bus.cpu.GetMesenFormatTracelog() ) {
+                        AddLog( line.c_str() );
+                    }
                 }
             }
 
@@ -70,9 +112,8 @@ class LogWindow : public UIComponent // NOLINT
             _filter.Draw( "Filter", -100.0f );
             ImGui::Dummy( ImVec2( 0, 10 ) );
 
-            ImGui::Separator();
-
-            if ( ImGui::BeginChild( "scrolling", ImVec2( 0, 0 ), ImGuiChildFlags_None,
+            ImGui::PushStyleColor( ImGuiCol_ChildBg, ImVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
+            if ( ImGui::BeginChild( "scrolling", ImVec2( 0, 0 ), ImGuiChildFlags_Border,
                                     ImGuiWindowFlags_HorizontalScrollbar ) ) {
                 if ( clear ) {
                     Clear();
@@ -83,8 +124,11 @@ class LogWindow : public UIComponent // NOLINT
 
                 ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 0, 0 ) );
                 ImGui::PushFont( renderer->fontMono );
-                const char *buf = _buf.begin();
-                const char *bufEnd = _buf.end();
+
+                const char *buf = nullptr;
+                const char *bufEnd = nullptr;
+                buf = _buf.begin();
+                bufEnd = _buf.end();
 
                 // filter code pulled from imgui_demo, I have no idea how it works
                 if ( _filter.IsActive() ) {
@@ -122,6 +166,7 @@ class LogWindow : public UIComponent // NOLINT
                     ImGui::SetScrollHereY( 1.0f );
                 }
             }
+            ImGui::PopStyleColor();
             ImGui::EndChild();
             ImGui::End();
             ImGui::PopStyleVar();
@@ -133,7 +178,8 @@ class LogWindow : public UIComponent // NOLINT
         _buf.clear();
         _lineOffsets.clear();
         _lineOffsets.push_back( 0 );
-        renderer->bus.cpu.ClearTracelog();
+        renderer->bus.cpu.ClearTraceLog();
+        renderer->bus.cpu.ClearMesenTraceLog();
     }
 
   private:
@@ -141,37 +187,6 @@ class LogWindow : public UIComponent // NOLINT
     ImGuiTextFilter _filter;
     ImVector<int>   _lineOffsets;
     bool            _autoScroll{ true };
-
-    void DebugControls()
-    {
-        // Debug transport controls
-        bool const isPaused = renderer->paused;
-
-        ImGui::BeginDisabled( !isPaused );
-        ImGui::PushItemWidth( 140 );
-        if ( ImGui::Button( "Continue" ) ) {
-            renderer->paused = false;
-        }
-        ImGui::EndDisabled();
-
-        ImGui::SameLine();
-
-        ImGui::BeginDisabled( isPaused );
-        if ( ImGui::Button( "Pause" ) ) {
-            renderer->paused = true;
-        }
-        ImGui::EndDisabled();
-
-        ImGui::SameLine();
-
-        if ( ImGui::Button( "Reset" ) ) {
-            renderer->bus.DebugReset();
-            Clear();
-        }
-
-        ImGui::Separator();
-        ImGui::Dummy( ImVec2( 0, 3 ) );
-    }
 
     void RenderMenuBar()
     {
@@ -192,6 +207,17 @@ class LogWindow : public UIComponent // NOLINT
         int oldSize = _buf.size();
         _buf.append( str );
         // Process new lines or any additional logic
+        for ( int const newSize = _buf.size(); oldSize < newSize; oldSize++ ) {
+            if ( _buf[oldSize] == '\n' ) {
+                _lineOffsets.push_back( oldSize + 1 );
+            }
+        }
+    }
+
+    void AddLogMesen( const char *str )
+    {
+        int oldSize = _buf.size();
+        _buf.append( str );
         for ( int const newSize = _buf.size(); oldSize < newSize; oldSize++ ) {
             if ( _buf[oldSize] == '\n' ) {
                 _lineOffsets.push_back( oldSize + 1 );

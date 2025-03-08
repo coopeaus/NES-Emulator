@@ -11,8 +11,10 @@
 #include "log.h"
 #include "memory-display.h"
 #include "palettes.h"
-#include "register-viewer.h"
+#include "cpu-viewer.h"
+#include "ppu-viewer.h"
 #include "pattern-tables.h"
+#include "nametable.h"
 
 UIManager::UIManager( Renderer *renderer )
 {
@@ -24,7 +26,9 @@ UIManager::UIManager( Renderer *renderer )
     AddComponent<MemoryDisplayWindow>( renderer );
     AddComponent<PaletteWindow>( renderer );
     AddComponent<PatternTablesWindow>( renderer );
-    AddComponent<RegisterViewerWindow>( renderer );
+    AddComponent<CpuViewerWindow>( renderer );
+    AddComponent<PpuViewerWindow>( renderer );
+    AddComponent<NametableWindow>( renderer );
 }
 
 void UIManager::Render()

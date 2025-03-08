@@ -414,20 +414,23 @@ std::string CPU::LogLineAtPC( bool verbose ) // NOLINT
 
     // Program counter address
     // i.e. FFFF
-    output += utils::toHex( _pc, 4 ) + ":  ";
+    output += utils::toHex( _pc, 4 ) + " ";
 
-    // Hex instruction
-    // i.e. 4C F5 C5, this is the hex instruction
-    u8 const    bytes = _opcodeTable[Read( _pc )].bytes;
-    std::string hexInstruction;
-    for ( u8 i = 0; i < bytes; i++ ) {
-        hexInstruction += utils::toHex( Read( _pc + i ), 2 ) + ' ';
+    if ( verbose ) {
+        output += " k";
+        // Hex instruction
+        // i.e. 4C F5 C5, this is the hex instruction
+        u8 const    bytes = _opcodeTable[Read( _pc )].bytes;
+        std::string hexInstruction;
+        for ( u8 i = 0; i < bytes; i++ ) {
+            hexInstruction += utils::toHex( Read( _pc + i ), 2 ) + ' ';
+        }
+
+        // formatting, the instruction hex_instruction will be 9 characters long, with space padding to
+        // the right. This makes sure the hex line is the same length for all instructions
+        hexInstruction += std::string( 9 - ( bytes * 3 ), ' ' );
+        output += hexInstruction;
     }
-
-    // formatting, the instruction hex_instruction will be 9 characters long, with space padding to
-    // the right. This makes sure the hex line is the same length for all instructions
-    hexInstruction += std::string( 9 - ( bytes * 3 ), ' ' );
-    output += hexInstruction;
 
     // If name starts with a "*", it is an illegal opcode
     ( name[0] == '*' ) ? output += "*" + name.substr( 1 ) + " " : output += name + " ";
@@ -480,36 +483,38 @@ std::string CPU::LogLineAtPC( bool verbose ) // NOLINT
     }
 
     // Pad the assembly string with spaces, for fixed length
-    output += assemblyStr + std::string( 15 - assemblyStr.size(), ' ' );
+    if ( verbose ) {
+        output += assemblyStr + std::string( 15 - assemblyStr.size(), ' ' );
+    }
 
     // Add more log info
+    std::string registersStr;
+    // Format
+    // a: 00 x: 00 y: 00 s: FD
+    registersStr += "a: " + utils::toHex( _a, 2 ) + " ";
+    registersStr += "x: " + utils::toHex( _x, 2 ) + " ";
+    registersStr += "y: " + utils::toHex( _y, 2 ) + " ";
+    registersStr += "s: " + utils::toHex( _s, 2 ) + " ";
+
+    // status register
+    // Will return a formatted status string
+    // p: hex value, status string (NV-BDIZC). Letter present is flag set, dash is flag unset
+    std::string statusStr;
+    statusStr += "p: " + utils::toHex( _p, 2 ) + " ";
+
+    std::string statusFlags = "NV-BDIZC";
+    std::string statusFlagsLower = "nv--dizc";
+    std::string statusFlagsStr;
+    for ( int i = 7; i >= 0; i-- ) {
+        statusFlagsStr += ( _p & ( 1 << i ) ) != 0 ? statusFlags[7 - i] : statusFlagsLower[7 - i];
+    }
+    statusStr += statusFlagsStr;
+
+    // Combine to the output string
+    output += registersStr + statusStr;
+
+    // Scanline num (V)
     if ( verbose ) {
-        std::string registersStr;
-        // Format
-        // a: 00 x: 00 y: 00 s: FD
-        registersStr += "a: " + utils::toHex( _a, 2 ) + " ";
-        registersStr += "x: " + utils::toHex( _x, 2 ) + " ";
-        registersStr += "y: " + utils::toHex( _y, 2 ) + " ";
-        registersStr += "s: " + utils::toHex( _s, 2 ) + " ";
-
-        // status register
-        // Will return a formatted status string
-        // p: hex value, status string (NV-BDIZC). Letter present is flag set, dash is flag unset
-        std::string statusStr;
-        statusStr += "p: " + utils::toHex( _p, 2 ) + "  ";
-
-        std::string statusFlags = "NV-BDIZC";
-        std::string statusFlagsLower = "nv--dizc";
-        std::string statusFlagsStr;
-        for ( int i = 7; i >= 0; i-- ) {
-            statusFlagsStr += ( _p & ( 1 << i ) ) != 0 ? statusFlags[7 - i] : statusFlagsLower[7 - i];
-        }
-        statusStr += statusFlagsStr;
-
-        // Combine to the output string
-        output += registersStr + statusStr;
-
-        // Scanline num (V)
         std::string const scanlineStr = std::to_string( _bus->ppu.GetScanline() );
         // std::string scanline_str_adjusted = std::string( 4 - scanline_str.size(), ' ' );
         output += "  V: " + scanlineStr;
@@ -586,6 +591,15 @@ void CPU::Tick()
     _cycles++;
     _bus->ppu.Tick();
     _bus->ppu.Tick();
+
+    // Match mesen trace log, place logger here.
+    if ( _mesenFormatTraceEnabled && !_didMesenTrace ) {
+        _pc--;
+        AddMesenTracelog( LogLineAtPC( true ) );
+        _pc++;
+        _didMesenTrace = true;
+    }
+
     _bus->ppu.Tick();
 }
 
@@ -692,6 +706,8 @@ void CPU::DecodeExecute()
         AddTraceLog( LogLineAtPC( true ) );
     }
 
+    _didMesenTrace = false;
+
     // Fetch the next opcode and increment the program counter
     u8 const opcode = Fetch();
 
@@ -723,6 +739,7 @@ void CPU::DecodeExecute()
 
         // Reset flags
         _isWriteModify = false;
+        _didMesenTrace = false;
     } else {
         // Houston, we have a problem. No opcode was found.
         std::cerr << "Bad opcode: " << std::hex << static_cast<int>( opcode ) << '\n';

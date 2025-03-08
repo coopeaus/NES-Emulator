@@ -39,10 +39,11 @@ class PaletteWindow : public UIComponent
     {
         ImGuiWindowFlags const windowFlags = ImGuiWindowFlags_MenuBar;
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
-        ImGui::SetNextWindowSizeConstraints( ImVec2( 620, 400 ), ImVec2( 1000, 600 ) );
+        ImGui::SetNextWindowSizeConstraints( ImVec2( 620, 500 ), ImVec2( 1000, 600 ) );
 
         if ( ImGui::Begin( "Palettes", &visible, windowFlags ) ) {
             RenderMenuBar();
+            DebugControls();
 
             ImGui::PushFont( renderer->fontMono );
 

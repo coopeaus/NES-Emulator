@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "cartridge.h" // NOLINT
 #include "mappers/mapper-base.h"
+#include <cstdint>
 #include <exception>
 #include <cstdlib>
 #include <array>
@@ -1038,8 +1039,24 @@ u8 PPU::GetSpritePalette() // NOLINT
 
 u8 PPU::GetBgPixel() // NOLINT
 {
-    // TODO: Implement
-    return 0x00;
+    if ( _ppuMask.bit.renderBackground == 0 ) {
+        return 0x00;
+    }
+
+    if ( _ppuMask.bit.renderBackgroundLeft == 0 && _cycle < 9 ) {
+        return 0x00;
+    }
+
+    // Compute a bitmask to select the correct bit for the current pixel,
+    // taking into account the fine x scrolling offset.
+    u16 const mask = 0x8000 >> _fineX;
+    // Extract the background pixel bits:
+    // - The high pattern shifter gives a value of 2 if its bit is set.
+    // - The low pattern shifter gives a value of 1 if its bit is set.
+    // Combining them yields a 2-bit pixel index (0-3).
+    u8 const bgPixel =
+        ( ( _bgShiftPatternHigh & mask ) ? 0b10 : 0 ) | ( ( _bgShiftPatternLow & mask ) ? 0b01 : 0 );
+    return bgPixel;
 }
 
 u8 PPU::GetSpritePixel() // NOLINT
@@ -1051,10 +1068,30 @@ u8 PPU::GetSpritePixel() // NOLINT
 
 u32 PPU::GetOutputPixel( u8 bgPixel, u8 spritePixel, u8 bgPalette, u8 spritePalette ) // NOLINT
 {
-    // TODO: Implement
-    (void) bgPixel;
-    (void) spritePixel;
-    (void) bgPalette;
-    (void) spritePalette;
-    return _nesPaletteRgbValues[0x22];
+    u8 const fgPriority = 0; // TODO: Fetch from sprite
+    u8       pixel = 0x00;
+    u8       palette = 0x00;
+    //
+    // (fg_pixel != 0) yields 1 if fg_pixel is nonzero (visible).
+    // (bg_pixel == 0) yields 1 if the background is transparent.
+    // Their bitwise combination with fg_priority tells us if we should use fg.
+    int const mask = -( ( ( bgPixel != 0 ) & ( ( spritePixel == 0 ) | fgPriority ) ) );
+
+    // If mask == -1 (all ones), the foreground values are chosen.
+    // If mask == 0, the background values are selected.
+    pixel = (uint8_t) ( ( mask & spritePixel ) | ( ( ~mask ) & bgPixel ) );
+    palette = (uint8_t) ( ( mask & spritePalette ) | ( ( ~mask ) & bgPalette ) );
+
+    u16 const paletteAddr = 0x3F00 + ( palette << 2 ) + pixel;
+    u8 const  paletteIdx = Read( paletteAddr ) & 0x3F;
+
+    return _nesPaletteRgbValues.at( paletteIdx );
+}
+
+MirrorMode PPU::GetMirrorMode() const
+{
+    if ( _bus == nullptr ) {
+        return MirrorMode::Vertical;
+    }
+    return _bus->cartridge->GetMirrorMode();
 }
