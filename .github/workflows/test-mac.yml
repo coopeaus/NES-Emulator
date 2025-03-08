@@ -10,11 +10,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
-      - name: Set up environment variables
-        run: |
-          echo "VCPKG_DEFAULT_BINARY_CACHE=/tmp/vcpkg_cache" >> $GITHUB_ENV
-          echo "VCPKG_ROOT=/tmp/vcpkg" >> $GITHUB_ENV
   
       - name: Cache vcpkg dependencies
         uses: actions/cache@v4
@@ -46,6 +41,12 @@ jobs:
           git fetch
           git checkout d5ec528843d29e3a52d745a64b469f810b2cedbf
           ./bootstrap-vcpkg.sh -disableMetrics
+    
+      - name: Set up vcpkg environment variables
+        run: |
+          echo "VCPKG_DEFAULT_BINARY_CACHE=/tmp/vcpkg_cache" >> $GITHUB_ENV
+          echo "VCPKG_ROOT=/tmp/vcpkg" >> $GITHUB_ENV
+          echo "tmp/vcpkg/vcpkg" >> $GITHUB_PATH
 
       - name: Install dependencies with vcpkg
         run: |
