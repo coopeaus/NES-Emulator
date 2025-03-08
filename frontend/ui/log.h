@@ -53,8 +53,8 @@ class LogWindow : public UIComponent // NOLINT
             ImGui::Combo( "Log Type", &usingLogType, logTypes.data(), (int) logTypes.size() );
             ImGui::PopItemWidth();
             ImGui::SameLine();
-            HelpMarker( "Normal: Logs at the beginning of instruction. \nMesen: Logs each CPU cycle, between "
-                        "PPU cycle 2 and 3." );
+            HelpMarker( "Normal: Logs at the beginning of instruction. \nMesen: Logs between PPU cycle 2 and "
+                        "3 of each instruction." );
             ImGui::Dummy( ImVec2( 0, 10 ) );
 
             // Grab the trace log as long as not on the same cycle.
