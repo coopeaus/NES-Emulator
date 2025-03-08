@@ -1,4 +1,4 @@
-name: build-mac-arm
+name: test-build-mac-arm
 
 on:
     pull_request
@@ -14,6 +14,7 @@ jobs:
       - name: Set up environment variables
         run: |
           echo "VCPKG_DEFAULT_BINARY_CACHE=/tmp/vcpkg_cache" >> $GITHUB_ENV
+          echo "VCPKG_ROOT=/tmp/vcpkg" >> $GITHUB_ENV
   
       - name: Cache vcpkg dependencies
         uses: actions/cache@v4
@@ -27,7 +28,12 @@ jobs:
         run: |
           brew update
           brew install llvm cmake pkg-config ninja
-      
+    
+      - name: Check dependencies
+        run: |
+          chmod ugo+x ./scripts/env-check.sh
+          ./scripts/env-check.sh
+        
       - name: Checkout pinned version of vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg
@@ -47,6 +53,8 @@ jobs:
         run: |
           chmod ugo+x ./scripts/env-check.sh
           chmod ugo+x ./scripts/build.sh
+          ./scripts/env-check.sh
+          ./scripts/build.sh
       
       - name: Copy files to Release directory
         run: |
