@@ -16,13 +16,19 @@ class LogWindow : public UIComponent // NOLINT
 
     void OnVisible() override
     {
-        renderer->bus.cpu.EnableTracelog();
-        renderer->bus.cpu.EnableMesenFormatTraceLog();
+        if ( usingLogType == NORMAL ) {
+            renderer->bus.cpu.EnableTracelog();
+        } else {
+            renderer->bus.cpu.EnableMesenFormatTraceLog();
+        }
     }
     void OnHidden() override
     {
-        renderer->bus.cpu.DisableTracelog();
-        renderer->bus.cpu.DisableMesenFormatTraceLog();
+        if ( usingLogType == NORMAL ) {
+            renderer->bus.cpu.DisableTracelog();
+        } else {
+            renderer->bus.cpu.DisableMesenFormatTraceLog();
+        }
     }
 
     // variables
@@ -50,7 +56,9 @@ class LogWindow : public UIComponent // NOLINT
             DebugControls();
             ImGui::Dummy( ImVec2( 0, 10 ) );
             ImGui::PushItemWidth( 120 );
-            ImGui::Combo( "Log Type", &usingLogType, logTypes.data(), (int) logTypes.size() );
+            if ( ImGui::Combo( "Log Type", &usingLogType, logTypes.data(), (int) logTypes.size() ) ) {
+                Clear();
+            };
             ImGui::PopItemWidth();
             ImGui::SameLine();
             HelpMarker( "Normal: Logs at the beginning of instruction. \nMesen: Logs between PPU cycle 2 and "
@@ -62,15 +70,17 @@ class LogWindow : public UIComponent // NOLINT
             uint64_t const currentCycle = renderer->bus.cpu.GetCycles();
             if ( currentCycle != lastCpuCycleLogged ) {
                 _buf.clear();
-                _mesenBuf.clear();
                 _lineOffsets.clear();
                 _lineOffsets.push_back( 0 );
                 lastCpuCycleLogged = currentCycle;
-                for ( const auto &line : renderer->bus.cpu.GetTracelog() ) {
-                    AddLog( line.c_str() );
-                }
-                for ( const auto &line : renderer->bus.cpu.GetMesenFormatTracelog() ) {
-                    AddLogMesen( line.c_str() );
+                if ( usingLogType == NORMAL ) {
+                    for ( const auto &line : renderer->bus.cpu.GetTracelog() ) {
+                        AddLog( line.c_str() );
+                    }
+                } else {
+                    for ( const auto &line : renderer->bus.cpu.GetMesenFormatTracelog() ) {
+                        AddLog( line.c_str() );
+                    }
                 }
             }
 
@@ -117,13 +127,8 @@ class LogWindow : public UIComponent // NOLINT
 
                 const char *buf = nullptr;
                 const char *bufEnd = nullptr;
-                if ( usingLogType == NORMAL ) {
-                    buf = _buf.begin();
-                    bufEnd = _buf.end();
-                } else {
-                    buf = _mesenBuf.begin();
-                    bufEnd = _mesenBuf.end();
-                }
+                buf = _buf.begin();
+                bufEnd = _buf.end();
 
                 // filter code pulled from imgui_demo, I have no idea how it works
                 if ( _filter.IsActive() ) {
@@ -171,7 +176,6 @@ class LogWindow : public UIComponent // NOLINT
     void Clear()
     {
         _buf.clear();
-        _mesenBuf.clear();
         _lineOffsets.clear();
         _lineOffsets.push_back( 0 );
         renderer->bus.cpu.ClearTraceLog();
@@ -180,7 +184,6 @@ class LogWindow : public UIComponent // NOLINT
 
   private:
     ImGuiTextBuffer _buf;
-    ImGuiTextBuffer _mesenBuf;
     ImGuiTextFilter _filter;
     ImVector<int>   _lineOffsets;
     bool            _autoScroll{ true };
@@ -213,10 +216,10 @@ class LogWindow : public UIComponent // NOLINT
 
     void AddLogMesen( const char *str )
     {
-        int oldSize = _mesenBuf.size();
-        _mesenBuf.append( str );
-        for ( int const newSize = _mesenBuf.size(); oldSize < newSize; oldSize++ ) {
-            if ( _mesenBuf[oldSize] == '\n' ) {
+        int oldSize = _buf.size();
+        _buf.append( str );
+        for ( int const newSize = _buf.size(); oldSize < newSize; oldSize++ ) {
+            if ( _buf[oldSize] == '\n' ) {
                 _lineOffsets.push_back( oldSize + 1 );
             }
         }

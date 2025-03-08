@@ -83,12 +83,20 @@ class CPU
     std::string             LogLineAtPC( bool verbose = true );
     std::deque<std::string> GetTracelog() const { return _traceLog; }
     std::deque<std::string> GetMesenFormatTracelog() const { return _mesenFormatTraceLog; }
-    void                    EnableTracelog() { _traceEnabled = true; }
-    void                    DisableTracelog() { _traceEnabled = false; }
-    void                    EnableJsonTestMode() { _isTestMode = true; }
-    void                    DisableJsonTestMode() { _isTestMode = false; }
-    void                    EnableMesenFormatTraceLog() { _mesenFormatTraceEnabled = true; }
-    void                    DisableMesenFormatTraceLog() { _mesenFormatTraceEnabled = false; }
+    void                    EnableTracelog()
+    {
+        _traceEnabled = true;
+        _mesenFormatTraceEnabled = false;
+    }
+    void EnableMesenFormatTraceLog()
+    {
+        _mesenFormatTraceEnabled = true;
+        _traceEnabled = false;
+    }
+    void DisableTracelog() { _traceEnabled = false; }
+    void DisableMesenFormatTraceLog() { _mesenFormatTraceEnabled = false; }
+    void EnableJsonTestMode() { _isTestMode = true; }
+    void DisableJsonTestMode() { _isTestMode = false; }
 
     u16  traceSize = 100;
     u16  mesenTraceSize = 100;
