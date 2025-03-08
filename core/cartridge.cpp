@@ -233,7 +233,7 @@ void Cartridge::Write( u16 address, u8 data )
      */
     if ( address >= 0x0000 && address <= 0x1FFF ) {
         u32 const translatedAddress = _mapper->TranslatePPUAddress( address );
-        return _chrRom.at( translatedAddress & 0x1FFF );
+        return _chrRom.at( translatedAddress );
     }
     return 0xFF;
 }
