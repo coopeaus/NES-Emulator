@@ -12,7 +12,7 @@ class LogWindow : public UIComponent // NOLINT
 {
   public:
     uint64_t lastCpuCycleLogged = 0;
-    LogWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = true; }
+    LogWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = false; }
 
     void OnVisible() override
     {

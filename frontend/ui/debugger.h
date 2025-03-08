@@ -27,7 +27,7 @@ class DebuggerWindow : public UIComponent
         ImGuiWindowFlags const windowFlags =
             ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize;
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
-        ImGui::SetNextWindowSizeConstraints( ImVec2( 420, -1 ), ImVec2( 420, -1 ) );
+        ImGui::SetNextWindowSizeConstraints( ImVec2( 430, -1 ), ImVec2( 600, -1 ) );
 
         if ( ImGui::Begin( "Debugger", &visible, windowFlags ) ) {
             RenderMenuBar();

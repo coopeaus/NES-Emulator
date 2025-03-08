@@ -1,9 +1,10 @@
 #include "ui-component.h"
 #include "renderer.h"
+#include <imgui.h>
 
 void UIComponent::DebugControls()
 {
-    ImVec2 size = ImVec2( 400, 120 );
+    ImVec2 size = ImVec2( 410, 120 );
     if ( ImGui::BeginChild( "debug-control", size, ImGuiChildFlags_Border ) ) {
         bool const isPaused = renderer->paused;
 
@@ -13,6 +14,7 @@ void UIComponent::DebugControls()
             renderer->paused = false;
             debuggerStatus = NORMAL;
         }
+        ImGui::PopItemWidth();
         ImGui::EndDisabled();
 
         ImGui::SameLine();
@@ -32,8 +34,43 @@ void UIComponent::DebugControls()
         }
 
         ImGui::SameLine();
-        ImGui::Text( "CPU Cycle: " U64_FORMAT_SPECIFIER, renderer->bus.cpu.GetCycles() );
-        ImGui::PopItemWidth();
+        ImGui::Spacing();
+        ImGui::SameLine();
+        HelpMarker( "H: PPU cycles, V: PPU scanline, C: CPU cycles" );
+        ImGui::SameLine();
+        ImGui::BeginGroup();
+        float const innerSpacing = 20.0f;
+        float const outerSpacing = 30.0f;
+
+        ImGui::PushFont( renderer->fontMono );
+
+        ImGui::PushFont( renderer->fontMonoBold );
+        ImGui::Text( "H:" );
+        ImGui::PopFont();
+        ImGui::SameLine();
+        ImGui::Indent( innerSpacing );
+        ImGui::Text( "%" PRIu16, renderer->bus.ppu.GetCycles() );
+
+        ImGui::SameLine();
+        ImGui::Indent( outerSpacing );
+        ImGui::PushFont( renderer->fontMonoBold );
+        ImGui::Text( "V:" );
+        ImGui::PopFont();
+        ImGui::SameLine();
+        ImGui::Indent( innerSpacing );
+        ImGui::Text( "%" PRId16, renderer->bus.ppu.GetScanline() );
+
+        ImGui::SameLine();
+        ImGui::Indent( outerSpacing );
+        ImGui::PushFont( renderer->fontMonoBold );
+        ImGui::Text( "C:" );
+        ImGui::PopFont();
+        ImGui::SameLine();
+        ImGui::Indent( innerSpacing );
+        ImGui::Text( U64_FORMAT_SPECIFIER, renderer->bus.cpu.GetCycles() );
+
+        ImGui::PopFont();
+        ImGui::EndGroup();
 
         const char *items[] = { "Cycles", "Instructions", "VBlank", "Scanlines", "Frame", "NMI", "IRQ" };
         static int  i0 = 1;
@@ -80,28 +117,29 @@ void UIComponent::DebugControls()
                     break;
                 case 2: // VBlank
                     if ( !renderer->bus.ppu.GetStatusVblank() ) {
-                        while ( !renderer->bus.ppu.GetStatusVblank() ) {
+                        while ( !renderer->bus.ppu.GetStatusVblank() && !didTimeout() ) {
                             renderer->bus.cpu.DecodeExecute();
                         }
                     } else {
-                        while ( renderer->bus.ppu.GetStatusVblank() ) {
+                        while ( renderer->bus.ppu.GetStatusVblank() && !didTimeout() ) {
                             renderer->bus.cpu.DecodeExecute();
                         }
-                        while ( !renderer->bus.ppu.GetStatusVblank() ) {
+                        while ( !renderer->bus.ppu.GetStatusVblank() && !didTimeout() ) {
+
                             renderer->bus.cpu.DecodeExecute();
                         }
                     }
                     break;
                 case 3: { // Scanlines
                     auto const target = renderer->bus.ppu.GetScanline() + i0;
-                    while ( renderer->bus.ppu.GetScanline() < target ) {
+                    while ( renderer->bus.ppu.GetScanline() < target && !didTimeout() ) {
                         renderer->bus.cpu.DecodeExecute();
                     }
                     break;
                 }
                 case 4: { // Frame
                     auto const target = renderer->bus.ppu.GetFrame() + i0;
-                    while ( renderer->bus.ppu.GetFrame() < target ) {
+                    while ( renderer->bus.ppu.GetFrame() < target && !didTimeout() ) {
                         renderer->bus.cpu.DecodeExecute();
                     }
                     break;
@@ -150,7 +188,18 @@ void UIComponent::DebugControls()
                 break;
 
             default:
-                ImGui::Text( "" );
+                auto const line = renderer->bus.cpu.LogLineAtPC( false );
+                ImGui::PushStyleColor( ImGuiCol_ChildBg, ImVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
+                ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 4.0f, 1.0f ) );
+                if ( ImGui::BeginChild( "", ImVec2( 0, 0 ), ImGuiChildFlags_Border ) ) {
+                    ;
+                    ImGui::PushFont( renderer->fontMono );
+                    ImGui::Text( "%s", line.c_str() );
+                    ImGui::PopFont();
+                    ImGui::EndChild();
+                }
+                ImGui::PopStyleVar();
+                ImGui::PopStyleColor();
                 break;
         }
 
