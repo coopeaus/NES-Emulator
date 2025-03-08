@@ -1,6 +1,9 @@
 name: build-linux
 
 on:
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       branch:

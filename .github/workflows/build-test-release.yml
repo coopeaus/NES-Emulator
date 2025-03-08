@@ -3,8 +3,13 @@ name: build-test-release
 # This should only be manually triggered for now, as new releases
 # should be infrequent while we are still developing core features.
 on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
-
     # Allow the workflow dispatcher to specify whether major, minor, or patch
     # should be incremented.
     inputs:
@@ -18,14 +23,30 @@ on:
                 - 'minor'
                 - 'patch'
 jobs:
+    test:
+      uses: coopeaus/NES-Emulator/.github/workflows/lint-format-test.yml@main
+      with:
+        branch: ${{ github.event_name == 'pull_request' && github.head_ref || 'main' }}
+        commit: HEAD
+
     versioning:
+        needs: test
         runs-on: ubuntu-latest
         outputs:
             version: ${{ steps.new_version.outputs.new_tag }}
         steps:
             - name: Checkout
               uses: actions/checkout@v4
-            
+
+            - name: Get bump type
+              id: bump_type
+              run: |
+                if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.version_bump }}" != "" ]]; then
+                  echo "BUMP_TYPE=${{ github.event.inputs.version_bump }}" >> $GITHUB_ENV
+                else
+                  echo "BUMP_TYPE=patch" >> $GITHUB_ENV
+                fi
+
             # Uses a handy marketplace action for bumping the version number
             # using semantic versioning.
             - name: auto-inc version
@@ -33,21 +54,21 @@ jobs:
               uses: anothrNick/github-tag-action@1.71.0
               env: 
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  DEFAULT_BUMP: ${{ github.event.inputs.version_bump }}
+                  DEFAULT_BUMP: ${{ github.event.inputs.version_bump || 'patch' }}
                   WITH_V: true
 
     build-linux:
       needs: versioning
       uses: coopeaus/NES-Emulator/.github/workflows/build-linux.yml@main
       with:
-        branch: main
+        branch: ${{ github.head_ref || 'main' }}
         commit: HEAD
 
     build-windows:
       needs: versioning
       uses: coopeaus/NES-Emulator/.github/workflows/build-windows.yml@main
       with:
-        branch: main
+        branch: ${{ github.head_ref || 'main' }}
         commit: HEAD
   
     build-macos:
@@ -57,7 +78,7 @@ jobs:
         - name: Build arm64 macOS
           run: |
             echo "Building for arm64 macOS not supported yet"
-    
+
     release:
       needs: [build-windows, build-linux, versioning]
       runs-on: ubuntu-latest
