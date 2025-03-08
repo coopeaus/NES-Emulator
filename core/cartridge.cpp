@@ -221,7 +221,7 @@ void Cartridge::Write( u16 address, u8 data )
      */
     if ( address >= 0x8000 && address <= 0xFFFF ) {
         u32 const translatedAddress = _mapper->TranslateCPUAddress( address );
-        return _prgRom.at( translatedAddress & 0xFFFF );
+        return _prgRom.at( translatedAddress );
     }
     return 0xFF;
 }
