@@ -57,9 +57,7 @@ jobs:
 
       - name: Build Project
         run: |
-          chmod ugo+x ./scripts/env-check.sh
           chmod ugo+x ./scripts/build.sh
-          ./scripts/env-check.sh
           ./scripts/build.sh
       
       - name: Copy files to Release directory
