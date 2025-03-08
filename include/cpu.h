@@ -82,12 +82,16 @@ class CPU
     */
     std::string             LogLineAtPC( bool verbose = true );
     std::deque<std::string> GetTracelog() const { return _traceLog; }
+    std::deque<std::string> GetMesenFormatTracelog() const { return _mesenFormatTraceLog; }
     void                    EnableTracelog() { _traceEnabled = true; }
     void                    DisableTracelog() { _traceEnabled = false; }
     void                    EnableJsonTestMode() { _isTestMode = true; }
     void                    DisableJsonTestMode() { _isTestMode = false; }
+    void                    EnableMesenFormatTraceLog() { _mesenFormatTraceEnabled = true; }
+    void                    DisableMesenFormatTraceLog() { _mesenFormatTraceEnabled = false; }
 
-    u16  traceSize = 1000;
+    u16  traceSize = 100;
+    u16  mesenTraceSize = 100;
     void AddTraceLog( const std::string &log )
     {
         if ( _traceEnabled ) {
@@ -97,7 +101,17 @@ class CPU
             }
         }
     }
-    void ClearTracelog() { _traceLog.clear(); }
+    void ClearTraceLog() { _traceLog.clear(); }
+    void AddMesenTracelog( const std::string &log )
+    {
+        if ( _mesenFormatTraceEnabled ) {
+            _mesenFormatTraceLog.push_back( log + "\n" );
+            if ( _mesenFormatTraceLog.size() > mesenTraceSize ) {
+                _mesenFormatTraceLog.pop_front();
+            }
+        }
+    }
+    void ClearMesenTraceLog() { _mesenFormatTraceLog.clear(); }
 
     /*
     ################################
@@ -151,9 +165,11 @@ class CPU
     */
     bool _isTestMode = false;
     bool _traceEnabled = false;
-    bool _isPaused = false;
+    bool _mesenFormatTraceEnabled = false;
+    bool _didMesenTrace = false;
 
     std::deque<std::string> _traceLog;
+    std::deque<std::string> _mesenFormatTraceLog;
 
     /*
     ################################

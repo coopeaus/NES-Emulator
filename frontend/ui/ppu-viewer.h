@@ -3,7 +3,6 @@
 #include "ui-component.h"
 #include "renderer.h"
 #include <imgui.h>
-#include "log.h"
 #include <cinttypes>
 
 class PpuViewerWindow : public UIComponent
@@ -27,7 +26,7 @@ class PpuViewerWindow : public UIComponent
 
     void RenderSelf() override
     {
-        ImVec2 const               outerWindowSize = ImVec2( 650, 800 );
+        ImVec2 const               outerWindowSize = ImVec2( 650, 880 );
         constexpr ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar;
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
         ImGui::SetNextWindowSizeConstraints( outerWindowSize,
@@ -57,34 +56,6 @@ class PpuViewerWindow : public UIComponent
         }
         ImGui::End();
         ImGui::PopStyleVar();
-    }
-
-    void DebugControls()
-    {
-        bool const isPaused = renderer->paused;
-
-        ImGui::BeginDisabled( !isPaused );
-        if ( ImGui::Button( "Continue" ) ) {
-            renderer->paused = false;
-        }
-        ImGui::EndDisabled();
-
-        ImGui::SameLine();
-
-        ImGui::BeginDisabled( isPaused );
-        if ( ImGui::Button( "Pause" ) ) {
-            renderer->paused = true;
-        }
-        ImGui::EndDisabled();
-
-        ImGui::SameLine();
-
-        if ( ImGui::Button( "Reset" ) ) {
-            renderer->bus.DebugReset();
-            if ( auto *logWindow = renderer->ui.GetComponent<LogWindow>() ) {
-                logWindow->Clear();
-            }
-        }
     }
 
     void PpuCycles( ImVec2 size )

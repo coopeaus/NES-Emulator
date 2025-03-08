@@ -24,35 +24,7 @@ class MemoryDisplayWindow : public UIComponent
         if ( ImGui::Begin( "Memory Viewer", &visible, windowFlags ) ) {
 
             RenderMenuBar();
-            bool const isPaused = renderer->paused;
-
-            ImGui::BeginDisabled( !isPaused );
-            ImGui::PushItemWidth( 140 );
-            if ( ImGui::Button( "Continue" ) ) {
-                renderer->paused = false;
-            }
-            ImGui::EndDisabled();
-
-            ImGui::SameLine();
-
-            ImGui::BeginDisabled( isPaused );
-            if ( ImGui::Button( "Pause" ) ) {
-                renderer->paused = true;
-            }
-            ImGui::EndDisabled();
-
-            ImGui::SameLine();
-
-            if ( ImGui::Button( "Reset" ) ) {
-                renderer->bus.DebugReset();
-                if ( auto *logWindow = renderer->ui.GetComponent<LogWindow>() ) {
-                    logWindow->Clear();
-                }
-            }
-
-            ImGui::SameLine();
-            ImGui::Text( "CPU Cycle: " U64_FORMAT_SPECIFIER, renderer->bus.cpu.GetCycles() );
-            ImGui::PopItemWidth();
+            DebugControls();
 
             // Add new items here
             const char *items[] = { "CPU Memory", "PPU Memory" };

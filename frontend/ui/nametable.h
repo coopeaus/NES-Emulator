@@ -5,7 +5,6 @@
 #include "mappers/mapper-base.h"
 #include "ui-component.h"
 #include "renderer.h"
-#include "log.h"
 #include <imgui.h>
 
 class NametableWindow : public UIComponent
@@ -33,7 +32,7 @@ class NametableWindow : public UIComponent
     {
         ImGuiWindowFlags const windowFlags = ImGuiWindowFlags_MenuBar;
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
-        ImGui::SetNextWindowSizeConstraints( ImVec2( 1000, 700 ), ImVec2( 1000, 800 ) );
+        ImGui::SetNextWindowSizeConstraints( ImVec2( 1000, 820 ), ImVec2( 1000, 820 ) );
 
         if ( ImGui::Begin( "Tiles", &visible, windowFlags ) ) {
             RenderMenuBar();
@@ -195,33 +194,5 @@ class NametableWindow : public UIComponent
         }
 
         ImGui::EndGroup();
-    }
-
-    void DebugControls()
-    {
-        bool const isPaused = renderer->paused;
-
-        ImGui::BeginDisabled( !isPaused );
-        if ( ImGui::Button( "Continue" ) ) {
-            renderer->paused = false;
-        }
-        ImGui::EndDisabled();
-
-        ImGui::SameLine();
-
-        ImGui::BeginDisabled( isPaused );
-        if ( ImGui::Button( "Pause" ) ) {
-            renderer->paused = true;
-        }
-        ImGui::EndDisabled();
-
-        ImGui::SameLine();
-
-        if ( ImGui::Button( "Reset" ) ) {
-            renderer->bus.DebugReset();
-            if ( auto *logWindow = renderer->ui.GetComponent<LogWindow>() ) {
-                logWindow->Clear();
-            }
-        }
     }
 };

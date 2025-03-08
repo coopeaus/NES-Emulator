@@ -1,7 +1,6 @@
 #pragma once
 #include "bus.h"
 #include "ui-component.h"
-#include "log.h"
 #include "renderer.h"
 #include <cstdio>
 #include <imgui.h>
@@ -40,7 +39,7 @@ class PaletteWindow : public UIComponent
     {
         ImGuiWindowFlags const windowFlags = ImGuiWindowFlags_MenuBar;
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
-        ImGui::SetNextWindowSizeConstraints( ImVec2( 620, 400 ), ImVec2( 1000, 600 ) );
+        ImGui::SetNextWindowSizeConstraints( ImVec2( 620, 500 ), ImVec2( 1000, 600 ) );
 
         if ( ImGui::Begin( "Palettes", &visible, windowFlags ) ) {
             RenderMenuBar();
@@ -323,34 +322,6 @@ class PaletteWindow : public UIComponent
                 ImGui::EndMenu();
             }
             ImGui::EndMenuBar();
-        }
-    }
-
-    void DebugControls()
-    {
-        bool const isPaused = renderer->paused;
-
-        ImGui::BeginDisabled( !isPaused );
-        if ( ImGui::Button( "Continue" ) ) {
-            renderer->paused = false;
-        }
-        ImGui::EndDisabled();
-
-        ImGui::SameLine();
-
-        ImGui::BeginDisabled( isPaused );
-        if ( ImGui::Button( "Pause" ) ) {
-            renderer->paused = true;
-        }
-        ImGui::EndDisabled();
-
-        ImGui::SameLine();
-
-        if ( ImGui::Button( "Reset" ) ) {
-            renderer->bus.DebugReset();
-            if ( auto *logWindow = renderer->ui.GetComponent<LogWindow>() ) {
-                logWindow->Clear();
-            }
         }
     }
 };

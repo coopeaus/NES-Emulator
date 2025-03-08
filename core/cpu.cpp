@@ -586,6 +586,15 @@ void CPU::Tick()
     _cycles++;
     _bus->ppu.Tick();
     _bus->ppu.Tick();
+
+    // Match mesen trace log, place logger here.
+    if ( _mesenFormatTraceEnabled && !_didMesenTrace ) {
+        _pc--;
+        AddMesenTracelog( LogLineAtPC( true ) );
+        _pc++;
+        _didMesenTrace = true;
+    }
+
     _bus->ppu.Tick();
 }
 
@@ -692,6 +701,8 @@ void CPU::DecodeExecute()
         AddTraceLog( LogLineAtPC( true ) );
     }
 
+    _didMesenTrace = false;
+
     // Fetch the next opcode and increment the program counter
     u8 const opcode = Fetch();
 
@@ -723,6 +734,7 @@ void CPU::DecodeExecute()
 
         // Reset flags
         _isWriteModify = false;
+        _didMesenTrace = false;
     } else {
         // Houston, we have a problem. No opcode was found.
         std::cerr << "Bad opcode: " << std::hex << static_cast<int>( opcode ) << '\n';

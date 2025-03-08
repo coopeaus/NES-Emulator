@@ -1,6 +1,7 @@
 #pragma once
 
 // Define the right format specifier for u64 based on the platform
+#include <imgui.h>
 #ifdef __APPLE__
 #define U64_FORMAT_SPECIFIER "%llu"
 #else
@@ -28,6 +29,28 @@ class UIComponent
     void Hide() { visible = false; }
 
     bool visible{};
+
+    enum DebuggerStatus : int {
+        NORMAL,
+        PAUSED,
+        STEPPING,
+        TIMEOUT,
+        RESET,
+    };
+    DebuggerStatus debuggerStatus = NORMAL;
+
+    void DebugControls();
+
+    static void HelpMarker( const char *desc )
+    {
+        ImGui::TextDisabled( "(?)" );
+        if ( ImGui::BeginItemTooltip() ) {
+            ImGui::PushTextWrapPos( ImGui::GetFontSize() * 35.0f );
+            ImGui::TextUnformatted( desc );
+            ImGui::PopTextWrapPos();
+            ImGui::EndTooltip();
+        }
+    }
 
   protected:
     Renderer *renderer;
