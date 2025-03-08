@@ -73,14 +73,14 @@ jobs:
   
     build-macos:
       needs: versioning
-      runs-on: ubuntu-latest
-      steps:
-        - name: Build arm64 macOS
-          run: |
-            echo "Building for arm64 macOS not supported yet"
+      uses: coopeaus/NES-Emulator/.github/workflows/build-mac-arm.yml@main
+      with:
+        branch: ${{ github.head_ref || 'main' }}
+        commit: HEAD
+
 
     release:
-      needs: [build-windows, build-linux, versioning]
+      needs: [build-windows, build-linux, build-macos, versioning]
       runs-on: ubuntu-latest
       steps:
         - name: Get Windows artifact
@@ -94,6 +94,11 @@ jobs:
           with:
             name: Linux-x86-64
             path: release/Linux
+
+        - name: Get MacOS artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: macOS-arm64
 
         - name: Create Release Windows
           uses: softprops/action-gh-release@v2
@@ -109,6 +114,15 @@ jobs:
           with:
             tag_name: ${{ needs.versioning.outputs.version }}
             files: release/Linux/*
+            body: "Release ${{ needs.versioning.outputs.version }}"
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        - name: Create Release MacOS
+          uses: softprops/action-gh-release@v2
+          with:
+            tag_name: ${{ needs.versioning.outputs.version }}
+            files: release/MacOS/*
             body: "Release ${{ needs.versioning.outputs.version }}"
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

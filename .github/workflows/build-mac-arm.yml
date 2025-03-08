@@ -1,4 +1,4 @@
-name: build-windows
+name: build-mac-arm
 
 on:
   workflow_dispatch:
@@ -28,11 +28,11 @@ on:
     outputs:
       artifact_name:
         description: 'Name of the artifact to upload'
-        value: 'Windows-x86-64'
+        value: 'MacOS-arm64'
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: macos-latest
 
     steps:
       - name: Checkout repository
@@ -45,65 +45,52 @@ jobs:
         run: |
           git fetch --depth=1 origin ${{ github.event.inputs.commit }}
           git checkout ${{ github.event.inputs.commit }}
-
+      
       - name: Set up environment variables
         run: |
-          echo "VCPKG_DEFAULT_BINARY_CACHE=C:/vcpkg_cache" | Out-File -FilePath $env:GITHUB_ENV -Append
-
+          echo "VCPKG_DEFAULT_BINARY_CACHE=/tmp/vcpkg_cache" >> $GITHUB_ENV
+  
       - name: Cache vcpkg dependencies
         uses: actions/cache@v4
         with:
-          path: C:/vcpkg_cache
+          path: /tmp/vcpkg_cache
           key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
-      - name: Upgrade LLVM
+      - name: Get missing tools
         run: |
-            choco uninstall llvm -y
-            choco install llvm -y
-            echo "C:\Program Files\LLVM\bin" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          brew update
+          brew install llvm cmake pkg-config ninja
       
       - name: Checkout pinned version of vcpkg
         run: |
-          cd C:/vcpkg
-          git reset --hard
+          git clone https://github.com/microsoft/vcpkg.git /tmp/vcpkg
+          cd /tmp/vcpkg
           git fetch
           git checkout d5ec528843d29e3a52d745a64b469f810b2cedbf
-          ./bootstrap-vcpkg.bat -disableMetrics
+          ./bootstrap-vcpkg.sh -disableMetrics
 
       - name: Install dependencies with vcpkg
         run: |
-          mkdir C:\vcpkg_cache -ErrorAction SilentlyContinue
-          cd $env:GITHUB_WORKSPACE
-          echo "VCPKG_FEATURE_FLAGS=manifests" | Out-File -FilePath $env:GITHUB_ENV -Append
-          C:/vcpkg/vcpkg.exe install --recurse
-
-      - name: Configure CMake
-        run: |
-            cmake -B build -S . `
-                -G "Visual Studio 17 2022" `
-                -T ClangCL `
-                -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" `
-                -DCMAKE_C_COMPILER=clang `
-                -DCMAKE_CXX_COMPILER=clang++ `
-                -DCMAKE_CXX_FLAGS="/utf-8 /EHsc" `
-                -DCMAKE_BUILD_TYPE=Release `
-                -DBUILD_FRONTEND=ON `
-                -DBUILD_TESTS=ON
+          mkdir /tmp/vcpkg_cache -p
+          cd $GITHUB_WORKSPACE
+          echo "VCPKG_FEATURE_FLAGS=manifests" >> $GITHUB_ENV
+          /tmp/vcpkg/vcpkg install --recurse
 
       - name: Build Project
         run: |
-          cmake --build build --config Release
+          chmod ugo+x ./scripts/env-check.sh
+          chmod ugo+x ./scripts/build.sh
       
       - name: Copy files to Release directory
         run: |
           cp -r build/fonts build/Release/
           cp -r build/palettes build/Release/
           cp -r build/tests build/Release/
-
+  
       - name: Upload build directory
         uses: actions/upload-artifact@v4
         with:
-          name: Windows-x86-64
+          name: macOS-arm64
           path: build/Release
