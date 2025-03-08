@@ -2,18 +2,27 @@
 #include "ui-component.h"
 #include "renderer.h"
 #include "log.h"
-#include <cstdint>
 #include <imgui.h>
+#include <chrono>
 
 class DebuggerWindow : public UIComponent
 {
   public:
-    DebuggerWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = false; }
+    DebuggerWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = true; }
 
     void OnVisible() override {}
     void OnHidden() override {}
 
-    void RenderSelf() override
+    // globals
+    enum DebuggerStatus : u8 {
+        NORMAL,
+        PAUSED,
+        STEPPING,
+        TIMEOUT,
+    };
+    DebuggerStatus debuggerStatus = NORMAL;
+
+    void RenderSelf() override // NOLINT
     {
         ImGuiWindowFlags const windowFlags =
             ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize;
@@ -28,6 +37,7 @@ class DebuggerWindow : public UIComponent
             ImGui::PushItemWidth( 140 );
             if ( ImGui::Button( "Continue" ) ) {
                 renderer->paused = false;
+                debuggerStatus = NORMAL;
             }
             ImGui::EndDisabled();
 
@@ -36,6 +46,7 @@ class DebuggerWindow : public UIComponent
             ImGui::BeginDisabled( isPaused );
             if ( ImGui::Button( "Pause" ) ) {
                 renderer->paused = true;
+                debuggerStatus = PAUSED;
             }
             ImGui::EndDisabled();
 
@@ -52,7 +63,7 @@ class DebuggerWindow : public UIComponent
             ImGui::Text( "CPU Cycle: " U64_FORMAT_SPECIFIER, renderer->bus.cpu.GetCycles() );
             ImGui::PopItemWidth();
 
-            const char *items[] = { "Cycles", "Instructions", "VBlank", "Scanlines" };
+            const char *items[] = { "Cycles", "Instructions", "VBlank", "Scanlines", "Frame", "NMI", "IRQ" };
             static int  i0 = 1;
             static int  item = 0;
 
@@ -68,20 +79,34 @@ class DebuggerWindow : public UIComponent
             ImGui::PopItemWidth();
             if ( ImGui::Button( "Go" ) ) {
                 renderer->paused = true;
+                debuggerStatus = STEPPING;
+
+                using Clock = std::chrono::steady_clock;
+                auto didTimeout = [&]() -> bool {
+                    auto const elapsed =
+                        std::chrono::duration<float>( Clock::now() - renderer->frameStart ).count();
+
+                    if ( elapsed > 2.0 ) {
+                        debuggerStatus = TIMEOUT;
+                    }
+
+                    return debuggerStatus == TIMEOUT;
+                };
+
                 switch ( item ) {
-                    case 0: {
+                    case 0: { // Cycles
                         auto const target = renderer->bus.cpu.GetCycles() + i0;
-                        while ( renderer->bus.cpu.GetCycles() < target ) {
+                        while ( renderer->bus.cpu.GetCycles() < target && !didTimeout() ) {
                             renderer->bus.cpu.DecodeExecute();
                         }
                         break;
                     }
-                    case 1:
+                    case 1: // Instructions
                         for ( int i = 0; i < i0; i++ ) {
                             renderer->bus.cpu.DecodeExecute();
                         }
                         break;
-                    case 2:
+                    case 2: // VBlank
                         if ( !renderer->bus.ppu.GetStatusVblank() ) {
                             while ( !renderer->bus.ppu.GetStatusVblank() ) {
                                 renderer->bus.cpu.DecodeExecute();
@@ -95,16 +120,66 @@ class DebuggerWindow : public UIComponent
                             }
                         }
                         break;
-                    case 3: {
+                    case 3: { // Scanlines
                         auto const target = renderer->bus.ppu.GetScanline() + i0;
                         while ( renderer->bus.ppu.GetScanline() < target ) {
                             renderer->bus.cpu.DecodeExecute();
                         }
                         break;
                     }
+                    case 4: { // Frame
+                        auto const target = renderer->bus.ppu.GetFrame() + i0;
+                        while ( renderer->bus.ppu.GetFrame() < target ) {
+                            renderer->bus.cpu.DecodeExecute();
+                        }
+                        break;
+                    }
+                    case 5: { // NMI
+                        if ( !renderer->bus.ppu.GetCtrlNmiEnable() ) {
+                            while ( !renderer->bus.ppu.GetCtrlNmiEnable() && !didTimeout() ) {
+                                renderer->bus.cpu.DecodeExecute();
+                            }
+                        } else {
+                            while ( renderer->bus.ppu.GetCtrlNmiEnable() && !didTimeout() ) {
+                                renderer->bus.cpu.DecodeExecute();
+                            }
+                            while ( !renderer->bus.ppu.GetCtrlNmiEnable() && !didTimeout() ) {
+                                renderer->bus.cpu.DecodeExecute();
+                            }
+                        }
+                        break;
+                    } break;
+                    case 6: // IRQ
+                        if ( !renderer->bus.cpu.GetInterruptDisableFlag() ) {
+                            while ( !renderer->bus.cpu.GetInterruptDisableFlag() && !didTimeout() ) {
+                                renderer->bus.cpu.DecodeExecute();
+                            }
+                        } else {
+                            while ( renderer->bus.cpu.GetInterruptDisableFlag() && !didTimeout() ) {
+                                renderer->bus.cpu.DecodeExecute();
+                            }
+                            while ( !renderer->bus.cpu.GetInterruptDisableFlag() && !didTimeout() ) {
+                                renderer->bus.cpu.DecodeExecute();
+                            }
+                        }
+                        break;
                     default:
                         break;
                 }
+            }
+
+            ImGui::Dummy( ImVec2( 0, 10 ) );
+
+            switch ( debuggerStatus ) {
+                case TIMEOUT:
+                    ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 1.0f, 0.0f, 0.0f, 1.0f ) );
+                    ImGui::Text( "Timed out! Step condition could not be matched." );
+                    ImGui::PopStyleColor();
+                    break;
+
+                default:
+                    ImGui::Text( "" );
+                    break;
             }
         }
         ImGui::End();

@@ -25,6 +25,7 @@
 #include <string>
 #include <memory>
 #include "theme.h"
+#include "chrono"
 
 using u32 = uint32_t;
 using u64 = uint64_t;
@@ -61,6 +62,10 @@ class Renderer
     GLuint        emuScreenShaderProgram = 0;
     GLuint        emuScreenVAO = 0;
     GLuint        emuScreenVBO = 0;
+
+    // frame clock
+    using Clock = std::chrono::steady_clock;
+    Clock::time_point frameStart;
 
     // Pattern tables
     GLuint patternTable0Texture = 0;
@@ -348,6 +353,7 @@ class Renderer
         u64          secondStart = SDL_GetPerformanceCounter();
 
         while ( running ) {
+            frameStart = Clock::now();
             u64 const frameStart = SDL_GetPerformanceCounter();
 
             ExecuteFrame();

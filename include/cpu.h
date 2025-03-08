@@ -35,6 +35,15 @@ class CPU
     bool IsReading2002() const { return _reading2002; }
     bool IsNmiInProgress() const { return _nmiInProgress; }
 
+    // status getters
+    u8 GetCarryFlag() const { return _p & Carry; }
+    u8 GetZeroFlag() const { return _p & Zero; }
+    u8 GetInterruptDisableFlag() const { return _p & InterruptDisable; }
+    u8 GetDecimalFlag() const { return _p & Decimal; }
+    u8 GetBreakFlag() const { return _p & Break; }
+    u8 GetOverflowFlag() const { return _p & Overflow; }
+    u8 GetNegativeFlag() const { return _p & Negative; }
+
     /*
     ################################
     ||           Setters          ||
