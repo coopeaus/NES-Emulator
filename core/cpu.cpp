@@ -729,17 +729,6 @@ void CPU::DecodeExecute()
     }
 }
 
-void CPU::ExecuteFrame( bool *isPaused ) // NOLINT
-{
-    _isPaused = *isPaused;
-    u64 const currentFrame = _bus->ppu.GetFrame();
-    while ( currentFrame == _bus->ppu.GetFrame() ) {
-        if ( _isPaused ) {
-            break;
-        }
-        DecodeExecute();
-    }
-}
 /*
 ################################################################
 ||                                                            ||
