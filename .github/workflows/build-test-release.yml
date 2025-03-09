@@ -99,30 +99,34 @@ jobs:
           uses: actions/download-artifact@v4
           with:
             name: macOS-arm64
+            path: release/MacOS
 
-        - name: Create Release Windows
+        - name: Package Windows Build
+          run: |
+            cd release/Windows
+            zip -r ../../Windows-${{ needs.versioning.outputs.version }}.zip .
+            cd ../..
+    
+        - name: Package Linux Build
+          run: |
+            cd release/Linux
+            tar -czvf ../../Linux-${{ needs.versioning.outputs.version }}.tar.gz .
+            cd ../..
+    
+        - name: Package macOS Build
+          run: |
+            cd release/MacOS
+            zip -r ../../MacOS-${{ needs.versioning.outputs.version }}.zip .
+            cd ../..
+    
+        - name: Create GitHub Release
           uses: softprops/action-gh-release@v2
           with:
             tag_name: ${{ needs.versioning.outputs.version }}
-            files: release/Windows/*
-            body: "Release ${{ needs.versioning.outputs.version }}"
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
-        - name: Create Release Linux
-          uses: softprops/action-gh-release@v2
-          with:
-            tag_name: ${{ needs.versioning.outputs.version }}
-            files: release/Linux/*
-            body: "Release ${{ needs.versioning.outputs.version }}"
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-        - name: Create Release MacOS
-          uses: softprops/action-gh-release@v2
-          with:
-            tag_name: ${{ needs.versioning.outputs.version }}
-            files: release/MacOS/*
+            files: |
+              Windows-x64-${{ needs.versioning.outputs.version }}.zip
+              Linux-x64-${{ needs.versioning.outputs.version }}.tar.gz
+              MacOS-arm64-${{ needs.versioning.outputs.version }}.zip
             body: "Release ${{ needs.versioning.outputs.version }}"
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
