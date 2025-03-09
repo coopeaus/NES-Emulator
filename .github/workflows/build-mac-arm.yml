@@ -97,6 +97,9 @@ jobs:
       
       - name: Copy files to Release directory
         run: |
+          mkdir -p build
+          mkdir -p build/Release
+          mkdir -p build/Release/fonts
           cp -r build/fonts build/Release/fonts
           cp -r build/palettes build/Release/
           cp -r build/tests build/Release/
