@@ -104,19 +104,19 @@ jobs:
         - name: Package Windows Build
           run: |
             cd release/Windows
-            zip -r ../../Windows-${{ needs.versioning.outputs.version }}.zip .
+            zip -r ../../Windows-x64-${{ needs.versioning.outputs.version }}.zip .
             cd ../..
     
         - name: Package Linux Build
           run: |
             cd release/Linux
-            tar -czvf ../../Linux-${{ needs.versioning.outputs.version }}.tar.gz .
+            tar -czvf ../../Linux-x64-${{ needs.versioning.outputs.version }}.tar.gz .
             cd ../..
     
         - name: Package macOS Build
           run: |
             cd release/MacOS
-            zip -r ../../MacOS-${{ needs.versioning.outputs.version }}.zip .
+            zip -r ../../MacOS-x64-${{ needs.versioning.outputs.version }}.zip .
             cd ../..
     
         - name: Create GitHub Release
