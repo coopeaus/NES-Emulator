@@ -10,15 +10,35 @@
 
 name: lint-format-test
 
-on: [pull_request]
+on:
+  workflow_call:
+    inputs:
+      branch:
+        description: 'Branch to test'
+        required: true
+        default: 'main'
+        type: string
+      commit:
+        description: 'Shortform commit hash to build'
+        required: false
+        default: 'HEAD'
+        type: string
 
 jobs:
   lint-format-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Pull code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          fetch-depth: 0
+      
+      - name: Get specified commit
+        if: ${{ github.event.inputs.commit != 'HEAD' }}
+        run: |
+          git checkout ${{ github.event.inputs.commit }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3

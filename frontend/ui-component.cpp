@@ -49,7 +49,7 @@ void UIComponent::DebugControls()
         ImGui::PopFont();
         ImGui::SameLine();
         ImGui::Indent( innerSpacing );
-        ImGui::Text( "%" PRIu16, renderer->bus.ppu.GetCycles() );
+        ImGui::Text( "%hu", renderer->bus.ppu.GetCycles() );
 
         ImGui::SameLine();
         ImGui::Indent( outerSpacing );
@@ -58,7 +58,7 @@ void UIComponent::DebugControls()
         ImGui::PopFont();
         ImGui::SameLine();
         ImGui::Indent( innerSpacing );
-        ImGui::Text( "%" PRId16, renderer->bus.ppu.GetScanline() );
+        ImGui::Text( "%hd", renderer->bus.ppu.GetScanline() );
 
         ImGui::SameLine();
         ImGui::Indent( outerSpacing );

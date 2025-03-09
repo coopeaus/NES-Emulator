@@ -3,8 +3,13 @@ name: build-test-release
 # This should only be manually triggered for now, as new releases
 # should be infrequent while we are still developing core features.
 on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
-
     # Allow the workflow dispatcher to specify whether major, minor, or patch
     # should be incremented.
     inputs:
@@ -17,16 +22,31 @@ on:
                 - 'major'
                 - 'minor'
                 - 'patch'
-
 jobs:
+    test:
+      uses: coopeaus/NES-Emulator/.github/workflows/lint-format-test.yml@main
+      with:
+        branch: ${{ github.event_name == 'pull_request' && github.head_ref || 'main' }}
+        commit: HEAD
+
     versioning:
+        needs: test
         runs-on: ubuntu-latest
         outputs:
             version: ${{ steps.new_version.outputs.new_tag }}
         steps:
             - name: Checkout
               uses: actions/checkout@v4
-            
+
+            - name: Get bump type
+              id: bump_type
+              run: |
+                if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.version_bump }}" != "" ]]; then
+                  echo "BUMP_TYPE=${{ github.event.inputs.version_bump }}" >> $GITHUB_ENV
+                else
+                  echo "BUMP_TYPE=patch" >> $GITHUB_ENV
+                fi
+
             # Uses a handy marketplace action for bumping the version number
             # using semantic versioning.
             - name: auto-inc version
@@ -34,40 +54,33 @@ jobs:
               uses: anothrNick/github-tag-action@1.71.0
               env: 
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  DEFAULT_BUMP: ${{ github.event.inputs.version_bump }}
+                  DEFAULT_BUMP: ${{ github.event.inputs.version_bump || 'patch' }}
                   WITH_V: true
 
-    build:
-        needs: versioning
-        strategy:
-            matrix:
-                os: [windows-x86-64, linux-x86-64, macos-arm64]
-        # This workflow only runs on ubuntu-latest. Building will be performed
-        # in a reusable workflow that will be called for each OS.
-        runs-on: ubuntu-latest
-        steps:
+    build-linux:
+      needs: versioning
+      uses: coopeaus/NES-Emulator/.github/workflows/build-linux.yml@main
+      with:
+        branch: ${{ github.head_ref || 'main' }}
+        commit: HEAD
 
-            - name: Build x64 Linux
-              if: ${{ matrix.os == 'linux-x86-64' }}
-              uses: coopeaus/NES-Emulator/.github/workflows/build-linux.yml@main
-              with:
-                  branch: main
-                  commit: HEAD
-            
-            - name: Build arm64 macOS
-              if: ${{ matrix.os == 'macos-arm64' }}
-              run: |
-                echo "Building for arm64 macOS not supported yet"
+    build-windows:
+      needs: versioning
+      uses: coopeaus/NES-Emulator/.github/workflows/build-windows.yml@main
+      with:
+        branch: ${{ github.head_ref || 'main' }}
+        commit: HEAD
+  
+    build-macos:
+      needs: versioning
+      uses: coopeaus/NES-Emulator/.github/workflows/build-mac-arm.yml@main
+      with:
+        branch: ${{ github.head_ref || 'main' }}
+        commit: HEAD
 
-            - name: Call build-windows workflow
-              if: ${{ matrix.os == 'windows-x86-64' }}
-              uses: coopeaus/NES-Emulator/.github/workflows/build-windows.yml@main
-              with:
-                  branch: main
-                  commit: HEAD
-    
+
     release:
-      needs: [build, versioning]
+      needs: [build-windows, build-linux, build-macos, versioning]
       runs-on: ubuntu-latest
       steps:
         - name: Get Windows artifact
@@ -81,6 +94,11 @@ jobs:
           with:
             name: Linux-x86-64
             path: release/Linux
+
+        - name: Get MacOS artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: macOS-arm64
 
         - name: Create Release Windows
           uses: softprops/action-gh-release@v2
@@ -96,6 +114,15 @@ jobs:
           with:
             tag_name: ${{ needs.versioning.outputs.version }}
             files: release/Linux/*
+            body: "Release ${{ needs.versioning.outputs.version }}"
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        - name: Create Release MacOS
+          uses: softprops/action-gh-release@v2
+          with:
+            tag_name: ${{ needs.versioning.outputs.version }}
+            files: release/MacOS/*
             body: "Release ${{ needs.versioning.outputs.version }}"
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
