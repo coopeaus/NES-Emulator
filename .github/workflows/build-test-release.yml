@@ -116,7 +116,7 @@ jobs:
         - name: Package macOS Build
           run: |
             cd release/MacOS
-            zip -r ../../MacOS-x64-${{ needs.versioning.outputs.version }}.zip .
+            zip -r ../../MacOS-arm64-${{ needs.versioning.outputs.version }}.zip .
             cd ../..
     
         - name: Create GitHub Release
