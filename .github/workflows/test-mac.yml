@@ -65,6 +65,9 @@ jobs:
           cp -r build/fonts build/Release/
           cp -r build/palettes build/Release/
           cp -r build/tests build/Release/
+          cp -r build/emu build/Release/
+          cp -r build/cpu_test build/Release/
+          cp -r build/rom_test build/release/
   
       - name: Upload build directory
         uses: actions/upload-artifact@v4
