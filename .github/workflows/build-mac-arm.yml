@@ -46,14 +46,14 @@ jobs:
           git fetch --depth=1 origin ${{ github.event.inputs.commit }}
           git checkout ${{ github.event.inputs.commit }}
       
-          - name: Cache vcpkg dependencies
-          uses: actions/cache@v4
-          with:
-            path: /tmp/vcpkg_cache
-            key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
-            restore-keys: |
-              vcpkg-${{ runner.os }}-
-  
+      - name: Cache vcpkg dependencies
+        uses: actions/cache@v4
+        with:
+          path: /tmp/vcpkg_cache
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-
+
       - name: Get missing tools
         run: |
           brew update
@@ -80,28 +80,29 @@ jobs:
       - name: Set up vcpkg environment variables
         run: |
           echo "VCPKG_DEFAULT_BINARY_CACHE=/tmp/vcpkg_cache" >> $GITHUB_ENV
-          echo "VCPKG_ROOT=/tmp/vcpkg" >> $GITHUB_ENV
+          echo "VCPKG_ROOT=/private/tmp/vcpkg" >> $GITHUB_ENV
           echo "tmp/vcpkg/vcpkg" >> $GITHUB_PATH
 
       - name: Install dependencies with vcpkg
         run: |
-          mkdir /tmp/vcpkg_cache -p
+          mkdir -p /tmp/vcpkg_cache
           cd $GITHUB_WORKSPACE
           echo "VCPKG_FEATURE_FLAGS=manifests" >> $GITHUB_ENV
           /tmp/vcpkg/vcpkg install --recurse
 
       - name: Build Project
         run: |
-          chmod ugo+x ./scripts/env-check.sh
           chmod ugo+x ./scripts/build.sh
-          ./scripts/env-check.sh
           ./scripts/build.sh
       
       - name: Copy files to Release directory
         run: |
-          cp -r build/fonts build/Release/
+          cp -r build/fonts build/Release/fonts
           cp -r build/palettes build/Release/
           cp -r build/tests build/Release/
+          cp -r build/emu build/Release/
+          cp -r build/cpu_test build/Release/
+          cp -r build/rom_test build/release/
   
       - name: Upload build directory
         uses: actions/upload-artifact@v4
