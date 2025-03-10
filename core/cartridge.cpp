@@ -1,8 +1,10 @@
 #include "cartridge.h"
 #include <array>
 #include <cstddef>
+#include <fmt/base.h>
 #include <fstream>
 #include <ios>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -12,7 +14,11 @@
 #include "mappers/mapper0.h"
 #include "mappers/mapper1.h"
 
-Cartridge::Cartridge( const std::string &filePath )
+Cartridge::Cartridge( Bus *bus ) : bus( bus )
+{
+}
+
+void Cartridge::LoadRom( const std::string &filePath )
 {
     /** @brief Initiates a cartridge and loads a ROM from file
      */
@@ -44,8 +50,9 @@ Cartridge::Cartridge( const std::string &filePath )
         }
     }
 
-    // First four bytes, should be "NES\x1A", if not, let's bail
-    if ( header[0] != 'N' || header[1] != 'E' || header[2] != 'S' || header[3] != 0x1A ) {
+    std::memcpy( iNes.header.value, header.data(), header.size() );
+
+    if ( iNes.GetIdentification() != "NES\x1A" ) {
         throw std::runtime_error( "Invalid ROM file" );
     }
 
@@ -56,40 +63,20 @@ Cartridge::Cartridge( const std::string &filePath )
     ||                            ||
     ################################
     */
-    // Flag 6 and 7, provide various info
-    u8 const flags6 = header[6];
-    u8 const flags7 = header[7];
 
     // Mirror mode
     // Provided by the 0th bit of byte 6.
-    u8 const mirrorMode = header[6] & 0b00000001;
+    // u8 const mirrorMode = header[6] & 0b00000001;
+    u8 const mirrorMode = iNes.GetMirroring();
     ( mirrorMode == 0 ) ? _mirrorMode = MirrorMode::Horizontal : _mirrorMode = MirrorMode::Vertical;
 
     // Four screen mode
-    // Provided by the 3rd bit of byte 6.
-    // If provided, it overrides info in byte 0
-    _fourScreenMode = ( flags6 & 0b00001000 ) != 0;
+    _fourScreenMode = iNes.GetFourScreenMode();
     if ( _fourScreenMode ) {
         _mirrorMode = MirrorMode::FourScreen;
     }
 
-    // PRG and CHR banks, derived from bytes 4 and 5
-    u8 const     prgRomBanks = header[4];
-    u8 const     chrRomBanks = header[5];
-    size_t const prgRomSize = static_cast<size_t>( header[4] * 16 * 1024 );
-    size_t const chrRomSize = static_cast<size_t>( header[5] * 8 * 1024 );
-
-    // Mapper number
-    // Derived from the upper 4 bits of byte 7 and the lower 4 bits of byte 6
-    u8 const mapperNumber = ( flags7 & 0b11110000 ) | ( flags6 >> 4 );
-
-    // Does it have a save battery?
-    // Derived from the 1st bit of byte 6
-    _hasBattery = ( flags6 & 0b00000010 );
-
-    // Does it have trainer data?
-    // Derived from the 2nd bit of byte 6
-    bool const hasTrainer = ( flags6 & 0b00000100 ) != 0;
+    _hasBattery = iNes.GetBatteryMode();
 
     /*
     ################################
@@ -100,25 +87,43 @@ Cartridge::Cartridge( const std::string &filePath )
     */
 
     // Skip 512 bytes if there is trainer data
+    bool const hasTrainer = iNes.GetTrainerMode() == 1;
     if ( hasTrainer ) {
         romFile.seekg( 512, std::ios::cur );
     }
 
+    int const prgRomSize = iNes.GetPrgRomSizeBytes();
+    int const chrRomSize = iNes.GetChrRomSizeBytes();
+
     // Set the PRG and CHR vector sizes
     _usesChrRam = chrRomSize == 0;
-    _prgRom.resize( prgRomSize );
+    if ( prgRomSize > 0 ) {
+        _prgRom.resize( prgRomSize );
+    }
+
     // Sometimes, chr rom isn't provided. Some games use chr ram instead.
     if ( !_usesChrRam ) {
-        _chrRom.resize( chrRomSize );
+        if ( chrRomSize > 0 ) {
+            _chrRom.resize( chrRomSize );
+        }
     }
 
     // Read data into the PRG and CHR ROM vectors
-    romFile.read( reinterpret_cast<char *>( _prgRom.data() ), // NOLINT
-                  static_cast<std::streamsize>( prgRomSize ) );
+    if ( prgRomSize > 0 ) {
+
+        romFile.read( reinterpret_cast<char *>( _prgRom.data() ), // NOLINT
+                      static_cast<std::streamsize>( prgRomSize ) );
+    } else {
+        fmt::print( "Cartridge:romFile.read:No PRG ROM data found. No read occured.\n" );
+    }
     if ( !_usesChrRam ) {
 
-        romFile.read( reinterpret_cast<char *>( _chrRom.data() ), // NOLINT
-                      static_cast<std::streamsize>( chrRomSize ) );
+        if ( chrRomSize > 0 ) {
+            romFile.read( reinterpret_cast<char *>( _chrRom.data() ), // NOLINT
+                          static_cast<std::streamsize>( chrRomSize ) );
+        } else {
+            fmt::print( "Cartridge:romFile.read:No CHR ROM data found. No read occured.\n" );
+        }
     }
 
     /*
@@ -128,12 +133,13 @@ Cartridge::Cartridge( const std::string &filePath )
     ||                            ||
     ################################
     */
+    auto const mapperNumber = iNes.GetMapper();
     switch ( mapperNumber ) {
         case 0:
-            _mapper = std::make_shared<Mapper0>( prgRomBanks, chrRomBanks );
+            _mapper = std::make_shared<Mapper0>( iNes );
             break;
         case 1:
-            _mapper = std::make_shared<Mapper1>( prgRomBanks, chrRomBanks );
+            _mapper = std::make_shared<Mapper1>( iNes );
             break;
         default:
             throw std::runtime_error( "Unsupported mapper: " + std::to_string( mapperNumber ) );
