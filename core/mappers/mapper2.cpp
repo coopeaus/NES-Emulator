@@ -2,11 +2,6 @@
 #include "mappers/mapper-base.h"
 #include <stdexcept>
 
-Mapper2::Mapper2( u8 prgRomBanks, u8 chrRomBanks, MirrorMode mirrorMode )
-    : Mapper( prgRomBanks, chrRomBanks ), _mirrorMode( mirrorMode )
-{
-}
-
 MirrorMode Mapper2::GetMirrorMode()
 {
     return _mirrorMode;

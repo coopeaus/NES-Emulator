@@ -2,11 +2,9 @@
 #include "cartridge.h"
 #include "ppu.h"
 #include <iostream>
-#include <memory>
-#include <utility>
 
 // Constructor to initialize the bus with a flat memory model
-Bus::Bus() : cpu( this ), ppu( this )
+Bus::Bus() : cpu( this ), ppu( this ), cartridge( this )
 {
 }
 
@@ -42,7 +40,7 @@ u8 Bus::Read( const u16 address, bool debugMode )
 
     // 4020 and up is cartridge territory
     if ( address >= 0x4020 && address <= 0xFFFF ) {
-        return cartridge->Read( address );
+        return cartridge.Read( address );
     }
 
     // Unhandled address ranges return open bus value
@@ -57,6 +55,7 @@ u8 Bus::Read( const u16 address, bool debugMode )
 */
 void Bus::Write( const u16 address, const u8 data )
 {
+
     if ( _useFlatMemory ) {
         _flatMemory.at( address ) = data;
         return;
@@ -75,36 +74,26 @@ void Bus::Write( const u16 address, const u8 data )
         return;
     }
 
-    // APU and I/O Registers: 0x4000 - 0x401F
-    if ( address >= 0x4000 && address <= 0x401F ) {
-        _apuIoMemory.at( address & 0x001F ) = data; // temp
-        return;
-    }
-
     // PPU DMA: 0x4014
     if ( address == 0x4014 ) {
         ppu.DmaTransfer( data );
         return;
     }
 
+    // APU and I/O Registers: 0x4000 - 0x401F
+    if ( address >= 0x4000 && address <= 0x401F ) {
+        _apuIoMemory.at( address & 0x001F ) = data; // temp
+        return;
+    }
+
     // 4020 and up is cartridge territory
     if ( address >= 0x4020 && address <= 0xFFFF ) {
-        cartridge->Write( address, data );
+        cartridge.Write( address, data );
         return;
     }
     // Unhandled address ranges
     // Optionally log a warning or ignore
     std::cout << "Unhandled write to address: " << std::hex << address << "\n";
-}
-
-/*
-################################
-||       Load Cartridge       ||
-################################
-*/
-void Bus::LoadCartridge( std::shared_ptr<Cartridge> loadedCartridge )
-{
-    cartridge = std::move( loadedCartridge );
 }
 
 /*

@@ -24,58 +24,71 @@ class PPU
     ################################
     */
     MirrorMode GetMirrorMode() const;
-    s16        GetScanline() const { return _scanline; }
-    u16        GetCycles() const { return _cycle; }
-    u64        GetFrame() const { return _frame; }
-    u32        GetMasterPaletteColor( u8 index ) const { return _nesPaletteRgbValues.at( index ); }
+    s16        GetScanline() const { return scanline; }
+    u16        GetCycles() const { return cycle; }
+    u64        GetFrame() const { return frame; }
+    u32        GetMasterPaletteColor( u8 index ) const { return nesPaletteRgbValues.at( index ); }
 
-    u8 GetPpuCtrl() const { return _ppuCtrl.value; }
-    u8 GetCtrlNametableX() const { return _ppuCtrl.bit.nametableX; }
-    u8 GetCtrlNametableY() const { return _ppuCtrl.bit.nametableY; }
-    u8 GetCtrlIncrementMode() const { return _ppuCtrl.bit.vramIncrement; }
-    u8 GetCtrlPatternSprite() const { return _ppuCtrl.bit.patternSprite; }
-    u8 GetCtrlPatternBackground() const { return _ppuCtrl.bit.patternBackground; }
-    u8 GetCtrlSpriteSize() const { return _ppuCtrl.bit.spriteSize; }
-    u8 GetCtrlNmiEnable() const { return _ppuCtrl.bit.nmiEnable; }
+    u8 GetPpuCtrl() const { return ppuCtrl.value; }
+    u8 GetCtrlNametableX() const { return ppuCtrl.bit.nametableX; }
+    u8 GetCtrlNametableY() const { return ppuCtrl.bit.nametableY; }
+    u8 GetCtrlIncrementMode() const { return ppuCtrl.bit.vramIncrement; }
+    u8 GetCtrlPatternSprite() const { return ppuCtrl.bit.patternSprite; }
+    u8 GetCtrlPatternBackground() const { return ppuCtrl.bit.patternBackground; }
+    u8 GetCtrlSpriteSize() const { return ppuCtrl.bit.spriteSize; }
+    u8 GetCtrlNmiEnable() const { return ppuCtrl.bit.nmiEnable; }
 
-    u8 GetPpuMask() const { return _ppuMask.value; }
-    u8 GetMaskGrayscale() const { return _ppuMask.bit.grayscale; }
-    u8 GetMaskShowBgLeft() const { return _ppuMask.bit.renderBackgroundLeft; }
-    u8 GetMaskShowSpritesLeft() const { return _ppuMask.bit.renderSpritesLeft; }
-    u8 GetMaskShowBg() const { return _ppuMask.bit.renderBackground; }
-    u8 GetMaskShowSprites() const { return _ppuMask.bit.renderSprites; }
-    u8 GetMaskEnhanceRed() const { return _ppuMask.bit.enhanceRed; }
-    u8 GetMaskEnhanceGreen() const { return _ppuMask.bit.enhanceGreen; }
-    u8 GetMaskEnhanceBlue() const { return _ppuMask.bit.enhanceBlue; }
+    u8 GetPpuMask() const { return ppuMask.value; }
+    u8 GetMaskGrayscale() const { return ppuMask.bit.grayscale; }
+    u8 GetMaskShowBgLeft() const { return ppuMask.bit.renderBackgroundLeft; }
+    u8 GetMaskShowSpritesLeft() const { return ppuMask.bit.renderSpritesLeft; }
+    u8 GetMaskShowBg() const { return ppuMask.bit.renderBackground; }
+    u8 GetMaskShowSprites() const { return ppuMask.bit.renderSprites; }
+    u8 GetMaskEnhanceRed() const { return ppuMask.bit.enhanceRed; }
+    u8 GetMaskEnhanceGreen() const { return ppuMask.bit.enhanceGreen; }
+    u8 GetMaskEnhanceBlue() const { return ppuMask.bit.enhanceBlue; }
 
-    u8 GetPpuStatus() const { return _ppuStatus.value; }
-    u8 GetStatusSpriteOverflow() const { return _ppuStatus.bit.spriteOverflow; }
-    u8 GetStatusSpriteZeroHit() const { return _ppuStatus.bit.spriteZeroHit; }
-    u8 GetStatusVblank() const { return _ppuStatus.bit.verticalBlank; }
+    u8 GetPpuStatus() const { return ppuStatus.value; }
+    u8 GetStatusSpriteOverflow() const { return ppuStatus.bit.spriteOverflow; }
+    u8 GetStatusSpriteZeroHit() const { return ppuStatus.bit.spriteZeroHit; }
+    u8 GetStatusVblank() const { return ppuStatus.bit.verticalBlank; }
 
-    u8 GetOamAddr() const { return _oamAddr; }
-    u8 GetOamData() const { return _oamData; }
-    u8 GetPpuScroll() const { return _ppuScroll; }
-    u8 GetPpuAddr() const { return _ppuAddr; }
-    u8 GetPpuData() const { return _ppuData; }
+    u8 GetOamAddr() const { return oamAddr; }
+    u8 GetOamData() const { return oamData; }
+    u8 GetPpuScroll() const { return ppuScroll; }
+    u8 GetPpuAddr() const { return ppuAddr; }
+    u8 GetPpuData() const { return ppuData; }
 
-    u16 GetVramAddr() const { return _vramAddr.value; }
-    u16 GetTempAddr() const { return _tempAddr.value; }
-    u8  GetFineX() const { return _fineX; }
-    u8  GetAddrLatch() const { return _addrLatch; }
+    u16 GetVramAddr() const { return vramAddr.value; }
+    u8  GetVramCoarseX() const { return vramAddr.bit.coarseX; }
+    u8  GetVramCoarseY() const { return vramAddr.bit.coarseY; }
+    u8  GetVramNametableX() const { return vramAddr.bit.nametableX; }
+    u8  GetVramNametableY() const { return vramAddr.bit.nametableY; }
+    u8  GetVramFineY() const { return vramAddr.bit.fineY; }
+    u8  GetVramUnused() const { return vramAddr.bit.unused; }
 
-    u16 GetBgShiftPatternLow() const { return _bgShiftPatternLow; }
-    u16 GetBgShiftPatternHigh() const { return _bgShiftPatternHigh; }
-    u16 GetBgShiftAttributeLow() const { return _bgShiftAttributeLow; }
-    u16 GetBgShiftAttributeHigh() const { return _bgShiftAttributeHigh; }
+    u16  GetTempAddr() const { return tempAddr.value; }
+    u8   GetTempCoarseX() const { return tempAddr.bit.coarseX; }
+    u8   GetTempCoarseY() const { return tempAddr.bit.coarseY; }
+    u8   GetTempNametableX() const { return tempAddr.bit.nametableX; }
+    u8   GetTempNametableY() const { return tempAddr.bit.nametableY; }
+    u8   GetTempFineY() const { return tempAddr.bit.fineY; }
+    u8   GetTempUnused() const { return tempAddr.bit.unused; }
+    u8   GetFineX() const { return fineX; }
+    bool GetAddrLatch() const { return addrLatch; }
+
+    u16 GetBgShiftPatternLow() const { return bgShiftPatternLow; }
+    u16 GetBgShiftPatternHigh() const { return bgShiftPatternHigh; }
+    u16 GetBgShiftAttributeLow() const { return bgShiftAttributeLow; }
+    u16 GetBgShiftAttributeHigh() const { return bgShiftAttributeHigh; }
 
     /*
     ################################
     ||           Setters          ||
     ################################
     */
-    void SetScanline( s16 scanline ) { _scanline = scanline; }
-    void SetCycles( u16 cycles ) { _cycle = cycles; }
+    void SetScanline( s16 val ) { scanline = val; }
+    void SetCycles( u16 cycles ) { cycle = cycles; }
 
     /*
     ################################
@@ -105,7 +118,7 @@ class PPU
     ################################
     */
     void DmaTransfer( u8 data );
-    u16  ResolveNameTableAddress( u16 addr );
+    u16  ResolveNameTableAddress( u16 addr, int testMirrorMode = -1 ) const;
     void Tick();
     void LoadNextBgShiftRegisters();
     void UpdateShiftRegisters();
@@ -120,29 +133,29 @@ class PPU
     u8   GetBgPixel();
     u8   GetSpritePixel();
     u32  GetOutputPixel( u8 bgPixel, u8 spritePixel, u8 bgPalette, u8 spritePalette );
-    void TriggerNmi();
+    void TriggerNmi() const;
     void Reset()
     {
-        _scanline = 0;
-        _cycle = 4;
-        _frame = 1;
-        _isRenderingEnabled = false;
-        _preventVBlank = false;
-        _ppuCtrl.value = 0x00;
-        _ppuMask.value = 0x00;
-        _ppuStatus.value = 0x00;
-        _oamAddr = 0x00;
-        _oamData = 0x00;
-        _ppuScroll = 0x00;
-        _ppuAddr = 0x00;
-        _ppuData = 0x00;
-        _addrLatch = false;
-        _ppuDataBuffer = 0x00;
-        _vramAddr.value = 0x0000;
-        _tempAddr.value = 0x0000;
-        _fineX = 0x00;
-        _nameTables.fill( 0x00 );
-        _paletteMemory = _defaultPalette;
+        scanline = 0;
+        cycle = 4;
+        frame = 1;
+        isRenderingEnabled = false;
+        preventVBlank = false;
+        ppuCtrl.value = 0x00;
+        ppuMask.value = 0x00;
+        ppuStatus.value = 0x00;
+        oamAddr = 0x00;
+        oamData = 0x00;
+        ppuScroll = 0x00;
+        ppuAddr = 0x00;
+        ppuData = 0x00;
+        addrLatch = false;
+        ppuDataBuffer = 0x00;
+        vramAddr.value = 0x0000;
+        tempAddr.value = 0x0000;
+        fineX = 0x00;
+        nameTables.fill( 0x00 );
+        paletteMemory = defaultPalette;
     }
     void IncrementSystemPalette()
     {
@@ -168,15 +181,15 @@ class PPU
     void LoadSystemPalette( int paletteIdx = 0 )
     {
         std::string const palettePath = systemPalettePaths.at( paletteIdx );
-        _nesPaletteRgbValues = utils::readPalette( palettePath );
+        nesPaletteRgbValues = utils::readPalette( palettePath );
     }
-    u8  GetPpuPaletteValue( u8 index ) { return _paletteMemory.at( index ); }
-    u32 GetPpuPaletteColor( u8 index ) { return _nesPaletteRgbValues.at( _paletteMemory.at( index ) ); }
+    u8  GetPpuPaletteValue( u8 index ) { return paletteMemory.at( index ); }
+    u32 GetPpuPaletteColor( u8 index ) { return nesPaletteRgbValues.at( paletteMemory.at( index ) ); }
 
     void LoadDefaultSystemPalette()
     {
         // clang-format off
-        _nesPaletteRgbValues = {
+        nesPaletteRgbValues = {
             0xFF606060, 0xFF7B2100, 0xFF9C0000, 0xFF8B0031, 0xFF6F0059, 0xFF31006F, 0xFF000064, 0xFF00114F,
             0xFF00192F, 0xFF002927, 0xFF004400, 0xFF373900, 0xFF4F3900, 0xFF000000, 0xFF0C0C0C, 0xFF0C0C0C,
             0xFFAEAEAE, 0xFFCE5610, 0xFFFF2C1B, 0xFFEC2060, 0xFFBF00A9, 0xFF5416CA, 0xFF0800CA, 0xFF043A9E,
@@ -202,8 +215,8 @@ class PPU
     ||        Debug Methods       ||
     ################################
     */
-    void EnableJsonTestMode() { _isDisabled = true; }
-    void DisableJsonTestMode() { _isDisabled = false; }
+    void EnableJsonTestMode() { isDisabled = true; }
+    void DisableJsonTestMode() { isDisabled = false; }
 
     // Get pattern table data, used in debugging (pattern-tables.h)
     std::array<u32, 16384> GetPatternTable( int tableIdx )
@@ -282,7 +295,7 @@ class PPU
             const int tileY = ( vramAddr >> 5 ) & 0x1F;
 
             // Bit 4 from ctrl registers determines the pattern table
-            u16 const patternTableBaseAddr = _ppuCtrl.bit.patternBackground ? 0x1000 : 0x0000;
+            u16 const patternTableBaseAddr = ppuCtrl.bit.patternBackground ? 0x1000 : 0x0000;
 
             // Vram address determines which tile index to use from the pattern table (0-255)
             u8 const tileIndex = Read( vramAddr );
@@ -346,53 +359,52 @@ class PPU
     std::array<std::string, 3> systemPalettePaths = { "palettes/palette1.pal", "palettes/palette2.pal",
                                                       "palettes/palette3.pal" };
 
-  private:
     /*
     ################################
     ||      Global Variables      ||
     ################################
     */
-    s16            _scanline = 0;
-    u16            _cycle = 4;
-    u64            _frame = 1;
-    bool           _isRenderingEnabled = false;
-    bool           _preventVBlank = false;
-    array<u32, 64> _nesPaletteRgbValues{};
+    s16            scanline = 0;
+    u16            cycle = 4;
+    u64            frame = 1;
+    bool           isRenderingEnabled = false;
+    bool           preventVBlank = false;
+    array<u32, 64> nesPaletteRgbValues{};
 
     /*
     ################################
     ||        SDL Variables       ||
     ################################
     */
-    array<u32, 61440> _frameBuffer{};
+    array<u32, 61440> frameBuffer{};
 
     /*
     ################################
     ||       Debug Variables      ||
     ################################
     */
-    bool _isDisabled = false;
+    bool isDisabled = false;
 
     /*
     ######################################
     ||  Background Rendering Variables  ||
     ######################################
     */
-    u8  _nametableByte = 0x00;
-    u8  _attributeByte = 0x00;
-    u8  _bgPlane0Byte = 0x00;
-    u8  _bgPlane1Byte = 0x00;
-    u16 _bgShiftPatternLow = 0x0000;
-    u16 _bgShiftPatternHigh = 0x0000;
-    u16 _bgShiftAttributeLow = 0x0000;
-    u16 _bgShiftAttributeHigh = 0x0000;
+    u8  nametableByte = 0x00;
+    u8  attributeByte = 0x00;
+    u8  bgPlane0Byte = 0x00;
+    u8  bgPlane1Byte = 0x00;
+    u16 bgShiftPatternLow = 0x0000;
+    u16 bgShiftPatternHigh = 0x0000;
+    u16 bgShiftAttributeLow = 0x0000;
+    u16 bgShiftAttributeHigh = 0x0000;
 
     /*
     ################################
     ||         Peripherals        ||
     ################################
     */
-    Bus *_bus;
+    Bus *bus;
 
     /*
     ################################
@@ -436,14 +448,14 @@ class PPU
         u8 value = 0x00;
     };
 
-    PPUCTRL   _ppuCtrl;          // $2000
-    PPUMASK   _ppuMask;          // $2001
-    PPUSTATUS _ppuStatus;        // $2002
-    u8        _oamAddr = 0x00;   // $2003
-    u8        _oamData = 0x00;   // $2004
-    u8        _ppuScroll = 0x00; // $2005
-    u8        _ppuAddr = 0x00;   // $2006
-    u8        _ppuData = 0x00;   // $2007
+    PPUCTRL   ppuCtrl;          // $2000
+    PPUMASK   ppuMask;          // $2001
+    PPUSTATUS ppuStatus;        // $2002
+    u8        oamAddr = 0x00;   // $2003
+    u8        oamData = 0x00;   // $2004
+    u8        ppuScroll = 0x00; // $2005
+    u8        ppuAddr = 0x00;   // $2006
+    u8        ppuData = 0x00;   // $2007
     // $4014: OAM DMA, handled in bus read/write, see bus.cpp
 
     /*
@@ -481,24 +493,24 @@ class PPU
         Both of these registers are sometimes referred to as "Loopy Registers", named
         after the developer who discovered how they work.
      */
-    LoopyRegister _vramAddr;
-    LoopyRegister _tempAddr;
+    LoopyRegister vramAddr;
+    LoopyRegister tempAddr;
 
     // Internal fine X scroll register
-    u8 _fineX = 0x00;
+    u8 fineX = 0x00;
 
     // Used by _ppuScroll and _ppuAddr for two-write operations
-    bool _addrLatch = false;
+    bool addrLatch = false;
 
     // Stores last data written to _ppuData
-    u8 _ppuDataBuffer = 0x00;
+    u8 ppuDataBuffer = 0x00;
 
     /*
     ################################################################
     ||                  Internal Memory Locations                 ||
     ################################################################
     */
-    array<u8, 2048> _nameTables{};
+    array<u8, 2048> nameTables{};
 
     /* Pattern Tables
         $0000-$0FFF: Pattern Table 1
@@ -535,7 +547,7 @@ class PPU
     */
     // Default boot palette, will get changed by the cartridge
     // clang-format off
-    array<u8, 32> _defaultPalette = {
+    array<u8, 32> defaultPalette = {
         0x09, 0x01, 0x00, 0x01, 
         0x00, 0x02, 0x02, 0x0D,
         0x08, 0x10, 0x08, 0x24,
@@ -545,8 +557,9 @@ class PPU
         0x08, 0x3A, 0x00, 0x02,
         0x00, 0x20, 0x2C, 0x08 
     };
+
     // clang-format on
-    array<u8, 32> _paletteMemory = _defaultPalette;
+    array<u8, 32> paletteMemory = defaultPalette;
 
     /* Object Attribute Memory (OAM)
        This is a 256 byte region internal to the PPU
@@ -568,5 +581,5 @@ class PPU
         +-------- Flip sprite vertically
       Byte 3: X position of the sprite
     */
-    array<u8, 256> _oam{};
+    array<u8, 256> oam{};
 };

@@ -360,6 +360,12 @@ CPU::CPU( Bus *bus ) : _bus( bus ), _opcodeTable{}
 
     // SBX
     _opcodeTable[0xCB] = InstructionData{ "*SBX", "IMM",  &CPU::SBX, &CPU::IMM,  2, 2 };
+
+    // LAS
+    _opcodeTable[0xBB] = InstructionData{ "*LAS", "ABSY", &CPU::LAS, &CPU::ABSY, 4, 3 };
+
+    // ANE
+    _opcodeTable[0x8B] = InstructionData{ "*ANE", "IMM",  &CPU::ANE, &CPU::IMM,  2, 2 };
     // clang-format on
     // NOLINTEND
 
@@ -2521,4 +2527,54 @@ void CPU::SBX( const u16 address )
     _x = static_cast<u8>( diff & 0xFF );
     ( ( diff & 0x100 ) == 0 ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
     SetZeroAndNegativeFlags( _x );
+}
+
+void CPU::LAS( const u16 address )
+{
+    /* @brief Illegal opcode: LAS(LAR), combines LDA/TSX
+     * M AND SP -> A, X, SP
+     *
+     * N Z C I D V
+     * + + - - - -
+     *   Usage and cycles:
+     *   LAS Absolute Y: BB(4+)
+     */
+    u8 const memVal = ReadAndTick( address );
+    u8 const sp = GetStackPointer();
+    u8 const result = memVal & sp;
+
+    _a = result;
+    _x = result;
+    _s = result;
+
+    SetZeroAndNegativeFlags( result );
+}
+
+void CPU::ANE( const u16 address )
+{
+    /* @details Illegal opcode: ANE, combines AND and EOR
+      * OR X + AND oper
+
+      A base value in A is determined based on the contets of A and a constant, which may be typically $00,
+      $ff, $ee, etc. The value of this constant depends on temerature, the chip series, and maybe other
+      factors, as well. In order to eliminate these uncertaincies from the equation, use either 0 as the
+      operand or a value of $FF in the accumulator.
+
+      (A OR CONST) AND X AND oper -> A
+      N	Z	C	I	D	V
+      +	+	-	-	-	-
+      addressing	assembler	opc	bytes	cycles
+      immediate	ANE #oper	8B	2	2  	††
+
+      Usage and cycles:
+      * ANE Immediate: 8B(2)
+    */
+    u8 const operand = ReadAndTick( address );
+    u8 const constant = 0xEE;
+
+    // Compute: (A OR constant) AND X AND operand.
+    u8 const result = ( _a | constant ) & _x & operand;
+    _a = result;
+
+    SetZeroAndNegativeFlags( _a );
 }

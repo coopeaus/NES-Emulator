@@ -2,6 +2,7 @@
 #include "bus.h"
 #include "cpu.h"
 #include "ppu.h"
+#include "cartridge.h"
 #include "json.hpp"
 #include <cstdint>
 #include <fstream>
@@ -25,11 +26,11 @@ class CPUTestFixture : public ::testing::Test
 {
   protected:
     // All tests assume flat memory model, which is why true is passed to Bus constructor
-    Bus bus;
-    CPU cpu;
-    PPU ppu;
+    Bus  bus;
+    CPU &cpu = bus.cpu;
+    PPU &ppu = bus.ppu;
 
-    CPUTestFixture() : cpu( bus.cpu ), ppu( bus.ppu ) {}
+    CPUTestFixture() = default;
 
     void                      RunTestCase( const json &testCase );
     void                      LoadStateFromJson( const json &jsonData, const std::string &state );
@@ -54,6 +55,13 @@ class CPUTestFixture : public ::testing::Test
     u16                INDX();
     u16                INDY();
     u16                REL();
+
+    void LoadTestCartridge()
+    {
+        std::string romFile = "tests/roms/palette.nes";
+        bus.cartridge.LoadRom( romFile );
+        bus.cpu.Reset();
+    }
 };
 
 /*
@@ -68,6 +76,122 @@ TEST_F( CPUTestFixture, SanityCheck )
     // cpu.read and cpu.write shouldn't throw any errors
     u8 const testVal = Read( 0x0000 );
     Write( 0x0000, testVal );
+}
+
+TEST_F( CPUTestFixture, MemorySweep )
+{
+    // Write to every place in addressable memory, ensure emulator doesn't crash
+    try {
+        for ( u16 i = 0; i < 0xFFFF; ++i ) {
+            Write( i, 0x00 );
+        }
+
+        for ( u16 i = 0; i < 0xFFFF; ++i ) {
+            auto dummyVal = Read( i );
+            (void) dummyVal;
+        }
+    } catch ( std::exception &e ) {
+        FAIL() << e.what();
+    }
+
+    LoadTestCartridge();
+
+    try {
+        for ( u16 i = 0; i < 0xFFFF; ++i ) {
+            Write( i, 0x00 );
+        }
+
+        for ( u16 i = 0; i < 0xFFFF; ++i ) {
+            auto dummyVal = Read( i );
+            (void) dummyVal;
+        }
+    } catch ( std::exception &e ) {
+        FAIL() << e.what();
+    }
+}
+
+TEST_F( CPUTestFixture, RamCheck )
+{
+    // Write 1 to every location in RAM
+    for ( u16 i = 0x0000; i < 0x0800; ++i ) {
+        Write( i, 0x01 );
+    }
+    for ( u16 i = 0x0000; i < 0x0800; ++i ) {
+        EXPECT_EQ( Read( i ), 0x01 );
+    }
+
+    bus.DebugReset();
+    // Write 1 to mirrored locations in RAM
+    for ( u16 i = 0x0800; i < 0x2000; ++i ) {
+        Write( i, 0x01 );
+    }
+    for ( u16 i = 0x0000; i < 0x0800; ++i ) {
+        EXPECT_EQ( Read( i ), 0x01 );
+    }
+}
+
+TEST_F( CPUTestFixture, ResetVector )
+{
+    bus.EnableJsonTestMode(); // enables flat memory
+    cpu.Write( 0xFFFC, 0x34 );
+    cpu.Write( 0xFFFD, 0x12 );
+
+    // PC should be 0
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x0000 );
+    cpu.Reset();
+
+    // PC should be 0x1234
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x1234 );
+}
+
+TEST_F( CPUTestFixture, IRQ )
+{
+    bus.EnableJsonTestMode();
+    bus.DebugReset();
+
+    // I flag should be set
+    EXPECT_EQ( cpu.GetInterruptDisableFlag(), 1 );
+
+    // No IRQ when I flag is set
+    auto cycles = cpu.GetCycles();
+    cpu.IRQ();
+    EXPECT_EQ( cpu.GetCycles(), cycles );
+
+    // IRQ should execute when I flag is cleared
+    cpu.SetInterruptDisableFlag( false );
+    cycles = cpu.GetCycles();
+    cpu.IRQ();
+    EXPECT_EQ( cpu.GetCycles(), cycles + 7 );
+
+    // Interrupt vector at 0xFFFE should set PC
+    bus.EnableJsonTestMode();
+    bus.DebugReset();
+    cpu.Write( 0xFFFE, 0x34 );
+    cpu.Write( 0xFFFF, 0x12 );
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x0000 );
+    cpu.SetInterruptDisableFlag( false );
+    cpu.IRQ();
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x1234 );
+}
+
+TEST_F( CPUTestFixture, NMI )
+{
+    bus.EnableJsonTestMode();
+    bus.DebugReset();
+
+    // NMI should trigger, even when I flag is set
+    auto cycles = cpu.GetCycles();
+    cpu.NMI();
+    EXPECT_EQ( cpu.GetCycles(), cycles + 7 );
+
+    // NMI vector at 0xFFFA should set PC
+    bus.EnableJsonTestMode();
+    bus.DebugReset();
+    cpu.Write( 0xFFFA, 0x34 );
+    cpu.Write( 0xFFFB, 0x12 );
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x0000 );
+    cpu.NMI();
+    EXPECT_EQ( cpu.GetProgramCounter(), 0x1234 );
 }
 
 /*
@@ -381,6 +505,8 @@ CPU_TEST( 0B, ANC, Immediate, "0b.json" );
 CPU_TEST( 2B, ANC, Immediate, "2b.json" );
 CPU_TEST( AB, LXA, Immediate, "ab.json" );
 CPU_TEST( CB, SBX, Immediate, "cb.json" );
+CPU_TEST( BB, LAS, AbsoluteY, "bb.json" );
+CPU_TEST( 8B, ANE, AbsoluteY, "8b.json" );
 /*
 ################################################################
 ||                                                            ||

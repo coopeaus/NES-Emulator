@@ -15,6 +15,7 @@
 #include "ppu-viewer.h"
 #include "pattern-tables.h"
 #include "nametable.h"
+#include "cartridge-info.h"
 
 UIManager::UIManager( Renderer *renderer )
 {
@@ -29,6 +30,7 @@ UIManager::UIManager( Renderer *renderer )
     AddComponent<CpuViewerWindow>( renderer );
     AddComponent<PpuViewerWindow>( renderer );
     AddComponent<NametableWindow>( renderer );
+    AddComponent<CartridgeInfoWindow>( renderer );
 }
 
 void UIManager::Render()
