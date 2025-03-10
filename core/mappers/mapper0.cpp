@@ -23,7 +23,7 @@
         }
 
         // Unsupported PRG ROM size
-        throw std::runtime_error( "Unsupported PRG ROM size for Mapper 0" );
+        throw std::runtime_error( "Mapper0:Unsupported PRG ROM size for Mapper 0" );
     }
     throw std::runtime_error( "Address out of range in TranslateCPUAddress" );
 }

@@ -5,7 +5,7 @@ class Mapper1 : public Mapper
 {
 
   public:
-    Mapper1( u8 prgRomBanks, u8 chrRomBanks );
+    Mapper1( iNes2Instance iNesHeader ) : Mapper( iNesHeader ), _prgBank16Hi( GetPrgBankCount() - 1 ) {}
     auto TranslateCPUAddress( u16 address ) -> u32 override;
     auto TranslatePPUAddress( u16 address ) -> u32 override;
     void HandleCPUWrite( u16 address, u8 data ) override;
@@ -21,7 +21,7 @@ class Mapper1 : public Mapper
 
     // PRG bank selectors.
     u8 _prgBank16Lo{ 0 };
-    u8 _prgBank16Hi;
+    u8 _prgBank16Hi{};
     u8 _prgBank32{ 0 };
 
     // CHR bank selectors

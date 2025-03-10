@@ -1,5 +1,5 @@
 #pragma once
-#include <cstddef>
+#include "ines2.h"
 #include <cstdint>
 
 using u8 = uint8_t;
@@ -16,7 +16,12 @@ class Mapper
      * All other mappers will inherit from this class
      */
   public:
-    Mapper( u8 prgRomBanks, u8 chrRomBanks ) : _prgRomBanks( prgRomBanks ), _chrRomBanks( chrRomBanks ) {}
+    // header will be passed and copied. This instance is not the same as the one one in the cartridge header.
+    // Each mapper will have its own copy of the iNes header. Since these don't change after rom loading, this
+    // is fine. It also allows the debug window to modify the header in the cartridge header, just to see what
+    // each bit does, without affecting emulation.
+    iNes2Instance iNes{};
+    Mapper( iNes2Instance iNesHeader ) : iNes( iNesHeader ) {}
 
     // Delete the copy constructor
     // Prevents creating a new Mapper by copying an existing one
@@ -39,8 +44,8 @@ class Mapper
     virtual ~Mapper() = default;
 
     // Getters
-    [[nodiscard]] size_t GetPrgBankCount() const { return _prgRomBanks; }
-    [[nodiscard]] size_t GetChrBankCount() const { return _chrRomBanks; }
+    int GetPrgBankCount() const { return iNes.GetPrgRomBanks(); }
+    int GetChrBankCount() const { return iNes.GetChrRomBanks(); }
 
     // Base methods
     virtual u32  TranslateCPUAddress( u16 address ) = 0;
@@ -54,6 +59,4 @@ class Mapper
     [[nodiscard]] virtual MirrorMode GetMirrorMode() = 0;
 
   private:
-    u8 _prgRomBanks;
-    u8 _chrRomBanks;
 };
