@@ -1082,11 +1082,8 @@ u32 PPU::GetOutputPixel( u8 bgPixel, u8 spritePixel, u8 bgPalette, u8 spritePale
     // u8 const  paletteIdx = Read( paletteAddr ) & 0x3F;
     //
 
-    // Stripe it for now
-    if ( scanline % 10 == 0 ) {
-        return nesPaletteRgbValues.at( 0x22 );
-    }
-    return nesPaletteRgbValues.at( 0x23 );
+    // Leave as a solid for now
+    return nesPaletteRgbValues.at( 0x22 );
 }
 
 MirrorMode PPU::GetMirrorMode() const
