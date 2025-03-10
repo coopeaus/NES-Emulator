@@ -101,7 +101,6 @@ class PatternTablesWindow : public UIComponent
         ImGui::Text( "Properties" );
         ImGui::PopFont();
         ImGui::Separator();
-        ImGui::Text( "Right Panel" );
         PatternTableProps( cellSelected );
         ImGui::EndChild();
     }

@@ -5,13 +5,19 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "ines2.h"
 
 using namespace std;
+
+class Bus;
 
 class Cartridge
 {
   public:
-    Cartridge( const string &filePath );
+    Cartridge( Bus *bus );
+    iNes2Instance iNes{};
+
+    Bus *bus;
 
     /*
     ################################
@@ -29,12 +35,12 @@ class Cartridge
     ||            Reads           ||
     ################################
     */
-    [[nodiscard]] u8 Read( u16 address );
-    [[nodiscard]] u8 ReadChrROM( u16 address );        // 0x0000 - 0x1FFF: PPU
-    [[nodiscard]] u8 ReadCartridgeVRAM( u16 address ); // 0x2800 - 0x2FFF: PPU (four screen mode)
-    [[nodiscard]] u8 ReadExpansionROM( u16 address );  // 0x4020 - 0x5FFF: CPU
-    [[nodiscard]] u8 ReadPrgRAM( u16 address );        // 0x6000 - 0x7FFF: CPU
-    [[nodiscard]] u8 ReadPrgROM( u16 address );        // 0x8000 - 0xFFFF: CPU
+    u8 Read( u16 address );
+    u8 ReadChrROM( u16 address );        // 0x0000 - 0x1FFF: PPU
+    u8 ReadCartridgeVRAM( u16 address ); // 0x2800 - 0x2FFF: PPU (four screen mode)
+    u8 ReadExpansionROM( u16 address );  // 0x4020 - 0x5FFF: CPU
+    u8 ReadPrgRAM( u16 address );        // 0x6000 - 0x7FFF: CPU
+    u8 ReadPrgROM( u16 address );        // 0x8000 - 0xFFFF: CPU
 
     /*
     ################################
@@ -53,7 +59,8 @@ class Cartridge
     ||      Cartridge Methods     ||
     ################################
     */
-    [[nodiscard]] MirrorMode GetMirrorMode();
+    MirrorMode GetMirrorMode();
+    void       LoadRom( const string &filePath );
 
   private:
     /*
@@ -69,7 +76,7 @@ class Cartridge
       The iNes header specifies how many PRG ROM banks are provided, so we
       can define _prg_rom as a vector and resize it during ROM initialization
     */
-    vector<u8> _prgRom;
+    vector<u8> _prgRom = std::vector<u8>( 16384 ); // 16KiB
 
     /* CHR ROM and RAM
       Character Read-Only Memory and Character Random Access Memory
@@ -90,8 +97,8 @@ class Cartridge
       table data dynamically. Having dynamic pattern tables allowed devs to
       create dynamic tiles.
     */
-    vector<u8>      _chrRom;   // Sized based on the number of CHR ROM banks
-    array<u8, 8192> _chrRam{}; // 8192 bytes (8 KiB)
+    vector<u8>      _chrRom = std::vector<u8>( 8192 ); // 8KiB
+    array<u8, 8192> _chrRam{};                         // 8192 bytes (8 KiB)
 
     // PRG RAM: Program RAM, also known as Save RAM (SRAM) or Work RAM sometimes
     // Its usage is determined by the mapper

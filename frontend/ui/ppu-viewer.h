@@ -66,22 +66,22 @@ class PpuViewerWindow : public UIComponent
         ImGui::TableSetColumnIndex( 0 );
         ImGui::Text( "PPU Cycle" );
         ImGui::TableSetColumnIndex( 1 );
-        auto cycles = renderer->bus.ppu.GetCycles();
-        ImGui::Text( "%" PRIu16, cycles );
+        int cycles = renderer->bus.ppu.GetCycles();
+        ImGui::Text( "%d", cycles );
 
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex( 0 );
         ImGui::Text( "Scanline" );
         ImGui::TableSetColumnIndex( 1 );
-        auto scanline = renderer->bus.ppu.GetScanline();
-        ImGui::Text( "%" PRId16, scanline );
+        int scanline = renderer->bus.ppu.GetScanline();
+        ImGui::Text( "%d", scanline );
 
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex( 0 );
         ImGui::Text( "Frame" );
         ImGui::TableSetColumnIndex( 1 );
         auto frame = renderer->bus.ppu.GetFrame();
-        ImGui::Text( "%" PRIu64, frame );
+        ImGui::Text( U64_FORMAT_SPECIFIER, frame );
 
         SectionTableEnd();
     }

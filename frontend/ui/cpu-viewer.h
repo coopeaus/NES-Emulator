@@ -135,7 +135,7 @@ class CpuViewerWindow : public UIComponent
         ImGui::PopFont();
         ImGui::SameLine();
         ImGui::Indent( 100 );
-        ImGui::Text( "%" PRIu16, renderer->bus.ppu.GetCycles() );
+        ImGui::Text( "%d", renderer->bus.ppu.GetCycles() );
         ImGui::EndGroup();
 
         ImGui::BeginGroup();
@@ -144,7 +144,7 @@ class CpuViewerWindow : public UIComponent
         ImGui::PopFont();
         ImGui::SameLine();
         ImGui::Indent( 100 );
-        ImGui::Text( "%" PRId16, renderer->bus.ppu.GetScanline() );
+        ImGui::Text( "%d", renderer->bus.ppu.GetScanline() );
         ImGui::EndGroup();
 
         ImGui::BeginGroup();
@@ -153,7 +153,7 @@ class CpuViewerWindow : public UIComponent
         ImGui::PopFont();
         ImGui::SameLine();
         ImGui::Indent( 100 );
-        ImGui::Text( "%" PRIu64, renderer->bus.ppu.GetFrame() );
+        ImGui::Text( U64_FORMAT_SPECIFIER, renderer->bus.ppu.GetFrame() );
         ImGui::EndGroup();
 
         ImGui::PopStyleColor();

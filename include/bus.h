@@ -1,9 +1,9 @@
 #pragma once
 #include "cpu.h"
 #include "ppu.h"
+#include "cartridge.h"
 #include <array>
 #include <cstdint>
-#include <memory>
 
 using u8 = uint8_t;
 using u16 = uint16_t;
@@ -26,9 +26,9 @@ class Bus
     ||         Peripherals        ||
     ################################
     */
-    CPU                        cpu;
-    PPU                        ppu;
-    std::shared_ptr<Cartridge> cartridge;
+    CPU       cpu;
+    PPU       ppu;
+    Cartridge cartridge;
 
     /*
     ################################
@@ -37,7 +37,6 @@ class Bus
     */
     [[nodiscard]] u8 Read( uint16_t address, bool debugMode = false );
     void             Write( u16 address, u8 data );
-    void             LoadCartridge( std::shared_ptr<Cartridge> cartridge );
 
     /*
     ################################

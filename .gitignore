@@ -126,5 +126,6 @@ list.md
 # vcpkg
 vcpkg_installed/
 
+# Misc
 imgui.ini
 *.ini
