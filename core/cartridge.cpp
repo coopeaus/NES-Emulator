@@ -1,6 +1,7 @@
 #include "cartridge.h"
 #include <array>
 #include <cstddef>
+#include <cstring>
 #include <fmt/base.h>
 #include <fstream>
 #include <ios>

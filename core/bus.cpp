@@ -1,7 +1,6 @@
 #include "bus.h"
 #include "cartridge.h"
 #include "ppu.h"
-#include <fmt/base.h>
 #include <iostream>
 
 // Constructor to initialize the bus with a flat memory model

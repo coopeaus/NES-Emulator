@@ -3,7 +3,6 @@
 #include "utils.h"
 #include "cartridge.h" // NOLINT
 #include "mappers/mapper-base.h"
-#include <cstdint>
 #include <exception>
 #include <array>
 #include <iostream>

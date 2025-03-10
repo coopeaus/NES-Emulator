@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
+#include <cstring>
 #include <string>
-#include <memory.h>
 
 using u8 = uint8_t;
 using u16 = uint16_t;
@@ -237,7 +237,7 @@ class iNes2Instance // NOLINT
         iNes2Format() { memset( value, 0, sizeof( value ) ); }
     };
 
-    iNes2Format header{};
+    iNes2Format header;
 
     /*
     ################################
@@ -265,23 +265,23 @@ class iNes2Instance // NOLINT
     std::string GetIdentification() const { return { header.fields.identification, 4 }; }
     int         GetPrgRomBanks() const
     {
-        int msb = header.fields.romSizeMSB.bit.prgRomSize; // upper 4 bits
-        int lsb = header.fields.prgRomSizeLSB;             // full 8 bits
+        int const msb = header.fields.romSizeMSB.bit.prgRomSize; // upper 4 bits
+        int const lsb = header.fields.prgRomSizeLSB;             // full 8 bits
         return ( msb << 8 ) | lsb;
     }
     int GetPrgRomSizeBytes() const { return GetPrgRomBanks() * 16384; }
     int GetChrRomBanks() const
     {
-        int msb = header.fields.romSizeMSB.bit.chrRomSize; // upper 4 bits
-        int lsb = header.fields.chrRomSizeLSB;             // full 8 bits
+        int const msb = header.fields.romSizeMSB.bit.chrRomSize; // upper 4 bits
+        int const lsb = header.fields.chrRomSizeLSB;             // full 8 bits
         return ( msb << 8 ) | lsb;
     }
     int GetChrRomSizeBytes() const { return GetChrRomBanks() * 8192; }
     int GetMapper() const
     {
-        int msb = header.fields.mapperMSB.bit.mapperMSB;
-        int mid = header.fields.flag7.bit.mapperMid;
-        int lsb = header.fields.flag6.bit.mapperLSB;
+        int const msb = header.fields.mapperMSB.bit.mapperMSB;
+        int const mid = header.fields.flag7.bit.mapperMid;
+        int const lsb = header.fields.flag6.bit.mapperLSB;
         return ( msb << 8 ) | ( mid << 4 ) | lsb;
     }
     int GetMirroring() const { return header.fields.flag6.bit.mirroring; }
@@ -301,24 +301,24 @@ class iNes2Instance // NOLINT
     // Otherwise, the actual size in bytes is (64 << shift).
     int GetPrgRamSizeBytes() const
     {
-        int shift = header.fields.prgRamSize.bit.prgRamSize;
+        int const shift = header.fields.prgRamSize.bit.prgRamSize;
         return ( shift == 0 ? 0 : ( 64 << shift ) );
     }
     int GetPrgNvramSizeBytes() const
     {
-        int shift = header.fields.prgRamSize.bit.prgNvramSize;
+        int const shift = header.fields.prgRamSize.bit.prgNvramSize;
         return ( shift == 0 ? 0 : ( 64 << shift ) );
     }
 
     // CHR-RAM / NVRAM size.
     int GetChrRamSizeBytes() const
     {
-        int shift = header.fields.chrRamSize.bit.chrRamSize;
+        int const shift = header.fields.chrRamSize.bit.chrRamSize;
         return ( shift == 0 ? 0 : ( 64 << shift ) );
     }
     int GetChrNvramSizeBytes() const
     {
-        int shift = header.fields.chrRamSize.bit.chrNvramSize;
+        int const shift = header.fields.chrRamSize.bit.chrNvramSize;
         return ( shift == 0 ? 0 : ( 64 << shift ) );
     }
 

@@ -15,7 +15,7 @@ class Cartridge
 {
   public:
     Cartridge( Bus *bus );
-    iNes2Instance iNes{};
+    iNes2Instance iNes;
 
     Bus *bus;
 

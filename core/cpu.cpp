@@ -2539,9 +2539,9 @@ void CPU::LAS( const u16 address )
      *   Usage and cycles:
      *   LAS Absolute Y: BB(4+)
      */
-    u8 memVal = ReadAndTick( address );
-    u8 sp = GetStackPointer();
-    u8 result = memVal & sp;
+    u8 const memVal = ReadAndTick( address );
+    u8 const sp = GetStackPointer();
+    u8 const result = memVal & sp;
 
     _a = result;
     _x = result;
@@ -2569,11 +2569,11 @@ void CPU::ANE( const u16 address )
       Usage and cycles:
       * ANE Immediate: 8B(2)
     */
-    u8 operand = ReadAndTick( address );
-    u8 constant = 0xEE;
+    u8 const operand = ReadAndTick( address );
+    u8 const constant = 0xEE;
 
     // Compute: (A OR constant) AND X AND operand.
-    u8 result = ( _a | constant ) & _x & operand;
+    u8 const result = ( _a | constant ) & _x & operand;
     _a = result;
 
     SetZeroAndNegativeFlags( _a );

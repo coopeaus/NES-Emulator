@@ -20,7 +20,7 @@ class Mapper
     // Each mapper will have its own copy of the iNes header. Since these don't change after rom loading, this
     // is fine. It also allows the debug window to modify the header in the cartridge header, just to see what
     // each bit does, without affecting emulation.
-    iNes2Instance iNes{};
+    iNes2Instance iNes;
     Mapper( iNes2Instance iNesHeader ) : iNes( iNesHeader ) {}
 
     // Delete the copy constructor
