@@ -129,7 +129,7 @@ jobs:
           cp -r build/tests build/Release/
           cp -r build/emu build/Release/
           cp -r build/cpu_test build/Release/
-          cp -r build/rom_test build/release/
+          cp -r build/rom_test build/Release/
       
       - name: Upload build directory
         uses: actions/upload-artifact@v4
