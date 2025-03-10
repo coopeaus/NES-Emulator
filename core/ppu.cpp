@@ -140,6 +140,7 @@ void PPU::HandleCpuWrite( u16 address, u8 data ) // NOLINT
               cpuCtrl nametable x and y bits.
              */
 
+            ppuCtrl.value = data;
             if ( ppuCtrl.bit.nmiEnable && ppuStatus.bit.verticalBlank ) {
                 TriggerNmi();
             }

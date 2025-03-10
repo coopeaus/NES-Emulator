@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <string>
+#include <memory.h>
 
 using u8 = uint8_t;
 using u16 = uint16_t;
@@ -233,7 +234,7 @@ class iNes2Instance // NOLINT
             DefaultExpansionDevice defaultExpansionDevice; // Byte 15: Default Expansion Device
         } fields;
         u8 value[16]{};
-        iNes2Format() { std::memset( value, 0, sizeof( value ) ); }
+        iNes2Format() { memset( value, 0, sizeof( value ) ); }
     };
 
     iNes2Format header{};

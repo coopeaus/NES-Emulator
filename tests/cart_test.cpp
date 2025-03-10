@@ -59,7 +59,7 @@ TEST_F( CartTest, iNes )
     // iNes 1.0 Unofficial Properties: 0
     // Misc Rom(s): 0
     iNes2Instance ines{};
-    std::memcpy( ines.header.value, paletteHeader.data(), paletteHeader.size() );
+    memcpy( ines.header.value, paletteHeader.data(), paletteHeader.size() );
 
     EXPECT_EQ( ines.header.value[0], 'N' );
     EXPECT_EQ( ines.header.value[1], 'E' );
@@ -90,7 +90,7 @@ TEST_F( CartTest, iNes )
     // Mirroring: Vertical, it's 0, but determined by the mapper
     // Region: 0 (NTSC)
     // System: Normal, VSSystemHardware: 0, VSSystemPPU: 0, ExtendSystem: 0
-    std::memcpy( ines.header.value, v5header.data(), v5header.size() );
+    memcpy( ines.header.value, v5header.data(), v5header.size() );
     EXPECT_EQ( ines.header.value[0], 'N' );
     EXPECT_EQ( ines.header.value[1], 'E' );
     EXPECT_EQ( ines.header.value[2], 'S' );

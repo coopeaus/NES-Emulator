@@ -50,7 +50,7 @@ void Cartridge::LoadRom( const std::string &filePath )
         }
     }
 
-    std::memcpy( iNes.header.value, header.data(), header.size() );
+    memcpy( iNes.header.value, header.data(), header.size() );
 
     if ( iNes.GetIdentification() != "NES\x1A" ) {
         throw std::runtime_error( "Invalid ROM file" );
@@ -226,6 +226,10 @@ void Cartridge::Write( u16 address, u8 data )
      * PRG ROM is the program ROM, which contains the game code
      */
     if ( address >= 0x8000 && address <= 0xFFFF ) {
+        if ( _mapper == nullptr ) {
+            fmt::print( "Cartridge:ReadPrgROM:Mapper is null. Rom file was likely not loaded.\n" );
+            return _prgRom.at( address & 0x3FFF );
+        }
         u32 const translatedAddress = _mapper->TranslateCPUAddress( address );
         return _prgRom.at( translatedAddress );
     }
@@ -238,6 +242,10 @@ void Cartridge::Write( u16 address, u8 data )
      * CHR ROM is the character ROM, which contains the graphics data for the PPU
      */
     if ( address >= 0x0000 && address <= 0x1FFF ) {
+        if ( _mapper == nullptr ) {
+            fmt::print( "Cartridge:ReadChrROM:Mapper is null. Rom file was likely not loaded.\n" );
+            return _chrRom.at( address & 0x1FFF );
+        }
         u32 const translatedAddress = _mapper->TranslatePPUAddress( address );
         return _chrRom.at( translatedAddress );
     }
@@ -252,6 +260,10 @@ void Cartridge::Write( u16 address, u8 data )
      * the 8th bit in the header. However, to keep compatibility with iNes 1.0, whether
      * a game uses PRG RAM or not will be determined by the mapper.
      */
+    if ( _mapper == nullptr ) {
+        fmt::print( "Cartridge:ReadPrgRAM:Mapper is null. Rom file was likely not loaded.\n" );
+        return _prgRam.at( address - 0x6000 );
+    }
     if ( address >= 0x6000 && address <= 0x7FFF && _mapper->SupportsPrgRam() ) {
         return _prgRam.at( address - 0x6000 );
     }
@@ -263,6 +275,11 @@ void Cartridge::Write( u16 address, u8 data )
     /** @brief Reads from the expansion ROM, ranges from 0x4020 to 0x5FFF
      * Expansion ROM is rarely used, but when it is, it's used for additional program data
      */
+    if ( _mapper == nullptr ) {
+        fmt::print( "Cartridge:ReadExpansionROM:Mapper is null. Rom file was likely not loaded.\n" );
+        return _expansionMemory.at( address - 0x4020 );
+    }
+
     if ( address >= 0x4020 && address <= 0x5FFF && _mapper->HasExpansionRom() ) {
         return _expansionMemory.at( address - 0x4020 );
     }
@@ -293,6 +310,11 @@ void Cartridge::WritePrgROM( u16 address, u8 data )
      * PRG ROM is ready-only. However, many mappers use writes to the ROM
      * to trigger bank switching.
      */
+    if ( _mapper == nullptr ) {
+        fmt::print( "Cartridge:WritePrgROM:Mapper is null. Rom file was likely not loaded.\n" );
+        return;
+    }
+
     if ( address >= 0x8000 && address <= 0xFFFF ) {
         _mapper->HandleCPUWrite( address, data );
     }
@@ -321,6 +343,10 @@ void Cartridge::WriteChrRAM( u16 address, u8 data )
      * uses CHR RAM
      */
     if ( _usesChrRam && address >= 0x0000 && address <= 0x1FFF ) {
+        if ( _mapper == nullptr ) {
+            fmt::print( "Cartridge:WriteChrRAM:Mapper is null. Rom file was likely not loaded.\n" );
+            return;
+        }
         u16 const translatedAddress = _mapper->TranslatePPUAddress( address );
         _chrRam.at( translatedAddress & 0x1FFF ) = data;
     }
@@ -334,6 +360,11 @@ void Cartridge::WritePrgRAM( u16 address, u8 data )
      * the 8th bit in the header. However, to keep compatibility with iNes 1.0, whether
      * a game uses PRG RAM or not will be determined by the mapper.
      */
+    if ( _mapper == nullptr ) {
+        fmt::print( "Cartridge:WritePrgRAM:Mapper is null. Rom file was likely not loaded.\n" );
+        return;
+    }
+
     if ( address >= 0x6000 && address <= 0x7FFF && _mapper->SupportsPrgRam() ) {
 
         _prgRam.at( address - 0x6000 ) = data;
@@ -345,6 +376,11 @@ void Cartridge::WriteExpansionRAM( u16 address, u8 data )
     /** @brief Writes to the expansion ROM, ranges from 0x4020 to 0x5FFF
      * Expansion ROM is rarely used, but when it is, it's used for additional program data
      */
+    if ( _mapper == nullptr ) {
+        fmt::print( "Cartridge:WriteExpansionRAM:Mapper is null. Rom file was likely not loaded.\n" );
+        return;
+    }
+
     if ( address >= 0x4020 && address <= 0x5FFF && _mapper->HasExpansionRam() ) {
         _expansionMemory.at( address - 0x4020 ) = data;
     }
