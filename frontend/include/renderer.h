@@ -5,7 +5,6 @@
 #include <SDL_hints.h>
 #include <SDL_events.h>
 #include <array>
-#include <fmt/base.h>
 #include <cstdlib>
 #include <glad/glad.h>
 #include <SDL2/SDL.h>
@@ -19,6 +18,7 @@
 #include <SDL_stdinc.h>
 #include <SDL_timer.h>
 #include <cstdint>
+#include <fmt/base.h>
 #include <fmt/core.h>
 #include <iostream>
 #include <csignal>
@@ -97,18 +97,18 @@ class Renderer
     std::array<u32, 61440> nametable2Buffer{};
     std::array<u32, 61440> nametable3Buffer{};
 
-    std::array<std::string, 4> testRoms = {
-        "tests/roms/palette.nes",
-        "tests/roms/color_test.nes",
-        "tests/roms/nestest.nes",
-        "tests/roms/mario.nes",
+    std::array<std::string, 5> testRoms = {
+        "tests/roms/palette.nes", "tests/roms/color_test.nes", "tests/roms/nestest.nes",
+        "tests/roms/mario.nes",   "tests/tools/custom.nes",
     };
     enum RomSelected : u8 {
         PALETTE,
         COLOR_TEST,
         NESTEST,
         MARIO,
+        CUSTOM,
     };
+    u8 romSelected = RomSelected::PALETTE;
 
     /*
     ################################
@@ -130,9 +130,8 @@ class Renderer
 
     void InitEmulator()
     {
-        auto romFile = testRoms[RomSelected::PALETTE];
-        auto cartridge = std::make_shared<Cartridge>( romFile );
-        bus.LoadCartridge( cartridge );
+        auto romFile = testRoms.at( romSelected );
+        bus.cartridge.LoadRom( romFile );
         bus.cpu.Reset();
         bus.ppu.onFrameReady = [this]( const u32 *frameBuffer ) {
             this->ProcessPpuFrameBuffer( frameBuffer );
@@ -142,8 +141,7 @@ class Renderer
 
     void LoadNewCartridge( const std::string &newRomFile )
     {
-        auto newCartridge = std::make_shared<Cartridge>( newRomFile );
-        bus.LoadCartridge( newCartridge );
+        bus.cartridge.LoadRom( newRomFile );
         bus.DebugReset();
         currentFrame = bus.ppu.GetFrame();
         frameCount = 0;

@@ -142,5 +142,7 @@ if(BUILD_TESTS)
   # Add your test executables
   add_test_executable(cpu_test tests/cpu_test.cpp)
   add_test_executable(rom_test tests/rom_test.cpp)
+  add_test_executable(ppu_test tests/ppu_test.cpp)
+  add_test_executable(cart_test tests/cart_test.cpp)
 
 endif()

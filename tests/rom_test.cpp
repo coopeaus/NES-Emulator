@@ -8,7 +8,6 @@
 #include <regex>
 #include <vector>
 #include <iostream>
-#include <memory>
 using namespace std;
 
 /*
@@ -25,11 +24,7 @@ TEST( RomTests, Nestest )
     CPU cpu = bus.cpu;
     PPU ppu = bus.ppu;
 
-    // Create a shared pointer to Cartridge
-    shared_ptr<Cartridge> cartridge = make_shared<Cartridge>( "tests/roms/nestest.nes" );
-
-    // Pass the shared pointer to LoadCartridge
-    bus.LoadCartridge( cartridge );
+    bus.cartridge.LoadRom( "tests/roms/nestest.nes" );
 
     cpu.Reset();
 

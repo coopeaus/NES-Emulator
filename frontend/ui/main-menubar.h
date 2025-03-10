@@ -14,6 +14,7 @@
 #include "ppu-viewer.h"
 #include "pattern-tables.h"
 #include "nametable.h"
+#include "cartridge-info.h"
 
 class MainMenuBar : public UIComponent
 {
@@ -65,6 +66,10 @@ class MainMenuBar : public UIComponent
 
                 if ( auto *registerViewer = ui->GetComponent<PpuViewerWindow>() ) {
                     ImGui::MenuItem( "PPU", nullptr, &registerViewer->visible );
+                }
+
+                if ( auto *cartridgeInfoViewer = ui->GetComponent<CartridgeInfoWindow>() ) {
+                    ImGui::MenuItem( "Cartridge Info", nullptr, &cartridgeInfoViewer->visible );
                 }
                 Separator();
 

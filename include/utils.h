@@ -99,7 +99,7 @@ inline const std::unordered_set<std::string> &getOpcodeNameSet()
         "RTS", "SBC", "SEC", "SED", "SEI", "STA", "STX", "STY", "TAX", "TAY", "TSX", "TXA", "TXS", "TYA",
         // Illegal
         "*ALR", "*ANC", "*ARR", "*DCP", "*ISC", "*JAM", "*LAX", "*LXA", "*NOP", "*RLA", "*RRA", "*SAX",
-        "*SBC", "*SBX", "*SLO", "*SRE" };
+        "*SBC", "*SBX", "*SLO", "*SRE", "*LAS", "*ANE" };
     return nameSet;
 }
 

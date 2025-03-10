@@ -1,11 +1,15 @@
 #pragma once
+#include "ines2.h"
 #include "mapper-base.h"
 
 class Mapper2 : public Mapper
 {
 
   public:
-    Mapper2( u8 prgRomBanks, u8 chrRomBanks, MirrorMode mirrorMode );
+    Mapper2( iNes2Instance iNes2Header, MirrorMode mirrorMode )
+        : Mapper( iNes2Header ), _mirrorMode( mirrorMode )
+    {
+    }
     auto TranslateCPUAddress( u16 address ) -> u32 override;
     auto TranslatePPUAddress( u16 address ) -> u32 override;
     void HandleCPUWrite( u16 address, u8 data ) override;

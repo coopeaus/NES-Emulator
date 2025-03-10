@@ -36,13 +36,13 @@ class CPU
     bool IsNmiInProgress() const { return _nmiInProgress; }
 
     // status getters
-    u8 GetCarryFlag() const { return _p & Carry; }
-    u8 GetZeroFlag() const { return _p & Zero; }
-    u8 GetInterruptDisableFlag() const { return _p & InterruptDisable; }
-    u8 GetDecimalFlag() const { return _p & Decimal; }
-    u8 GetBreakFlag() const { return _p & Break; }
-    u8 GetOverflowFlag() const { return _p & Overflow; }
-    u8 GetNegativeFlag() const { return _p & Negative; }
+    u8 GetCarryFlag() const { return ( _p & Carry ) >> 0; }
+    u8 GetZeroFlag() const { return ( _p & Zero ) >> 1; }
+    u8 GetInterruptDisableFlag() const { return ( _p & InterruptDisable ) >> 2; }
+    u8 GetDecimalFlag() const { return ( _p & Decimal ) >> 3; }
+    u8 GetBreakFlag() const { return ( _p & Break ) >> 4; }
+    u8 GetOverflowFlag() const { return ( _p & Overflow ) >> 6; }
+    u8 GetNegativeFlag() const { return ( _p & Negative ) >> 7; }
 
     /*
     ################################
@@ -58,6 +58,18 @@ class CPU
     void SetCycles( u64 value ) { _cycles = value; }
     void SetReading2002( bool value ) { _reading2002 = value; };
     void SetNmiInProgress( bool value ) { _nmiInProgress = value; }
+
+    // status setters
+    void SetCarryFlag( bool value ) { value ? SetFlags( Carry ) : ClearFlags( Carry ); }
+    void SetZeroFlag( bool value ) { value ? SetFlags( Zero ) : ClearFlags( Zero ); }
+    void SetInterruptDisableFlag( bool value )
+    {
+        value ? SetFlags( InterruptDisable ) : ClearFlags( InterruptDisable );
+    }
+    void SetDecimalFlag( bool value ) { value ? SetFlags( Decimal ) : ClearFlags( Decimal ); }
+    void SetBreakFlag( bool value ) { value ? SetFlags( Break ) : ClearFlags( Break ); }
+    void SetOverflowFlag( bool value ) { value ? SetFlags( Overflow ) : ClearFlags( Overflow ); }
+    void SetNegativeFlag( bool value ) { value ? SetFlags( Negative ) : ClearFlags( Negative ); }
 
     /*
     ################################
@@ -364,4 +376,6 @@ class CPU
     void ISC( u16 address );
     void ANC( u16 address );
     void SBX( u16 address );
+    void LAS( u16 address );
+    void ANE( u16 address );
 };
