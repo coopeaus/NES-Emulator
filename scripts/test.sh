@@ -40,7 +40,7 @@ else
 fi
 
 # Example usage:
-# ./scripts/test.sh "CPUTestFixture.IMM"   # Run a specific test
+# ./scripts/test.sh "CpuTest.IMM"   # Run a specific test
 # ./scripts/test.sh                      # Run all tests in parallel
 
 # List of all tests: ctest -N

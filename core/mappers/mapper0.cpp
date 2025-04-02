@@ -1,5 +1,5 @@
-#include "mappers/mapper-base.h"
 #include "mappers/mapper0.h"
+#include "global-types.h"
 #include <stdexcept>
 
 [[nodiscard]] u32 Mapper0::TranslateCPUAddress( u16 address )
