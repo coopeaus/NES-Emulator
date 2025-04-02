@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include <cstdint>
+#include <cstddef>
 #include <deque>
 #include <fmt/base.h>
 #include <string>
@@ -2060,7 +2060,7 @@ class CPU
          */
         u8 const  operand = ReadAndTick( address );
         u8 const  left = ( _a & _x );
-        u16 const diff = static_cast<uint16_t>( left ) - static_cast<uint16_t>( operand );
+        u16 const diff = static_cast<u16>( left ) - static_cast<u16>( operand );
         _x = static_cast<u8>( diff & 0xFF );
         ( ( diff & 0x100 ) == 0 ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
         SetZeroAndNegativeFlags( _x );

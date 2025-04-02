@@ -1,5 +1,6 @@
 #pragma once
 #include "cpu.h"
+#include "global-types.h"
 #include "ppu.h"
 #include "cartridge.h"
 #include <array>

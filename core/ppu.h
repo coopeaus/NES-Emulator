@@ -1,11 +1,13 @@
 #pragma once
 #include "config.h"
 #include "cpu.h"
+#include "global-types.h"
 #include "ppu-types.h"
 #include "mappers/mapper-base.h"
 #include <array>
 #include <functional>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <fstream>
 
@@ -279,7 +281,7 @@ class PPU
 
     void OddFrameSkip()
     {
-        bool isOddFrame = frame & 0x01;
+        bool const isOddFrame = frame & 0x01;
         if ( isOddFrame && scanline == 0 && cycle == 0 ) {
             cycle = 1;
         }
@@ -405,7 +407,7 @@ class PPU
     void FetchSpriteData()
     {
         for ( u8 i = 0; i < spriteCount; i++ ) {
-            SpriteEntry sprite = secondaryOam.entries[i];
+            SpriteEntry const sprite = secondaryOam.entries[i];
             FetchSpritePatternBytes( sprite );
             spriteShiftLow[i] = spritePattern0Byte;
             spriteShiftHigh[i] = spritePattern1Byte;
@@ -446,16 +448,16 @@ class PPU
 
     void FetchSpritePatternBytes( SpriteEntry sprite )
     {
-        bool horizontalMirror = ( sprite.attribute & 0x40 ) == 0x40;
-        bool verticalMirror = ( sprite.attribute & 0x80 ) == 0x80;
-        bool is8x16 = ppuCtrl.bit.spriteSize;
+        bool const horizontalMirror = ( sprite.attribute & 0x40 ) == 0x40;
+        bool const verticalMirror = ( sprite.attribute & 0x80 ) == 0x80;
+        bool const is8x16 = ppuCtrl.bit.spriteSize;
 
         u16 patternOffset = ppuCtrl.bit.patternSprite << 12;
         u16 tileBase = sprite.tileIndex << 4;
         u8  rowOffset = scanline - sprite.y;
 
         if ( verticalMirror ) {
-            u8 maxRow = is8x16 ? 15 : 7;
+            u8 const maxRow = is8x16 ? 15 : 7;
             rowOffset = maxRow - rowOffset;
         }
 
@@ -464,7 +466,7 @@ class PPU
             tileBase = ( sprite.tileIndex & ~0x01 ) << 4;
             rowOffset = ( rowOffset >= 8 ) ? rowOffset + 8 : rowOffset;
         }
-        u16 tileAddr = ( patternOffset | tileBase ) + rowOffset;
+        u16 const tileAddr = ( patternOffset | tileBase ) + rowOffset;
         spritePattern0Byte = ReadVram( tileAddr );
         spritePattern1Byte = ReadVram( tileAddr + 8 );
 
@@ -519,15 +521,15 @@ class PPU
     {
         if ( ppuMask.bit.renderBackground && ( ppuMask.bit.renderBackgroundLeft || cycle >= 9 ) ) {
             // Fine X scrolling: determine the bit offset in our shifters.
-            u16 bitMux = 0x8000 >> fineX;
+            u16 const bitMux = 0x8000 >> fineX;
             // Extract the pixel bits from background shifters.
-            u8 p0Pixel = ( bgPatternShiftLow & bitMux ) ? 1 : 0;
-            u8 p1Pixel = ( bgPatternShiftHigh & bitMux ) ? 1 : 0;
+            u8 const p0Pixel = ( bgPatternShiftLow & bitMux ) ? 1 : 0;
+            u8 const p1Pixel = ( bgPatternShiftHigh & bitMux ) ? 1 : 0;
             pixel = ( p1Pixel << 1 ) | p0Pixel;
 
             // Extract the palette bits from attribute shifters.
-            u8 pal0 = ( bgAttributeShiftLow & bitMux ) ? 1 : 0;
-            u8 pal1 = ( bgAttributeShiftHigh & bitMux ) ? 1 : 0;
+            u8 const pal0 = ( bgAttributeShiftLow & bitMux ) ? 1 : 0;
+            u8 const pal1 = ( bgAttributeShiftHigh & bitMux ) ? 1 : 0;
             palette = ( pal1 << 1 ) | pal0;
         }
     }
@@ -536,12 +538,12 @@ class PPU
     {
         if ( ppuMask.bit.renderSprites && ( ppuMask.bit.renderSpritesLeft || cycle >= 9 ) ) {
             for ( u8 i = 0; i < spriteCount; i++ ) {
-                SpriteEntry sprite = secondaryOam.entries[i];
+                SpriteEntry const sprite = secondaryOam.entries[i];
 
                 // Only consider sprites whose shift registers are active (x==0).
                 if ( sprite.x == 0 ) {
-                    u8 lo = ( spriteShiftLow[i] & 0x80 ) ? 1 : 0;
-                    u8 hi = ( spriteShiftHigh[i] & 0x80 ) ? 1 : 0;
+                    u8 const lo = ( spriteShiftLow[i] & 0x80 ) ? 1 : 0;
+                    u8 const hi = ( spriteShiftHigh[i] & 0x80 ) ? 1 : 0;
                     pixel = ( hi << 1 ) | lo;
 
                     // The sprite's palette is in the lower 2 bits with an offset of 4.
@@ -615,9 +617,9 @@ class PPU
         }
 
         // Write final color to framebuffer
-        u16 paletteAddr = 0x3F00 + ( finalPalette << 2 ) + finalPixel;
-        u8  paletteIdx = ReadVram( paletteAddr ) & 0x3F;
-        u32 rgbColor = nesPaletteRgbValues.at( paletteIdx );
+        u16 const paletteAddr = 0x3F00 + ( finalPalette << 2 ) + finalPixel;
+        u8 const  paletteIdx = ReadVram( paletteAddr ) & 0x3F;
+        u32 const rgbColor = nesPaletteRgbValues.at( paletteIdx );
         return rgbColor;
     }
 
@@ -858,9 +860,9 @@ class PPU
         return buffer;
     }
 
-    static array<uint32_t, 64> ReadPalette( const string &filename )
+    static array<u32, 64> ReadPalette( const string &filename )
     {
-        array<uint32_t, 64> nesPalette{};
+        array<u32, 64> nesPalette{};
 
         std::ifstream file( filename, std::ios::binary );
         if ( !file ) {
@@ -885,10 +887,10 @@ class PPU
 
         // Convert to 32-bit RGBA (SDL_PIXELFORMAT_RGBA32)
         for ( int i = 0; i < 64; ++i ) {
-            uint8_t const red = buffer[( i * 3 ) + 0];
-            uint8_t const green = buffer[( i * 3 ) + 1];
-            uint8_t const blue = buffer[( i * 3 ) + 2];
-            uint8_t const alpha = 0xFF;
+            u8 const red = buffer[( i * 3 ) + 0];
+            u8 const green = buffer[( i * 3 ) + 1];
+            u8 const blue = buffer[( i * 3 ) + 2];
+            u8 const alpha = 0xFF;
             nesPalette[i] = ( alpha << 24 ) | ( blue << 16 ) | ( green << 8 ) | red;
         }
 

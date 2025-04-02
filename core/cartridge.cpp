@@ -11,6 +11,7 @@
 #include <string>
 
 // Mappers
+#include "global-types.h"
 #include "mappers/mapper-base.h"
 #include "mappers/mapper0.h"
 #include "mappers/mapper1.h"

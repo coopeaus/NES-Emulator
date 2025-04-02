@@ -1,6 +1,7 @@
 #include "ppu.h"
 #include "bus.h"
 #include "cartridge.h" // NOLINT
+#include "global-types.h"
 #include "mappers/mapper-base.h"
 #include <exception>
 #include <array>
@@ -465,7 +466,7 @@ void PPU::OamCopy()
     }
 
     // Determine sprite height (8 or 16 pixels).
-    u8 spriteHeight = ( ppuCtrl.bit.spriteSize ? 16 : 8 );
+    u8 const spriteHeight = ( ppuCtrl.bit.spriteSize ? 16 : 8 );
 
     // Check if the sprite (Y coordinate in oamCopyBuffer) is in range for the next scanline.
     if ( !spriteInRange && ( ( scanline + 1 ) >= oamCopyBuffer ) &&

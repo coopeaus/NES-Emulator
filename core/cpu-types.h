@@ -107,12 +107,12 @@ inline const std::bitset<256> writeModifyOpcodes = []() {
 }();
 // clang-format on
 
-inline bool pageCrossPenalty( uint8_t opcode )
+inline bool pageCrossPenalty( u8 opcode )
 {
     return !noPageCrossPenaltyOpcodes.test( opcode );
 }
 
-inline bool isWriteModify( uint8_t opcode )
+inline bool isWriteModify( u8 opcode )
 {
     return writeModifyOpcodes.test( opcode );
 }

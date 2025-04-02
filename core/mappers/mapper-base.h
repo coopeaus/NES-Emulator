@@ -1,5 +1,6 @@
 #pragma once
 #include "cartridge-header.h"
+#include "global-types.h"
 
 enum class MirrorMode : u8 { Horizontal, Vertical, SingleLower, SingleUpper, FourScreen };
 

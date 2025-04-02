@@ -1,5 +1,6 @@
 #pragma once
 #include "cartridge-header.h"
+#include "global-types.h"
 #include "mapper-base.h"
 
 class Mapper2 : public Mapper

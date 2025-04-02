@@ -1,5 +1,6 @@
 #pragma once
 
+#include "global-types.h"
 #include "mappers/mapper-base.h"
 #include <array>
 #include <string>

@@ -1,5 +1,6 @@
 #include "bus.h"
 #include "cartridge.h"
+#include "global-types.h"
 #include "ppu.h"
 #include <iostream>
 
@@ -113,7 +114,7 @@ void Bus::ProcessDma()
 {
     const u64 cycle = cpu.GetCycles();
 
-    u8 oamAddr = ppu.oamAddr;
+    u8 const oamAddr = ppu.oamAddr;
     // Wait first read is on an odd cycle, wait it out.
     if ( dmaOffset == 0 && cycle % 2 == 1 ) {
         cpu.Tick();

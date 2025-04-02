@@ -6,6 +6,7 @@
 #include "bus.h"
 #include "cpu.h"
 #include "cpu-types.h"
+#include "global-types.h"
 #include "utils.h"
 #include <string>
 #include <stdexcept>
