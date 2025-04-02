@@ -1,4 +1,3 @@
-#include "mappers/mapper-base.h"
 #include "mappers/mapper0.h"
 #include <stdexcept>
 

@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "ines2.h"
+#include "cartridge-header.h"
 
 using namespace std;
 
@@ -61,6 +61,23 @@ class Cartridge
     */
     MirrorMode GetMirrorMode();
     void       LoadRom( const string &filePath );
+
+    /*
+    ################################
+    ||        Debug Methods       ||
+    ################################
+    */
+    bool DidMapperLoad() const { return didMapperLoad; }
+    bool DoesMapperExist() const { return _mapper != nullptr; }
+    void SetChrROM( u16 address, u8 data ) { _chrRom.at( address ) = data; }
+    void SetMirrorMode( MirrorMode mode ) { _mirrorMode = mode; }
+
+    /*
+    ################################
+    ||       Debug Variables      ||
+    ################################
+    */
+    bool didMapperLoad = false;
 
   private:
     /*

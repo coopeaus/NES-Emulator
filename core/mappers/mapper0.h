@@ -1,5 +1,5 @@
 #pragma once
-#include "ines2.h"
+#include "cartridge-header.h"
 #include "mapper-base.h"
 
 class Mapper0 : public Mapper

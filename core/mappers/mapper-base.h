@@ -1,11 +1,5 @@
 #pragma once
-#include "ines2.h"
-#include <cstdint>
-
-using u8 = uint8_t;
-using u16 = uint16_t;
-using u32 = uint32_t;
-using u64 = uint64_t;
+#include "cartridge-header.h"
 
 enum class MirrorMode : u8 { Horizontal, Vertical, SingleLower, SingleUpper, FourScreen };
 
