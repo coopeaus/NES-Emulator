@@ -97,7 +97,7 @@ jobs:
           cd /usr/local/share/vcpkg
           git reset --hard
           git fetch
-          git checkout d5ec528843d29e3a52d745a64b469f810b2cedbf
+          git checkout e113942454e6b829366af7bcf196bbdbccbd6b3c
           ./bootstrap-vcpkg.sh -disableMetrics
           cd $GITHUB_WORKSPACE
           mkdir -p $HOME/vcpkg_cache
@@ -124,12 +124,11 @@ jobs:
         run: |
           mkdir -p build
           mkdir -p build/Release
-          cp -r build/fonts build/Release/
-          cp -r build/palettes build/Release/
-          cp -r build/tests build/Release/
-          cp -r build/emu build/Release/
-          cp -r build/cpu_test build/Release/
+          cp -r build/cart_test build/Release/
+          cp -r build/ppu_test build/Release/
           cp -r build/rom_test build/Release/
+          cp -r build/cpu_test build/Release/
+          cp -r build/emu build/Release/
       
       - name: Upload build directory
         uses: actions/upload-artifact@v4
