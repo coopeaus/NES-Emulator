@@ -2,6 +2,7 @@
 
 // Define the right format specifier for u64 based on the platform
 #include <imgui.h>
+#include <string>
 #ifdef __APPLE__
 #define U64_FORMAT_SPECIFIER "%llu"
 #else
@@ -39,7 +40,7 @@ class UIComponent
     };
     DebuggerStatus debuggerStatus = NORMAL;
 
-    void DebugControls();
+    void DebugControls( const std::string &parentLabel );
 
     static void HelpMarker( const char *desc )
     {
