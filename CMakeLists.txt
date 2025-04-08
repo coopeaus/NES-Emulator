@@ -1,5 +1,17 @@
 cmake_minimum_required( VERSION 3.28.3 )
 
+# Check if Clang is available and set it as the compiler
+find_program(CLANG_C_COMPILER clang)
+find_program(CLANG_CXX_COMPILER clang++)
+
+if(CLANG_C_COMPILER AND CLANG_CXX_COMPILER)
+  message(STATUS "Clang found, using Clang as the compiler")
+  set(CMAKE_C_COMPILER ${CLANG_C_COMPILER})
+  set(CMAKE_CXX_COMPILER ${CLANG_CXX_COMPILER})
+else()
+  message(STATUS "Clang not found, using default system compiler")
+endif()
+
 # Env setup
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 set( CMAKE_CXX_STANDARD 23 )
