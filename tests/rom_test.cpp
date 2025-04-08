@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "bus.h"
+#include "config.h"
 #include "cpu.h"
 #include "ppu.h"
 #include "utils.h"
@@ -20,11 +21,12 @@ using namespace std;
 
 TEST( RomTests, Nestest )
 {
-    Bus bus;
-    CPU cpu = bus.cpu;
-    PPU ppu = bus.ppu;
+    Bus  bus;
+    CPU &cpu = bus.cpu;
+    PPU &ppu = bus.ppu;
 
-    bus.cartridge.LoadRom( "tests/roms/nestest.nes" );
+    std::string romFile = std::string( ROM_DIR ) + "/nestest.nes";
+    bus.cartridge.LoadRom( romFile );
 
     cpu.Reset();
 
@@ -86,6 +88,7 @@ TEST( RomTests, Nestest )
     bool   didFail = false;
 
     // Execute the CPU until the end of the test ROM
+    std::cout << "PC: " << utils::toHex( cpu.GetProgramCounter(), 4 ) << '\n';
 
     while ( lineIndex < expectedLines.size() ) {
         try {
@@ -187,7 +190,7 @@ TEST( RomTests, Nestest )
                 break;
             }
 
-            cpu.DecodeExecute(); // Run one CPU cycle
+            bus.Clock(); // Run one CPU cycle
             lineIndex++;
         } catch ( const std::exception &e ) {
             std::cerr << red << "Failed at line " << ( lineIndex + 1 ) << reset << '\n';
