@@ -90,11 +90,6 @@ jobs:
           echo "VCPKG_FEATURE_FLAGS=manifests" >> $GITHUB_ENV
           /tmp/vcpkg/vcpkg install --recurse
       
-      - name: Recheck dependencies
-        run: |
-          chmod ugo+x ./scripts/env-check.sh
-          ./scripts/env-check.sh
-      
       - name: Build Project
         run: |
           chmod ugo+x ./scripts/build.sh
