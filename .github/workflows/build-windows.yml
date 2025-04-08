@@ -96,6 +96,13 @@ jobs:
         run: |
           cmake --build build --config Release
       
+      - name: Debug Release directory
+        run: |
+          cd build
+          ls
+          cd Release
+          ls
+          
       - name: Copy files to Release directory
         run: |
           cp -r build/cart_test.exe build/Release/
