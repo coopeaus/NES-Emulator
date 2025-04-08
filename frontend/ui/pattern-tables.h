@@ -41,9 +41,9 @@ class PatternTablesWindow : public UIComponent
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
         ImGui::SetNextWindowSizeConstraints( ImVec2( 400, 800 ), ImVec2( 600, 800 ) );
 
-        if ( ImGui::Begin( "Tiles", &visible, windowFlags ) ) {
+        if ( ImGui::Begin( "Pattern Table Viewer", &visible, windowFlags ) ) {
             RenderMenuBar();
-            DebugControls();
+            DebugControls( "Pattern Table Debugger" );
 
             ImGui::PushFont( renderer->fontMono );
             LeftPanel();
@@ -77,7 +77,7 @@ class PatternTablesWindow : public UIComponent
 
         ImGui::PushStyleColor( ImGuiCol_ChildBg, Spectrum::GRAY100 );
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
-        ImGui::BeginChild( "left panel", panelSize, ImGuiChildFlags_Borders, windowFlags );
+        ImGui::BeginChild( "pattern table panel", panelSize, ImGuiChildFlags_Borders, windowFlags );
 
         ImGui::Text( "Pattern Table 0" );
         RenderPatternTable( 0, tilemapSize );
@@ -95,7 +95,7 @@ class PatternTablesWindow : public UIComponent
 
     void RightPanel()
     {
-        ImGui::BeginChild( "right panel", ImVec2( 0, 0 ) );
+        ImGui::BeginChild( "patter table properties", ImVec2( 0, 0 ) );
 
         ImGui::PushFont( renderer->fontMonoBold );
         ImGui::Text( "Properties" );
@@ -268,7 +268,7 @@ class PatternTablesWindow : public UIComponent
         {
             ImGui::BeginGroup();
             u16 const paletteAddress = 0x3F00 + targetId;
-            u8 const  colorIndex = renderer->bus.ppu.Read( paletteAddress );
+            u8 const  colorIndex = renderer->bus.ppu.ReadVram( paletteAddress );
 
             ImGui::Text( "Index" );
             ImGui::SameLine();

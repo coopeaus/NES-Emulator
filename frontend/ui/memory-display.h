@@ -45,7 +45,7 @@ class MemoryDisplayWindow : public UIComponent
         if ( ImGui::Begin( "Memory Viewer", &visible, windowFlags ) ) {
 
             RenderMenuBar();
-            DebugControls();
+            DebugControls( "Memory Viewer Debugger" );
             ImGui::Dummy( ImVec2( 0, 5 ) );
 
             // PC Location
@@ -83,7 +83,9 @@ class MemoryDisplayWindow : public UIComponent
                     lowerBound = 0x0000;
                     upperBound = 0x3FFF;
                     step = 16;
-                    readFunc = [&]( int address ) -> uint8_t { return renderer->bus.ppu.Read( address ); };
+                    readFunc = [&]( int address ) -> uint8_t {
+                        return renderer->bus.ppu.ReadVram( address );
+                    };
                     break;
                 default:
                     break;
