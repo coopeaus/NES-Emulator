@@ -69,7 +69,7 @@ jobs:
           cd C:/vcpkg
           git reset --hard
           git fetch
-          git checkout d5ec528843d29e3a52d745a64b469f810b2cedbf
+          git checkout e113942454e6b829366af7bcf196bbdbccbd6b3c
           ./bootstrap-vcpkg.bat -disableMetrics
 
       - name: Install dependencies with vcpkg

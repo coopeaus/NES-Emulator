@@ -6,7 +6,7 @@
 class OverlayWindow : public UIComponent
 {
   public:
-    OverlayWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = true; }
+    OverlayWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = false; }
 
     void OnVisible() override {}
     void OnHidden() override {}
@@ -26,9 +26,9 @@ class OverlayWindow : public UIComponent
         ImGui::SetNextWindowPos( windowPos, ImGuiCond_Always, windowPosPivot );
         ImGui::SetNextWindowViewport( viewport->ID );
         windowFlags |= ImGuiWindowFlags_NoMove;
-        ImGui::SetNextWindowBgAlpha( 0.35f );
+        ImGui::SetNextWindowBgAlpha( 0.75f );
 
-        if ( ImGui::Begin( "Overlay", &visible, windowFlags ) ) {
+        if ( ImGui::Begin( "Emulator Overlay", &visible, windowFlags ) ) {
             ImGui::PushFont( renderer->fontMono );
             ImGui::Text( "CPU Cycle: " U64_FORMAT_SPECIFIER, renderer->bus.cpu.GetCycles() );
             ImGui::Text( "FPS(%.1f FPS)", renderer->io->Framerate );
