@@ -95,21 +95,6 @@ jobs:
       - name: Build Project
         run: |
           cmake --build build --config Release
-      
-      - name: Debug Release directory
-        run: |
-          cd build
-          ls
-          cd Release
-          ls
-          
-      - name: Copy files to Release directory
-        run: |
-          cp -r build/cart_test.exe build/Release/
-          cp -r build/ppu_test.exe build/Release/
-          cp -r build/rom_test.exe build/Release/
-          cp -r build/cpu_test.exe build/Release/
-          cp -r build/emu.exe build/Release/
 
       - name: Upload build directory
         uses: actions/upload-artifact@v4
