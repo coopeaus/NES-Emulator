@@ -53,7 +53,6 @@ jobs:
           echo "CMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake" >> $GITHUB_ENV
           echo "VCPKG_ROOT=/usr/local/share/vcpkg" >> $GITHUB_ENV
           echo "VCPKG_INSTALLED_DIR=/usr/local/share/vcpkg/packages" >> $GITHUB_ENV
-
       - name: Cache vcpkg dependencies
         uses: actions/cache@v4
         with:
@@ -61,7 +60,6 @@ jobs:
           key: vcpkg-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
-
       - name: Install basic dependencies
         run: |
           sudo apt update
@@ -84,14 +82,12 @@ jobs:
       - name: Verify CMake installation
         run: |
           cmake --version
-
       - name: Check clang version
         run: |
           which clang
           which clang++
           clang --version
           clang++ --version
-
       - name: Install vcpkg dependencies
         run: |
           cd /usr/local/share/vcpkg
@@ -103,7 +99,6 @@ jobs:
           mkdir -p $HOME/vcpkg_cache
           export VCPKG_FEATURE_FLAGS=manifests
           /usr/local/share/vcpkg/vcpkg install --recurse
-
       # For some reason, installing these before vcpkg causes vcpkg to break?
       - name: Install OpenGL dependencies
         run: |
@@ -114,7 +109,6 @@ jobs:
         run: |
           chmod +x ./scripts/env-check.sh
           ./scripts/env-check.sh            
-
       - name: Build
         run: |
           chmod +x ./scripts/build.sh
