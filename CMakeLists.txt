@@ -1,20 +1,15 @@
 cmake_minimum_required( VERSION 3.28.3 )
 
-# Check if the system is not Apple
-if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
-  # Check if Clang is available and set it as the compiler
-  find_program(CLANG_C_COMPILER clang)
-  find_program(CLANG_CXX_COMPILER clang++)
+# Check if Clang is available and set it as the compiler
+find_program(CLANG_C_COMPILER clang)
+find_program(CLANG_CXX_COMPILER clang++)
 
-  if(CLANG_C_COMPILER AND CLANG_CXX_COMPILER)
-    message(STATUS "Clang found, using Clang as the compiler")
-    set(CMAKE_C_COMPILER ${CLANG_C_COMPILER})
-    set(CMAKE_CXX_COMPILER ${CLANG_CXX_COMPILER})
-  else()
-    message(STATUS "Clang not found, using default system compiler")
-  endif()
+if(CLANG_C_COMPILER AND CLANG_CXX_COMPILER)
+  message(STATUS "Clang found, using Clang as the compiler")
+  set(CMAKE_C_COMPILER ${CLANG_C_COMPILER})
+  set(CMAKE_CXX_COMPILER ${CLANG_CXX_COMPILER})
 else()
-  message(STATUS "Running on Apple, skipping Clang selection")
+  message(STATUS "Clang not found, using default system compiler")
 endif()
 
 # Env setup
@@ -24,6 +19,9 @@ set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
 # Project setup
 project( nes_emu VERSION 0.1 LANGUAGES CXX )
+
+# Disable deprecated C++ ABI
+add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 
 # Includes
 set(GENERAL_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include)
