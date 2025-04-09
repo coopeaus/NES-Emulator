@@ -29,12 +29,21 @@ set(FRONTEND_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/frontend/include)
 set(UI_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/frontend/ui)
 set(TEST_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
 
+# Build asset directories
+Set(ASSET_DIR "${CMAKE_BINARY_DIR}/assets")
+
 # Global directories
-SET(ROOT_DIR "${CMAKE_SOURCE_DIR}")
-set(ROM_DIR "${CMAKE_SOURCE_DIR}/roms")
-set(FONTS_DIR "${CMAKE_SOURCE_DIR}/fonts")
-set(PALETTES_DIR "${CMAKE_SOURCE_DIR}/palettes")
-set(TESTS_DIR "${CMAKE_SOURCE_DIR}/tests")
+Set(ROOT "${CMAKE_SOURCE_DIR}")
+set(ROM_DIR "${ASSET_DIR}/roms")
+set(FONTS_DIR "${ASSET_DIR}/fonts")
+set(PALETTES_DIR "${ASSET_DIR}/palettes")
+set(TESTS_DIR "${ASSET_DIR}/tests")
+
+set(ROM_SRC "${ROOT}/roms")
+set(FONTS_SRC "${ROOT}/fonts")
+set(PALETTES_SRC "${ROOT}/palettes")
+set(TESTS_SRC "${ROOT}/tests")
+
 
 # Configure the config.h file from the template
 configure_file(
@@ -108,6 +117,32 @@ if(BUILD_FRONTEND)
     find_package(OpenGL REQUIRED)
     target_link_libraries(emu PRIVATE OpenGL::GL)
   endif()
+
+  # Debugging asset paths
+  message(STATUS "Checking asset paths:")
+  message(STATUS "Palettes: ${PALETTES_DIR}")
+  message(STATUS "Fonts: ${FONTS_DIR}")
+  message(STATUS "Roms: ${ROM_DIR}")
+
+  function(add_directory_copy target source_dir asset_subdir)
+    if(EXISTS "${source_dir}")
+      add_custom_command(TARGET ${target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${source_dir}" "${ASSET_DIR}/${asset_subdir}"
+      )
+    else()
+      message(FATAL_ERROR "BUILD FAILED: Missing source directory: ${source_dir}")
+    endif()
+  endfunction()
+
+  add_directory_copy(emu "${PALETTES_SRC}" "palettes")
+  add_directory_copy(emu "${FONTS_SRC}"    "fonts")
+  add_directory_copy(emu "${ROM_SRC}"      "roms")
+  add_directory_copy(emu "${TESTS_SRC}"    "tests")
+
+
+  # Force asset copy by adding a target
+  add_custom_target(copy_assets ALL DEPENDS emu)
+  add_dependencies(copy_assets emu)
 
 endif()
 

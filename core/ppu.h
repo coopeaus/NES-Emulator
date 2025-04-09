@@ -311,10 +311,6 @@ class PPU
         if ( InCycle( 280, 304 ) ) {
             TransferAddressY();
         }
-
-        if ( cycle == 261 ) {
-            FetchSpriteData();
-        }
     }
 
     void VisibleScanline()
