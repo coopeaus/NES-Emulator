@@ -1,10 +1,7 @@
 #pragma once
-#include <cstdint>
 #include <cstring>
 #include <string>
-
-using u8 = uint8_t;
-using u16 = uint16_t;
+#include "global-types.h"
 
 class iNes2Instance // NOLINT
 {

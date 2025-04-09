@@ -29,6 +29,7 @@ Checks: >
   ,-cppcoreguidelines-macro-usage
   ,-readability-function-cognitive-complexity
   ,-cppcoreguidelines-avoid-const-or-ref-data-members
+  ,-readability-braces-around-statements
 CheckOptions:
   # Standardized naming conventions:
   - key: readability-identifier-naming.ClassCase

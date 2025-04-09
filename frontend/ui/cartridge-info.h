@@ -1,6 +1,6 @@
 #pragma once
 #include "bus.h"
-#include "ines2.h"
+#include "cartridge-header.h"
 #include "ui-component.h"
 #include "renderer.h"
 #include <imgui.h>
