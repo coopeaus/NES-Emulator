@@ -41,9 +41,9 @@ class PaletteWindow : public UIComponent
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
         ImGui::SetNextWindowSizeConstraints( ImVec2( 620, 500 ), ImVec2( 1000, 600 ) );
 
-        if ( ImGui::Begin( "Palettes", &visible, windowFlags ) ) {
+        if ( ImGui::Begin( "Palette Viewer", &visible, windowFlags ) ) {
             RenderMenuBar();
-            DebugControls();
+            DebugControls( "Palette Debugger" );
 
             ImGui::PushFont( renderer->fontMono );
 
@@ -64,7 +64,7 @@ class PaletteWindow : public UIComponent
     void LeftPanel()
     {
         ImGui::PushStyleColor( ImGuiCol_ChildBg, Spectrum::GRAY100 );
-        ImGui::BeginChild( "left panel", ImVec2( 330, 0 ), ImGuiChildFlags_Borders );
+        ImGui::BeginChild( "palette panel", ImVec2( 330, 0 ), ImGuiChildFlags_Borders );
         RenderTabs();
         ImGui::EndChild();
         ImGui::PopStyleColor();
@@ -72,7 +72,7 @@ class PaletteWindow : public UIComponent
 
     void RightPanel()
     {
-        ImGui::BeginChild( "right panel" );
+        ImGui::BeginChild( "palette properties" );
         ImGui::PushFont( renderer->fontMonoBold );
         ImGui::Text( "Properties" );
         ImGui::PopFont();
@@ -140,7 +140,7 @@ class PaletteWindow : public UIComponent
         {
             ImGui::BeginGroup();
             u16 const paletteAddress = 0x3F00 + targetId;
-            u8 const  colorIndex = renderer->bus.ppu.Read( paletteAddress );
+            u8 const  colorIndex = renderer->bus.ppu.ReadVram( paletteAddress );
 
             ImGui::Text( "Index" );
             ImGui::SameLine();
@@ -207,7 +207,7 @@ class PaletteWindow : public UIComponent
                 ImGui::SameLine( 0.0f, 0.0f );
                 int const    cellIdx = rowStart + cell;
                 u16 const    paletteAddress = 0x3F00 + cellIdx;
-                u8 const     colorIndex = renderer->bus.ppu.Read( paletteAddress );
+                u8 const     colorIndex = renderer->bus.ppu.ReadVram( paletteAddress );
                 ImVec4 const paletteColor =
                     Rgba32ToImVec4( renderer->bus.ppu.GetMasterPaletteColor( colorIndex ) );
                 char label[3];

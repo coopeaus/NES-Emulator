@@ -31,7 +31,7 @@ class MainMenuBar : public UIComponent
         if ( ImGui::BeginMainMenuBar() ) {
             if ( ImGui::BeginMenu( "File" ) ) {
 
-                if ( ImGui::BeginMenu( "Open Recent" ) ) {
+                if ( ImGui::BeginMenu( "Test Roms" ) ) {
                     auto testRoms = renderer->testRoms;
                     for ( auto &romPath : testRoms ) {
                         if ( ImGui::MenuItem( romPath.c_str() ) ) {
