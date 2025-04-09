@@ -20,9 +20,6 @@ set( CMAKE_CXX_STANDARD_REQUIRED ON )
 # Project setup
 project( nes_emu VERSION 0.1 LANGUAGES CXX )
 
-# Disable deprecated C++ ABI
-add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
-
 # Includes
 set(GENERAL_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(CORE_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/core)
