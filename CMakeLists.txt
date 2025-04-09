@@ -73,6 +73,32 @@ target_include_directories(emu_core PUBLIC
 find_package(fmt CONFIG REQUIRED)
 target_link_libraries(emu_core PRIVATE fmt::fmt)
 
+# Debugging asset paths
+message(STATUS "Checking asset paths:")
+message(STATUS "Palettes: ${PALETTES_DIR}")
+message(STATUS "Fonts: ${FONTS_DIR}")
+message(STATUS "Roms: ${ROM_DIR}")
+
+function(add_directory_copy target source_dir asset_subdir)
+  if(EXISTS "${source_dir}")
+    add_custom_command(TARGET ${target} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${source_dir}" "${ASSET_DIR}/${asset_subdir}"
+    )
+  else()
+    message(FATAL_ERROR "BUILD FAILED: Missing source directory: ${source_dir}")
+  endif()
+endfunction()
+
+add_directory_copy(emu_core "${PALETTES_SRC}" "palettes")
+add_directory_copy(emu_core "${FONTS_SRC}"    "fonts")
+add_directory_copy(emu_core "${ROM_SRC}"      "roms")
+add_directory_copy(emu_core "${TESTS_SRC}"    "tests")
+
+# Force assets to copy by adding a target
+add_custom_target(copied_assets ALL DEPENDS emu_core)
+add_dependencies(copied_assets emu_core)
+
+
 #[[
 ################################################
 ||                                            ||
@@ -117,33 +143,6 @@ if(BUILD_FRONTEND)
     find_package(OpenGL REQUIRED)
     target_link_libraries(emu PRIVATE OpenGL::GL)
   endif()
-
-  # Debugging asset paths
-  message(STATUS "Checking asset paths:")
-  message(STATUS "Palettes: ${PALETTES_DIR}")
-  message(STATUS "Fonts: ${FONTS_DIR}")
-  message(STATUS "Roms: ${ROM_DIR}")
-
-  function(add_directory_copy target source_dir asset_subdir)
-    if(EXISTS "${source_dir}")
-      add_custom_command(TARGET ${target} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory "${source_dir}" "${ASSET_DIR}/${asset_subdir}"
-      )
-    else()
-      message(FATAL_ERROR "BUILD FAILED: Missing source directory: ${source_dir}")
-    endif()
-  endfunction()
-
-  add_directory_copy(emu "${PALETTES_SRC}" "palettes")
-  add_directory_copy(emu "${FONTS_SRC}"    "fonts")
-  add_directory_copy(emu "${ROM_SRC}"      "roms")
-  add_directory_copy(emu "${TESTS_SRC}"    "tests")
-
-
-  # Force asset copy by adding a target
-  add_custom_target(copy_assets ALL DEPENDS emu)
-  add_dependencies(copy_assets emu)
-
 endif()
 
 #[[
@@ -184,5 +183,5 @@ if(BUILD_TESTS)
   add_test_executable(rom_test tests/rom_test.cpp)
   add_test_executable(ppu_test tests/ppu_test.cpp)
   add_test_executable(cart_test tests/cart_test.cpp)
-
 endif()
+
