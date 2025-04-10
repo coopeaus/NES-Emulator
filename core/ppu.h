@@ -5,6 +5,7 @@
 #include "ppu-types.h"
 #include "mappers/mapper-base.h"
 #include <array>
+#include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <stdexcept>
@@ -863,7 +864,7 @@ class PPU
         std::ifstream file( filename, std::ios::binary );
         if ( !file ) {
             std::cerr << "PPU::ReadPalette: Failed to open palette file: " << filename << '\n';
-            exit( 1 );
+            throw std::runtime_error( "Failed to open palette file" );
         }
 
         file.seekg( 0, std::ios::end );

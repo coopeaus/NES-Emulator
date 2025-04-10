@@ -4,7 +4,9 @@
 // should be copied during build time.
 
 #pragma once
+#include <filesystem>
 #include <stdexcept>
+#include <string>
 #include "global-types.h"
 
 #ifdef __APPLE__
