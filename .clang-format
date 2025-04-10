@@ -1,7 +1,7 @@
 IndentWidth: 4
 UseTab: Never
 ColumnLimit: 110 # Maximimum line length
-SortIncludes: false
+SortIncludes: "Never"
 IncludeBlocks: Preserve
 
 SpacesInParentheses: true # ( a + b ) instead of (a + b)
@@ -30,7 +30,7 @@ BreakBeforeBraces: Linux
 #     }
 # }
 
-AlignConsecutiveDeclarations: true
+AlignConsecutiveDeclarations: Consecutive
 # Example:
 # int    a   = 5;
 # float  b   = 10.0;
