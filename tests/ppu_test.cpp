@@ -1,6 +1,6 @@
 #include "bus.h"
 #include "cartridge.h"
-#include "config.h"
+#include "paths.h"
 #include <fmt/base.h>
 #include <gtest/gtest.h>
 
@@ -18,7 +18,7 @@ class PpuTest : public ::testing::Test
 
     PpuTest()
     {
-        std::string romFile = std::string( ROM_DIR ) + "/palette.nes";
+        std::string romFile = std::string( paths::roms() ) + "/palette.nes";
         cartridge.LoadRom( romFile );
         bus.cpu.Reset();
     }

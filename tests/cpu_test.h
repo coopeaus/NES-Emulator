@@ -12,7 +12,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include "config.h"
+#include "paths.h"
 
 using json = nlohmann::json;
 
@@ -29,7 +29,7 @@ class CpuTest : public ::testing::Test
     CpuTest() = default;
     void LoadTestCartridge()
     {
-        std::string romFile = std::string( ROM_DIR ) + "/palette.nes";
+        std::string romFile = std::string( paths::roms() ) + "/palette.nes";
         bus.cartridge.LoadRom( romFile );
         bus.cpu.Reset();
     }

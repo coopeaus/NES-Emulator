@@ -1,5 +1,5 @@
 #pragma once
-#include "config.h"
+#include "paths.h"
 #include "cpu.h"
 #include "global-types.h"
 #include "ppu-types.h"
@@ -24,9 +24,9 @@ class PPU
     ||      Helper Variables      ||
     ################################
     */
-    std::array<std::string, 3> systemPalettePaths = { std::string( PALETTES_DIR ) + "/palette1.pal",
-                                                      std::string( PALETTES_DIR ) + "/palette2.pal",
-                                                      std::string( PALETTES_DIR ) + "/palette3.pal" };
+    std::array<std::string, 3> systemPalettePaths = { std::string( paths::palettes() ) + "/palette1.pal",
+                                                      std::string( paths::palettes() ) + "/palette2.pal",
+                                                      std::string( paths::palettes() ) + "/palette3.pal" };
 
     array<u32, 64> nesPaletteRgbValues{};
     u32            GetMasterPaletteColor( u8 index ) const { return nesPaletteRgbValues.at( index ); }
@@ -862,14 +862,14 @@ class PPU
 
         std::ifstream file( filename, std::ios::binary );
         if ( !file ) {
-            std::cerr << "utils::readPalette: Failed to open palette file: " << filename << '\n';
-            throw std::runtime_error( "Failed to open palette file" );
+            std::cerr << "PPU::ReadPalette: Failed to open palette file: " << filename << '\n';
+            exit( 1 );
         }
 
         file.seekg( 0, std::ios::end );
         streamsize const fileSize = file.tellg();
         if ( fileSize != 192 ) {
-            std::cerr << "utils::readPalette: Invalid palette file size: " << fileSize << '\n';
+            std::cerr << "Invalid palette file size: " << fileSize << '\n';
             throw std::runtime_error( "Invalid palette file size" );
         }
 
@@ -877,7 +877,7 @@ class PPU
 
         char buffer[192]; // NOLINT
         if ( !file.read( buffer, 192 ) ) {
-            std::cerr << "utils::readPalette: Failed to read palette file: " << filename << '\n';
+            std::cerr << "Failed to read palette file: " << filename << '\n';
             throw std::runtime_error( "Failed to read palette file" );
         }
 

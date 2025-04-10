@@ -16,7 +16,6 @@ endif()
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 set( CMAKE_CXX_STANDARD 23 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
-
 set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk)
 
 # Project setup
@@ -28,30 +27,6 @@ set(CORE_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/core)
 set(FRONTEND_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/frontend/include)
 set(UI_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/frontend/ui)
 set(TEST_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
-
-# Build asset directories
-Set(ASSET_DIR "${CMAKE_BINARY_DIR}/assets")
-
-# Global directories
-Set(ROOT "${CMAKE_SOURCE_DIR}")
-set(ROM_DIR "${ASSET_DIR}/roms")
-set(FONTS_DIR "${ASSET_DIR}/fonts")
-set(PALETTES_DIR "${ASSET_DIR}/palettes")
-set(TESTS_DIR "${ASSET_DIR}/tests")
-
-set(ROM_SRC "${ROOT}/roms")
-set(FONTS_SRC "${ROOT}/fonts")
-set(PALETTES_SRC "${ROOT}/palettes")
-set(TESTS_SRC "${ROOT}/tests")
-
-
-# Configure the config.h file from the template
-configure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
-  "${CMAKE_BINARY_DIR}/config.h"
-)
-# Include the generated config.h file
-include_directories("${CMAKE_BINARY_DIR}")
 
 #[[
 ################################################
@@ -73,26 +48,40 @@ target_include_directories(emu_core PUBLIC
 find_package(fmt CONFIG REQUIRED)
 target_link_libraries(emu_core PRIVATE fmt::fmt)
 
-# Debugging asset paths
-message(STATUS "Checking asset paths:")
-message(STATUS "Palettes: ${PALETTES_DIR}")
-message(STATUS "Fonts: ${FONTS_DIR}")
-message(STATUS "Roms: ${ROM_DIR}")
+# Build asset directories
+# --copy source
+set(ROOT "${CMAKE_SOURCE_DIR}")
+set(ROM_S "${ROOT}/roms")
+set(TESTS_S "${ROOT}/tests")
+set(FONTS_S "${ROOT}/fonts")
+set(PALETTES_S "${ROOT}/palettes")
 
-function(add_directory_copy target source_dir asset_subdir)
-  if(EXISTS "${source_dir}")
-    add_custom_command(TARGET ${target} POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_directory "${source_dir}" "${ASSET_DIR}/${asset_subdir}"
+# --copy dest
+set(ASSETS "${CMAKE_BINARY_DIR}/assets")
+set(TESTS_D "${CMAKE_BINARY_DIR}/tests")
+set(ROMS_D "${ASSETS}/roms")
+set(FONTS_D "${ASSETS}/fonts")
+set(PALETTES_D "${ASSETS}/palettes")
+
+message(STATUS "Checking asset paths:")
+message(STATUS "Palettes: ${PALETTES_D}")
+message(STATUS "Fonts: ${FONTS_D}")
+message(STATUS "Roms: ${ROMS_D}")
+
+function(copy_asset source dest)
+  if(EXISTS "${source}")
+    add_custom_command(TARGET emu_core POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${source}" "${dest}"
     )
   else()
-    message(FATAL_ERROR "BUILD FAILED: Missing source directory: ${source_dir}")
+    message(FATAL_ERROR "COPY ASSET FAILED: Source: ${source} Destination: ${dest}")
   endif()
 endfunction()
 
-add_directory_copy(emu_core "${PALETTES_SRC}" "palettes")
-add_directory_copy(emu_core "${FONTS_SRC}"    "fonts")
-add_directory_copy(emu_core "${ROM_SRC}"      "roms")
-add_directory_copy(emu_core "${TESTS_SRC}"    "tests")
+copy_asset(${PALETTES_S} ${PALETTES_D})
+copy_asset(${FONTS_S}    ${FONTS_D})
+copy_asset(${ROM_S}      ${ROMS_D})
+copy_asset(${TESTS_S}    ${TESTS_D})
 
 # Force assets to copy by adding a target
 add_custom_target(copied_assets ALL DEPENDS emu_core)

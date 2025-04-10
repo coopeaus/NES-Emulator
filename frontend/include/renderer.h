@@ -25,7 +25,7 @@
 #include <string>
 #include "theme.h"
 #include "chrono"
-#include "config.h"
+#include "paths.h"
 
 using u32 = uint32_t;
 using u64 = uint64_t;
@@ -97,7 +97,7 @@ class Renderer
     std::array<u32, 61440> nametable2Buffer{};
     std::array<u32, 61440> nametable3Buffer{};
 
-#define ROM( x ) ( std::string( ROM_DIR ) + "/" + ( x ) )
+#define ROM( x ) ( std::string( paths::roms() ) + "/" + ( x ) )
     std::vector<std::string> testRoms = {
         ROM( "palette.nes" ), ROM( "color_test.nes" ),  ROM( "nestest.nes" ),
         ROM( "mario.nes" ),   ROM( "custom.nes" ),      ROM( "scanline.nes" ),
@@ -304,7 +304,7 @@ class Renderer
         ImFontConfig fontConfig;
         fontConfig.RasterizerDensity = 4.0F;
         float const fontSize = 16.0F;
-        std::string fontsDir = std::string( FONTS_DIR );
+        std::string fontsDir = std::string( paths::fonts() );
         fontMenu =
             io->Fonts->AddFontFromFileTTF( ( fontsDir + "/font-menu.otf" ).c_str(), fontSize, &fontConfig );
         fontMono =

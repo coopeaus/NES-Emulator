@@ -1,6 +1,6 @@
 #include "bus.h"
 #include "cartridge.h"
-#include "config.h"
+#include "paths.h"
 #include <fmt/base.h>
 #include <gtest/gtest.h>
 
@@ -15,7 +15,7 @@ class CartTest : public ::testing::Test
 
     CartTest()
     {
-        std::string romFile = std::string( ROM_DIR ) + "/palette.nes";
+        std::string romFile = std::string( paths::roms() ) + "/palette.nes";
         bus.cartridge.LoadRom( romFile );
         bus.cpu.Reset();
     }

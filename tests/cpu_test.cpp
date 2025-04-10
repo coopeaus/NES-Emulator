@@ -151,7 +151,7 @@ TEST_F( CpuTest, ExecuteFrame )
         std::string       space = " ";                                                                       \
         std::string const testName = #opcode_hex + space + #mnemonic + space + #addr_mode;                   \
         TestStart( testName );                                                                               \
-        std::string jsonDir = std::string( TESTS_DIR ) + "/json/" + ( filename );                            \
+        std::string jsonDir = std::string( paths::tests() ) + "/json/" + ( filename );                       \
         json const  testCases = GetJsonData( jsonDir );                                                      \
         for ( const auto &testCase : testCases ) {                                                           \
             RunTestCase( testCase );                                                                         \
