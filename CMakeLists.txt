@@ -1,15 +1,29 @@
 cmake_minimum_required( VERSION 3.28.3 )
 
+# Check if Clang is available and set it as the compiler
+find_program(CLANG_C_COMPILER clang)
+find_program(CLANG_CXX_COMPILER clang++)
+
+if(CLANG_C_COMPILER AND CLANG_CXX_COMPILER)
+  message(STATUS "Clang found, using Clang as the compiler")
+  set(CMAKE_C_COMPILER ${CLANG_C_COMPILER})
+  set(CMAKE_CXX_COMPILER ${CLANG_CXX_COMPILER})
+else()
+  message(STATUS "Clang not found, using default system compiler")
+endif()
+
 # Env setup
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 set( CMAKE_CXX_STANDARD 23 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
+set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk)
 
 # Project setup
 project( nes_emu VERSION 0.1 LANGUAGES CXX )
 
 # Includes
-set(CORE_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(GENERAL_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(CORE_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/core)
 set(FRONTEND_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/frontend/include)
 set(UI_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/frontend/ui)
 set(TEST_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
@@ -25,11 +39,54 @@ set(TEST_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
 file(GLOB CORE_SOURCES "core/*.cpp" "core/mappers/*.cpp")
 add_library(emu_core STATIC ${CORE_SOURCES})
 
-target_include_directories(emu_core PUBLIC ${CORE_INCLUDES})
+target_include_directories(emu_core PUBLIC
+  ${GENERAL_INCLUDES}
+  ${CORE_INCLUDES}
+)
 
 # Fmt library
 find_package(fmt CONFIG REQUIRED)
 target_link_libraries(emu_core PRIVATE fmt::fmt)
+
+# Build asset directories
+# --copy source
+set(ROOT "${CMAKE_SOURCE_DIR}")
+set(ROM_S "${ROOT}/roms")
+set(TESTS_S "${ROOT}/tests")
+set(FONTS_S "${ROOT}/fonts")
+set(PALETTES_S "${ROOT}/palettes")
+
+# --copy dest
+set(ASSETS "${CMAKE_BINARY_DIR}/assets")
+set(TESTS_D "${CMAKE_BINARY_DIR}/tests")
+set(ROMS_D "${ASSETS}/roms")
+set(FONTS_D "${ASSETS}/fonts")
+set(PALETTES_D "${ASSETS}/palettes")
+
+message(STATUS "Checking asset paths:")
+message(STATUS "Palettes: ${PALETTES_D}")
+message(STATUS "Fonts: ${FONTS_D}")
+message(STATUS "Roms: ${ROMS_D}")
+
+function(copy_asset source dest)
+  if(EXISTS "${source}")
+    add_custom_command(TARGET emu_core POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${source}" "${dest}"
+    )
+  else()
+    message(FATAL_ERROR "COPY ASSET FAILED: Source: ${source} Destination: ${dest}")
+  endif()
+endfunction()
+
+copy_asset(${PALETTES_S} ${PALETTES_D})
+copy_asset(${FONTS_S}    ${FONTS_D})
+copy_asset(${ROM_S}      ${ROMS_D})
+copy_asset(${TESTS_S}    ${TESTS_D})
+
+# Force assets to copy by adding a target
+add_custom_target(copied_assets ALL DEPENDS emu_core)
+add_dependencies(copied_assets emu_core)
+
 
 #[[
 ################################################
@@ -44,9 +101,12 @@ if(BUILD_FRONTEND)
   file(GLOB FRONTEND_SOURCES "frontend/*.cpp" "frontend/ui/*.cpp")
   add_executable(emu ${FRONTEND_SOURCES})
 
-  target_include_directories(emu PRIVATE ${CORE_INCLUDES})
-  target_include_directories(emu PRIVATE ${FRONTEND_INCLUDES})
-  target_include_directories(emu PRIVATE ${UI_INCLUDES})
+  target_include_directories(emu PRIVATE
+    ${GENERAL_INCLUDES}
+    ${CORE_INCLUDES}
+    ${FRONTEND_INCLUDES}
+    ${UI_INCLUDES}
+  )
   target_link_libraries(emu PRIVATE emu_core)
 
   # SDL
@@ -72,42 +132,6 @@ if(BUILD_FRONTEND)
     find_package(OpenGL REQUIRED)
     target_link_libraries(emu PRIVATE OpenGL::GL)
   endif()
-
-  # Debugging asset paths
-  message(STATUS "Checking asset paths:")
-  message(STATUS "Palettes: ${CMAKE_SOURCE_DIR}/palettes -> ${CMAKE_BINARY_DIR}/palettes")
-  message(STATUS "Fonts: ${CMAKE_SOURCE_DIR}/fonts -> ${CMAKE_BINARY_DIR}/fonts")
-  message(STATUS "Tests/Roms: ${CMAKE_SOURCE_DIR}/tests/roms -> ${CMAKE_BINARY_DIR}/tests/roms")
-
-  # Copy assets only if they exist
-  if(EXISTS "${CMAKE_SOURCE_DIR}/palettes")
-    add_custom_command(TARGET emu POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/palettes ${CMAKE_BINARY_DIR}/palettes
-    )
-  else()
-    message(WARNING "WARNING: Palettes directory NOT found!")
-  endif()
-
-  if(EXISTS "${CMAKE_SOURCE_DIR}/fonts")
-    add_custom_command(TARGET emu POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/fonts ${CMAKE_BINARY_DIR}/fonts
-    )
-  else()
-    message(WARNING "WARNING: Fonts directory NOT found!")
-  endif()
-
-  if(EXISTS "${CMAKE_SOURCE_DIR}/tests/roms")
-    add_custom_command(TARGET emu POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/tests/roms ${CMAKE_BINARY_DIR}/tests/roms
-    )
-  else()
-    message(WARNING "WARNING: Tests/Roms directory NOT found!")
-  endif()
-
-  # Force asset copy by adding a target
-  add_custom_target(copy_assets ALL DEPENDS emu)
-  add_dependencies(copy_assets emu)
-
 endif()
 
 #[[
@@ -128,7 +152,11 @@ if(BUILD_TESTS)
   include(GoogleTest)
 
   # Define include directories for your project
-  set(ALL_INCLUDES ${CORE_INCLUDES} ${TEST_INCLUDES})
+  set(ALL_INCLUDES
+    ${GENERAL_INCLUDES}
+    ${CORE_INCLUDES}
+    ${TEST_INCLUDES}
+  )
 
   # Function to add test executables
   function(add_test_executable TARGET_NAME SOURCE_FILE)
@@ -144,5 +172,5 @@ if(BUILD_TESTS)
   add_test_executable(rom_test tests/rom_test.cpp)
   add_test_executable(ppu_test tests/ppu_test.cpp)
   add_test_executable(cart_test tests/cart_test.cpp)
-
 endif()
+

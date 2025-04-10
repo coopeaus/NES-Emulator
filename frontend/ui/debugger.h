@@ -31,7 +31,7 @@ class DebuggerWindow : public UIComponent
 
         if ( ImGui::Begin( "Debugger", &visible, windowFlags ) ) {
             RenderMenuBar();
-            DebugControls(); // Defined in ui-component.cpp
+            DebugControls( "Debugger debugger controls" ); // Defined in ui-component.cpp
         }
         ImGui::End();
         ImGui::PopStyleVar();

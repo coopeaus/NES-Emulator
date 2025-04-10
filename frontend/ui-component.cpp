@@ -2,10 +2,10 @@
 #include "renderer.h"
 #include <imgui.h>
 
-void UIComponent::DebugControls()
+void UIComponent::DebugControls( const std::string &parentLabel )
 {
     ImVec2 size = ImVec2( 410, 120 );
-    ImGui::BeginChild( "debug-control", size, ImGuiChildFlags_Border );
+    ImGui::BeginChild( parentLabel.c_str(), size, ImGuiChildFlags_Border );
     bool const isPaused = renderer->paused;
 
     ImGui::BeginDisabled( !isPaused );
@@ -49,7 +49,7 @@ void UIComponent::DebugControls()
     ImGui::PopFont();
     ImGui::SameLine();
     ImGui::Indent( innerSpacing );
-    ImGui::Text( "%hu", renderer->bus.ppu.GetCycles() );
+    ImGui::Text( "%hu", renderer->bus.ppu.cycle );
 
     ImGui::SameLine();
     ImGui::Indent( outerSpacing );
@@ -58,7 +58,7 @@ void UIComponent::DebugControls()
     ImGui::PopFont();
     ImGui::SameLine();
     ImGui::Indent( innerSpacing );
-    ImGui::Text( "%hd", renderer->bus.ppu.GetScanline() );
+    ImGui::Text( "%hd", renderer->bus.ppu.scanline );
 
     ImGui::SameLine();
     ImGui::Indent( outerSpacing );
@@ -81,7 +81,7 @@ void UIComponent::DebugControls()
     ImGui::Text( "Step" );
     ImGui::SameLine();
     ImGui::PushItemWidth( 120 );
-    ImGui::InputInt( "", &i0 );
+    ImGui::InputInt( "##nolabel", &i0 );
     ImGui::SameLine();
     ImGui::Combo( " ", &item, items, IM_ARRAYSIZE( items ) );
     ImGui::SameLine();
@@ -101,59 +101,60 @@ void UIComponent::DebugControls()
             return debuggerStatus == TIMEOUT;
         };
 
+        auto execute = [&]() { renderer->bus.Clock(); };
         switch ( item ) {
+
             case 0: { // Cycles
                 auto const target = renderer->bus.cpu.GetCycles() + i0;
                 while ( renderer->bus.cpu.GetCycles() < target && !didTimeout() ) {
-                    renderer->bus.cpu.DecodeExecute();
+                    execute();
                 }
                 break;
             }
             case 1: // Instructions
                 for ( int i = 0; i < i0; i++ ) {
-                    renderer->bus.cpu.DecodeExecute();
+                    execute();
                 }
                 break;
             case 2: // VBlank
                 if ( !renderer->bus.ppu.GetStatusVblank() ) {
                     while ( !renderer->bus.ppu.GetStatusVblank() && !didTimeout() ) {
-                        renderer->bus.cpu.DecodeExecute();
+                        execute();
                     }
                 } else {
                     while ( renderer->bus.ppu.GetStatusVblank() && !didTimeout() ) {
-                        renderer->bus.cpu.DecodeExecute();
+                        execute();
                     }
                     while ( !renderer->bus.ppu.GetStatusVblank() && !didTimeout() ) {
-
-                        renderer->bus.cpu.DecodeExecute();
+                        execute();
                     }
                 }
                 break;
             case 3: { // Scanlines
-                auto const target = renderer->bus.ppu.GetScanline() + i0;
-                while ( renderer->bus.ppu.GetScanline() < target && !didTimeout() ) {
-                    renderer->bus.cpu.DecodeExecute();
+                auto const target = renderer->bus.ppu.scanline + i0;
+                while ( renderer->bus.ppu.scanline < target && !didTimeout() ) {
+                    execute();
                 }
                 break;
             }
             case 4: { // Frame
-                auto const target = renderer->bus.ppu.GetFrame() + i0;
-                while ( renderer->bus.ppu.GetFrame() < target && !didTimeout() ) {
-                    renderer->bus.cpu.DecodeExecute();
+                auto const target = renderer->bus.ppu.frame + i0;
+                while ( renderer->bus.ppu.frame < target && !didTimeout() ) {
+                    execute();
                 }
                 break;
             }
             case 5: { // NMI
                 if ( !renderer->bus.ppu.GetCtrlNmiEnable() ) {
                     while ( !renderer->bus.ppu.GetCtrlNmiEnable() && !didTimeout() ) {
-                        renderer->bus.cpu.DecodeExecute();
+                        execute();
                     }
                 } else {
                     while ( renderer->bus.ppu.GetCtrlNmiEnable() && !didTimeout() ) {
-                        renderer->bus.cpu.DecodeExecute();
+                        execute();
                     }
                     while ( !renderer->bus.ppu.GetCtrlNmiEnable() && !didTimeout() ) {
-                        renderer->bus.cpu.DecodeExecute();
+                        execute();
                     }
                 }
                 break;
@@ -161,14 +162,14 @@ void UIComponent::DebugControls()
             case 6: // IRQ
                 if ( !renderer->bus.cpu.GetInterruptDisableFlag() ) {
                     while ( !renderer->bus.cpu.GetInterruptDisableFlag() && !didTimeout() ) {
-                        renderer->bus.cpu.DecodeExecute();
+                        execute();
                     }
                 } else {
                     while ( renderer->bus.cpu.GetInterruptDisableFlag() && !didTimeout() ) {
-                        renderer->bus.cpu.DecodeExecute();
+                        execute();
                     }
                     while ( !renderer->bus.cpu.GetInterruptDisableFlag() && !didTimeout() ) {
-                        renderer->bus.cpu.DecodeExecute();
+                        execute();
                     }
                 }
                 break;
@@ -190,7 +191,8 @@ void UIComponent::DebugControls()
             auto const line = renderer->bus.cpu.LogLineAtPC( false );
             ImGui::PushStyleColor( ImGuiCol_ChildBg, ImVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
             ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 4.0f, 1.0f ) );
-            ImGui::BeginChild( "", ImVec2( 0, 0 ), ImGuiChildFlags_Border );
+            std::string label = parentLabel + "##log";
+            ImGui::BeginChild( label.c_str(), ImVec2( 0, 0 ), ImGuiChildFlags_Border );
 
             ImGui::PushFont( renderer->fontMono );
             ImGui::Text( "%s", line.c_str() );
