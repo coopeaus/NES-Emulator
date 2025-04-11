@@ -53,7 +53,7 @@ class LogWindow : public UIComponent // NOLINT
         if ( ImGui::Begin( "Trace Log", &visible, windowFlags ) ) {
 
             RenderMenuBar();
-            DebugControls();
+            DebugControls( "Trace log debugger" );
             ImGui::Dummy( ImVec2( 0, 10 ) );
             ImGui::PushItemWidth( 120 );
             if ( ImGui::Combo( "Log Type", &usingLogType, logTypes.data(), (int) logTypes.size() ) ) {

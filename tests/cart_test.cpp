@@ -1,27 +1,6 @@
-// Google Test Basics: TEST and TEST_F
-//
-// - `TEST`: Defines a standalone test case.
-// - `TEST_F`: Defines a test case that uses a fixture (a shared setup/teardown
-// environment).
-//
-// Common Assertions:
-// - EXPECT_EQ(val1, val2): Checks if val1 == val2 (non-fatal, continues test on
-// failure).
-// - ASSERT_EQ(val1, val2): Checks if val1 == val2 (fatal, stops test on
-// failure).
-// - EXPECT_NE, EXPECT_LT, EXPECT_GT, EXPECT_LE, EXPECT_GE: Comparison macros.
-// - EXPECT_TRUE(condition) / EXPECT_FALSE(condition): Checks a boolean
-// condition.
-//
-// Basic Usage:
-// 1. Include <gtest/gtest.h>.
-// 2. Define tests using `TEST` or `TEST_F`.
-// 3. Compile using settings from CMakeLists.txt and run with `ctest`.
-//
-// Below is an example of both `TEST` and `TEST_F` usage.
-
 #include "bus.h"
 #include "cartridge.h"
+#include "paths.h"
 #include <fmt/base.h>
 #include <gtest/gtest.h>
 
@@ -36,7 +15,7 @@ class CartTest : public ::testing::Test
 
     CartTest()
     {
-        std::string romFile = "tests/roms/palette.nes";
+        std::string romFile = std::string( paths::roms() ) + "/palette.nes";
         bus.cartridge.LoadRom( romFile );
         bus.cpu.Reset();
     }
