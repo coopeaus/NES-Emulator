@@ -123,61 +123,61 @@ TEST_F( PPUTestFixture, TestInitialization )
 */
 
 // Test CPU Read Operations
-TEST_F( PPUTestFixture, TestHandleCpuRead )
+TEST_F( PPUTestFixture, TestCpuRead )
 {
     // Test reading from non-readable registers
-    EXPECT_EQ( ppu.HandleCpuRead( 0x2000, false ), 0xFF ); // PPUCTRL
-    EXPECT_EQ( ppu.HandleCpuRead( 0x2001, false ), 0xFF ); // PPUMASK
-    EXPECT_EQ( ppu.HandleCpuRead( 0x2003, false ), 0xFF ); // OAMADDR
-    EXPECT_EQ( ppu.HandleCpuRead( 0x2005, false ), 0xFF ); // PPUSCROLL
-    EXPECT_EQ( ppu.HandleCpuRead( 0x2006, false ), 0xFF ); // PPUADDR
+    EXPECT_EQ( ppu.CpuRead( 0x2000, false ), 0xFF ); // PPUCTRL
+    EXPECT_EQ( ppu.CpuRead( 0x2001, false ), 0xFF ); // PPUMASK
+    EXPECT_EQ( ppu.CpuRead( 0x2003, false ), 0xFF ); // OAMADDR
+    EXPECT_EQ( ppu.CpuRead( 0x2005, false ), 0xFF ); // PPUSCROLL
+    EXPECT_EQ( ppu.CpuRead( 0x2006, false ), 0xFF ); // PPUADDR
 
     // Test reading from PPU Status Register
     // Assuming vertical blank flag is set
-    ppu.HandleCpuWrite( 0x2002, 0x00 );                        // Write to clear the status
-    EXPECT_EQ( ppu.HandleCpuRead( 0x2002, false ) & 0xE0, 0 ); // Check if vertical blank flag is cleared
+    ppu.CpuWrite( 0x2002, 0x00 );                        // Write to clear the status
+    EXPECT_EQ( ppu.CpuRead( 0x2002, false ) & 0xE0, 0 ); // Check if vertical blank flag is cleared
 
     // Test OAM Data Read
-    ppu.HandleCpuWrite( 0x2004, 0xAA );             // Write to OAM
-    EXPECT_EQ( ppu.HandleCpuRead( 0x2004 ), 0xAA ); // Read back OAM data
+    ppu.CpuWrite( 0x2004, 0xAA );             // Write to OAM
+    EXPECT_EQ( ppu.CpuRead( 0x2004 ), 0xAA ); // Read back OAM data
 
     // Test PPU Data Read
-    ppu.HandleCpuWrite( 0x2007, 0x55 );             // Write to VRAM
-    EXPECT_EQ( ppu.HandleCpuRead( 0x2007 ), 0x55 ); // Read back VRAM data
+    ppu.CpuWrite( 0x2007, 0x55 );             // Write to VRAM
+    EXPECT_EQ( ppu.CpuRead( 0x2007 ), 0x55 ); // Read back VRAM data
 }
 
 // Test CPU Write Operations
-TEST_F( PPUTestFixture, TestHandleCpuWrite )
+TEST_F( PPUTestFixture, TestCpuWrite )
 {
     // Test writing to PPUCTRL
-    ppu.HandleCpuWrite( 0x2000, 0x01 );
+    ppu.CpuWrite( 0x2000, 0x01 );
     // Check if the control register is set correctly
     // You may need to add a method to verify the control register state
 
     // Test writing to PPUMASK
-    ppu.HandleCpuWrite( 0x2001, 0x02 );
+    ppu.CpuWrite( 0x2001, 0x02 );
     // Verify if rendering is enabled or not based on the mask
 
     // Test writing to OAMADDR
-    ppu.HandleCpuWrite( 0x2003, 0x10 );
+    ppu.CpuWrite( 0x2003, 0x10 );
     // Verify if the OAM address is set correctly
 
     // Test writing to OAMDATA
-    ppu.HandleCpuWrite( 0x2004, 0xFF );
+    ppu.CpuWrite( 0x2004, 0xFF );
     // Verify if the OAM data is written correctly
 
     // Test writing to PPUSCROLL
-    ppu.HandleCpuWrite( 0x2005, 0x20 ); // First write
-    ppu.HandleCpuWrite( 0x2005, 0x10 ); // Second write
+    ppu.CpuWrite( 0x2005, 0x20 ); // First write
+    ppu.CpuWrite( 0x2005, 0x10 ); // Second write
     // Verify the scroll registers are set correctly
 
     // Test writing to PPUADDR
-    ppu.HandleCpuWrite( 0x2006, 0x80 ); // First write
-    ppu.HandleCpuWrite( 0x2006, 0x00 ); // Second write
+    ppu.CpuWrite( 0x2006, 0x80 ); // First write
+    ppu.CpuWrite( 0x2006, 0x00 ); // Second write
     // Verify the VRAM address is set correctly
 
     // Test writing to PPU Data
-    ppu.HandleCpuWrite( 0x2007, 0xAA );
+    ppu.CpuWrite( 0x2007, 0xAA );
     // Verify the data is written to VRAM correctly
 }
 
@@ -291,11 +291,11 @@ void PPUTestFixture::RunTestCase( const json &testCase )
         std::string operation = testCase["operation"];
         if ( operation == "cpu_read" ) {
             u16 address = testCase["address"];
-            ppu.HandleCpuRead( address, false );
+            ppu.CpuRead( address, false );
         } else if ( operation == "cpu_write" ) {
             u16 address = testCase["address"];
             u8  data = testCase["data"];
-            ppu.HandleCpuWrite( address, data );
+            ppu.CpuWrite( address, data );
         } else if ( operation == "tick" ) {
             int cycles = testCase["cycles"];
             for ( int i = 0; i < cycles; i++ ) {
