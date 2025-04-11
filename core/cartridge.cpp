@@ -11,6 +11,7 @@
 #include <string>
 
 // Mappers
+#include "global-types.h"
 #include "mappers/mapper-base.h"
 #include "mappers/mapper0.h"
 #include "mappers/mapper1.h"
@@ -23,6 +24,8 @@ void Cartridge::LoadRom( const std::string &filePath )
 {
     /** @brief Initiates a cartridge and loads a ROM from file
      */
+    didMapperLoad = false;
+
     std::ifstream romFile( filePath, std::ios::binary );
     if ( !romFile.is_open() ) {
         throw std::runtime_error( "Failed to open ROM file: " + filePath );
@@ -145,6 +148,10 @@ void Cartridge::LoadRom( const std::string &filePath )
         default:
             throw std::runtime_error( "Unsupported mapper: " + std::to_string( mapperNumber ) );
     };
+
+    if ( _mapper != nullptr ) {
+        didMapperLoad = true;
+    }
 
     romFile.close();
 }

@@ -1,4 +1,5 @@
 #include "mappers/mapper2.h"
+#include "global-types.h"
 #include "mappers/mapper-base.h"
 #include <stdexcept>
 
