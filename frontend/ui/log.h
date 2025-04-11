@@ -1,5 +1,4 @@
 #pragma once
-#define NOMINMAX // Prevent conflics with std::max and std::min
 #include "ui-component.h"
 #include "renderer.h"
 #include <cstdint>

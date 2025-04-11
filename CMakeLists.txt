@@ -101,6 +101,8 @@ if(BUILD_FRONTEND)
   file(GLOB FRONTEND_SOURCES "frontend/*.cpp" "frontend/ui/*.cpp")
   add_executable(emu ${FRONTEND_SOURCES})
 
+  target_compile_definitions(emu PRIVATE NOMINMAX)
+
   target_include_directories(emu PRIVATE
     ${GENERAL_INCLUDES}
     ${CORE_INCLUDES}
