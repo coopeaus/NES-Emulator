@@ -95,7 +95,12 @@ jobs:
       - name: Build Project
         run: |
           cmake --build build --config Release
-
+      
+      - name: Explore build directory
+        run: |
+          ls build/Release
+          ls build/
+          
       - name: Upload build directory
         uses: actions/upload-artifact@v4
         with:

@@ -104,6 +104,7 @@ jobs:
           cp -r build/rom_test build/Release/
           cp -r build/cpu_test build/Release/
           cp -r build/emu build/Release/
+          cp -r build/assets build/Release/
   
       - name: Upload release directory
         uses: actions/upload-artifact@v4
