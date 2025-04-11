@@ -34,9 +34,9 @@ class NametableWindow : public UIComponent
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
         ImGui::SetNextWindowSizeConstraints( ImVec2( 1000, 820 ), ImVec2( 1000, 820 ) );
 
-        if ( ImGui::Begin( "Tiles", &visible, windowFlags ) ) {
+        if ( ImGui::Begin( "Nametable Viewer", &visible, windowFlags ) ) {
             RenderMenuBar();
-            DebugControls();
+            DebugControls( "Nametable Debugger" );
 
             ImGui::PushFont( renderer->fontMono );
             LeftPanel();
@@ -56,7 +56,7 @@ class NametableWindow : public UIComponent
 
         ImGui::PushStyleColor( ImGuiCol_ChildBg, Spectrum::GRAY100 );
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
-        ImGui::BeginChild( "left panel", panelSize, ImGuiChildFlags_Borders, windowFlags );
+        ImGui::BeginChild( "nametable panel", panelSize, ImGuiChildFlags_Borders, windowFlags );
 
         ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing, ImVec2( 0, 1 ) );
         RenderNametable( 0, tilemapSize );
@@ -78,7 +78,7 @@ class NametableWindow : public UIComponent
 
     void RightPanel()
     {
-        ImGui::BeginChild( "right panel", ImVec2( 0, 0 ) );
+        ImGui::BeginChild( "nametable properties", ImVec2( 0, 0 ) );
 
         ImGui::PushFont( renderer->fontMonoBold );
         ImGui::Text( "Properties" );
@@ -167,7 +167,7 @@ class NametableWindow : public UIComponent
         ImGui::Text( "Tile Index" );
         ImGui::SameLine();
         ImGui::Indent( indentSpacing );
-        int const tileValue = renderer->bus.ppu.Read( targetAddr );
+        int const tileValue = renderer->bus.ppu.ReadVram( targetAddr );
         ImGui::Text( "$%02X (%d)", tileValue, tileValue );
 
         ImGui::Unindent( indentSpacing );
