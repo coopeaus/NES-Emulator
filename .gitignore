@@ -129,3 +129,4 @@ vcpkg_installed/
 # Misc
 imgui.ini
 *.ini
+tools/python/__pycache__
