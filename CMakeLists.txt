@@ -87,6 +87,17 @@ copy_asset(${TESTS_S}    ${TESTS_D})
 add_custom_target(copied_assets ALL DEPENDS emu_core)
 add_dependencies(copied_assets emu_core)
 
+#[[
+#######################################
+||                                   ||
+||  Interactive CLI Tool (optional)  ||
+||                                   ||
+#######################################
+]]
+if(PYTHON_BINDINGS)
+  add_subdirectory(tools/python)
+endif()
+
 
 #[[
 ################################################
