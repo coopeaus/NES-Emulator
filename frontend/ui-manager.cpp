@@ -14,6 +14,7 @@
 #include "cpu-viewer.h"
 #include "ppu-viewer.h"
 #include "pattern-tables.h"
+#include "sprites.h"
 #include "nametable.h"
 #include "cartridge-info.h"
 
@@ -27,6 +28,7 @@ UIManager::UIManager( Renderer *renderer )
     AddComponent<MemoryDisplayWindow>( renderer );
     AddComponent<PaletteWindow>( renderer );
     AddComponent<PatternTablesWindow>( renderer );
+    AddComponent<SpritesWindow>( renderer );
     AddComponent<CpuViewerWindow>( renderer );
     AddComponent<PpuViewerWindow>( renderer );
     AddComponent<NametableWindow>( renderer );

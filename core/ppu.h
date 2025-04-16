@@ -4,6 +4,7 @@
 #include "global-types.h"
 #include "ppu-types.h"
 #include "mappers/mapper-base.h"
+#include "utils.h"
 #include <array>
 #include <cstdlib>
 #include <functional>
@@ -445,8 +446,8 @@ class PPU
 
     void FetchSpritePatternBytes( SpriteEntry sprite )
     {
-        bool const horizontalMirror = ( sprite.attribute & 0x40 ) == 0x40;
-        bool const verticalMirror = ( sprite.attribute & 0x80 ) == 0x80;
+        bool const horizontalMirror = ( sprite.attribute.value & 0x40 ) == 0x40;
+        bool const verticalMirror = ( sprite.attribute.value & 0x80 ) == 0x80;
         bool const is8x16 = ppuCtrl.bit.spriteSize;
 
         u16 patternOffset = ppuCtrl.bit.patternSprite << 12;
@@ -544,9 +545,9 @@ class PPU
                     pixel = ( hi << 1 ) | lo;
 
                     // The sprite's palette is in the lower 2 bits with an offset of 4.
-                    palette = ( sprite.attribute & 0x03 ) + 0x04;
+                    palette = ( sprite.attribute.value & 0x03 ) + 0x04;
                     // fgPriority is determined by bit 5: clear means the sprite has priority.
-                    priority = ( ( sprite.attribute & 0x20 ) == 0 );
+                    priority = ( ( sprite.attribute.value & 0x20 ) == 0 );
 
                     // As soon as we find a nontransparent sprite pixel, use it.
                     if ( pixel != 0 ) {
@@ -761,6 +762,47 @@ class PPU
             }
         }
 
+        return buffer;
+    }
+
+    // Used in frontend/ui/sprites.h
+    std::array<u32, 4096> GetOamSpriteData()
+    {
+        std::array<u32, 4096> buffer{};
+        u16                   baseAddr = ppuCtrl.bit.patternSprite ? 0x1000 : 0x0000;
+
+        for ( int tileY = 0; tileY < 8; tileY++ ) {
+            for ( int tileX = 0; tileX < 8; tileX++ ) {
+                int const tileIndex = ( tileY * 8 ) + tileX;
+                u16 const tileAddr = baseAddr + ( tileIndex * 16 );
+
+                auto entry = GetOamEntry( tileIndex );
+
+                for ( int row = 0; row < 8; row++ ) {
+                    u8 const plane0Byte = ReadVram( tileAddr + row );
+                    u8 const plane1Byte = ReadVram( tileAddr + row + 8 );
+
+                    for ( int bit = 7; bit >= 0; bit-- ) {
+                        // Calculate the pixel's position in the 64x64 output buffer.
+                        int const localX = 7 - bit;
+                        int const globalX = ( tileX * 8 ) + localX;
+                        int const globalY = ( tileY * 8 ) + row;
+                        int const bufferIdx = ( globalY * 64 ) + globalX;
+
+                        // Calculate pixel color
+                        u8 const  plane0Bit = ( plane0Byte >> bit ) & 0x01;
+                        u8 const  plane1Bit = ( plane1Byte >> bit ) & 0x01;
+                        u8 const  colorOffset = ( plane1Bit << 1 ) | plane0Bit;
+                        u8 const  paletteBase = 16 + ( entry.attribute.bit.palette * 4 );
+                        u16 const vramAddr = 0x3F00 + paletteBase + colorOffset;
+                        u8 const  paletteIdx = ReadVram( vramAddr );
+
+                        // Output
+                        buffer.at( bufferIdx ) = GetPpuPaletteColor( paletteIdx );
+                    }
+                }
+            }
+        }
         return buffer;
     }
 

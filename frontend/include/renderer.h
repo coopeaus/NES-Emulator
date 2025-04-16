@@ -67,15 +67,14 @@ class Renderer
     using Clock = std::chrono::steady_clock;
     Clock::time_point frameStart;
 
-    // Pattern tables
+    // Textures
     GLuint patternTable0Texture = 0;
     GLuint patternTable1Texture = 0;
-
-    // Nametables
     GLuint nametable0Texture = 0;
     GLuint nametable1Texture = 0;
     GLuint nametable2Texture = 0;
     GLuint nametable3Texture = 0;
+    GLuint oamTexture = 0;
 
     /*
     ################################
@@ -84,10 +83,12 @@ class Renderer
     */
     bool running = true;
     bool paused = false;
-    bool updatePatternTables = false;
-    bool updateNametables = false;
     u16  fps = 0;
     u64  frameCount = 0;
+
+    bool updatePatternTables = false;
+    bool updateNametables = false;
+    bool updateOam = false;
 
     u64                    currentFrame = 0;
     std::array<u32, 16384> patternTable0Buffer{};
@@ -96,6 +97,7 @@ class Renderer
     std::array<u32, 61440> nametable1Buffer{};
     std::array<u32, 61440> nametable2Buffer{};
     std::array<u32, 61440> nametable3Buffer{};
+    std::array<u32, 4096>  oamBuffer{};
 
 #define ROM( x ) ( std::string( paths::roms() ) + "/" + ( x ) )
     std::vector<std::string> testRoms = {
@@ -103,7 +105,7 @@ class Renderer
         ROM( "mario.nes" ),   ROM( "custom.nes" ),      ROM( "scanline.nes" ),
         ROM( "dk.nes" ),      ROM( "ice_climber.nes" ), ROM( "instr_test-v5.nes" ) };
     enum RomSelected : u8 { PALETTE, COLOR_TEST, NESTEST, MARIO, CUSTOM, SCANLINE, DK, ICE_CLIMBER, V5 };
-    u8 romSelected = RomSelected::MARIO;
+    u8 romSelected = RomSelected::DK;
 
     /*
     ################################
@@ -233,6 +235,7 @@ class Renderer
         nametable1Texture = CreateTexture( 256, 240 );
         nametable2Texture = CreateTexture( 256, 240 );
         nametable3Texture = CreateTexture( 256, 240 );
+        oamTexture = CreateTexture( 64, 64 );
 
         /*
         ################################
@@ -357,6 +360,7 @@ class Renderer
             PollEvents();
             RenderFrame();
             UpdatePatternTableTextures();
+            UpdateOamTextures();
             UpdateNametableTextures();
 
             u64 const    frameEnd = SDL_GetPerformanceCounter();
@@ -440,25 +444,42 @@ class Renderer
             if ( event.type == SDL_QUIT ) {
                 running = false;
                 ui.willRender = false;
-            }
-            if ( event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE &&
-                 event.window.windowID == SDL_GetWindowID( window ) ) {
+            } else if ( event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE &&
+                        event.window.windowID == SDL_GetWindowID( window ) ) {
                 ui.willRender = false;
                 running = false;
+            } else if ( event.type == SDL_KEYDOWN ) {
+                if ( event.key.repeat == 0 ) {
+                    // Esc to pause and unpause (for debugging)
+                    if ( event.key.keysym.scancode == SDL_SCANCODE_ESCAPE ) {
+                        paused = !paused;
+                        if ( paused ) {
+                            fmt::print( "Paused\n" );
+                        } else {
+                            fmt::print( "Unpaused\n" );
+                        }
+                    }
+
+                    // Cmd + R to reset
+                    if ( event.key.keysym.scancode == SDL_SCANCODE_R && ( SDL_GetModState() & KMOD_GUI ) ) {
+                        fmt::print( "Reset\n" );
+                        bus.DebugReset();
+                    }
+                }
             }
         }
         bus.controller[0] = 0x00;
         const Uint8 *keystate = SDL_GetKeyboardState( nullptr );
 
         // Map keys to controller bits
-        bus.controller[0] |= keystate[SDL_SCANCODE_X] ? 0x80 : 0x00;     // A Button
-        bus.controller[0] |= keystate[SDL_SCANCODE_Z] ? 0x40 : 0x00;     // B Button
-        bus.controller[0] |= keystate[SDL_SCANCODE_A] ? 0x20 : 0x00;     // Select
-        bus.controller[0] |= keystate[SDL_SCANCODE_S] ? 0x10 : 0x00;     // Start
-        bus.controller[0] |= keystate[SDL_SCANCODE_UP] ? 0x08 : 0x00;    // Up
-        bus.controller[0] |= keystate[SDL_SCANCODE_DOWN] ? 0x04 : 0x00;  // Down
-        bus.controller[0] |= keystate[SDL_SCANCODE_LEFT] ? 0x02 : 0x00;  // Left
-        bus.controller[0] |= keystate[SDL_SCANCODE_RIGHT] ? 0x01 : 0x00; // Right
+        bus.controller[0] |= keystate[SDL_SCANCODE_X] ? 0x80 : 0x00;     // A Button -> x
+        bus.controller[0] |= keystate[SDL_SCANCODE_Z] ? 0x40 : 0x00;     // B Button -> z
+        bus.controller[0] |= keystate[SDL_SCANCODE_A] ? 0x20 : 0x00;     // Select   -> a
+        bus.controller[0] |= keystate[SDL_SCANCODE_S] ? 0x10 : 0x00;     // Start    -> s
+        bus.controller[0] |= keystate[SDL_SCANCODE_UP] ? 0x08 : 0x00;    // Up       -> up
+        bus.controller[0] |= keystate[SDL_SCANCODE_DOWN] ? 0x04 : 0x00;  // Down     -> down
+        bus.controller[0] |= keystate[SDL_SCANCODE_LEFT] ? 0x02 : 0x00;  // Left     -> left
+        bus.controller[0] |= keystate[SDL_SCANCODE_RIGHT] ? 0x01 : 0x00; // Right    -> right
     }
 
     /*
@@ -576,6 +597,13 @@ class Renderer
         }
     }
 
+    void UpdateOamTextures()
+    {
+        if ( updateOam ) {
+            oamBuffer = ppu.GetOamSpriteData();
+        }
+    }
+
     GLuint GrabPatternTableTextureHandle( int tableIdx )
     {
         /*
@@ -592,6 +620,18 @@ class Renderer
         glBindTexture( GL_TEXTURE_2D, 0 );
 
         return texture;
+    }
+
+    GLuint GrabOamTextureHandle()
+    {
+        /*
+           @brief: Updates OAM texture, read by the cartridge from the PPU. Used by sprite debug window.
+        */
+        glBindTexture( GL_TEXTURE_2D, oamTexture );
+        glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
+        glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, 64, 64, GL_RGBA, GL_UNSIGNED_BYTE, oamBuffer.data() );
+        glBindTexture( GL_TEXTURE_2D, 0 );
+        return oamTexture;
     }
 
     GLuint GrabNametableTextureHandle( int tableIdx )
