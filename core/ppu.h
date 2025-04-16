@@ -773,10 +773,9 @@ class PPU
 
         for ( int tileY = 0; tileY < 8; tileY++ ) {
             for ( int tileX = 0; tileX < 8; tileX++ ) {
-                int const tileIndex = ( tileY * 8 ) + tileX;
-                u16 const tileAddr = baseAddr + ( tileIndex * 16 );
-
-                auto entry = GetOamEntry( tileIndex );
+                int const spriteIndex = ( tileY * 8 ) + tileX;
+                auto      entry = GetOamEntry( spriteIndex );
+                u16 const tileAddr = baseAddr | ( entry.tileIndex << 4 );
 
                 for ( int row = 0; row < 8; row++ ) {
                     u8 const plane0Byte = ReadVram( tileAddr + row );
@@ -798,7 +797,7 @@ class PPU
                         u8 const  paletteIdx = ReadVram( vramAddr );
 
                         // Output
-                        buffer.at( bufferIdx ) = GetPpuPaletteColor( paletteIdx );
+                        buffer.at( bufferIdx ) = GetMasterPaletteColor( paletteIdx );
                     }
                 }
             }
