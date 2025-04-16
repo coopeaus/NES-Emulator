@@ -4,11 +4,11 @@ The purpose of this directory to compile the emulator C++ core to a Python modul
 
 ### Pre-requisites
 
-Package installation is not handled by the main build system. To compile, you'll need to install the `pybind11` package. I recommend installing it with `pip`, either globally or in a virtual environment.
+Package installation is not handled by the main build system. To compile, you'll need to install the `pybind11` package system-wide.
 
-`pip install pybind11`
+`brew install pybind11`
 
-See the [pybind11 docs](https://pybind11.readthedocs.io/en/stable/installing.html#) for more details.
+See the [pybind11](https://pybind11.readthedocs.io/en/stable/installing.html#) for more details.
 
 ### Build instructions
 
