@@ -11,7 +11,7 @@
 class SpritesWindow : public UIComponent
 {
   public:
-    SpritesWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = true; }
+    SpritesWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = false; }
 
     /*
     ################################
@@ -38,7 +38,7 @@ class SpritesWindow : public UIComponent
         ImGuiWindowFlags const windowFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoResize;
 
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
-        ImGui::SetNextWindowSizeConstraints( ImVec2( 700, 440 ), ImVec2( 700, 440 ) );
+        ImGui::SetNextWindowSizeConstraints( ImVec2( 490, 850 ), ImVec2( 490, 850 ) );
 
         if ( ImGui::Begin( "Sprite Viewer", &visible, windowFlags ) ) {
             RenderMenuBar();
@@ -52,14 +52,13 @@ class SpritesWindow : public UIComponent
             ImGui::PopFont();
             ImGui::EndChild();
 
-            ImGui::SameLine();
-
-            // sprite window bottom, make darker for debuggin purposes
+            float  scale = 1.8f;
+            ImVec2 spriteWindowSize = ImVec2( 256 * scale, 240 * scale );
             ImGui::PushStyleColor( ImGuiCol_ChildBg, Spectrum::GRAY200 );
-            ImGui::BeginChild( "sprite window bottom", ImVec2( 256, 240 ), ImGuiChildFlags_Borders,
+            ImGui::BeginChild( "sprite window bottom", ImVec2( spriteWindowSize ), ImGuiChildFlags_Borders,
                                ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar );
             ImGui::PopStyleColor();
-            RenderScreenSprites();
+            RenderScreenSprites( scale );
 
             ImGui::EndChild();
         }
@@ -148,46 +147,7 @@ class SpritesWindow : public UIComponent
         ImGui::PopStyleVar();
     }
 
-    void RenderScreenSprites_Debug()
-    {
-        // Obtain the top-left corner of the drawing child window:
-        ImVec2      childPos = ImGui::GetCursorScreenPos();
-        ImDrawList *drawList = ImGui::GetWindowDrawList();
-
-        // Grab the atlas texture that holds your 64 sprites arranged in an 8x8 grid:
-        GLuint      textureHandle = renderer->GrabOamTextureHandle();
-        ImTextureID textureID = (ImTextureID) (intptr_t) textureHandle;
-
-        const float atlasSize = 64.0f; // Atlas width and height (pixels)
-        const float tileSize = 8.0f;   // Each tile’s size (pixels)
-
-        // Debug: Choose the tile in the top-right corner.
-        // In an 8-column grid, top-right is column 7 (0-indexed) and row 0.
-        int debugCol = 0;
-        int debugRow = 0;
-
-        // Compute normalized UV coordinates; note we do the multiplication using integers
-        // and then cast to float to ensure we are snapping to exact texel boundaries.
-        float u0 = ( static_cast<float>( debugCol * static_cast<int>( tileSize ) ) ) / atlasSize;
-        float v0 = ( static_cast<float>( debugRow * static_cast<int>( tileSize ) ) ) / atlasSize;
-        float u1 = ( static_cast<float>( ( debugCol + 1 ) * static_cast<int>( tileSize ) ) ) / atlasSize;
-        float v1 = ( static_cast<float>( ( debugRow + 1 ) * static_cast<int>( tileSize ) ) ) / atlasSize;
-
-        ImVec2 uv0( u0, v0 );
-        ImVec2 uv1( u1, v1 );
-
-        // Optionally, if your atlas’s V-axis is inverted relative to how you expect it:
-        // std::swap(uv0.y, uv1.y);
-
-        // For testing we place the tile at an obvious position – e.g. offset by (100, 100):
-        ImVec2 posMin( childPos.x + 100.0f, childPos.y + 100.0f );
-        ImVec2 posMax( posMin.x + tileSize, posMin.y + tileSize );
-
-        // Draw the single tile:
-        drawList->AddImage( textureID, posMin, posMax, uv0, uv1 );
-    }
-
-    void RenderScreenSprites()
+    void RenderScreenSprites( float scale = 1 )
     {
         ImVec2       childPos = ImGui::GetCursorScreenPos();
         ImDrawList  *drawList = ImGui::GetWindowDrawList();
@@ -197,24 +157,22 @@ class SpritesWindow : public UIComponent
         const float atlasSize = 64.0f;
         const float tileSize = 8.0f;
 
-        for ( int i = 0; i < 64; i++ ) {
-            SpriteEntry sprite = ppu.GetOamEntry( i );
+        for ( int cellIdx = 0; cellIdx < 64; cellIdx++ ) {
+            SpriteEntry sprite = ppu.GetOamEntry( cellIdx );
             if ( sprite.y >= 240 )
                 continue; // Skip off-screen sprites
 
-            // UV coordinates
-            int col = i % 8;
-            int row = i / 8;
+            // UV coordinates based on cell index.
+            int    col = cellIdx % 8;
+            int    row = cellIdx / 8;
+            float  u0 = ( static_cast<float>( col * static_cast<int>( tileSize ) ) ) / atlasSize;
+            float  v0 = ( static_cast<float>( row * static_cast<int>( tileSize ) ) ) / atlasSize;
+            float  u1 = ( static_cast<float>( ( col + 1 ) * static_cast<int>( tileSize ) ) ) / atlasSize;
+            float  v1 = ( static_cast<float>( ( row + 1 ) * static_cast<int>( tileSize ) ) ) / atlasSize;
+            ImVec2 uv0( u0, v0 );
+            ImVec2 uv1( u1, v1 );
 
-            float u0 = ( static_cast<float>( col * static_cast<int>( tileSize ) ) ) / atlasSize;
-            float v0 = ( static_cast<float>( row * static_cast<int>( tileSize ) ) ) / atlasSize;
-            float u1 = ( static_cast<float>( ( col + 1 ) * static_cast<int>( tileSize ) ) ) / atlasSize;
-            float v1 = ( static_cast<float>( ( row + 1 ) * static_cast<int>( tileSize ) ) ) / atlasSize;
-
-            ImVec2 uv0 = ImVec2( u0, v0 );
-            ImVec2 uv1 = ImVec2( u1, v1 );
-
-            // Adjust for mirroring
+            // Adjust for mirroring.
             if ( sprite.attribute.bit.flipH ) {
                 std::swap( uv0.x, uv1.x );
             }
@@ -222,10 +180,33 @@ class SpritesWindow : public UIComponent
                 std::swap( uv0.y, uv1.y );
             }
 
-            // Draw the atlas sprite into the screen position
-            ImVec2 posMin = ImVec2( childPos.x + (float) sprite.x, childPos.y + (float) sprite.y );
-            ImVec2 posMax = ImVec2( posMin.x + tileSize, posMin.y + tileSize );
+            // Scale the destination rectangle.
+            ImVec2 posMin( childPos.x + ( static_cast<float>( sprite.x ) * scale ),
+                           childPos.y + ( static_cast<float>( sprite.y ) * scale ) );
+            ImVec2 posMax( posMin.x + ( tileSize * scale ), posMin.y + ( tileSize * scale ) );
+
             drawList->AddImage( textureID, posMin, posMax, uv0, uv1 );
+
+            // Draw a border if this cell is selected.
+            if ( cellSelected == cellIdx ) {
+                float  t = static_cast<float>( ImGui::GetTime() );
+                float  delta = 0.5f + ( 0.5f * sinf( t * 5.0f ) );
+                ImVec2 pMin = posMin;
+                ImVec2 pMax = posMax;
+                // For a border, no need to adjust inner rect if you only want one outline.
+                ImVec4 colorA( 1.0f, 1.0f, 1.0f, 1.0f );
+                ImVec4 colorB( 0.5f, 0.5f, 0.5f, 1.0f );
+                ImVec4 tweenedColor;
+                tweenedColor.x = colorA.x * ( 1.0f - delta ) + colorB.x * delta;
+                tweenedColor.y = colorA.y * ( 1.0f - delta ) + colorB.y * delta;
+                tweenedColor.z = colorA.z * ( 1.0f - delta ) + colorB.z * delta;
+                tweenedColor.w = colorA.w * ( 1.0f - delta ) + colorB.w * delta;
+                ImU32 tweenedColor32 = IM_COL32(
+                    static_cast<int>( tweenedColor.x * 255 ), static_cast<int>( tweenedColor.y * 255 ),
+                    static_cast<int>( tweenedColor.z * 255 ), static_cast<int>( tweenedColor.w * 255 ) );
+
+                drawList->AddRect( pMin, pMax, tweenedColor32, 0.0f, 0, 1.0f );
+            }
         }
     }
 
