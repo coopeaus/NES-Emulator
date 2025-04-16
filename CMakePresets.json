@@ -20,6 +20,10 @@
           "type": "BOOL",
           "value": "ON"
         },
+        "PYTHON_BINDINGS": {
+          "type": "BOOL",
+          "value": "OFF"
+        },
         "BUILD_TESTS": {
           "type": "BOOL",
           "value": "ON"
@@ -53,6 +57,25 @@
         "CMAKE_CXX_FLAGS": {
           "type": "STRING",
           "value": "-Werror"
+        }
+      }
+    },
+    {
+      "name": "python",
+      "description": "Core + python bindings, no frontend.",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "type": "STRING",
+          "value": "Debug"
+        },
+        "BUILD_FRONTEND": {
+          "type": "BOOL",
+          "value": "OFF"
+        },
+        "PYTHON_BINDINGS": {
+          "type": "BOOL",
+          "value": "ON"
         }
       }
     },
@@ -101,6 +124,11 @@
     {
       "name": "ci",
       "configurePreset": "ci",
+      "jobs": 2
+    },
+    {
+      "name": "python",
+      "configurePreset": "python",
       "jobs": 2
     },
     {
