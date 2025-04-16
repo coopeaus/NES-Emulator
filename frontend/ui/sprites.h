@@ -35,19 +35,33 @@ class SpritesWindow : public UIComponent
     void OnHidden() override { renderer->updateOam = false; }
     void RenderSelf() override
     {
-        ImGuiWindowFlags const windowFlags = ImGuiWindowFlags_MenuBar;
+        ImGuiWindowFlags const windowFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoResize;
+
         ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
-        ImGui::SetNextWindowSizeConstraints( ImVec2( 430, 400 ), ImVec2( 430, 400 ) );
+        ImGui::SetNextWindowSizeConstraints( ImVec2( 700, 440 ), ImVec2( 700, 440 ) );
 
         if ( ImGui::Begin( "Sprite Viewer", &visible, windowFlags ) ) {
             RenderMenuBar();
             DebugControls( "Sprite Debugger" );
 
+            ImGui::BeginChild( "sprite window top", ImVec2( 410, 220 ) );
             ImGui::PushFont( renderer->fontMono );
             LeftPanel();
             ImGui::SameLine();
             RightPanel();
             ImGui::PopFont();
+            ImGui::EndChild();
+
+            ImGui::SameLine();
+
+            // sprite window bottom, make darker for debuggin purposes
+            ImGui::PushStyleColor( ImGuiCol_ChildBg, Spectrum::GRAY200 );
+            ImGui::BeginChild( "sprite window bottom", ImVec2( 256, 240 ), ImGuiChildFlags_Borders,
+                               ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar );
+            ImGui::PopStyleColor();
+            RenderScreenSprites();
+
+            ImGui::EndChild();
         }
         ImGui::End();
         ImGui::PopStyleVar();
@@ -132,6 +146,87 @@ class SpritesWindow : public UIComponent
         ImGui::SetCursorScreenPos( currentCursorPos );
         ImGui::EndChild();
         ImGui::PopStyleVar();
+    }
+
+    void RenderScreenSprites_Debug()
+    {
+        // Obtain the top-left corner of the drawing child window:
+        ImVec2      childPos = ImGui::GetCursorScreenPos();
+        ImDrawList *drawList = ImGui::GetWindowDrawList();
+
+        // Grab the atlas texture that holds your 64 sprites arranged in an 8x8 grid:
+        GLuint      textureHandle = renderer->GrabOamTextureHandle();
+        ImTextureID textureID = (ImTextureID) (intptr_t) textureHandle;
+
+        const float atlasSize = 64.0f; // Atlas width and height (pixels)
+        const float tileSize = 8.0f;   // Each tile’s size (pixels)
+
+        // Debug: Choose the tile in the top-right corner.
+        // In an 8-column grid, top-right is column 7 (0-indexed) and row 0.
+        int debugCol = 0;
+        int debugRow = 0;
+
+        // Compute normalized UV coordinates; note we do the multiplication using integers
+        // and then cast to float to ensure we are snapping to exact texel boundaries.
+        float u0 = ( static_cast<float>( debugCol * static_cast<int>( tileSize ) ) ) / atlasSize;
+        float v0 = ( static_cast<float>( debugRow * static_cast<int>( tileSize ) ) ) / atlasSize;
+        float u1 = ( static_cast<float>( ( debugCol + 1 ) * static_cast<int>( tileSize ) ) ) / atlasSize;
+        float v1 = ( static_cast<float>( ( debugRow + 1 ) * static_cast<int>( tileSize ) ) ) / atlasSize;
+
+        ImVec2 uv0( u0, v0 );
+        ImVec2 uv1( u1, v1 );
+
+        // Optionally, if your atlas’s V-axis is inverted relative to how you expect it:
+        // std::swap(uv0.y, uv1.y);
+
+        // For testing we place the tile at an obvious position – e.g. offset by (100, 100):
+        ImVec2 posMin( childPos.x + 100.0f, childPos.y + 100.0f );
+        ImVec2 posMax( posMin.x + tileSize, posMin.y + tileSize );
+
+        // Draw the single tile:
+        drawList->AddImage( textureID, posMin, posMax, uv0, uv1 );
+    }
+
+    void RenderScreenSprites()
+    {
+        ImVec2       childPos = ImGui::GetCursorScreenPos();
+        ImDrawList  *drawList = ImGui::GetWindowDrawList();
+        GLuint const textureHandle = renderer->GrabOamTextureHandle();
+        ImTextureID  textureID = (ImTextureID) (intptr_t) textureHandle;
+
+        const float atlasSize = 64.0f;
+        const float tileSize = 8.0f;
+
+        for ( int i = 0; i < 64; i++ ) {
+            SpriteEntry sprite = ppu.GetOamEntry( i );
+            if ( sprite.y >= 240 )
+                continue; // Skip off-screen sprites
+
+            // UV coordinates
+            int col = i % 8;
+            int row = i / 8;
+
+            float u0 = ( static_cast<float>( col * static_cast<int>( tileSize ) ) ) / atlasSize;
+            float v0 = ( static_cast<float>( row * static_cast<int>( tileSize ) ) ) / atlasSize;
+            float u1 = ( static_cast<float>( ( col + 1 ) * static_cast<int>( tileSize ) ) ) / atlasSize;
+            float v1 = ( static_cast<float>( ( row + 1 ) * static_cast<int>( tileSize ) ) ) / atlasSize;
+
+            ImVec2 uv0 = ImVec2( u0, v0 );
+            ImVec2 uv1 = ImVec2( u1, v1 );
+
+            // Adjust for mirroring
+            if ( sprite.attribute.bit.flipH ) {
+                std::swap( uv0.x, uv1.x );
+            }
+            if ( sprite.attribute.bit.flipV ) {
+                std::swap( uv0.y, uv1.y );
+            }
+
+            // Draw the atlas sprite into the screen position
+            ImVec2 posMin = ImVec2( childPos.x + (float) sprite.x, childPos.y + (float) sprite.y );
+            ImVec2 posMax = ImVec2( posMin.x + tileSize, posMin.y + tileSize );
+            drawList->AddImage( textureID, posMin, posMax, uv0, uv1 );
+        }
     }
 
     void PatternTableProps( int spriteIdx, float indentSpacing = 110 )
