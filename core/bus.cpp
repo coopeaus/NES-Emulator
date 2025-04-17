@@ -1,11 +1,13 @@
 #include "bus.h"
 #include "cartridge.h"
 #include "global-types.h"
-#include "ppu.h"
 #include <iostream>
 
+#include "utils.h"
+using namespace utils;
+
 // Constructor to initialize the bus with a flat memory model
-Bus::Bus() : cpu( this ), ppu( this ), cartridge( this )
+Bus::Bus() : cpu( this ), ppu( this ), cartridge( this ), apu( this )
 {
 }
 
@@ -33,12 +35,12 @@ u8 Bus::Read( const u16 address, bool debugMode )
     }
 
     // APU
-    if ( address == 0x4015 ) {
-        return _apuIoMemory.at( address & 0x001F );
+    if ( between( address, 0x4000, 0x4013 ) || address == 0x4015 || address == 0x4017 ) {
+        return apu.HandleCpuRead( address );
     }
 
     // Controller read
-    if ( address >= 0x4016 && address <= 0x4017 ) {
+    if ( address >= 0x4016 && address <= 0x4017 ) { // FIX: 0x4017 is also used here
         auto data = ( controllerState[address & 0x0001] & 0x80 ) > 0;
         controllerState[address & 0x0001] <<= 1;
         return data;
@@ -89,13 +91,13 @@ void Bus::Write( const u16 address, const u8 data )
     }
 
     // APU
-    if ( address >= 0x4000 && address <= 0x4015 ) {
-        _apuIoMemory.at( address & 0x001F ) = data;
+    if ( between( address, 0x4000, 0x4013 ) || address == 0x4015 || address == 0x4017 ) {
+        apu.HandleCpuWrite( address, data );
         return;
     }
 
     // Controller input
-    if ( address >= 0x4016 && address <= 0x4017 ) {
+    if ( address >= 0x4016 && address <= 0x4017 ) { // FIX: 0x4017 is also used here
         controllerState[address & 0x0001] = controller[address & 0x0001];
         return;
     }
