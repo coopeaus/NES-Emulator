@@ -8,8 +8,6 @@
 #include <memory>
 #include "cartridge-header.h"
 
-using namespace std;
-
 class Bus;
 
 class Cartridge
@@ -61,7 +59,7 @@ class Cartridge
     ################################
     */
     MirrorMode GetMirrorMode();
-    void       LoadRom( const string &filePath );
+    void       LoadRom( const std::string &filePath );
 
     /*
     ################################
@@ -94,7 +92,7 @@ class Cartridge
       The iNes header specifies how many PRG ROM banks are provided, so we
       can define _prg_rom as a vector and resize it during ROM initialization
     */
-    vector<u8> _prgRom = std::vector<u8>( 16384 ); // 16KiB
+    std::vector<u8> _prgRom = std::vector<u8>( 16384 ); // 16KiB
 
     /* CHR ROM and RAM
       Character Read-Only Memory and Character Random Access Memory
@@ -115,33 +113,33 @@ class Cartridge
       table data dynamically. Having dynamic pattern tables allowed devs to
       create dynamic tiles.
     */
-    vector<u8>      _chrRom = std::vector<u8>( 8192 ); // 8KiB
-    array<u8, 8192> _chrRam{};                         // 8192 bytes (8 KiB)
+    std::vector<u8>      _chrRom = std::vector<u8>( 8192 ); // 8KiB
+    std::array<u8, 8192> _chrRam{};                         // 8192 bytes (8 KiB)
 
     // PRG RAM: Program RAM, also known as Save RAM (SRAM) or Work RAM sometimes
     // Its usage is determined by the mapper
-    array<u8, 8192> _prgRam{}; // 8KiB PRG RAM, also known as Save RAM (SRAM) or Work RAM sometimes
+    std::array<u8, 8192> _prgRam{}; // 8KiB PRG RAM, also known as Save RAM (SRAM) or Work RAM sometimes
 
     // Expansion ROM
     // Almost never used, but here it is anyway.
     // Can be both ROM or RAM, determined by the mapper
-    array<u8, 8192> _expansionMemory{};
+    std::array<u8, 8192> _expansionMemory{};
 
     // Cartrdige VRAM
     // The PPU has 2KiB of vram for nametables (background layout information).
     // Some cartridges provided 2Kib extra which allowed for four unique
     // nametables without mirroring. Nametables are documented in the PPU class.
-    array<u8, 2048> _cartridgeVram{};
+    std::array<u8, 2048> _cartridgeVram{};
 
     /*
     ################################
     ||      Global Variables      ||
     ################################
     */
-    shared_ptr<Mapper> _mapper;
-    u8                 _mapperNumber = 0;
-    u8                 _hasBattery = 0;
-    bool               _fourScreenMode = false;
-    MirrorMode         _mirrorMode = MirrorMode::Vertical;
-    bool               _usesChrRam = false;
+    std::shared_ptr<Mapper> _mapper;
+    u8                      _mapperNumber = 0;
+    u8                      _hasBattery = 0;
+    bool                    _fourScreenMode = false;
+    MirrorMode              _mirrorMode = MirrorMode::Vertical;
+    bool                    _usesChrRam = false;
 };

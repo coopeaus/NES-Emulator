@@ -14,6 +14,7 @@ class PpuTest : public ::testing::Test
     Bus        bus;
     PPU       &ppu = bus.ppu;
     CPU       &cpu = bus.cpu;
+    APU       &apu = bus.apu;
     Cartridge &cartridge = bus.cartridge;
 
     PpuTest()

@@ -1,6 +1,7 @@
 #include "bus.h"
 #include "cpu.h"
 #include "ppu.h"
+#include "apu.h"
 #include "cartridge.h"
 #include "json.hpp"
 #include <cstdint>
@@ -25,6 +26,7 @@ class CpuTest : public ::testing::Test
     Bus  bus;
     CPU &cpu = bus.cpu;
     PPU &ppu = bus.ppu;
+    APU &apu = bus.apu;
 
     CpuTest() = default;
     void LoadTestCartridge()

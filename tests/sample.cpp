@@ -102,4 +102,7 @@ int main( int argc, char **argv )
     return RUN_ALL_TESTS();
 }
 
-int test_function() { return 0; }
+int test_function()
+{
+    return 0;
+}
