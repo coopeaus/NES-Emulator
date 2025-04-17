@@ -24,82 +24,85 @@
 
 class Counter
 {
-  public:
-    Counter() = default;
+public:
+  Counter() = default;
 
-    void              increment() { ++_count; }
-    void              decrement() { --_count; }
-    void              reset() { _count = 0; }
-    [[nodiscard]] int getCount() const { return _count; }
+  void              increment() { ++_count; }
+  void              decrement() { --_count; }
+  void              reset() { _count = 0; }
+  [[nodiscard]] int getCount() const { return _count; }
 
-  private:
-    int _count{};
+private:
+  int _count{};
 };
 
 // === TEST ===
 // Simple, standalone tests without any shared setup
 TEST( CounterTests, Increment )
 {
-    Counter counter;
-    counter.increment();
-    EXPECT_EQ( counter.getCount(), 1 );
-    counter.increment();
-    EXPECT_EQ( counter.getCount(), 2 );
+  Counter counter;
+  counter.increment();
+  EXPECT_EQ( counter.getCount(), 1 );
+  counter.increment();
+  EXPECT_EQ( counter.getCount(), 2 );
 }
 
 TEST( CounterTests, Reset )
 {
-    Counter counter;
-    counter.increment();
-    counter.reset();
-    EXPECT_EQ( counter.getCount(), 0 );
+  Counter counter;
+  counter.increment();
+  counter.reset();
+  EXPECT_EQ( counter.getCount(), 0 );
 }
 
 // === Test Fixture with TEST_F ===
 // Shared setup for tests using a fixture
 class CounterTest : public ::testing::Test
 {
-  protected:
-    Counter counter; // Shared instance for all tests in this fixture
+protected:
+  Counter counter; // Shared instance for all tests in this fixture
 
-    void SetUp() override
-    {
-        counter.reset(); // Ensure counter starts from zero
-    }
+  void SetUp() override
+  {
+    counter.reset(); // Ensure counter starts from zero
+  }
 
-    void TearDown() override
-    {
-        // Optional cleanup after each test, if needed
-    }
+  void TearDown() override
+  {
+    // Optional cleanup after each test, if needed
+  }
 };
 
 // Tests using the shared Counter instance from the fixture
 TEST_F( CounterTest, MultipleIncrements )
 {
-    counter.increment();
-    counter.increment();
-    EXPECT_EQ( counter.getCount(), 2 );
+  counter.increment();
+  counter.increment();
+  EXPECT_EQ( counter.getCount(), 2 );
 }
 
 TEST_F( CounterTest, Decrement )
 {
-    counter.increment();
-    counter.increment();
-    counter.decrement();
-    EXPECT_EQ( counter.getCount(), 1 );
+  counter.increment();
+  counter.increment();
+  counter.decrement();
+  EXPECT_EQ( counter.getCount(), 1 );
 }
 
 TEST_F( CounterTest, NegativeCount )
 {
-    counter.decrement();
-    EXPECT_EQ( counter.getCount(), -1 );
+  counter.decrement();
+  EXPECT_EQ( counter.getCount(), -1 );
 }
 
 // main function to run all tests
 int main( int argc, char **argv )
 {
-    ::testing::InitGoogleTest( &argc, argv );
-    return RUN_ALL_TESTS();
+  ::testing::InitGoogleTest( &argc, argv );
+  return RUN_ALL_TESTS();
 }
 
-int test_function() { return 0; }
+int test_function()
+{
+  return 0;
+}
