@@ -1,6 +1,6 @@
-IndentWidth: 4
+IndentWidth: 2
 UseTab: Never
-ColumnLimit: 110 # Maximimum line length
+ColumnLimit: 120 # Maximimum line length
 SortIncludes: "Never"
 IncludeBlocks: Preserve
 
