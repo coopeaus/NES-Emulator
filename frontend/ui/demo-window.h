@@ -5,10 +5,10 @@
 
 class DemoWindow : public UIComponent
 {
-  public:
-    DemoWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = false; }
+public:
+  DemoWindow( Renderer *renderer ) : UIComponent( renderer ) { visible = false; }
 
-    void OnVisible() override {}
-    void OnHidden() override {}
-    void RenderSelf() override { ImGui::ShowDemoWindow( &visible ); }
+  void OnVisible() override {}
+  void OnHidden() override {}
+  void RenderSelf() override { ImGui::ShowDemoWindow( &visible ); }
 };

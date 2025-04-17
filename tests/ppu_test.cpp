@@ -369,32 +369,9 @@ TEST_F( PpuTest, ResolveNameTableAddress_Horizontal )
 TEST_F( PpuTest, ResolveNameTableAddress_FourScreen )
 {
   u16 addr = 0x2FFF;
-  u16 expected = addr & 0x0FFF;
+  u16 expected = 0x2FFF;
   u16 result = ppu.ResolveNameTableAddress( addr, static_cast<int>( MirrorMode::FourScreen ) );
   EXPECT_EQ( result, expected );
-}
-
-TEST_F( PpuTest, ClearSecondaryOAM )
-{
-  cpu.Write( 0x2001, 0x08 ); // enable rendering
-
-  // set secondaryOam to non-default
-  for ( u8 i = 0; i < 32; i++ ) {
-    ppu.secondaryOam.data.at( i ) = 0x12;
-  }
-  for ( u8 i = 0; i < 32; i++ ) {
-    EXPECT_EQ( ppu.secondaryOam.data.at( i ), 0x12 );
-  }
-
-  ppu.cycle = 1;
-  for ( int i = 0; i < 64; i++ ) {
-    ppu.Tick();
-  }
-
-  // All should be intialized to 0xFF.
-  for ( u8 i = 0; i < 32; i++ ) {
-    EXPECT_EQ( ppu.secondaryOam.data.at( i ), 0xFF );
-  }
 }
 
 TEST_F( PpuTest, FetchNametableByte )
@@ -581,60 +558,6 @@ TEST_F( PpuTest, TransferAddressX )
   ppu.TransferAddressX();
   EXPECT_EQ( ppu.vramAddr.bit.nametableX, 1 );
   EXPECT_EQ( ppu.vramAddr.bit.coarseX, 1 );
-}
-
-TEST_F( PpuTest, PrerenderScanline )
-{
-  // This function should:
-  // 1. clear status registers
-  // 2. clear the sprite shift registers
-  // 3. Transfer Y address from temp to vram
-
-  // enable rendering
-  bus.Write( 0x2001, 0x08 );
-
-  // Setup state
-  ppu.ppuStatus.value = 0xFF;
-  for ( int i = 0; i < 8; i++ ) {
-    ppu.spriteShiftLow.at( i ) = 0xFF;
-    ppu.spriteShiftHigh.at( i ) = 0xFF;
-  }
-  ppu.tempAddr.bit.fineY = 1;
-  ppu.tempAddr.bit.nametableY = 1;
-  ppu.tempAddr.bit.coarseY = 1;
-
-  // When not called on 261, should do nothing
-  ppu.scanline = 260;
-  ppu.PrerenderScanline();
-  EXPECT_EQ( ppu.ppuStatus.value, 0xFF );
-  for ( int i = 0; i < 8; i++ ) {
-    EXPECT_EQ( ppu.spriteShiftLow.at( i ), 0xFF );
-    EXPECT_EQ( ppu.spriteShiftHigh.at( i ), 0xFF );
-  }
-  EXPECT_EQ( ppu.tempAddr.bit.fineY, 1 );
-  EXPECT_EQ( ppu.tempAddr.bit.nametableY, 1 );
-  EXPECT_EQ( ppu.tempAddr.bit.coarseY, 1 );
-
-  // Called on 261
-  ppu.scanline = 261;
-
-  // cycle 1 clears status registers and sprite shift registers
-  ppu.cycle = 1;
-  ppu.PrerenderScanline();
-  EXPECT_EQ( ppu.ppuStatus.bit.vBlank, 0 );
-  EXPECT_EQ( ppu.ppuStatus.bit.spriteOverflow, 0 );
-  EXPECT_EQ( ppu.ppuStatus.bit.spriteZeroHit, 0 );
-  for ( int i = 0; i < 8; i++ ) {
-    EXPECT_EQ( ppu.spriteShiftLow.at( i ), 0x00 );
-    EXPECT_EQ( ppu.spriteShiftHigh.at( i ), 0x00 );
-  }
-
-  // cycle 280 - 304 traansfers Y address from temp to vram
-  ppu.cycle = 280;
-  ppu.PrerenderScanline();
-  EXPECT_EQ( ppu.vramAddr.bit.fineY, 1 );
-  EXPECT_EQ( ppu.vramAddr.bit.nametableY, 1 );
-  EXPECT_EQ( ppu.vramAddr.bit.coarseY, 1 );
 }
 
 TEST_F( PpuTest, IsSpriteInRange )

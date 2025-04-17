@@ -109,10 +109,10 @@ inline const std::bitset<256> writeModifyOpcodes = []() {
 
 inline bool pageCrossPenalty( u8 opcode )
 {
-    return !noPageCrossPenaltyOpcodes.test( opcode );
+  return !noPageCrossPenaltyOpcodes.test( opcode );
 }
 
 inline bool isWriteModify( u8 opcode )
 {
-    return writeModifyOpcodes.test( opcode );
+  return writeModifyOpcodes.test( opcode );
 }

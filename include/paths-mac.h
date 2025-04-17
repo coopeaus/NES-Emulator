@@ -9,12 +9,12 @@
 
 inline path getProjectRoot()
 {
-    char     buffer[PATH_MAX];
-    uint32_t size = PATH_MAX;
-    if ( _NSGetExecutablePath( buffer, &size ) != 0 ) {
-        throw std::runtime_error( "Buffer size too small for executable path" );
-    }
-    path executablePath = std::filesystem::canonical( buffer );
-    return executablePath.parent_path();
+  char     buffer[PATH_MAX];
+  uint32_t size = PATH_MAX;
+  if ( _NSGetExecutablePath( buffer, &size ) != 0 ) {
+    throw std::runtime_error( "Buffer size too small for executable path" );
+  }
+  path executablePath = std::filesystem::canonical( buffer );
+  return executablePath.parent_path();
 }
 #endif
