@@ -164,10 +164,10 @@ Index of this file:
                       // snprintf/vsnprintf on Windows so they are available, but not always used.
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant" // warning: zero as null pointer constant // some
                                                                    // standard header variations use #define NULL 0
-#pragma clang diagnostic ignored "-Wdouble-promotion" // warning: implicit conversion from 'float' to 'double' when
-                                                      // passing argument to function  // using printf() is a misery
-                                                      // with this as C++ va_arg ellipsis changes float to double.
-#pragma clang diagnostic ignored "-Wreserved-id-macro"             // warning: macro name is a reserved identifier
+#pragma clang diagnostic ignored "-Wdouble-promotion"  // warning: implicit conversion from 'float' to 'double' when
+                                                       // passing argument to function  // using printf() is a misery
+                                                       // with this as C++ va_arg ellipsis changes float to double.
+#pragma clang diagnostic ignored "-Wreserved-id-macro" // warning: macro name is a reserved identifier
 #pragma clang diagnostic ignored "-Wimplicit-int-float-conversion" // warning: implicit conversion from 'xxx'
                                                                    // to 'float' may lose precision
 #pragma clang diagnostic ignored "-Wunsafe-buffer-usage" // warning: 'xxx' is an unsafe pointer used for buffer access
@@ -9729,7 +9729,7 @@ struct ExampleAppPropertyEditor {
     tree_flags |=
         ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick; // Standard opening mode as we are likely
                                                                                // to want to add selection afterwards
-    tree_flags |= ImGuiTreeNodeFlags_NavLeftJumpsBackHere; // Left arrow support
+    tree_flags |= ImGuiTreeNodeFlags_NavLeftJumpsBackHere;                     // Left arrow support
     if ( node == VisibleNode )
       tree_flags |= ImGuiTreeNodeFlags_Selected;
     if ( node->Childs.Size == 0 )
