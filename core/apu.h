@@ -1,162 +1,87 @@
 #pragma once
-#include "cpu.h"
 #include <cstdint>
-#include <array>
+#include "utils.h"
 
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
 using s16 = std::int16_t;
 
+using namespace utils;
 using namespace std;
 
+class Bus;
 class APU
 {
   public:
-    explicit APU( Bus *bus );
-
-    /*
-    ################################
-    ||           Getters          ||
-    ################################
-    */
-
-    u8 GetApuStatus() const { return apuStatus.value; }
-    u8 GetOamAddr() const { return oamAddr; }
-    u8 GetOamData() const { return oamData; }
-    u8 GetApuScroll() const { return apuScroll; }
-    u8 GetApuAddr() const { return apuAddr; }
-    u8 GetApuData() const { return apuData; }
-
-    bool GetAddrLatch() const { return addrLatch; }
-
-    /*
-    ################################
-    ||           Setters          ||
-    ################################
-    */
-    void SetScanline( s16 val ) { scanline = val; }
+    APU( Bus *bus );
+    Bus *bus;
 
     /*
     ################################
     ||      CPU Read / Write      ||
     ################################
     */
-    [[nodiscard]] u8 HandleCpuRead( u16 address, bool debugMode = false );
-    void             HandleCpuWrite( u16 address, u8 data );
+    u8 HandleCpuRead( u16 addr )
+    {
+        if ( between( addr, 0x4000, 0x4003 ) ) {
+            Pulse1Read();
+        } else if ( between( addr, 0x4004, 0x4007 ) ) {
+            Pulse2Read();
+        } else if ( between( addr, 0x4008, 0x400B ) ) {
+            TriangleRead();
+        } else if ( between( addr, 0x400C, 0x400F ) ) {
+            NoiseRead();
+        } else if ( between( addr, 0x4010, 0x4013 ) ) {
+            DMCRead();
+        } else if ( addr == 0x4015 ) {
+            StatusRead();
+        } else if ( addr == 0x4017 ) {
+            FrameCounterRead();
+        }
 
-    /*
-    ################################
-    ||       Internal Reads       ||
-    ################################
-    */
-    [[nodiscard]] u8 Read( u16 addr );
+        // placeholder
+        return 0xFF;
+    }
 
-    /*
-    ################################
-    ||       Internal Writes      ||
-    ################################
-    */
-    void Write( u16 addr, u8 data );
+    void HandleCpuWrite( u16 address, u8 data )
+    {
+        if ( between( address, 0x4000, 0x4003 ) ) {
+            Pulse1Write( data );
+        } else if ( between( address, 0x4004, 0x4007 ) ) {
+            Pulse2Write( data );
+        } else if ( between( address, 0x4008, 0x400B ) ) {
+            TriangleWrite( data );
+        } else if ( between( address, 0x400C, 0x400F ) ) {
+            NoiseWrite( data );
+        } else if ( between( address, 0x4010, 0x4013 ) ) {
+            DMCWrite( data );
+        } else if ( address == 0x4015 ) {
+        } else if ( address == 0x4017 ) {
+            FrameCounterWrite( data );
+        }
+    }
 
     /*
     ################################
     ||         APU Methods        ||
     ################################
     */
-    void Reset()
-    {
-        cycle = 4;
-        apuStatus.value = 0x00;
-        oamAddr = 0x00;
-        oamData = 0x00;
-        apuAddr = 0x00;
-        apuData = 0x00;
-    }
 
-    /*
-    ################################
-    ||        Debug Methods       ||
-    ################################
-    */
-    void EnableJsonTestMode() { isDisabled = true; }
-    void DisableJsonTestMode() { isDisabled = false; }
+    // Placeholders
+    void Pulse1Read() {}
+    void Pulse2Read() {}
+    void TriangleRead() {}
+    void NoiseRead() {}
+    void StatusRead() {}
+    void DMCRead() {}
+    void FrameCounterRead() {}
 
-    /*
-    ################################
-    ||      Global Variables      ||
-    ################################
-    */
-    bool failedPaletteRead = false;
-    int  systemPaletteIdx = 0;
-    int  maxSystemPalettes = 3;
-
-    /*
-    ################################
-    ||      Global Variables      ||
-    ################################
-    */
-    s16            scanline = 0;
-    u16            cycle = 4;
-    u64            frame = 1;
-    bool           isRenderingEnabled = false;
-    bool           preventVBlank = false;
-    array<u32, 64> nesPaletteRgbValues{};
-
-    /*
-    ################################
-    ||       Debug Variables      ||
-    ################################
-    */
-    bool isDisabled = false;
-
-    /*
-    ################################
-    ||         Peripherals        ||
-    ################################
-    */
-    Bus *bus;
-
-    /*
-    ################################
-    ||    CPU-facing Registers    ||
-    ################################
-    */
-
-    union APUSTATUS {
-        struct {
-            u8 enableDMC : 4;
-            u8 noise : 5;
-            u8 triangle : 6;
-            u8 pulse2 : 7;
-            u8 pulse1 : 8;
-        } bit;
-        u8 value = 0x00;
-    };
-
-    APUSTATUS apuStatus;        // $2002
-    u8        oamAddr = 0x00;   // $2003
-    u8        oamData = 0x00;   // $2004
-    u8        apuScroll = 0x00; // $2005
-    u8        apuAddr = 0x00;   // $2006
-    u8        apuData = 0x00;   // $2007
-    // $4014: OAM DMA, handled in bus read/write, see bus.cpp
-
-    /*
-    ################################################################
-    ||                     Internal Registers                     ||
-    ################################################################
-    */
-
-    // Used by _apuScroll and _apuAddr for two-write operations
-    bool addrLatch = false;
-
-    // Stores last data written to _apuData
-    u8 apuDataBuffer = 0x00;
-
-    /*
-    ################################################################
-    ||                  Internal Memory Locations                 ||
-    ################################################################
-    */
-    array<u8, 256> oam{};
+    // NOLINTBEGIN(readability-convert-member-functions-to-static)
+    void Pulse1Write( u8 data ) { (void) data; };
+    void Pulse2Write( u8 data ) { (void) data; };
+    void TriangleWrite( u8 data ) { (void) data; };
+    void NoiseWrite( u8 data ) { (void) data; };
+    void DMCWrite( u8 data ) { (void) data; };
+    void FrameCounterWrite( u8 data ) { (void) data; };
+    // NOLINTEND(readability-convert-member-functions-to-static)
 };
