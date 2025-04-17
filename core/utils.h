@@ -6,8 +6,6 @@
 #include <vector>
 #include "global-types.h"
 
-using namespace std;
-
 namespace utils
 {
 

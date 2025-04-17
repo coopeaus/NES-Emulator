@@ -21,15 +21,13 @@
 #include "paths-windows.h"
 #endif
 
-using namespace std;
-
 namespace paths
 {
 inline path root()
 {
     try {
         return getProjectRoot();
-    } catch ( const filesystem::filesystem_error &e ) {
+    } catch ( const std::filesystem::filesystem_error &e ) {
         throw std::runtime_error( "Failed to get project directory: " + std::string( e.what() ) );
     }
 }
@@ -39,25 +37,25 @@ inline path assets()
     return root() / "assets";
 }
 
-inline string roms()
+inline std::string roms()
 {
     auto path = assets() / "roms";
     return path.string();
 }
 
-inline string fonts()
+inline std::string fonts()
 {
     auto path = assets() / "fonts";
     return path.string();
 }
 
-inline string palettes()
+inline std::string palettes()
 {
     auto path = assets() / "palettes";
     return path.string();
 }
 
-inline string tests()
+inline std::string tests()
 {
     auto path = root() / "tests";
     return path.string();
