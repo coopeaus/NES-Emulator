@@ -346,7 +346,7 @@ public:
 
     while ( nOamEntry < 64 && spriteCount < 9 ) {
       auto const sprite = oam.entries.at( nOamEntry );
-      bool       const spriteInRange = IsSpriteInRange( scanline, sprite.y, (bool) ppuCtrl.bit.spriteSize );
+      bool const spriteInRange = IsSpriteInRange( scanline, sprite.y, (bool) ppuCtrl.bit.spriteSize );
 
       if ( spriteInRange ) {
         if ( spriteCount < 8 ) {
@@ -376,10 +376,10 @@ public:
     for ( u8 i = 0; i < spriteCount; i++ ) {
       SpriteEntry const sprite = secondaryOam.entries[i];
 
-      u8   spritePattern0Byte = 0;
-      u8   spritePattern1Byte = 0;
-      u16  spritePattern0Addr = 0;
-      u16  spritePattern1Addr = 0;
+      u8         spritePattern0Byte = 0;
+      u8         spritePattern1Byte = 0;
+      u16        spritePattern0Addr = 0;
+      u16        spritePattern1Addr = 0;
       bool const isLarge = ppuCtrl.bit.spriteSize;
 
       u16 baseAddr = ppuCtrl.bit.patternSprite << 12; // 0x0000 or 0x1000 depending on ppuCtrl (for 8x8 sprites)
@@ -776,7 +776,7 @@ public:
   std::array<u32, 4096> GetOamSpriteData()
   {
     std::array<u32, 4096> buffer{};
-    u16                   const baseAddr = ppuCtrl.bit.patternSprite ? 0x1000 : 0x0000;
+    u16 const             baseAddr = ppuCtrl.bit.patternSprite ? 0x1000 : 0x0000;
 
     for ( int tileY = 0; tileY < 8; tileY++ ) {
       for ( int tileX = 0; tileX < 8; tileX++ ) {
