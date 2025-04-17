@@ -289,14 +289,23 @@ void PPU::CpuWrite( u16 address, u8 data )
       way, but it's a more accurate paradigm because that's how the hardware
       handles it.
     */
-    address &= 0x2FFF;
+    address &= 0x2FFF; // 0x2FFF is the address limit for nametables
 
-    if ( GetMirrorMode() == MirrorMode::FourScreen && address >= 0x2800 ) {
-      return bus->cartridge.ReadCartridgeVRAM( address );
-    }
+    // // nametables 2 ($2800-$2BFF) and 3 ($2C00-$2FFF) are stored in the cartridge
+    // if ( GetMirrorMode() == MirrorMode::FourScreen && address >= 0x2800 ) {
+    //   return bus->cartridge.ReadCartridgeVRAM( address );
+    // }
+    //
+    // // nameTables 0 ($2000-$23FF) and 1 ($2400-$27FF) are stored in ppu memory
+    // u16 const nametableAddr = ResolveNameTableAddress( address );
+    // return nameTables.at( nametableAddr & 0x07FF );
 
     u16 const nametableAddr = ResolveNameTableAddress( address );
-    return nameTables.at( nametableAddr & 0x07FF );
+    u8 const  tableIndex = ( nametableAddr <= 0x23FF )   ? 0
+                           : ( nametableAddr <= 0x27FF ) ? 1
+                           : ( nametableAddr <= 0x2BFF ) ? 2
+                                                         : 3;
+    return nameTables.at( tableIndex ).at( nametableAddr & 0x03FF );
   }
 
   // $3F00-$3FFF: Palettes
@@ -364,12 +373,12 @@ void PPU::WriteVram( u16 address, u8 data )
     */
 
     address &= 0x2FFF;
-    if ( GetMirrorMode() == MirrorMode::FourScreen && address >= 0x2800 ) {
-      bus->cartridge.WriteCartridgeVRAM( address, data );
-      return;
-    }
     u16 const nametableAddr = ResolveNameTableAddress( address );
-    nameTables.at( nametableAddr & 0x07FF ) = data;
+    u8 const  tableIndex = ( nametableAddr <= 0x23FF )   ? 0
+                           : ( nametableAddr <= 0x27FF ) ? 1
+                           : ( nametableAddr <= 0x2BFF ) ? 2
+                                                         : 3;
+    nameTables.at( tableIndex ).at( nametableAddr & 0x03FF ) = data;
     return;
   }
 
@@ -468,23 +477,18 @@ u16 PPU::ResolveNameTableAddress( u16 addr, int testMirrorMode ) const
         2800 < > 2C00
 
         Horizontal mode is used for vertical scrolling games, like Kid Icarus.
-
-       Map addresses from 2C00-2FFF to 2800-2BFF if the address is for nametable 1
-       Otherwise map addresses from 2400-27FF to 2000-23FF
        */
 
-      if ( addr & 0x800 ) {
-        return 0x2800 | ( addr & 0x03FF );
-      } else {
+      if ( ( addr >= 0x2000 && addr <= 0x23FF ) || ( addr >= 0x2400 && addr <= 0x27FF ) )
         return 0x2000 | ( addr & 0x03FF );
-      }
+      if ( ( addr >= 0x2800 && addr <= 0x2BFF ) || ( addr >= 0x2C00 && addr <= 0x2FFF ) )
+        return 0x2800 | ( addr & 0x03FF );
 
-      return 0x2000 | ( ( addr & 0x03FF ) | ( ( addr & 0x800 ) >> 1 ) );
     case MirrorMode::FourScreen:
       /* Four-Screen Mirroring
          All four nametables are unique and backed by cartridge VRAM. There's no mirroring.
        */
-      return addr & 0x0FFF;
+      return addr;
     default:
       // Default to vertical mirroring
       return 0x2000 | ( addr & 0x07FF );
