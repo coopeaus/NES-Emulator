@@ -12,20 +12,20 @@
 // directory.
 inline path getProjectRoot()
 {
-    char buffer[MAX_PATH];
-    // GetModuleFileNameA returns the length of the string copied to the buffer.
-    DWORD size = GetModuleFileNameA( NULL, buffer, MAX_PATH );
-    if ( size == 0 ) {
-        throw std::runtime_error( "Failed to retrieve executable path via GetModuleFileNameA" );
-    }
+  char buffer[MAX_PATH];
+  // GetModuleFileNameA returns the length of the string copied to the buffer.
+  DWORD size = GetModuleFileNameA( NULL, buffer, MAX_PATH );
+  if ( size == 0 ) {
+    throw std::runtime_error( "Failed to retrieve executable path via GetModuleFileNameA" );
+  }
 
-    // Create a filesystem path from the buffer.
-    std::filesystem::path exePath( buffer );
+  // Create a filesystem path from the buffer.
+  std::filesystem::path exePath( buffer );
 
-    // Canonicalize to resolve any symlinks and relative path elements.
-    std::filesystem::path canonicalExePath = std::filesystem::canonical( exePath );
+  // Canonicalize to resolve any symlinks and relative path elements.
+  std::filesystem::path canonicalExePath = std::filesystem::canonical( exePath );
 
-    // Return the directory containing the executable.
-    return canonicalExePath.parent_path();
+  // Return the directory containing the executable.
+  return canonicalExePath.parent_path();
 }
 #endif

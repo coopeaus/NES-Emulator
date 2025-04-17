@@ -42,21 +42,21 @@ namespace
 { // Unnamed namespace, since we only use this here.
 unsigned int Color( unsigned int c )
 {
-    // add alpha.
-    // also swap red and blue channel for some reason.
-    // todo: figure out why, and fix it.
-    const short a = 0xFF;
-    const short r = ( c >> 16 ) & 0xFF;
-    const short g = ( c >> 8 ) & 0xFF;
-    const short b = ( c >> 0 ) & 0xFF;
-    return ( a << 24 ) | ( r << 0 ) | ( g << 8 ) | ( b << 16 );
+  // add alpha.
+  // also swap red and blue channel for some reason.
+  // todo: figure out why, and fix it.
+  const short a = 0xFF;
+  const short r = ( c >> 16 ) & 0xFF;
+  const short g = ( c >> 8 ) & 0xFF;
+  const short b = ( c >> 0 ) & 0xFF;
+  return ( a << 24 ) | ( r << 0 ) | ( g << 8 ) | ( b << 16 );
 }
 } // namespace
 // all colors are from http://spectrum.corp.adobe.com/color.html
 
 inline unsigned int color_alpha( unsigned int alpha, unsigned int c )
 {
-    return ( ( alpha & 0xFF ) << 24 ) | ( c & 0x00FFFFFF );
+  return ( ( alpha & 0xFF ) << 24 ) | ( c & 0x00FFFFFF );
 }
 
 namespace Static
