@@ -3,9 +3,8 @@
 #include "mappers/mapper-base.h"
 #include "global-types.h"
 
-Mapper3::Mapper3( iNes2Instance iNesHeader ) : Mapper( iNesHeader ), _chrBank(0)
+Mapper3::Mapper3( iNes2Instance iNesHeader ) : Mapper( iNesHeader ) 
 {
-    
 }
 
 u32 Mapper3::TranslateCPUAddress( u16 address )
@@ -15,7 +14,7 @@ u32 Mapper3::TranslateCPUAddress( u16 address )
     if ( address >= 0x8000 ) {
         // If only 16KB PRG, mirror it
         int const prgBankCount = GetPrgBankCount();
-        u32 prgAddr = address - 0x8000;
+        u32       prgAddr = address - 0x8000;
         if ( prgBankCount == 1 ) // 16KB
             prgAddr = prgAddr % 0x4000;
         return prgAddr;
