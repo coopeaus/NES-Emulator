@@ -3,7 +3,7 @@
 #include "mappers/mapper-base.h"
 #include "global-types.h"
 
-Mapper3::Mapper3( iNes2Instance iNesHeader ) : Mapper( iNesHeader ) 
+Mapper3::Mapper3( iNes2Instance iNesHeader ) : Mapper( iNesHeader )
 {
 }
 
