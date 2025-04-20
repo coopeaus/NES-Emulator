@@ -9,17 +9,17 @@
  */
 class Mapper3 : public Mapper
 {
-  public:
-    Mapper3( iNes2Instance iNesHeader );
-    u32  TranslateCPUAddress( u16 address ) override;
-    u32  TranslatePPUAddress( u16 address ) override;
-    void HandleCPUWrite( u16 address, u8 data ) override;
+public:
+  Mapper3( iNes2Instance iNesHeader );
+  u32  TranslateCPUAddress( u16 address ) override;
+  u32  TranslatePPUAddress( u16 address ) override;
+  void HandleCPUWrite( u16 address, u8 data ) override;
 
-    [[nodiscard]] bool       SupportsPrgRam() override { return false; }
-    [[nodiscard]] bool       HasExpansionRom() override { return false; }
-    [[nodiscard]] bool       HasExpansionRam() override { return false; }
-    [[nodiscard]] MirrorMode GetMirrorMode() override;
+  [[nodiscard]] bool       SupportsPrgRam() override { return false; }
+  [[nodiscard]] bool       HasExpansionRom() override { return false; }
+  [[nodiscard]] bool       HasExpansionRam() override { return false; }
+  [[nodiscard]] MirrorMode GetMirrorMode() override;
 
-  private:
-    u8 _chrBank = 0;
+private:
+  u8 _chrBank = 0;
 };
