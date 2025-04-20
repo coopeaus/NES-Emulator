@@ -15,6 +15,7 @@
 #include "mappers/mapper-base.h"
 #include "mappers/mapper0.h"
 #include "mappers/mapper1.h"
+#include "mappers/mapper3.h"
 
 Cartridge::Cartridge( Bus *bus ) : bus( bus )
 {
@@ -144,6 +145,9 @@ void Cartridge::LoadRom( const std::string &filePath )
       break;
     case 1:
       _mapper = std::make_shared<Mapper1>( iNes );
+      break;
+    case 3:
+      _mapper = std::make_shared<Mapper3>( iNes );
       break;
     default:
       throw std::runtime_error( "Unsupported mapper: " + std::to_string( mapperNumber ) );
