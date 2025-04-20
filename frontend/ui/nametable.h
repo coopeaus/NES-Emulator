@@ -53,7 +53,7 @@ public:
     ImVec2 const           tilemapSize = ImVec2( 320, 300 );
     ImGuiWindowFlags const windowFlags = ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar;
 
-    ImGui::PushStyleColor( ImGuiCol_ChildBg, Spectrum::GRAY100 );
+    ImGui::PushStyleColor( ImGuiCol_ChildBg, ImGui::Spectrum::GRAY100 );
     ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
     ImGui::BeginChild( "nametable panel", panelSize, ImGuiChildFlags_Borders, windowFlags );
 

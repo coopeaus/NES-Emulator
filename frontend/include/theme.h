@@ -5,11 +5,11 @@
 
 // NOLINTBEGIN
 // clang-format off
-using namespace ImGui;
-
 namespace CustomTheme {
 inline void Style()
 {
+    using namespace ImGui;
+
     ImGuiStyle *style = &ImGui::GetStyle();
     // style->FramePadding = ImVec2( 4, 6 );
 
