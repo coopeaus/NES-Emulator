@@ -1,8 +1,9 @@
 #pragma once
-#include "cpu.h"
 #include "global-types.h"
-#include "ppu.h"
 #include "cartridge.h"
+#include "cpu.h"
+#include "ppu.h"
+#include "apu.h"
 #include <array>
 #include <cstdint>
 
@@ -24,6 +25,7 @@ public:
   */
   CPU       cpu;
   PPU       ppu;
+  APU       apu;
   Cartridge cartridge;
 
   /*

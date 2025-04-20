@@ -54,7 +54,7 @@ public:
 
       float  scale = 1.8f;
       ImVec2 spriteWindowSize = ImVec2( 256 * scale, 240 * scale );
-      ImGui::PushStyleColor( ImGuiCol_ChildBg, Spectrum::GRAY200 );
+      ImGui::PushStyleColor( ImGuiCol_ChildBg, ImGui::Spectrum::GRAY200 );
       ImGui::BeginChild( "sprite window bottom", ImVec2( spriteWindowSize ), ImGuiChildFlags_Borders,
                          ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar );
       ImGui::PopStyleColor();
@@ -72,7 +72,7 @@ public:
     ImVec2 const           tilemapSize = ImVec2( 192, 192 );
     ImGuiWindowFlags const windowFlags = ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar;
 
-    ImGui::PushStyleColor( ImGuiCol_ChildBg, Spectrum::GRAY100 );
+    ImGui::PushStyleColor( ImGuiCol_ChildBg, ImGui::Spectrum::GRAY100 );
     ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 10.0f, 10.0f ) );
     ImGui::BeginChild( "sprite panel", panelSize, ImGuiChildFlags_Borders, windowFlags );
     RenderOamSpriteData( 0, tilemapSize );

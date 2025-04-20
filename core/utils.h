@@ -6,8 +6,6 @@
 #include <vector>
 #include "global-types.h"
 
-using namespace std;
-
 namespace utils
 {
 
@@ -27,6 +25,14 @@ inline std::string toHex( u16 num, u8 width = 4 )
     hexStr[i] = "0123456789ABCDEF"[num & 0xF];
   }
   return hexStr;
+}
+
+inline bool between( int value, int min, int max )
+{
+  /*
+   * @brief Check if a value is between min and max
+   */
+  return ( value >= min && value <= max );
 }
 
 } // namespace utils

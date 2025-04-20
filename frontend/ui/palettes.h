@@ -63,7 +63,7 @@ public:
 private:
   void LeftPanel()
   {
-    ImGui::PushStyleColor( ImGuiCol_ChildBg, Spectrum::GRAY100 );
+    ImGui::PushStyleColor( ImGuiCol_ChildBg, ImGui::Spectrum::GRAY100 );
     ImGui::BeginChild( "palette panel", ImVec2( 330, 0 ), ImGuiChildFlags_Borders );
     RenderTabs();
     ImGui::EndChild();

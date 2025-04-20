@@ -41,7 +41,7 @@ public:
           }
           ImGui::EndMenu();
         }
-        Separator();
+        ImGui::Separator();
         if ( ImGui::MenuItem( "Exit" ) ) {
           renderer->running = false;
         }
@@ -60,7 +60,7 @@ public:
         if ( auto *logWindow = ui->GetComponent<LogWindow>() ) {
           ImGui::MenuItem( "Trace Log", nullptr, &logWindow->visible );
         }
-        Separator();
+        ImGui::Separator();
         if ( auto *cpuViewer = ui->GetComponent<CpuViewerWindow>() ) {
           ImGui::MenuItem( "CPU", nullptr, &cpuViewer->visible );
         }
@@ -72,7 +72,7 @@ public:
         if ( auto *cartridgeInfoViewer = ui->GetComponent<CartridgeInfoWindow>() ) {
           ImGui::MenuItem( "Cartridge Info", nullptr, &cartridgeInfoViewer->visible );
         }
-        Separator();
+        ImGui::Separator();
 
         if ( auto *paletteWindow = ui->GetComponent<PaletteWindow>() ) {
           ImGui::MenuItem( "Palettes", nullptr, &paletteWindow->visible );
