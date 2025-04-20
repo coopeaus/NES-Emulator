@@ -9,125 +9,125 @@
  */
 TEST_F( CpuTest, SanityCheck )
 {
-    // cpu.read and cpu.write shouldn't throw any errors
-    u8 const testVal = cpu.Read( 0x0000 );
-    cpu.Write( 0x0000, testVal );
+  // cpu.read and cpu.write shouldn't throw any errors
+  u8 const testVal = cpu.Read( 0x0000 );
+  cpu.Write( 0x0000, testVal );
 }
 
 TEST_F( CpuTest, MemorySweep )
 {
-    // Write to every place in addressable memory, ensure emulator doesn't crash
-    try {
-        for ( u16 i = 0; i < 0xFFFF; ++i ) {
-            cpu.Write( i, 0x00 );
-        }
-
-        for ( u16 i = 0; i < 0xFFFF; ++i ) {
-            auto dummyVal = cpu.Read( i );
-            (void) dummyVal;
-        }
-    } catch ( std::exception &e ) {
-        FAIL() << e.what();
+  // Write to every place in addressable memory, ensure emulator doesn't crash
+  try {
+    for ( u16 i = 0; i < 0xFFFF; ++i ) {
+      cpu.Write( i, 0x00 );
     }
 
-    LoadTestCartridge();
-
-    try {
-        for ( u16 i = 0; i < 0xFFFF; ++i ) {
-            cpu.Write( i, 0x00 );
-        }
-
-        for ( u16 i = 0; i < 0xFFFF; ++i ) {
-            auto dummyVal = cpu.Read( i );
-            (void) dummyVal;
-        }
-    } catch ( std::exception &e ) {
-        FAIL() << e.what();
+    for ( u16 i = 0; i < 0xFFFF; ++i ) {
+      auto dummyVal = cpu.Read( i );
+      (void) dummyVal;
     }
+  } catch ( std::exception &e ) {
+    FAIL() << e.what();
+  }
+
+  LoadTestCartridge();
+
+  try {
+    for ( u16 i = 0; i < 0xFFFF; ++i ) {
+      cpu.Write( i, 0x00 );
+    }
+
+    for ( u16 i = 0; i < 0xFFFF; ++i ) {
+      auto dummyVal = cpu.Read( i );
+      (void) dummyVal;
+    }
+  } catch ( std::exception &e ) {
+    FAIL() << e.what();
+  }
 }
 
 TEST_F( CpuTest, RamCheck )
 {
-    // Write 1 to every location in RAM
-    for ( u16 i = 0x0000; i < 0x0800; ++i ) {
-        cpu.Write( i, 0x01 );
-    }
-    for ( u16 i = 0x0000; i < 0x0800; ++i ) {
-        EXPECT_EQ( cpu.Read( i ), 0x01 );
-    }
+  // Write 1 to every location in RAM
+  for ( u16 i = 0x0000; i < 0x0800; ++i ) {
+    cpu.Write( i, 0x01 );
+  }
+  for ( u16 i = 0x0000; i < 0x0800; ++i ) {
+    EXPECT_EQ( cpu.Read( i ), 0x01 );
+  }
 
-    bus.DebugReset();
-    // Write 1 to mirrored locations in RAM
-    for ( u16 i = 0x0800; i < 0x2000; ++i ) {
-        cpu.Write( i, 0x01 );
-    }
-    for ( u16 i = 0x0000; i < 0x0800; ++i ) {
-        EXPECT_EQ( cpu.Read( i ), 0x01 );
-    }
+  bus.DebugReset();
+  // Write 1 to mirrored locations in RAM
+  for ( u16 i = 0x0800; i < 0x2000; ++i ) {
+    cpu.Write( i, 0x01 );
+  }
+  for ( u16 i = 0x0000; i < 0x0800; ++i ) {
+    EXPECT_EQ( cpu.Read( i ), 0x01 );
+  }
 }
 
 TEST_F( CpuTest, ResetVector )
 {
-    bus.EnableJsonTestMode(); // enables flat memory
-    cpu.Write( 0xFFFC, 0x34 );
-    cpu.Write( 0xFFFD, 0x12 );
+  bus.EnableJsonTestMode(); // enables flat memory
+  cpu.Write( 0xFFFC, 0x34 );
+  cpu.Write( 0xFFFD, 0x12 );
 
-    // PC should be 0
-    EXPECT_EQ( cpu.GetProgramCounter(), 0x0000 );
-    cpu.Reset();
+  // PC should be 0
+  EXPECT_EQ( cpu.GetProgramCounter(), 0x0000 );
+  cpu.Reset();
 
-    // PC should be 0x1234
-    EXPECT_EQ( cpu.GetProgramCounter(), 0x1234 );
+  // PC should be 0x1234
+  EXPECT_EQ( cpu.GetProgramCounter(), 0x1234 );
 }
 
 TEST_F( CpuTest, IRQ )
 {
-    bus.EnableJsonTestMode();
-    bus.DebugReset();
+  bus.EnableJsonTestMode();
+  bus.DebugReset();
 
-    EXPECT_EQ( cpu.GetInterruptDisableFlag(), 0 );
-    cpu.SetInterruptDisableFlag( true );
+  EXPECT_EQ( cpu.GetInterruptDisableFlag(), 0 );
+  cpu.SetInterruptDisableFlag( true );
 
-    // No IRQ when I flag is set
-    auto cycles = cpu.GetCycles();
-    cpu.IRQ();
-    EXPECT_EQ( cpu.GetCycles(), cycles );
+  // No IRQ when I flag is set
+  auto cycles = cpu.GetCycles();
+  cpu.IRQ();
+  EXPECT_EQ( cpu.GetCycles(), cycles );
 
-    // IRQ should execute when I flag is cleared
-    cpu.SetInterruptDisableFlag( false );
-    cycles = cpu.GetCycles();
-    cpu.IRQ();
-    EXPECT_EQ( cpu.GetCycles(), cycles + 7 );
+  // IRQ should execute when I flag is cleared
+  cpu.SetInterruptDisableFlag( false );
+  cycles = cpu.GetCycles();
+  cpu.IRQ();
+  EXPECT_EQ( cpu.GetCycles(), cycles + 7 );
 
-    // Interrupt vector at 0xFFFE should set PC
-    bus.EnableJsonTestMode();
-    bus.DebugReset();
-    cpu.Write( 0xFFFE, 0x34 );
-    cpu.Write( 0xFFFF, 0x12 );
-    EXPECT_EQ( cpu.GetProgramCounter(), 0x0000 );
-    cpu.SetInterruptDisableFlag( false );
-    cpu.IRQ();
-    EXPECT_EQ( cpu.GetProgramCounter(), 0x1234 );
+  // Interrupt vector at 0xFFFE should set PC
+  bus.EnableJsonTestMode();
+  bus.DebugReset();
+  cpu.Write( 0xFFFE, 0x34 );
+  cpu.Write( 0xFFFF, 0x12 );
+  EXPECT_EQ( cpu.GetProgramCounter(), 0x0000 );
+  cpu.SetInterruptDisableFlag( false );
+  cpu.IRQ();
+  EXPECT_EQ( cpu.GetProgramCounter(), 0x1234 );
 }
 
 TEST_F( CpuTest, NMI )
 {
-    bus.EnableJsonTestMode();
-    bus.DebugReset();
+  bus.EnableJsonTestMode();
+  bus.DebugReset();
 
-    // NMI should trigger, even when I flag is set
-    auto cycles = cpu.GetCycles();
-    cpu.NMI();
-    EXPECT_EQ( cpu.GetCycles(), cycles + 7 );
+  // NMI should trigger, even when I flag is set
+  auto cycles = cpu.GetCycles();
+  cpu.NMI();
+  EXPECT_EQ( cpu.GetCycles(), cycles + 7 );
 
-    // NMI vector at 0xFFFA should set PC
-    bus.EnableJsonTestMode();
-    bus.DebugReset();
-    cpu.Write( 0xFFFA, 0x34 );
-    cpu.Write( 0xFFFB, 0x12 );
-    EXPECT_EQ( cpu.GetProgramCounter(), 0x0000 );
-    cpu.NMI();
-    EXPECT_EQ( cpu.GetProgramCounter(), 0x1234 );
+  // NMI vector at 0xFFFA should set PC
+  bus.EnableJsonTestMode();
+  bus.DebugReset();
+  cpu.Write( 0xFFFA, 0x34 );
+  cpu.Write( 0xFFFB, 0x12 );
+  EXPECT_EQ( cpu.GetProgramCounter(), 0x0000 );
+  cpu.NMI();
+  EXPECT_EQ( cpu.GetProgramCounter(), 0x1234 );
 }
 
 TEST_F( CpuTest, ExecuteFrame )
@@ -145,19 +145,19 @@ TEST_F( CpuTest, ExecuteFrame )
 /* This is a macro to simplify test creation for json tests
  * The naming convention is <opcode hex>_<mnemonic>_<addressing mode>
  * e.g. x00_BRK_Implied, x01_ORA_IndirectX, x05_ORA_ZeroPage, etc. */
-#define CPU_TEST( opcode_hex, mnemonic, addr_mode, filename )                                                \
-    TEST_F( CpuTest, x##opcode_hex##_##mnemonic##_##addr_mode )                                              \
-    {                                                                                                        \
-        std::string       space = " ";                                                                       \
-        std::string const testName = #opcode_hex + space + #mnemonic + space + #addr_mode;                   \
-        TestStart( testName );                                                                               \
-        std::string jsonDir = std::string( paths::tests() ) + "/json/" + ( filename );                       \
-        json const  testCases = GetJsonData( jsonDir );                                                      \
-        for ( const auto &testCase : testCases ) {                                                           \
-            RunTestCase( testCase );                                                                         \
-        }                                                                                                    \
-        TestEnd( testName );                                                                                 \
-    }
+#define CPU_TEST( opcode_hex, mnemonic, addr_mode, filename )                                                          \
+  TEST_F( CpuTest, x##opcode_hex##_##mnemonic##_##addr_mode )                                                          \
+  {                                                                                                                    \
+    std::string       space = " ";                                                                                     \
+    std::string const testName = #opcode_hex + space + #mnemonic + space + #addr_mode;                                 \
+    TestStart( testName );                                                                                             \
+    std::string jsonDir = std::string( paths::tests() ) + "/json/" + ( filename );                                     \
+    json const  testCases = GetJsonData( jsonDir );                                                                    \
+    for ( const auto &testCase : testCases ) {                                                                         \
+      RunTestCase( testCase );                                                                                         \
+    }                                                                                                                  \
+    TestEnd( testName );                                                                                               \
+  }
 
 /*
 ################################
@@ -424,6 +424,6 @@ CPU_TEST( 8B, ANE, Immediate, "8b.json" );
 
 auto main( int argc, char **argv ) -> int
 {
-    testing::InitGoogleTest( &argc, argv );
-    return RUN_ALL_TESTS();
+  testing::InitGoogleTest( &argc, argv );
+  return RUN_ALL_TESTS();
 }

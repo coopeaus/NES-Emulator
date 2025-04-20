@@ -5,15 +5,15 @@
 
 class Mapper0 : public Mapper
 {
-  public:
-    Mapper0( iNes2Instance iNesHeader ) : Mapper( iNesHeader ) {}
-    auto TranslateCPUAddress( u16 address ) -> u32 override;
-    auto TranslatePPUAddress( u16 address ) -> u32 override;
-    void HandleCPUWrite( u16 address, u8 data ) override;
+public:
+  Mapper0( iNes2Instance iNesHeader ) : Mapper( iNesHeader ) {}
+  auto TranslateCPUAddress( u16 address ) -> u32 override;
+  auto TranslatePPUAddress( u16 address ) -> u32 override;
+  void HandleCPUWrite( u16 address, u8 data ) override;
 
-    [[nodiscard]] bool SupportsPrgRam() override { return false; }
-    [[nodiscard]] bool HasExpansionRom() override { return false; }
-    [[nodiscard]] bool HasExpansionRam() override { return false; }
+  [[nodiscard]] bool SupportsPrgRam() override { return false; }
+  [[nodiscard]] bool HasExpansionRom() override { return false; }
+  [[nodiscard]] bool HasExpansionRam() override { return false; }
 
-    [[nodiscard]] MirrorMode GetMirrorMode() override { return MirrorMode::Vertical; }
+  [[nodiscard]] MirrorMode GetMirrorMode() override { return MirrorMode::Vertical; }
 };

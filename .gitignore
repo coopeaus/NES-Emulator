@@ -130,3 +130,4 @@ vcpkg_installed/
 imgui.ini
 *.ini
 tools/python/__pycache__
+.lldbinit
