@@ -35,7 +35,7 @@ u8 Bus::Read( const u16 address, bool debugMode )
 
   // APU
   if ( utils::between( address, 0x4000, 0x4013 ) || address == 0x4015 ) {
-    return apu.HandleCpuRead( address );
+    return APU::HandleCpuRead( address );
   }
 
   // Controller read
