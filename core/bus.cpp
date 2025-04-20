@@ -39,7 +39,7 @@ u8 Bus::Read( const u16 address, bool debugMode )
   }
 
   // Controller read
-  if ( address >= 0x4016 && address <= 0x4017 ) { // FIX: 0x4017 for controllers or for APU?
+  if ( address >= 0x4016 && address <= 0x4017 ) {
     auto data = ( controllerState[address & 0x0001] & 0x80 ) > 0;
     controllerState[address & 0x0001] <<= 1;
     return data;
@@ -90,13 +90,13 @@ void Bus::Write( const u16 address, const u8 data )
   }
 
   // Controller input
-  if ( address >= 0x4016 && address <= 0x4017 ) { // FIX: 0x4017 for controllers or APU?
+  if ( address >= 0x4016 ) {
     controllerState[address & 0x0001] = controller[address & 0x0001];
     return;
   }
 
   // APU
-  if ( utils::between( address, 0x4000, 0x4013 ) || address == 0x4015 ) {
+  if ( utils::between( address, 0x4000, 0x4013 ) || address == 0x4015 || address == 0x4017 ) {
     apu.HandleCpuWrite( address, data );
     return;
   }

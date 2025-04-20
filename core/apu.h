@@ -1,6 +1,7 @@
 #pragma once
 #include "utils.h"
 #include "global-types.h"
+#include "apu-types.h"
 
 class Bus;
 class APU
@@ -11,29 +12,20 @@ public:
 
   /*
   ################################
+  ||        APU Variables       ||
+  ################################
+  */
+
+  /*
+  ################################
   ||      CPU Read / Write      ||
   ################################
   */
   u8 HandleCpuRead( u16 addr )
   {
-    using utils::between;
-    if ( between( addr, 0x4000, 0x4003 ) ) {
-      Pulse1Read();
-    } else if ( between( addr, 0x4004, 0x4007 ) ) {
-      Pulse2Read();
-    } else if ( between( addr, 0x4008, 0x400B ) ) {
-      TriangleRead();
-    } else if ( between( addr, 0x400C, 0x400F ) ) {
-      NoiseRead();
-    } else if ( between( addr, 0x4010, 0x4013 ) ) {
-      DMCRead();
-    } else if ( addr == 0x4015 ) {
+    if ( addr == 0x4015 ) {
       StatusRead();
-    } else if ( addr == 0x4017 ) {
-      FrameCounterRead();
     }
-
-    // placeholder
     return 0xFF;
   }
 

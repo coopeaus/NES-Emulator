@@ -468,14 +468,14 @@ public:
     const Uint8 *keystate = SDL_GetKeyboardState( nullptr );
 
     // Map keys to controller bits
-    bus.controller[0] |= keystate[SDL_SCANCODE_X] ? 0x80 : 0x00;     // A Button -> x
-    bus.controller[0] |= keystate[SDL_SCANCODE_Z] ? 0x40 : 0x00;     // B Button -> z
-    bus.controller[0] |= keystate[SDL_SCANCODE_A] ? 0x20 : 0x00;     // Select   -> a
-    bus.controller[0] |= keystate[SDL_SCANCODE_S] ? 0x10 : 0x00;     // Start    -> s
-    bus.controller[0] |= keystate[SDL_SCANCODE_UP] ? 0x08 : 0x00;    // Up       -> up
-    bus.controller[0] |= keystate[SDL_SCANCODE_DOWN] ? 0x04 : 0x00;  // Down     -> down
-    bus.controller[0] |= keystate[SDL_SCANCODE_LEFT] ? 0x02 : 0x00;  // Left     -> left
-    bus.controller[0] |= keystate[SDL_SCANCODE_RIGHT] ? 0x01 : 0x00; // Right    -> right
+    bus.controller[0] |= keystate[SDL_SCANCODE_Z] ? 0x80 : 0x00;      // A Button -> z
+    bus.controller[0] |= keystate[SDL_SCANCODE_X] ? 0x40 : 0x00;      // B Button -> x
+    bus.controller[0] |= keystate[SDL_SCANCODE_TAB] ? 0x20 : 0x00;    // Select   -> tab
+    bus.controller[0] |= keystate[SDL_SCANCODE_RETURN] ? 0x10 : 0x00; // Start    -> return
+    bus.controller[0] |= keystate[SDL_SCANCODE_UP] ? 0x08 : 0x00;     // Up       -> up
+    bus.controller[0] |= keystate[SDL_SCANCODE_DOWN] ? 0x04 : 0x00;   // Down     -> down
+    bus.controller[0] |= keystate[SDL_SCANCODE_LEFT] ? 0x02 : 0x00;   // Left     -> left
+    bus.controller[0] |= keystate[SDL_SCANCODE_RIGHT] ? 0x01 : 0x00;  // Right    -> right
   }
 
   /*
