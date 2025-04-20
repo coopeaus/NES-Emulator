@@ -14,8 +14,6 @@
 #include <string>
 #include <fstream>
 
-using namespace std;
-
 class PPU
 {
 public:
@@ -31,8 +29,8 @@ public:
                                                     std::string( paths::palettes() ) + "/palette2.pal",
                                                     std::string( paths::palettes() ) + "/palette3.pal" };
 
-  array<u32, 64> nesPaletteRgbValues{};
-  u32            GetMasterPaletteColor( u8 index ) const { return nesPaletteRgbValues.at( index ); }
+  std::array<u32, 64> nesPaletteRgbValues{};
+  u32                 GetMasterPaletteColor( u8 index ) const { return nesPaletteRgbValues.at( index ); }
 
   bool preventVBlank = false;
   bool nmiReady = false;
@@ -114,16 +112,16 @@ public:
   u8 vramBuffer = 0x00;
 
   using nametable_t = std::array<u8, 1024>;
-  array<nametable_t, 4> nameTables{};
+  std::array<nametable_t, 4> nameTables{};
 
   // u8 nametables[4][1024];
-  array<u8, 32> defaultPalette = { 0x09, 0x01, 0x00, 0x01, 0x00, 0x02, 0x02, 0x0D, 0x08, 0x10, 0x08,
-                                   0x24, 0x00, 0x00, 0x04, 0x2C, 0x09, 0x01, 0x34, 0x03, 0x00, 0x04,
-                                   0x00, 0x14, 0x08, 0x3A, 0x00, 0x02, 0x00, 0x20, 0x2C, 0x08 };
+  std::array<u8, 32> defaultPalette = { 0x09, 0x01, 0x00, 0x01, 0x00, 0x02, 0x02, 0x0D, 0x08, 0x10, 0x08,
+                                        0x24, 0x00, 0x00, 0x04, 0x2C, 0x09, 0x01, 0x34, 0x03, 0x00, 0x04,
+                                        0x00, 0x14, 0x08, 0x3A, 0x00, 0x02, 0x00, 0x20, 0x2C, 0x08 };
 
-  array<u8, 32> paletteMemory = defaultPalette;
-  u8            GetPaletteEntry( u8 index ) const { return paletteMemory.at( index ); }
-  void          SetPaletteEntry( u8 index, u8 value ) { paletteMemory.at( index ) = value; }
+  std::array<u8, 32> paletteMemory = defaultPalette;
+  u8                 GetPaletteEntry( u8 index ) const { return paletteMemory.at( index ); }
+  void               SetPaletteEntry( u8 index, u8 value ) { paletteMemory.at( index ) = value; }
 
   OAM          oam{};
   SpriteEntry  GetOamEntry( u8 index ) const { return oam.entries.at( index ); }
@@ -175,9 +173,9 @@ public:
   ||        SDL Variables       ||
   ################################
   */
-  static constexpr int    gBufferSize = 61440;
-  array<u32, gBufferSize> frameBuffer{};
-  array<u32, gBufferSize> GetFrameBuffer() const { return frameBuffer; }
+  static constexpr int         gBufferSize = 61440;
+  std::array<u32, gBufferSize> frameBuffer{};
+  std::array<u32, gBufferSize> GetFrameBuffer() const { return frameBuffer; }
 
   void ClearFrameBuffer() { frameBuffer.fill( 0x00000000 ); }
 
@@ -905,9 +903,9 @@ public:
     return buffer;
   }
 
-  static array<u32, 64> ReadPalette( const string &filename )
+  static std::array<u32, 64> ReadPalette( const std::string &filename )
   {
-    array<u32, 64> nesPalette{};
+    std::array<u32, 64> nesPalette{};
 
     std::ifstream file( filename, std::ios::binary );
     if ( !file ) {
@@ -916,7 +914,7 @@ public:
     }
 
     file.seekg( 0, std::ios::end );
-    streamsize const fileSize = file.tellg();
+    std::streamsize const fileSize = file.tellg();
     if ( fileSize != 192 ) {
       std::cerr << "Invalid palette file size: " << fileSize << '\n';
       throw std::runtime_error( "Invalid palette file size" );

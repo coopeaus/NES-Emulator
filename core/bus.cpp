@@ -4,7 +4,6 @@
 #include <iostream>
 
 #include "utils.h"
-using namespace utils;
 
 // Constructor to initialize the bus with a flat memory model
 Bus::Bus() : cpu( this ), ppu( this ), cartridge( this ), apu( this )
@@ -35,7 +34,7 @@ u8 Bus::Read( const u16 address, bool debugMode )
   }
 
   // APU
-  if ( between( address, 0x4000, 0x4013 ) || address == 0x4015 || address == 0x4017 ) {
+  if ( utils::between( address, 0x4000, 0x4013 ) || address == 0x4015 || address == 0x4017 ) {
     return apu.HandleCpuRead( address );
   }
 
@@ -91,7 +90,7 @@ void Bus::Write( const u16 address, const u8 data )
   }
 
   // APU
-  if ( between( address, 0x4000, 0x4013 ) || address == 0x4015 || address == 0x4017 ) {
+  if ( utils::between( address, 0x4000, 0x4013 ) || address == 0x4015 || address == 0x4017 ) {
     apu.HandleCpuWrite( address, data );
     return;
   }

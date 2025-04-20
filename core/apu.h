@@ -1,11 +1,6 @@
 #pragma once
-#include <cstdint>
 #include "utils.h"
-
-using u8 = std::uint8_t;
-using u16 = std::uint16_t;
-using s16 = std::int16_t;
-using namespace utils;
+#include "global-types.h"
 
 class Bus;
 class APU
@@ -21,6 +16,7 @@ public:
   */
   u8 HandleCpuRead( u16 addr )
   {
+    using utils::between;
     if ( between( addr, 0x4000, 0x4003 ) ) {
       Pulse1Read();
     } else if ( between( addr, 0x4004, 0x4007 ) ) {
@@ -43,6 +39,7 @@ public:
 
   void HandleCpuWrite( u16 address, u8 data )
   {
+    using utils::between;
     if ( between( address, 0x4000, 0x4003 ) ) {
       Pulse1Write( data );
     } else if ( between( address, 0x4004, 0x4007 ) ) {
