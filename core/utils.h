@@ -16,23 +16,23 @@ MatchResults parseLog( const std::string &filename, const std::regex &pattern, s
 
 inline std::string toHex( u16 num, u8 width = 4 )
 {
-    /*
-     * @brief Convert a 16-bit unsigned integer to a hexadecimal string
-     */
+  /*
+   * @brief Convert a 16-bit unsigned integer to a hexadecimal string
+   */
 
-    std::string hexStr( width, '0' );
-    for ( int i = width - 1; i >= 0; --i, num >>= 4 ) {
-        hexStr[i] = "0123456789ABCDEF"[num & 0xF];
-    }
-    return hexStr;
+  std::string hexStr( width, '0' );
+  for ( int i = width - 1; i >= 0; --i, num >>= 4 ) {
+    hexStr[i] = "0123456789ABCDEF"[num & 0xF];
+  }
+  return hexStr;
 }
 
 inline bool between( int value, int min, int max )
 {
-    /*
-     * @brief Check if a value is between min and max
-     */
-    return ( value >= min && value <= max );
+  /*
+   * @brief Check if a value is between min and max
+   */
+  return ( value >= min && value <= max );
 }
 
 } // namespace utils

@@ -25,39 +25,39 @@ namespace paths
 {
 inline path root()
 {
-    try {
-        return getProjectRoot();
-    } catch ( const std::filesystem::filesystem_error &e ) {
-        throw std::runtime_error( "Failed to get project directory: " + std::string( e.what() ) );
-    }
+  try {
+    return getProjectRoot();
+  } catch ( const std::filesystem::filesystem_error &e ) {
+    throw std::runtime_error( "Failed to get project directory: " + std::string( e.what() ) );
+  }
 }
 
 inline path assets()
 {
-    return root() / "assets";
+  return root() / "assets";
 }
 
 inline std::string roms()
 {
-    auto path = assets() / "roms";
-    return path.string();
+  auto path = assets() / "roms";
+  return path.string();
 }
 
 inline std::string fonts()
 {
-    auto path = assets() / "fonts";
-    return path.string();
+  auto path = assets() / "fonts";
+  return path.string();
 }
 
 inline std::string palettes()
 {
-    auto path = assets() / "palettes";
-    return path.string();
+  auto path = assets() / "palettes";
+  return path.string();
 }
 
 inline std::string tests()
 {
-    auto path = root() / "tests";
-    return path.string();
+  auto path = root() / "tests";
+  return path.string();
 }
 } // namespace paths

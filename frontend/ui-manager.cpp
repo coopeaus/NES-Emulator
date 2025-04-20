@@ -19,29 +19,29 @@
 
 UIManager::UIManager( Renderer *renderer )
 {
-    AddComponent<MainMenuBar>( renderer );
-    AddComponent<OverlayWindow>( renderer );
-    AddComponent<DemoWindow>( renderer );
-    AddComponent<DebuggerWindow>( renderer );
-    AddComponent<LogWindow>( renderer );
-    AddComponent<MemoryDisplayWindow>( renderer );
-    AddComponent<PaletteWindow>( renderer );
-    AddComponent<PatternTablesWindow>( renderer );
-    AddComponent<CpuViewerWindow>( renderer );
-    AddComponent<PpuViewerWindow>( renderer );
-    AddComponent<NametableWindow>( renderer );
-    AddComponent<CartridgeInfoWindow>( renderer );
+  AddComponent<MainMenuBar>( renderer );
+  AddComponent<OverlayWindow>( renderer );
+  AddComponent<DemoWindow>( renderer );
+  AddComponent<DebuggerWindow>( renderer );
+  AddComponent<LogWindow>( renderer );
+  AddComponent<MemoryDisplayWindow>( renderer );
+  AddComponent<PaletteWindow>( renderer );
+  AddComponent<PatternTablesWindow>( renderer );
+  AddComponent<CpuViewerWindow>( renderer );
+  AddComponent<PpuViewerWindow>( renderer );
+  AddComponent<NametableWindow>( renderer );
+  AddComponent<CartridgeInfoWindow>( renderer );
 }
 
 void UIManager::Render()
 {
-    // Render all visible components
-    for ( auto &comp : _components ) {
-        if ( comp->visible ) {
-            comp->OnVisible();
-            comp->RenderSelf();
-        } else {
-            comp->OnHidden();
-        }
+  // Render all visible components
+  for ( auto &comp : _components ) {
+    if ( comp->visible ) {
+      comp->OnVisible();
+      comp->RenderSelf();
+    } else {
+      comp->OnHidden();
     }
+  }
 }
