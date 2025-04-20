@@ -131,20 +131,11 @@ void Mapper1::HandleCPUWrite( u16 address, u8 data )
 
     // the lower 2 bits of the control register set the mirroring mode
     switch ( _controlRegister & 0b00000011 ) {
-      case 0x00:
-        _mirrorMode = MirrorMode::SingleLower;
-        break;
-      case 0x01:
-        _mirrorMode = MirrorMode::SingleUpper;
-        break;
-      case 0x02:
-        _mirrorMode = MirrorMode::Vertical;
-        break;
-      case 0x03:
-        _mirrorMode = MirrorMode::Horizontal;
-        break;
-      default:
-        throw std::runtime_error( "Invalid mirroring mode" );
+      case 0x00: _mirrorMode = MirrorMode::SingleLower; break;
+      case 0x01: _mirrorMode = MirrorMode::SingleUpper; break;
+      case 0x02: _mirrorMode = MirrorMode::Vertical; break;
+      case 0x03: _mirrorMode = MirrorMode::Horizontal; break;
+      default  : throw std::runtime_error( "Invalid mirroring mode" );
     }
   }
 

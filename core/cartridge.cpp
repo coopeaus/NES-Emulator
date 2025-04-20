@@ -139,14 +139,9 @@ void Cartridge::LoadRom( const std::string &filePath )
   */
   auto const mapperNumber = iNes.GetMapper();
   switch ( mapperNumber ) {
-    case 0:
-      _mapper = std::make_shared<Mapper0>( iNes );
-      break;
-    case 1:
-      _mapper = std::make_shared<Mapper1>( iNes );
-      break;
-    default:
-      throw std::runtime_error( "Unsupported mapper: " + std::to_string( mapperNumber ) );
+    case 0 : _mapper = std::make_shared<Mapper0>( iNes ); break;
+    case 1 : _mapper = std::make_shared<Mapper1>( iNes ); break;
+    default: throw std::runtime_error( "Unsupported mapper: " + std::to_string( mapperNumber ) );
   };
 
   if ( _mapper != nullptr ) {

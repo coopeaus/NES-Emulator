@@ -157,8 +157,7 @@ void PPU::CpuWrite( u16 address, u8 data )
       break;
     }
     // 2002: PPUSTATUS, does nothing
-    case 0x2002:
-      break;
+    case 0x2002: break;
     // 2003: OAMADDR
     case 0x2003: // NOLINT
     {
@@ -250,8 +249,7 @@ void PPU::CpuWrite( u16 address, u8 data )
       WriteVram( vramAddr.value, data );
       vramAddr.value += ppuCtrl.bit.vramIncrement ? 32 : 1;
     }
-    default:
-      break;
+    default: break;
   }
 }
 
