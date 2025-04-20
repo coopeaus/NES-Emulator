@@ -256,7 +256,7 @@ public:
     ImGui::TableSetColumnIndex( 1 );
     ImGui::Text( "OAMADDR" );
     ImGui::TableSetColumnIndex( 2 );
-    auto oamAddr = renderer->bus.ppu.GetOamAddr();
+    auto oamAddr = renderer->bus.ppu.oamAddr;
     ImGui::Text( "$%02X", oamAddr );
 
     SectionTableEnd();

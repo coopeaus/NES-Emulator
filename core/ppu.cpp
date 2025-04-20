@@ -289,14 +289,23 @@ void PPU::CpuWrite( u16 address, u8 data )
       way, but it's a more accurate paradigm because that's how the hardware
       handles it.
     */
-    address &= 0x2FFF;
+    address &= 0x2FFF; // 0x2FFF is the address limit for nametables
 
-    if ( GetMirrorMode() == MirrorMode::FourScreen && address >= 0x2800 ) {
-      return bus->cartridge.ReadCartridgeVRAM( address );
-    }
+    // // nametables 2 ($2800-$2BFF) and 3 ($2C00-$2FFF) are stored in the cartridge
+    // if ( GetMirrorMode() == MirrorMode::FourScreen && address >= 0x2800 ) {
+    //   return bus->cartridge.ReadCartridgeVRAM( address );
+    // }
+    //
+    // // nameTables 0 ($2000-$23FF) and 1 ($2400-$27FF) are stored in ppu memory
+    // u16 const nametableAddr = ResolveNameTableAddress( address );
+    // return nameTables.at( nametableAddr & 0x07FF );
 
     u16 const nametableAddr = ResolveNameTableAddress( address );
-    return nameTables.at( nametableAddr & 0x07FF );
+    u8 const  tableIndex = ( nametableAddr <= 0x23FF )   ? 0
+                           : ( nametableAddr <= 0x27FF ) ? 1
+                           : ( nametableAddr <= 0x2BFF ) ? 2
+                                                         : 3;
+    return nameTables.at( tableIndex ).at( nametableAddr & 0x03FF );
   }
 
   // $3F00-$3FFF: Palettes
@@ -364,12 +373,12 @@ void PPU::WriteVram( u16 address, u8 data )
     */
 
     address &= 0x2FFF;
-    if ( GetMirrorMode() == MirrorMode::FourScreen && address >= 0x2800 ) {
-      bus->cartridge.WriteCartridgeVRAM( address, data );
-      return;
-    }
     u16 const nametableAddr = ResolveNameTableAddress( address );
-    nameTables.at( nametableAddr & 0x07FF ) = data;
+    u8 const  tableIndex = ( nametableAddr <= 0x23FF )   ? 0
+                           : ( nametableAddr <= 0x27FF ) ? 1
+                           : ( nametableAddr <= 0x2BFF ) ? 2
+                                                         : 3;
+    nameTables.at( tableIndex ).at( nametableAddr & 0x03FF ) = data;
     return;
   }
 
@@ -427,95 +436,6 @@ void PPU::VBlank()
   }
 }
 
-// Called each cycle between cycle 65 and 256 to evaluate sprites.
-void PPU::SpriteEvalForNextScanline()
-{
-  // Only run during visible scanlines (0–239) and cycles 65–256.
-  if ( !IsRenderingEnabled() || scanline > 239 || cycle < 65 || cycle > 256 )
-    return;
-
-  // Start
-  if ( cycle == 65 ) {
-    SpriteEvalForNextScanlineStart();
-  }
-
-  if ( cycle & 0x01 ) // Odd cycle: perform a read.
-  {
-    oamCopyBuffer = oam.data.at( oamAddr );
-  } else // Even cycle: process copying.
-  {
-    OamCopy();
-  }
-  oamAddr = ( spriteAddrLo & 0x03 ) | ( spriteAddrHi << 2 );
-
-  // End
-  if ( cycle == 256 ) {
-    SpriteEvalForNextScanlineEnd();
-  }
-}
-
-void PPU::OamCopy()
-{
-  if ( oamCopyDone ) {
-    // If copying is already finished, simply advance the sprite address.
-    spriteAddrHi = ( spriteAddrHi + 1 ) & 0x3F;
-    if ( secondaryOamAddr >= 0x20 ) {
-      oamCopyBuffer = secondaryOam.data.at( secondaryOamAddr & 0x1F );
-    }
-    return;
-  }
-
-  // Determine sprite height (8 or 16 pixels).
-  u8 const spriteHeight = ( ppuCtrl.bit.spriteSize ? 16 : 8 );
-
-  // Check if the sprite (Y coordinate in oamCopyBuffer) is in range for the next scanline.
-  if ( !spriteInRange && ( ( scanline + 1 ) >= oamCopyBuffer ) &&
-       ( ( scanline + 1 ) < ( oamCopyBuffer + spriteHeight ) ) ) {
-    spriteInRange = true;
-  }
-
-  // If there's room in secondary OAM (32 bytes = 8 sprites * 4 bytes)
-  if ( secondaryOamAddr < 0x20 ) {
-    // Copy the current byte from primary OAM into secondary OAM.
-    secondaryOam.data.at( secondaryOamAddr ) = oam.data.at( oamAddr );
-
-    if ( spriteInRange ) {
-      // Mark sprite 0 as added on cycle 66 if applicable.
-      if ( cycle == 66 )
-        sprite0Added = true;
-
-      // Advance the low part of the sprite address and the secondary OAM pointer.
-      spriteAddrLo++;
-      secondaryOamAddr++;
-
-      // When 4 bytes (a complete sprite entry) have been copied, move to the next sprite.
-      if ( spriteAddrLo >= 4 ) {
-        spriteAddrHi = ( spriteAddrHi + 1 ) & 0x3F;
-        spriteAddrLo = 0;
-        if ( spriteAddrHi == 0 )
-          oamCopyDone = true;
-      }
-
-      // Once a full sprite is copied, reset spriteInRange for the next sprite.
-      if ( ( secondaryOamAddr & 0x03 ) == 0 )
-        spriteInRange = false;
-    } else {
-      // Sprite not in range: skip copying and move to the next sprite.
-      spriteAddrHi = ( spriteAddrHi + 1 ) & 0x3F;
-      spriteAddrLo = 0;
-      if ( spriteAddrHi == 0 )
-        oamCopyDone = true;
-    }
-  } else {
-    // Secondary OAM is full; skip to the next sprite.
-    ppuStatus.bit.spriteOverflow = 1;
-    spriteAddrHi = ( spriteAddrHi + 1 ) & 0x3F;
-    spriteAddrLo = 0;
-    if ( spriteAddrHi == 0 )
-      oamCopyDone = true;
-  }
-}
-
 u16 PPU::ResolveNameTableAddress( u16 addr, int testMirrorMode ) const
 {
 
@@ -557,23 +477,18 @@ u16 PPU::ResolveNameTableAddress( u16 addr, int testMirrorMode ) const
         2800 < > 2C00
 
         Horizontal mode is used for vertical scrolling games, like Kid Icarus.
-
-       Map addresses from 2C00-2FFF to 2800-2BFF if the address is for nametable 1
-       Otherwise map addresses from 2400-27FF to 2000-23FF
        */
 
-      if ( addr & 0x800 ) {
-        return 0x2800 | ( addr & 0x03FF );
-      } else {
+      if ( ( addr >= 0x2000 && addr <= 0x23FF ) || ( addr >= 0x2400 && addr <= 0x27FF ) )
         return 0x2000 | ( addr & 0x03FF );
-      }
+      if ( ( addr >= 0x2800 && addr <= 0x2BFF ) || ( addr >= 0x2C00 && addr <= 0x2FFF ) )
+        return 0x2800 | ( addr & 0x03FF );
 
-      return 0x2000 | ( ( addr & 0x03FF ) | ( ( addr & 0x800 ) >> 1 ) );
     case MirrorMode::FourScreen:
       /* Four-Screen Mirroring
          All four nametables are unique and backed by cartridge VRAM. There's no mirroring.
        */
-      return addr & 0x0FFF;
+      return addr;
     default:
       // Default to vertical mirroring
       return 0x2000 | ( addr & 0x07FF );

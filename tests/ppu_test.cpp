@@ -14,7 +14,6 @@ protected:
   Bus        bus;
   PPU       &ppu = bus.ppu;
   CPU       &cpu = bus.cpu;
-  APU       &apu = bus.apu;
   Cartridge &cartridge = bus.cartridge;
 
   PpuTest()
@@ -370,32 +369,9 @@ TEST_F( PpuTest, ResolveNameTableAddress_Horizontal )
 TEST_F( PpuTest, ResolveNameTableAddress_FourScreen )
 {
   u16 addr = 0x2FFF;
-  u16 expected = addr & 0x0FFF;
+  u16 expected = 0x2FFF;
   u16 result = ppu.ResolveNameTableAddress( addr, static_cast<int>( MirrorMode::FourScreen ) );
   EXPECT_EQ( result, expected );
-}
-
-TEST_F( PpuTest, ClearSecondaryOAM )
-{
-  cpu.Write( 0x2001, 0x08 ); // enable rendering
-
-  // set secondaryOam to non-default
-  for ( u8 i = 0; i < 32; i++ ) {
-    ppu.secondaryOam.data.at( i ) = 0x12;
-  }
-  for ( u8 i = 0; i < 32; i++ ) {
-    EXPECT_EQ( ppu.secondaryOam.data.at( i ), 0x12 );
-  }
-
-  ppu.cycle = 1;
-  for ( int i = 0; i < 64; i++ ) {
-    ppu.Tick();
-  }
-
-  // All should be intialized to 0xFF.
-  for ( u8 i = 0; i < 32; i++ ) {
-    EXPECT_EQ( ppu.secondaryOam.data.at( i ), 0xFF );
-  }
 }
 
 TEST_F( PpuTest, FetchNametableByte )
@@ -533,26 +509,6 @@ TEST_F( PpuTest, IncrementCoarseY )
   EXPECT_EQ( ppu.vramAddr.bit.nametableY, 1 );
 }
 
-TEST_F( PpuTest, ShiftBackgrounds )
-{
-  // Write to enable mask render background
-  ppu.ppuMask.bit.renderBackground = 1;
-
-  // Initialize registers with known values
-  ppu.bgPatternShiftLow = 0b0000000011111111;
-  ppu.bgPatternShiftHigh = 0b1111111100000000;
-  ppu.bgAttributeShiftLow = 0b0000000010101010;
-  ppu.bgAttributeShiftHigh = 0b1111111101010101;
-
-  ppu.ShiftBackgrounds();
-
-  // Verify each register has been shifted left by one bit
-  EXPECT_EQ( ppu.bgPatternShiftLow, 0b0000000111111110 );
-  EXPECT_EQ( ppu.bgPatternShiftHigh, 0b1111111000000000 );
-  EXPECT_EQ( ppu.bgAttributeShiftLow, 0b0000000101010100 );
-  EXPECT_EQ( ppu.bgAttributeShiftHigh, 0b1111111010101010 );
-}
-
 TEST_F( PpuTest, OddFrameSkip )
 {
   ppu.Reset();
@@ -604,58 +560,59 @@ TEST_F( PpuTest, TransferAddressX )
   EXPECT_EQ( ppu.vramAddr.bit.coarseX, 1 );
 }
 
-TEST_F( PpuTest, PrerenderScanline )
+TEST_F( PpuTest, IsSpriteInRange )
 {
-  // This function should:
-  // 1. clear status registers
-  // 2. clear the sprite shift registers
-  // 3. Transfer Y address from temp to vram
+  // -- Test for normal 8-pixel sprite --
+  {
+    int  y = 20;
+    bool isLarge = false; // Sprite height: 8 pixels, so valid scanlines: [20, 28)
 
-  // enable rendering
-  bus.Write( 0x2001, 0x08 );
+    // Beginning of the range.
+    EXPECT_TRUE( ppu.IsSpriteInRange( 20, y, isLarge ) );
 
-  // Setup state
-  ppu.ppuStatus.value = 0xFF;
-  for ( int i = 0; i < 8; i++ ) {
-    ppu.spriteShiftLow.at( i ) = 0xFF;
-    ppu.spriteShiftHigh.at( i ) = 0xFF;
-  }
-  ppu.tempAddr.bit.fineY = 1;
-  ppu.tempAddr.bit.nametableY = 1;
-  ppu.tempAddr.bit.coarseY = 1;
+    // A scanline in the middle.
+    EXPECT_TRUE( ppu.IsSpriteInRange( 25, y, isLarge ) );
 
-  // When not called on 261, should do nothing
-  ppu.scanline = 260;
-  ppu.PrerenderScanline();
-  EXPECT_EQ( ppu.ppuStatus.value, 0xFF );
-  for ( int i = 0; i < 8; i++ ) {
-    EXPECT_EQ( ppu.spriteShiftLow.at( i ), 0xFF );
-    EXPECT_EQ( ppu.spriteShiftHigh.at( i ), 0xFF );
-  }
-  EXPECT_EQ( ppu.tempAddr.bit.fineY, 1 );
-  EXPECT_EQ( ppu.tempAddr.bit.nametableY, 1 );
-  EXPECT_EQ( ppu.tempAddr.bit.coarseY, 1 );
+    // Last valid line (27 is < 28).
+    EXPECT_TRUE( ppu.IsSpriteInRange( 27, y, isLarge ) );
 
-  // Called on 261
-  ppu.scanline = 261;
+    // Exactly at the boundary (28 is not less than 28).
+    EXPECT_FALSE( ppu.IsSpriteInRange( 28, y, isLarge ) );
 
-  // cycle 1 clears status registers and sprite shift registers
-  ppu.cycle = 1;
-  ppu.PrerenderScanline();
-  EXPECT_EQ( ppu.ppuStatus.bit.vBlank, 0 );
-  EXPECT_EQ( ppu.ppuStatus.bit.spriteOverflow, 0 );
-  EXPECT_EQ( ppu.ppuStatus.bit.spriteZeroHit, 0 );
-  for ( int i = 0; i < 8; i++ ) {
-    EXPECT_EQ( ppu.spriteShiftLow.at( i ), 0x00 );
-    EXPECT_EQ( ppu.spriteShiftHigh.at( i ), 0x00 );
+    // Before the range.
+    EXPECT_FALSE( ppu.IsSpriteInRange( 19, y, isLarge ) );
   }
 
-  // cycle 280 - 304 traansfers Y address from temp to vram
-  ppu.cycle = 280;
-  ppu.PrerenderScanline();
-  EXPECT_EQ( ppu.vramAddr.bit.fineY, 1 );
-  EXPECT_EQ( ppu.vramAddr.bit.nametableY, 1 );
-  EXPECT_EQ( ppu.vramAddr.bit.coarseY, 1 );
+  // -- Test for large 16-pixel sprite --
+  {
+    int  y = 50;
+    bool isLarge = true; // Sprite height: 16 pixels, so valid scanlines: [50, 66)
+
+    // Beginning of the range.
+    EXPECT_TRUE( ppu.IsSpriteInRange( 50, y, isLarge ) );
+
+    // A scanline in the middle.
+    EXPECT_TRUE( ppu.IsSpriteInRange( 55, y, isLarge ) );
+
+    // Last valid line (65 is < 66).
+    EXPECT_TRUE( ppu.IsSpriteInRange( 65, y, isLarge ) );
+
+    // Exactly at the boundary (66 is not less than 66).
+    EXPECT_FALSE( ppu.IsSpriteInRange( 66, y, isLarge ) );
+
+    // Before the range.
+    EXPECT_FALSE( ppu.IsSpriteInRange( 49, y, isLarge ) );
+  }
+
+  // -- Additional test for y=0 (edge case) --
+  {
+    int  y = 0;
+    bool isLarge = false; // 8-pixel sprite: valid range: [0, 8)
+
+    EXPECT_TRUE( ppu.IsSpriteInRange( 0, y, isLarge ) );  // at the top boundary
+    EXPECT_TRUE( ppu.IsSpriteInRange( 7, y, isLarge ) );  // last valid scanline
+    EXPECT_FALSE( ppu.IsSpriteInRange( 8, y, isLarge ) ); // one pixel too far
+  }
 }
 
 int main( int argc, char **argv )

@@ -8,7 +8,7 @@ class CpuViewerWindow : public UIComponent
 {
 public:
   CPU &cpu; // NOLINT
-  CpuViewerWindow( Renderer *renderer ) : UIComponent( renderer ), cpu( renderer->bus.cpu ) { visible = true; }
+  CpuViewerWindow( Renderer *renderer ) : UIComponent( renderer ), cpu( renderer->bus.cpu ) { visible = false; }
 
   /*
   ################################

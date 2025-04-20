@@ -13,6 +13,7 @@
 #include "cpu-viewer.h"
 #include "ppu-viewer.h"
 #include "pattern-tables.h"
+#include "sprites.h"
 #include "nametable.h"
 #include "cartridge-info.h"
 
@@ -83,6 +84,10 @@ public:
 
         if ( auto *nametableWindow = ui->GetComponent<NametableWindow>() ) {
           ImGui::MenuItem( "Nametables", nullptr, &nametableWindow->visible );
+        }
+
+        if ( auto *spritesWindow = ui->GetComponent<SpritesWindow>() ) {
+          ImGui::MenuItem( "Sprites", nullptr, &spritesWindow->visible );
         }
 
         ImGui::EndMenu();

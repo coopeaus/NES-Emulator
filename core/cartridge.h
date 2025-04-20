@@ -35,11 +35,10 @@ public:
   ################################
   */
   u8 Read( u16 address );
-  u8 ReadChrROM( u16 address );        // 0x0000 - 0x1FFF: PPU
-  u8 ReadCartridgeVRAM( u16 address ); // 0x2800 - 0x2FFF: PPU (four screen mode)
-  u8 ReadExpansionROM( u16 address );  // 0x4020 - 0x5FFF: CPU
-  u8 ReadPrgRAM( u16 address );        // 0x6000 - 0x7FFF: CPU
-  u8 ReadPrgROM( u16 address );        // 0x8000 - 0xFFFF: CPU
+  u8 ReadChrROM( u16 address );       // 0x0000 - 0x1FFF: PPU
+  u8 ReadExpansionROM( u16 address ); // 0x4020 - 0x5FFF: CPU
+  u8 ReadPrgRAM( u16 address );       // 0x6000 - 0x7FFF: CPU
+  u8 ReadPrgROM( u16 address );       // 0x8000 - 0xFFFF: CPU
 
   /*
   ################################
@@ -47,11 +46,10 @@ public:
   ################################
   */
   void Write( u16 address, u8 data );
-  void WriteChrRAM( u16 address, u8 data );        // 0x0000 - 0x1FFF: PPU
-  void WriteCartridgeVRAM( u16 address, u8 data ); // 0x2800 - 0x2FFF: PPU (four screen mode)
-  void WriteExpansionRAM( u16 address, u8 data );  // 0x4020 - 0x5FFF: CPU
-  void WritePrgRAM( u16 address, u8 data );        // 0x6000 - 0x7FFF: CPU
-  void WritePrgROM( u16 address, u8 data );        // 0x8000 - 0xFFFF: CPU
+  void WriteChrRAM( u16 address, u8 data );       // 0x0000 - 0x1FFF: PPU
+  void WriteExpansionRAM( u16 address, u8 data ); // 0x4020 - 0x5FFF: CPU
+  void WritePrgRAM( u16 address, u8 data );       // 0x6000 - 0x7FFF: CPU
+  void WritePrgROM( u16 address, u8 data );       // 0x8000 - 0xFFFF: CPU
 
   /*
   ################################
@@ -129,7 +127,7 @@ private:
   // The PPU has 2KiB of vram for nametables (background layout information).
   // Some cartridges provided 2Kib extra which allowed for four unique
   // nametables without mirroring. Nametables are documented in the PPU class.
-  std::array<u8, 2048> _cartridgeVram{};
+  // array<u8, 2048> _cartridgeVram{}; // For simplicity, I've defined all nametables in the PPU class.
 
   /*
   ################################

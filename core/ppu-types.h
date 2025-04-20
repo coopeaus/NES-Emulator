@@ -50,17 +50,28 @@ union LoopyRegister {
   u16 value = 0x00;
 };
 
+union SpriteAttribute {
+  struct {
+    u8 palette : 2;
+    u8 unused : 3;
+    u8 priority : 1;
+    u8 flipH : 1;
+    u8 flipV : 1;
+  } bit;
+  u8 value = 0x00;
+};
+
 struct SpriteEntry {
-  u8 y;
-  u8 tileIndex;
-  u8 attribute;
-  u8 x;
+  u8              y;
+  u8              tileIndex;
+  SpriteAttribute attribute;
+  u8              x;
 };
 union OAM {
-  std::array<u8, 256>         data;
+  std::array<u8, 256>         data{};
   std::array<SpriteEntry, 64> entries;
 };
 union SecondaryOAM {
-  std::array<u8, 32>         data;
+  std::array<u8, 32>         data{};
   std::array<SpriteEntry, 8> entries;
 };

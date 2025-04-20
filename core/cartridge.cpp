@@ -173,9 +173,6 @@ void Cartridge::LoadRom( const std::string &filePath )
   if ( address >= 0x0000 && address <= 0x1FFF ) {
     return ReadChrROM( address );
   }
-  if ( address >= 2800 && address <= 0x2FFF ) {
-    return ReadCartridgeVRAM( address );
-  }
 
   // From the CPU
   if ( address >= 0x4020 && address <= 0x5FFF ) {
@@ -198,10 +195,6 @@ void Cartridge::Write( u16 address, u8 data )
   // From the PPU
   if ( address >= 0x0000 && address <= 0x1FFF ) {
     WriteChrRAM( address, data );
-    return;
-  }
-  if ( address >= 2800 && address <= 0x2FFF ) {
-    WriteCartridgeVRAM( address, data );
     return;
   }
 
@@ -294,17 +287,6 @@ void Cartridge::Write( u16 address, u8 data )
   return 0xFF;
 }
 
-[[nodiscard]] u8 Cartridge::ReadCartridgeVRAM( u16 address )
-{
-  /** @brief Reads from the cartridge VRAM, ranges from 0x2800 to 0x2FFF
-   * This is used by the PPU in four-screen mode
-   */
-  if ( address >= 0x2800 && address <= 0x2FFF ) {
-    return _cartridgeVram.at( address & 0x07FF ); // Mask to 2Kib
-  }
-  return 0xFF;
-}
-
 /*
 ################################
 ||                            ||
@@ -391,16 +373,6 @@ void Cartridge::WriteExpansionRAM( u16 address, u8 data )
 
   if ( address >= 0x4020 && address <= 0x5FFF && _mapper->HasExpansionRam() ) {
     _expansionMemory.at( address - 0x4020 ) = data;
-  }
-}
-
-void Cartridge::WriteCartridgeVRAM( u16 address, u8 data )
-{
-  /** @brief Writes to the cartridge VRAM, ranges from 0x2800 to 0x2FFF
-   * This is used by the PPU in four-screen mode
-   */
-  if ( address >= 0x2800 && address <= 0x2FFF ) {
-    _cartridgeVram.at( address & 0x07FF ) = data;
   }
 }
 

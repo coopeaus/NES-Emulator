@@ -5,12 +5,16 @@
 #include "ppu-types.h"
 #include "mappers/mapper-base.h"
 #include <array>
+#include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <functional>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <fstream>
+
+using namespace std;
 
 class PPU
 {
@@ -27,8 +31,8 @@ public:
                                                     std::string( paths::palettes() ) + "/palette2.pal",
                                                     std::string( paths::palettes() ) + "/palette3.pal" };
 
-  std::array<u32, 64> nesPaletteRgbValues{};
-  u32                 GetMasterPaletteColor( u8 index ) const { return nesPaletteRgbValues.at( index ); }
+  array<u32, 64> nesPaletteRgbValues{};
+  u32            GetMasterPaletteColor( u8 index ) const { return nesPaletteRgbValues.at( index ); }
 
   bool preventVBlank = false;
   bool nmiReady = false;
@@ -42,15 +46,12 @@ public:
   ################################
   */
   u16  scanline = 0;
-  u16  GetScanline() const { return scanline; }
   void SetScanline( u16 line ) { scanline = line; }
 
   u16  cycle = 0;
-  u16  GetCycles() const { return cycle; }
   void SetCycles( u16 cycles ) { cycle = cycles; }
 
   u64 frame = 1;
-  u64 GetFrame() const { return frame; }
 
   PPUCTRL ppuCtrl; // $2000
   u8      GetPpuCtrl() const { return ppuCtrl.value; }
@@ -80,20 +81,11 @@ public:
   u8        GetStatusSpriteZeroHit() const { return ppuStatus.bit.spriteZeroHit; }
   u8        GetStatusVblank() const { return ppuStatus.bit.vBlank; }
 
-  u8 oamAddr = 0x00; // $2003
-  u8 GetOamAddr() const { return oamAddr; }
-
-  u8 oamData = 0x00; // $2004
-  u8 GetOamData() const { return oamData; }
-
+  u8 oamAddr = 0x00;   // $2003
+  u8 oamData = 0x00;   // $2004
   u8 ppuScroll = 0x00; // $2005
-  u8 GetPpuScroll() const { return ppuScroll; }
-
-  u8 ppuAddr = 0x00; // $2006
-  u8 GetPpuAddr() const { return ppuAddr; }
-
-  u8 ppuData = 0x00; // $2007
-  u8 GetPpuData() const { return ppuData; }
+  u8 ppuAddr = 0x00;   // $2006
+  u8 ppuData = 0x00;   // $2007
 
   LoopyRegister vramAddr;
   u16           GetVramAddr() const { return vramAddr.value; }
@@ -119,20 +111,24 @@ public:
   bool addrLatch = false;
   bool GetAddrLatch() const { return addrLatch; }
 
-  u8                   vramBuffer = 0x00;
-  std::array<u8, 2048> nameTables{};
-  std::array<u8, 32>   defaultPalette = { 0x09, 0x01, 0x00, 0x01, 0x00, 0x02, 0x02, 0x0D, 0x08, 0x10, 0x08,
-                                          0x24, 0x00, 0x00, 0x04, 0x2C, 0x09, 0x01, 0x34, 0x03, 0x00, 0x04,
-                                          0x00, 0x14, 0x08, 0x3A, 0x00, 0x02, 0x00, 0x20, 0x2C, 0x08 };
+  u8 vramBuffer = 0x00;
 
-  std::array<u8, 32> paletteMemory = defaultPalette;
-  u8                 GetPaletteEntry( u8 index ) const { return paletteMemory.at( index ); }
-  void               SetPaletteEntry( u8 index, u8 value ) { paletteMemory.at( index ) = value; }
+  using nametable_t = std::array<u8, 1024>;
+  array<nametable_t, 4> nameTables{};
 
-  OAM         oam{};
-  SpriteEntry GetOamEntry( u8 index ) const { return oam.entries.at( index ); }
+  // u8 nametables[4][1024];
+  array<u8, 32> defaultPalette = { 0x09, 0x01, 0x00, 0x01, 0x00, 0x02, 0x02, 0x0D, 0x08, 0x10, 0x08,
+                                   0x24, 0x00, 0x00, 0x04, 0x2C, 0x09, 0x01, 0x34, 0x03, 0x00, 0x04,
+                                   0x00, 0x14, 0x08, 0x3A, 0x00, 0x02, 0x00, 0x20, 0x2C, 0x08 };
 
+  array<u8, 32> paletteMemory = defaultPalette;
+  u8            GetPaletteEntry( u8 index ) const { return paletteMemory.at( index ); }
+  void          SetPaletteEntry( u8 index, u8 value ) { paletteMemory.at( index ) = value; }
+
+  OAM          oam{};
+  SpriteEntry  GetOamEntry( u8 index ) const { return oam.entries.at( index ); }
   SecondaryOAM secondaryOam{};
+  SpriteEntry  GetSecondaryOamEntry( u8 index ) const { return secondaryOam.entries.at( index ); }
 
   /*
   ################################
@@ -152,26 +148,17 @@ public:
 
   std::array<u8, 8> spriteShiftLow{};  // low bitplane pattern data for each sprite
   std::array<u8, 8> spriteShiftHigh{}; // high bitplane pattern data for each sprite
-  std::array<u8, 8> spriteAttributes{};
 
   u8 spritePattern0Byte = 0x00;
   u8 spritePattern1Byte = 0x00;
 
   // Sprite helpers
-  SpriteEntry currentSprite{};
-  bool        sprite0Added = false;
-  bool        spriteInRange = false;
-  u8          spriteCount = 0;
-  u8          secondaryOamAddr = 0;
-  u8          oamCopyBuffer = 0;
-  u8          spriteAddrHi = 0;
-  u8          spriteAddrLo = 0;
-  bool        oamCopyDone = false;
+  bool bSpriteZeroHitPossible = false;
+  bool bSprite0Appeared = false;
+  u8   spriteCount = 0;
+  u8   nOamEntry = 0;
 
-  u8 firstVisibleSpriteAddr = 0; // For extra sprites
-  u8 lastVisibleSpriteAddr = 0;  // For extra sprites
-
-  // SDL callback
+  // SDL callbacks
   std::function<void( const u32 * )> onFrameReady = nullptr;
 
   /*
@@ -188,9 +175,9 @@ public:
   ||        SDL Variables       ||
   ################################
   */
-  static constexpr int         gBufferSize = 61440;
-  std::array<u32, gBufferSize> frameBuffer{};
-  std::array<u32, gBufferSize> GetFrameBuffer() const { return frameBuffer; }
+  static constexpr int    gBufferSize = 61440;
+  array<u32, gBufferSize> frameBuffer{};
+  array<u32, gBufferSize> GetFrameBuffer() const { return frameBuffer; }
 
   void ClearFrameBuffer() { frameBuffer.fill( 0x00000000 ); }
 
@@ -206,8 +193,6 @@ public:
   void       WriteVram( u16 addr, u8 data );
   u16        ResolveNameTableAddress( u16 addr, int testMirrorMode = -1 ) const;
   void       Tick();
-  void       SpriteEvalForNextScanline();
-  void       OamCopy();
   void       VBlank();
 
   /*
@@ -240,41 +225,23 @@ public:
 
   void UpdateShifters()
   {
-    ShiftBackgrounds();
-    if ( InCycle( 1, 258 ) ) {
-      ShiftSprites();
-    }
-  }
-
-  void ShiftBackgrounds()
-  {
     if ( ppuMask.bit.renderBackground ) {
       bgPatternShiftLow <<= 1;
       bgPatternShiftHigh <<= 1;
       bgAttributeShiftLow <<= 1;
       bgAttributeShiftHigh <<= 1;
     }
-  }
-
-  void ShiftSprites()
-  {
-    if ( ppuMask.bit.renderSprites ) {
-      for ( int i = 0; i < spriteCount; i++ ) {
-        if ( secondaryOam.entries.at( i ).x > 0 ) {
-          secondaryOam.entries.at( i ).x--;
-        } else {
-          spriteShiftLow.at( i ) <<= 1;
-          spriteShiftHigh.at( i ) <<= 1;
+    if ( InCycle( 1, 256 ) ) {
+      if ( ppuMask.bit.renderSprites ) {
+        for ( int i = 0; i < spriteCount; i++ ) {
+          if ( secondaryOam.entries.at( i ).x > 0 ) {
+            secondaryOam.entries.at( i ).x--;
+          } else {
+            spriteShiftLow.at( i ) <<= 1;
+            spriteShiftHigh.at( i ) <<= 1;
+          }
         }
       }
-    }
-  }
-
-  void ClearSecondaryOam()
-  {
-    if ( scanline <= 239 && ( InCycle( 1, 64 ) ) ) {
-      // Cycle 1-64: Initialize secondary OAM to 0xFF, every other cycle
-      secondaryOam.data.at( ( cycle - 1 ) >> 1 ) = 0xFF;
     }
   }
 
@@ -297,11 +264,6 @@ public:
       ppuStatus.bit.vBlank = 0;
       ppuStatus.bit.spriteZeroHit = 0;
       ppuStatus.bit.spriteOverflow = 0;
-
-      for ( int i = 0; i < 8; i++ ) {
-        spriteShiftLow[i] = 0;
-        spriteShiftHigh[i] = 0;
-      }
     }
 
     VisibleScanline();
@@ -316,21 +278,12 @@ public:
   {
     if ( InCycle( 1, 256 ) ) {
       FetchBgTileData();
-
-      if ( cycle <= 64 )
-        ClearSecondaryOam();
-      else
-        SpriteEvalForNextScanline();
     }
 
     if ( cycle == 257 ) {
       LoadBgShifters();
       TransferAddressX();
-    }
-
-    // Fetch sprite data
-    if ( cycle == 261 ) {
-      FetchSpriteData();
+      SpriteEval();
     }
 
     // Cycles 321-336 will fetch the first two tiles for the next scanline
@@ -341,6 +294,10 @@ public:
     // Unused fetches
     if ( cycle == 338 || cycle == 340 ) {
       FetchNametableByte();
+    }
+    // Fetch sprite data
+    if ( cycle == 340 ) {
+      FetchSpriteData();
     }
   }
 
@@ -373,39 +330,233 @@ public:
     }
   }
 
-  // Called exactly at cycle 65 to initialize sprite evaluation.
-  void SpriteEvalForNextScanlineStart()
+  void SpriteEval()
   {
-    if ( cycle != 65 )
+    if ( !IsRenderingEnabled() || cycle != 257 )
       return;
 
-    sprite0Added = false;
-    spriteInRange = false;
-    secondaryOamAddr = 0;
-    oamCopyDone = false;
+    std::memset( secondaryOam.data.data(), 0xFF, secondaryOam.data.size() );
+    spriteCount = 0;
+    for ( u8 i = 0; i < 8; i++ ) {
+      spriteShiftLow[i] = 0;
+      spriteShiftHigh[i] = 0;
+    }
+    nOamEntry = 0;
+    bSpriteZeroHitPossible = false;
 
-    // Sprite evaluation can start at any byte in OAM (based on OAMADDR from $2003).
-    // Interpret that byte as the "sprite 0" Y coordinate.
-    spriteAddrHi = ( oamAddr >> 2 ) & 0x3F;
-    spriteAddrLo = oamAddr & 0x03;
-    firstVisibleSpriteAddr = spriteAddrHi * 4;
-    lastVisibleSpriteAddr = firstVisibleSpriteAddr;
+    while ( nOamEntry < 64 && spriteCount < 9 ) {
+      auto const sprite = oam.entries.at( nOamEntry );
+      bool const spriteInRange = IsSpriteInRange( scanline, sprite.y, (bool) ppuCtrl.bit.spriteSize );
+
+      if ( spriteInRange ) {
+        if ( spriteCount < 8 ) {
+          if ( nOamEntry == 0 ) {
+            bSpriteZeroHitPossible = true;
+          }
+          secondaryOam.entries.at( spriteCount ) = sprite;
+          spriteCount++;
+        }
+      }
+      nOamEntry++;
+    }
+
+    ppuStatus.bit.spriteOverflow = ( spriteCount > 8 );
   }
 
-  // Called on cycle 256 to finalize sprite evaluation.
-  void SpriteEvalForNextScanlineEnd()
+  static bool IsSpriteInRange( int scanline, int y, bool isLarge )
   {
-    // Compute how many sprites were copied (each sprite occupies 4 bytes).
-    spriteCount = ( ( secondaryOamAddr + 3 ) >> 2 );
+    return scanline >= y && scanline < y + ( isLarge ? 16 : 8 );
   }
+
+  // Copies from primary to secondary oam
+  void CopyToSecondaryOam() {}
 
   void FetchSpriteData()
   {
     for ( u8 i = 0; i < spriteCount; i++ ) {
       SpriteEntry const sprite = secondaryOam.entries[i];
-      FetchSpritePatternBytes( sprite );
-      spriteShiftLow[i] = spritePattern0Byte;
-      spriteShiftHigh[i] = spritePattern1Byte;
+
+      u8         spritePattern0Byte = 0;
+      u8         spritePattern1Byte = 0;
+      u16        spritePattern0Addr = 0;
+      u16        spritePattern1Addr = 0;
+      bool const isLarge = ppuCtrl.bit.spriteSize;
+
+      u16 baseAddr = ppuCtrl.bit.patternSprite << 12; // 0x0000 or 0x1000 depending on ppuCtrl (for 8x8 sprites)
+      u8  tileIndex = sprite.tileIndex;               // 0 - 16
+      u8  rowOffset = scanline - sprite.y;            // 0 - 7
+
+      // 8x8
+      if ( !isLarge ) {
+        // Not vertically flipped
+        if ( !sprite.attribute.bit.flipV ) {
+          spritePattern0Addr = baseAddr | tileIndex << 4 | rowOffset;
+        }
+        // vertically flipped
+        else {
+          spritePattern0Addr = baseAddr | tileIndex << 4 | ( 7 - rowOffset );
+        }
+      }
+      // 8x16
+      else {
+        baseAddr = ( sprite.tileIndex & 0x1 ) << 12; // offset depends on first bit of the tile index for 8x16 sprites
+        tileIndex = sprite.tileIndex & ~0x1;         // other bits of tile index determine the tileIndex
+        rowOffset = ( scanline - sprite.y ) & 0x07;
+
+        // Not vertically flipped
+        if ( !sprite.attribute.bit.flipV ) {
+          // Top half
+          if ( scanline - sprite.y < 8 ) {
+            spritePattern0Addr = baseAddr | ( tileIndex << 4 ) | rowOffset;
+          }
+          // Bottom half
+          else {
+            spritePattern0Addr = baseAddr | ( ( tileIndex + 1 ) << 4 ) | rowOffset;
+          }
+        }
+        // vertically flipped
+        else {
+          // Top half
+          if ( scanline - sprite.y < 8 ) {
+            spritePattern0Addr = baseAddr | ( ( tileIndex + 1 ) << 4 ) | ( 7 - rowOffset );
+          }
+          // bottom half
+          else {
+            spritePattern0Addr = baseAddr | ( tileIndex << 4 ) | ( 7 - rowOffset );
+          }
+        }
+      }
+
+      spritePattern1Addr = spritePattern0Addr + 8;
+      spritePattern0Byte = ReadVram( spritePattern0Addr );
+      spritePattern1Byte = ReadVram( spritePattern1Addr );
+
+      auto flipbyte = []( uint8_t b ) {
+        b = ( b & 0xF0 ) >> 4 | ( b & 0x0F ) << 4;
+        b = ( b & 0xCC ) >> 2 | ( b & 0x33 ) << 2;
+        b = ( b & 0xAA ) >> 1 | ( b & 0x55 ) << 1;
+        return b;
+      };
+
+      if ( sprite.attribute.bit.flipH ) {
+        spritePattern0Byte = flipbyte( spritePattern0Byte );
+        spritePattern1Byte = flipbyte( spritePattern1Byte );
+      }
+
+      spriteShiftLow.at( i ) = spritePattern0Byte;
+      spriteShiftHigh.at( i ) = spritePattern1Byte;
+    }
+  }
+
+  u32 GetOutputPixel()
+  {
+    u8 bgPixel = 0;
+    u8 bgPalette = 0;
+    FetchBackgroundPixel( bgPixel, bgPalette );
+
+    u8 fgPixel = 0;
+    u8 fgPalette = 0;
+    u8 fgPriority = 0;
+    FetchForegroundPixel( fgPixel, fgPalette, fgPriority );
+
+    u8 outPixel = 0x00;
+    u8 outPalette = 0x00;
+
+    // Both background and foreground are transparent.
+    if ( bgPixel == 0 && fgPixel == 0 ) {
+      outPixel = 0;
+      outPalette = 0;
+    }
+
+    // Background transparent, foreground visible.
+    else if ( bgPixel == 0 && fgPixel > 0 ) {
+      outPixel = fgPixel;
+      outPalette = fgPalette;
+    }
+
+    // Background visible, foreground transparent.
+    else if ( bgPixel > 0 && fgPixel == 0 ) {
+      outPixel = bgPixel;
+      outPalette = bgPalette;
+    }
+
+    // Both are non-transparent. Sprite priority determines which one is visible.
+    else if ( bgPixel > 0 && fgPixel > 0 ) {
+      if ( fgPriority ) {
+        outPixel = fgPixel;
+        outPalette = fgPalette;
+      } else {
+        outPixel = bgPixel;
+        outPalette = bgPalette;
+      }
+    }
+
+    // Sprite Zero Hit detection
+    if ( bSpriteZeroHitPossible && bSprite0Appeared ) {
+      if ( ppuMask.bit.renderBackground & ppuMask.bit.renderSprites ) {
+        if ( ~( ppuMask.bit.renderBackgroundLeft | ppuMask.bit.renderSpritesLeft ) ) {
+          if ( cycle >= 9 && cycle < 256 ) {
+            ppuStatus.bit.spriteZeroHit = 1;
+          }
+        } else {
+          if ( cycle >= 1 && cycle < 256 ) {
+            ppuStatus.bit.spriteZeroHit = 1;
+          }
+        }
+      }
+    }
+
+    // Write final color to framebuffer
+    u16 const paletteAddr = 0x3F00 + ( outPalette << 2 ) + outPixel;
+    u8 const  paletteIdx = ReadVram( paletteAddr ) & 0x3F;
+    u32 const rgbColor = nesPaletteRgbValues.at( paletteIdx );
+    return rgbColor;
+
+    return 0;
+  }
+
+  void FetchBackgroundPixel( u8 &pixel, u8 &palette ) const
+  {
+    if ( ppuMask.bit.renderBackground && ( ppuMask.bit.renderBackgroundLeft || cycle >= 9 ) ) {
+      // Fine X scrolling: determine the bit offset in our shifters.
+      u16 const bitMux = 0x8000 >> fineX;
+      // Extract the pixel bits from background shifters.
+      u8 const p0Pixel = ( bgPatternShiftLow & bitMux ) ? 1 : 0;
+      u8 const p1Pixel = ( bgPatternShiftHigh & bitMux ) ? 1 : 0;
+      pixel = ( p1Pixel << 1 ) | p0Pixel;
+
+      // Extract the palette bits from attribute shifters.
+      u8 const pal0 = ( bgAttributeShiftLow & bitMux ) ? 1 : 0;
+      u8 const pal1 = ( bgAttributeShiftHigh & bitMux ) ? 1 : 0;
+      palette = ( pal1 << 1 ) | pal0;
+    }
+  }
+
+  void FetchForegroundPixel( u8 &pixel, u8 &palette, u8 &priority )
+  {
+    if ( ppuMask.bit.renderSprites ) {
+      bSprite0Appeared = false;
+
+      for ( u8 i = 0; i < spriteCount; i++ ) {
+        SpriteEntry const sprite = secondaryOam.entries[i];
+
+        // Only consider sprites whose shift registers are active (x==0).
+        if ( sprite.x == 0 ) {
+          u8 const plane0Bit = ( spriteShiftLow[i] & 0x80 ) > 0;
+          u8 const plane1Bit = ( spriteShiftHigh[i] & 0x80 ) > 0;
+          pixel = ( plane1Bit << 1 ) | plane0Bit;
+          palette = ( sprite.attribute.bit.palette ) + 0x04;
+          priority = sprite.attribute.bit.priority == 0;
+
+          // As soon as we find a nontransparent sprite pixel, use it.
+          if ( pixel != 0 ) {
+            if ( i == 0 ) {
+              bSprite0Appeared = true;
+            }
+            break;
+          }
+        }
+      }
     }
   }
 
@@ -441,43 +592,6 @@ public:
     bgPattern1Byte = ReadVram( ( bgPatternOffset | tileBase | rowOffset ) + 8 );
   }
 
-  void FetchSpritePatternBytes( SpriteEntry sprite )
-  {
-    bool const horizontalMirror = ( sprite.attribute & 0x40 ) == 0x40;
-    bool const verticalMirror = ( sprite.attribute & 0x80 ) == 0x80;
-    bool const is8x16 = ppuCtrl.bit.spriteSize;
-
-    u16 patternOffset = ppuCtrl.bit.patternSprite << 12;
-    u16 tileBase = sprite.tileIndex << 4;
-    u8  rowOffset = scanline - sprite.y;
-
-    if ( verticalMirror ) {
-      u8 const maxRow = is8x16 ? 15 : 7;
-      rowOffset = maxRow - rowOffset;
-    }
-
-    if ( is8x16 ) {
-      patternOffset = ( sprite.tileIndex & 0x01 ) << 12;
-      tileBase = ( sprite.tileIndex & ~0x01 ) << 4;
-      rowOffset = ( rowOffset >= 8 ) ? rowOffset + 8 : rowOffset;
-    }
-    u16 const tileAddr = ( patternOffset | tileBase ) + rowOffset;
-    spritePattern0Byte = ReadVram( tileAddr );
-    spritePattern1Byte = ReadVram( tileAddr + 8 );
-
-    auto flipByte = []( u8 b ) {
-      b = ( ( b & 0xF0 ) >> 4 ) | ( ( b & 0x0F ) << 4 );
-      b = ( ( b & 0xCC ) >> 2 ) | ( ( b & 0x33 ) << 2 );
-      b = ( ( b & 0xAA ) >> 1 ) | ( ( b & 0x55 ) << 1 );
-      return b;
-    };
-
-    if ( horizontalMirror ) {
-      spritePattern0Byte = flipByte( spritePattern0Byte );
-      spritePattern1Byte = flipByte( spritePattern1Byte );
-    }
-  }
-
   void IncrementCoarseX()
   {
     if ( !IsRenderingEnabled() ) {
@@ -510,111 +624,6 @@ public:
         vramAddr.bit.coarseY++;
       }
     }
-  }
-
-  void FetchBackgroundPixel( u8 &pixel, u8 &palette ) const
-  {
-    if ( ppuMask.bit.renderBackground && ( ppuMask.bit.renderBackgroundLeft || cycle >= 9 ) ) {
-      // Fine X scrolling: determine the bit offset in our shifters.
-      u16 const bitMux = 0x8000 >> fineX;
-      // Extract the pixel bits from background shifters.
-      u8 const p0Pixel = ( bgPatternShiftLow & bitMux ) ? 1 : 0;
-      u8 const p1Pixel = ( bgPatternShiftHigh & bitMux ) ? 1 : 0;
-      pixel = ( p1Pixel << 1 ) | p0Pixel;
-
-      // Extract the palette bits from attribute shifters.
-      u8 const pal0 = ( bgAttributeShiftLow & bitMux ) ? 1 : 0;
-      u8 const pal1 = ( bgAttributeShiftHigh & bitMux ) ? 1 : 0;
-      palette = ( pal1 << 1 ) | pal0;
-    }
-  }
-
-  void FetchForegroundPixel( u8 &pixel, u8 &palette, u8 &priority, bool &spriteZeroBeingRendered )
-  {
-    if ( ppuMask.bit.renderSprites && ( ppuMask.bit.renderSpritesLeft || cycle >= 9 ) ) {
-      for ( u8 i = 0; i < spriteCount; i++ ) {
-        SpriteEntry const sprite = secondaryOam.entries[i];
-
-        // Only consider sprites whose shift registers are active (x==0).
-        if ( sprite.x == 0 ) {
-          u8 const lo = ( spriteShiftLow[i] & 0x80 ) ? 1 : 0;
-          u8 const hi = ( spriteShiftHigh[i] & 0x80 ) ? 1 : 0;
-          pixel = ( hi << 1 ) | lo;
-
-          // The sprite's palette is in the lower 2 bits with an offset of 4.
-          palette = ( sprite.attribute & 0x03 ) + 0x04;
-          // fgPriority is determined by bit 5: clear means the sprite has priority.
-          priority = ( ( sprite.attribute & 0x20 ) == 0 );
-
-          // As soon as we find a nontransparent sprite pixel, use it.
-          if ( pixel != 0 ) {
-            if ( i == 0 ) {
-              spriteZeroBeingRendered = true;
-            }
-            break;
-          }
-        }
-      }
-    }
-  }
-
-  [[nodiscard]] u32 GetOutputPixel()
-  {
-    u8   bgPixel = 0;
-    u8   bgPalette = 0;
-    u8   fgPixel = 0;
-    u8   fgPalette = 0;
-    u8   fgPriority = 0;
-    bool spriteZeroBeingRendered = false;
-
-    FetchBackgroundPixel( bgPixel, bgPalette );
-    FetchForegroundPixel( fgPixel, fgPalette, fgPriority, spriteZeroBeingRendered );
-
-    // Pixel Priority Decision
-    u8 finalPixel = 0x00;
-    u8 finalPalette = 0x00;
-
-    if ( bgPixel == 0 && fgPixel == 0 ) {
-      // Both background and foreground are transparent.
-      finalPixel = 0;
-      finalPalette = 0;
-    } else if ( bgPixel == 0 ) {
-      // Background transparent, foreground visible.
-      finalPixel = fgPixel;
-      finalPalette = fgPalette;
-    } else if ( fgPixel == 0 ) {
-      // Foreground transparent, background visible.
-      finalPixel = bgPixel;
-      finalPalette = bgPalette;
-    } else {
-      // Both are non-transparent. Sprite priority determines which one is visible.
-      if ( fgPriority ) {
-        finalPixel = fgPixel;
-        finalPalette = fgPalette;
-      } else {
-        finalPixel = bgPixel;
-        finalPalette = bgPalette;
-      }
-    }
-    // --- Sprite Zero Hit Detection ---
-    if ( sprite0Added && spriteZeroBeingRendered && ( ppuMask.bit.renderBackground & ppuMask.bit.renderSprites ) ) {
-
-      if ( !( ppuMask.bit.renderBackgroundLeft | ppuMask.bit.renderSpritesLeft ) ) {
-        if ( cycle >= 9 && cycle < 256 ) {
-          ppuStatus.bit.spriteZeroHit = 1;
-        }
-      } else {
-        if ( cycle >= 1 && cycle < 256 ) {
-          ppuStatus.bit.spriteZeroHit = 1;
-        }
-      }
-    }
-
-    // Write final color to framebuffer
-    u16 const paletteAddr = 0x3F00 + ( finalPalette << 2 ) + finalPixel;
-    u8 const  paletteIdx = ReadVram( paletteAddr ) & 0x3F;
-    u32 const rgbColor = nesPaletteRgbValues.at( paletteIdx );
-    return rgbColor;
   }
 
   void UpdateFrameBuffer( int debugValue = -1 )
@@ -672,7 +681,9 @@ public:
     vramAddr.value = 0x0000;
     tempAddr.value = 0x0000;
     fineX = 0x00;
-    nameTables.fill( 0x00 );
+    for ( auto &table : nameTables ) {
+      table.fill( 0x00 );
+    }
     paletteMemory = defaultPalette;
     ClearFrameBuffer();
   }
@@ -758,6 +769,46 @@ public:
       }
     }
 
+    return buffer;
+  }
+
+  // Used in frontend/ui/sprites.h
+  std::array<u32, 4096> GetOamSpriteData()
+  {
+    std::array<u32, 4096> buffer{};
+    u16 const             baseAddr = ppuCtrl.bit.patternSprite ? 0x1000 : 0x0000;
+
+    for ( int tileY = 0; tileY < 8; tileY++ ) {
+      for ( int tileX = 0; tileX < 8; tileX++ ) {
+        int const spriteIndex = ( tileY * 8 ) + tileX;
+        auto      entry = GetOamEntry( spriteIndex );
+        u16 const tileAddr = baseAddr | ( entry.tileIndex << 4 );
+
+        for ( int row = 0; row < 8; row++ ) {
+          u8 const plane0Byte = ReadVram( tileAddr + row );
+          u8 const plane1Byte = ReadVram( tileAddr + row + 8 );
+
+          for ( int bit = 7; bit >= 0; bit-- ) {
+            // Calculate the pixel's position in the 64x64 output buffer.
+            int const localX = 7 - bit;
+            int const globalX = ( tileX * 8 ) + localX;
+            int const globalY = ( tileY * 8 ) + row;
+            int const bufferIdx = ( globalY * 64 ) + globalX;
+
+            // Calculate pixel color
+            u8 const  plane0Bit = ( plane0Byte >> bit ) & 0x01;
+            u8 const  plane1Bit = ( plane1Byte >> bit ) & 0x01;
+            u8 const  colorOffset = ( plane1Bit << 1 ) | plane0Bit;
+            u8 const  paletteBase = 16 + ( entry.attribute.bit.palette * 4 );
+            u16 const vramAddr = 0x3F00 + paletteBase + colorOffset;
+            u8 const  paletteIdx = ReadVram( vramAddr );
+
+            // Output
+            buffer.at( bufferIdx ) = GetMasterPaletteColor( paletteIdx );
+          }
+        }
+      }
+    }
     return buffer;
   }
 
@@ -854,9 +905,9 @@ public:
     return buffer;
   }
 
-  static std::array<u32, 64> ReadPalette( const std::string &filename )
+  static array<u32, 64> ReadPalette( const string &filename )
   {
-    std::array<u32, 64> nesPalette{};
+    array<u32, 64> nesPalette{};
 
     std::ifstream file( filename, std::ios::binary );
     if ( !file ) {
@@ -865,7 +916,7 @@ public:
     }
 
     file.seekg( 0, std::ios::end );
-    std::streamsize const fileSize = file.tellg();
+    streamsize const fileSize = file.tellg();
     if ( fileSize != 192 ) {
       std::cerr << "Invalid palette file size: " << fileSize << '\n';
       throw std::runtime_error( "Invalid palette file size" );
