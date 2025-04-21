@@ -59,8 +59,6 @@ Optional modules
 `Multi_Buffer.h`
 `Multi_Buffer.cpp`
 
-`boost/` Substitute for boost library if it's unavailable
-
 ---
 
 Shay Green <hotpop.com@blargg> (swap to e-mail)

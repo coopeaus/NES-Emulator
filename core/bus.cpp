@@ -6,7 +6,7 @@
 #include "utils.h"
 
 // Constructor to initialize the bus with a flat memory model
-Bus::Bus() : cpu( this ), ppu( this ), cartridge( this ), apu( this )
+Bus::Bus() : cpu( this ), ppu( this ), cartridge( this )
 {
 }
 
@@ -34,8 +34,8 @@ u8 Bus::Read( const u16 address, bool debugMode )
   }
 
   // APU
-  if ( utils::between( address, 0x4000, 0x4013 ) || address == 0x4015 ) {
-    return APU::HandleCpuRead( address );
+  if ( address == 0x4015 ) {
+    return apu.read_status();
   }
 
   // Controller read
@@ -97,7 +97,7 @@ void Bus::Write( const u16 address, const u8 data )
 
   // APU
   if ( utils::between( address, 0x4000, 0x4013 ) || address == 0x4015 || address == 0x4017 ) {
-    apu.HandleCpuWrite( address, data );
+    apu.write_register( address, data );
     return;
   }
 
@@ -162,4 +162,16 @@ void Bus::DebugReset()
   cpu.SetCycles( 0 );
   cpu.Reset();
   ppu.Reset();
+}
+
+/*
+################################
+||  Blargg's APU Integration  ||
+################################
+*/
+
+int Bus::ReadDmc( void *objPtr, cpu_addr_t addr )
+{
+  Bus *self = static_cast<Bus *>( objPtr );
+  return self->Read( addr );
 }

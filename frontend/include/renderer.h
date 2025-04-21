@@ -11,7 +11,6 @@
 #include <imgui.h>
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
-#include "bus.h"
 #include "cartridge.h"
 #include "ui-component.h"
 #include "ui-manager.h"
@@ -26,6 +25,9 @@
 #include "theme.h"
 #include "chrono"
 #include "paths.h"
+
+#include "bus.h"
+#include "Sound_Queue.h"
 
 using u32 = uint32_t;
 using u64 = uint64_t;
@@ -78,6 +80,15 @@ public:
 
   /*
   ################################
+  ||       Audio Variables      ||
+  ################################
+  */
+  std::unique_ptr<Sound_Queue> soundQueue;
+  static int const             audioBufferSize = 2048;
+  blip_sample_t                audioBuffer[audioBufferSize];
+
+  /*
+  ################################
   #       global variables       #
   ################################
   */
@@ -111,10 +122,11 @@ public:
   #          peripherals         #
   ################################
   */
-  UIManager ui;
-  Bus       bus;
-  CPU      &cpu = bus.cpu;
-  PPU      &ppu = bus.ppu;
+  UIManager   ui;
+  Bus         bus;
+  CPU        &cpu = bus.cpu;
+  PPU        &ppu = bus.ppu;
+  Simple_Apu &apu = bus.apu;
 
   Renderer() : ui( this ) { InitEmulator(); }
 
@@ -133,6 +145,30 @@ public:
     cpu.Reset();
     ppu.onFrameReady = [this]( const u32 *frameBuffer ) { this->ProcessPpuFrameBuffer( frameBuffer ); };
     currentFrame = ppu.frame;
+
+    // Set sample rate and check for out of memory error
+    if ( apu.sample_rate( bus.sampleRate ) ) {
+      std::cerr << "Failed to initialize APU\n";
+      std::exit( EXIT_FAILURE );
+    }
+
+#ifdef SDL_INIT_AUDIO
+    if ( SDL_Init( SDL_INIT_AUDIO ) < 0 )
+      exit( EXIT_FAILURE );
+
+    atexit( SDL_Quit );
+
+    soundQueue = std::make_unique<Sound_Queue>();
+
+    if ( !soundQueue )
+      exit( EXIT_FAILURE );
+
+    if ( soundQueue->init( bus.sampleRate ) )
+      exit( EXIT_FAILURE );
+#endif
+
+    // Set function for APU to read memory with (required for DMC samples to play properly)
+    apu.dmc_reader( Bus::ReadDmc, &bus );
   }
 
   void LoadNewCartridge( const std::string &newRomFile )
@@ -145,8 +181,7 @@ public:
 
   bool Setup()
   {
-    // Initialize SDL Video subsystem.
-    if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER ) != 0 ) {
+    if ( SDL_Init( SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER ) != 0 ) {
       std::cerr << "SDL_Init Error: " << SDL_GetError() << '\n';
       return false;
     }
@@ -331,6 +366,8 @@ public:
 
     return true;
   }
+
+  void PlaySamples( const blip_sample_t *samples, long count ) const { soundQueue->write( samples, count ); }
 
   /*
   ################################
@@ -571,7 +608,14 @@ public:
       }
       bus.Clock();
     }
+    // End of frame, set the current frame to the next one.
     currentFrame = ppu.frame;
+
+    // generate 1/60th second of sound into APU's sample buffer
+    apu.end_frame();
+
+    long count = apu.read_samples( audioBuffer, audioBufferSize );
+    PlaySamples( audioBuffer, count );
   }
 
   void UpdateUiWindows() {}

@@ -12,7 +12,6 @@ protected:
   Bus  bus;
   PPU &ppu = bus.ppu;
   CPU &cpu = bus.cpu;
-  APU &apu = bus.apu;
 
   CartTest()
   {

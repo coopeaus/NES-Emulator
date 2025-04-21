@@ -26,6 +26,7 @@ set(GENERAL_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(CORE_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/core)
 set(FRONTEND_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/frontend/include)
 set(UI_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/frontend/ui)
+set(AUDIO_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/frontend/audio)
 set(TEST_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
 
 #[[
@@ -36,7 +37,7 @@ set(TEST_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
 ################################################
 ]]
 # All emulation functionality is built as a static library.
-file(GLOB CORE_SOURCES "core/*.cpp" "core/mappers/*.cpp")
+file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "core/*.cpp")
 add_library(emu_core STATIC ${CORE_SOURCES})
 
 target_include_directories(emu_core PUBLIC
@@ -109,7 +110,7 @@ endif()
 if(BUILD_FRONTEND)
   message(STATUS "BUILD_FRONTEND is enabled. Configuring frontend...")
 
-  file(GLOB FRONTEND_SOURCES "frontend/*.cpp" "frontend/ui/*.cpp")
+  file(GLOB FRONTEND_SOURCES "frontend/*.cpp" "frontend/ui/*.cpp" "frontend/audio/*.cpp")
   add_executable(emu ${FRONTEND_SOURCES})
 
   target_compile_definitions(emu PRIVATE NOMINMAX)
@@ -119,6 +120,7 @@ if(BUILD_FRONTEND)
     ${CORE_INCLUDES}
     ${FRONTEND_INCLUDES}
     ${UI_INCLUDES}
+    ${AUDIO_INCLUDES}
   )
   target_link_libraries(emu PRIVATE emu_core)
 

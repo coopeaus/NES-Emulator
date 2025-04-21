@@ -3,14 +3,18 @@
 #include "cartridge.h"
 #include "cpu.h"
 #include "ppu.h"
-#include "apu.h"
+
+// Blargg's apu
+#include "blargg/Simple_Apu.h"
+
 #include <array>
 #include <cstdint>
 
 class Cartridge;
 class CPU;
 class PPU;
-class APU;
+
+class Simple_Apu;
 
 class Bus
 {
@@ -23,10 +27,10 @@ public:
   ||         Peripherals        ||
   ################################
   */
-  CPU       cpu;
-  PPU       ppu;
-  APU       apu;
-  Cartridge cartridge;
+  CPU        cpu;
+  PPU        ppu;
+  Simple_Apu apu;
+  Cartridge  cartridge;
 
   /*
   ################################
@@ -59,6 +63,14 @@ public:
   void               EnableJsonTestMode() { _useFlatMemory = true; }
   void               DisableJsonTestMode() { _useFlatMemory = false; }
 
+  /*
+  ################################
+  ||  Blargg's APU Integration  ||
+  ################################
+  */
+  const long sampleRate = 44100;
+  static int ReadDmc( void *objPtr, cpu_addr_t addr );
+
 private:
   /*
   ################################
@@ -74,11 +86,4 @@ private:
   */
   bool                  _useFlatMemory{}; // For testing purposes
   std::array<u8, 65536> _flatMemory{};    // 64KB memory, for early testing
-
-  /*
-  ################################
-  ||       Temporary Stubs      ||
-  ################################
-  */
-  std::array<u8, 32> _apuIoMemory{}; // 32 bytes APU and I/O registers
 };

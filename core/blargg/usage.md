@@ -93,10 +93,11 @@ void init()
 
  apu.dmc_reader( dmc_read );
 }
+```
 
+## Full APU support
 
-// Full APU support
-// ----------------
+```cpp
 
 #include "Nes_Apu.h"
 
