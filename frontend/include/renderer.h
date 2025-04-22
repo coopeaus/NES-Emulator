@@ -51,6 +51,8 @@ public:
   int         bufferSize = nesWidth * nesHeight;
   std::string windowTitle = "NES Emulator";
 
+  SDL_GameController *gamepad{};
+
   /*
   ################################
   #       Render Variables       #
@@ -88,7 +90,7 @@ public:
   */
   std::unique_ptr<Sound_Queue> soundQueue;
   static int const             audioBufferSize = 2048;
-  blip_sample_t                audioBuffer[audioBufferSize];
+  blip_sample_t                audioBuffer[audioBufferSize]{};
 
   /*
   ################################
@@ -119,11 +121,12 @@ public:
   std::chrono::time_point<Clock> lastFrameTime = Clock::now();
 
 #define ROM( x ) ( std::string( paths::roms() ) + "/" + ( x ) )
-  std::vector<std::string> testRoms = { ROM( "palette.nes" ), ROM( "color_test.nes" ),  ROM( "nestest.nes" ),
-                                        ROM( "mario.nes" ),   ROM( "custom.nes" ),      ROM( "scanline.nes" ),
-                                        ROM( "dk.nes" ),      ROM( "ice_climber.nes" ), ROM( "instr_test-v5.nes" ) };
-  enum RomSelected : u8 { PALETTE, COLOR_TEST, NESTEST, MARIO, CUSTOM, SCANLINE, DK, ICE_CLIMBER, V5 };
-  u8 romSelected = RomSelected::MARIO;
+  std::vector<std::string> testRoms = { ROM( "palette.nes" ),    ROM( "color_test.nes" ),  ROM( "nestest.nes" ),
+                                        ROM( "mario.nes" ),      ROM( "custom.nes" ),      ROM( "scanline.nes" ),
+                                        ROM( "dk.nes" ),         ROM( "ice_climber.nes" ), ROM( "instr_test-v5.nes" ),
+                                        ROM( "bomberman2.nes" ), ROM( "metroid.nes" ) };
+  enum RomSelected : u8 { PALETTE, COLOR_TEST, NESTEST, MARIO, CUSTOM, SCANLINE, DK, ICE_CLIMBER, V5, BM2, METROID };
+  u8 romSelected = RomSelected::BM2;
 
   /*
   ################################
@@ -266,6 +269,23 @@ public:
 
     /*
     ################################
+    ||       Game Controller      ||
+    ################################
+    */
+    int num = SDL_NumJoysticks();
+    fmt::print( "SDL reports {} joystick(s)\n", num );
+    for ( int i = 0; i < num; i++ ) {
+      const char *name = SDL_JoystickNameForIndex( i );
+      if ( SDL_IsGameController( i ) ) {
+        gamepad = SDL_GameControllerOpen( i );
+        fmt::print( "  [{}] GameController: {}\n", i, SDL_GameControllerName( gamepad ) );
+      } else {
+        fmt::print( "  [{}] Joystick (unsupported mapping): {}\n", i, name );
+      }
+    }
+
+    /*
+    ################################
     #            Textures          #
     ################################
     */
@@ -386,13 +406,13 @@ public:
 
   void Run()
   {
-    // Compute exact NES frame interval (~16.6366 ms).
+    // Compute exact NES frame interval
     constexpr double nesHz = ( 1789772.5 * 3 ) / ( 341.0 * 262.0 - 0.5 );
     auto             frameInterval = std::chrono::duration<double, std::milli>( 1000.0 / nesHz );
     auto             nextFrame = Clock::now() + frameInterval;
 
     while ( running ) {
-      // 1) Do all emulation for one video frame.
+      // Emulation and updates
       ExecuteFrame();
       PollEvents();
       RenderFrame();
@@ -400,24 +420,24 @@ public:
       UpdateOamTextures();
       UpdateNametableTextures();
 
-      // 2) Wait until our precise target time.
+      // Sleep until the next frame
       std::this_thread::sleep_until( nextFrame );
 
-      // 3) Advance the next‐frame marker by exactly one interval.
+      // Adjust the next frame time
       nextFrame += frameInterval;
 
-      // 4) If we ever fall behind by more than a frame, catch up:
+      // Catch up if behind
       auto now = Clock::now();
       if ( now > nextFrame + frameInterval ) {
         nextFrame = now + frameInterval;
       }
 
+      // Sample FPS, cycles per second, and other metrics as needed
       SampleMetrics();
 
+      // Keep track of frame time
       if ( now - lastFrameTime > std::chrono::seconds( 1 ) ) {
         lastFrameTime = now;
-        DebugCyclesPerSecond();
-        DebugFps();
       }
     }
   }
@@ -545,6 +565,7 @@ public:
   void PollEvents()
   {
     SDL_Event event;
+
     while ( SDL_PollEvent( &event ) ) {
       ImGui_ImplSDL2_ProcessEvent( &event );
       if ( event.type == SDL_QUIT ) {
@@ -574,19 +595,40 @@ public:
           }
         }
       }
-    }
-    bus.controller[0] = 0x00;
-    const Uint8 *keystate = SDL_GetKeyboardState( nullptr );
+      const Uint8 *keystate = SDL_GetKeyboardState( nullptr );
 
-    // Map keys to controller bits
-    bus.controller[0] |= keystate[SDL_SCANCODE_Z] ? 0x80 : 0x00;      // A Button -> z
-    bus.controller[0] |= keystate[SDL_SCANCODE_X] ? 0x40 : 0x00;      // B Button -> x
-    bus.controller[0] |= keystate[SDL_SCANCODE_TAB] ? 0x20 : 0x00;    // Select   -> tab
-    bus.controller[0] |= keystate[SDL_SCANCODE_RETURN] ? 0x10 : 0x00; // Start    -> return
-    bus.controller[0] |= keystate[SDL_SCANCODE_UP] ? 0x08 : 0x00;     // Up       -> up
-    bus.controller[0] |= keystate[SDL_SCANCODE_DOWN] ? 0x04 : 0x00;   // Down     -> down
-    bus.controller[0] |= keystate[SDL_SCANCODE_LEFT] ? 0x02 : 0x00;   // Left     -> left
-    bus.controller[0] |= keystate[SDL_SCANCODE_RIGHT] ? 0x01 : 0x00;  // Right    -> right
+      // Map keys to controller bits
+      bus.controller[0] = 0x00;
+
+      // keyboard
+      bus.controller[0] |= keystate[SDL_SCANCODE_Z] ? 0x80 : 0x00;      // A Button -> z
+      bus.controller[0] |= keystate[SDL_SCANCODE_X] ? 0x40 : 0x00;      // B Button -> x
+      bus.controller[0] |= keystate[SDL_SCANCODE_TAB] ? 0x20 : 0x00;    // Select   -> tab
+      bus.controller[0] |= keystate[SDL_SCANCODE_RETURN] ? 0x10 : 0x00; // Start    -> return
+      bus.controller[0] |= keystate[SDL_SCANCODE_UP] ? 0x08 : 0x00;     // Up       -> up
+      bus.controller[0] |= keystate[SDL_SCANCODE_DOWN] ? 0x04 : 0x00;   // Down     -> down
+      bus.controller[0] |= keystate[SDL_SCANCODE_LEFT] ? 0x02 : 0x00;   // Left     -> left
+      bus.controller[0] |= keystate[SDL_SCANCODE_RIGHT] ? 0x01 : 0x00;  // Right    -> right
+    }
+
+    // controller
+    if ( SDL_GameControllerGetAttached( gamepad ) ) {
+      // clang-format off
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_B ) ? 0x80 : 0x00; // A Button (swapped for personal reasons)
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_A ) ? 0x40 : 0x00; // B Button ( -^)
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_BACK ) ? 0x20 : 0x00; // Select
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_START ) ? 0x10 : 0x00; // Start
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_DPAD_UP ) ? 0x08 : 0x00; // Up
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_DPAD_DOWN ) ? 0x04 : 0x00; // Down
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_DPAD_LEFT ) ? 0x02 : 0x00; // Left
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_DPAD_RIGHT ) ? 0x01 : 0x00; // Right
+        // analog sticks also work
+        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad, SDL_CONTROLLER_AXIS_LEFTX ) < -8000 ? 0x02 : 0x00; // Left
+        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad, SDL_CONTROLLER_AXIS_LEFTX ) > 8000 ? 0x01 : 0x00; // Right
+        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad, SDL_CONTROLLER_AXIS_LEFTY ) < -8000 ? 0x08 : 0x00; // Up
+        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad, SDL_CONTROLLER_AXIS_LEFTY ) > 8000 ? 0x04 : 0x00; // Down
+      // clang-format on
+    }
   }
 
   /*
