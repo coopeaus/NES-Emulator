@@ -37,6 +37,9 @@ private:
   int  write_pos;
   bool sound_open;
 
+  // SDL2 audio device handle
+  SDL_AudioDeviceID device_id;
+
   sample_t   *buf( int index );
   void        fill_buffer( Uint8 *, int );
   static void fill_buffer_( void *, Uint8 *, int );

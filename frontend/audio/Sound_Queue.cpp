@@ -4,7 +4,9 @@
 
 #include "Sound_Queue.h"
 
+#include <SDL_audio.h>
 #include <assert.h>
+#include <iostream>
 #include <string.h>
 
 /* Copyright (C) 2005 by Shay Green. Permission is hereby granted, free of
@@ -39,13 +41,14 @@ Sound_Queue::Sound_Queue()
   write_pos = 0;
   read_buf = 0;
   sound_open = false;
+  device_id = 0;
 }
 
 Sound_Queue::~Sound_Queue()
 {
   if ( sound_open ) {
-    SDL_PauseAudio( true );
-    SDL_CloseAudio();
+    SDL_PauseAudioDevice( device_id, 1 );
+    SDL_CloseAudioDevice( device_id );
   }
 
   if ( free_sem )
@@ -72,20 +75,22 @@ const char *Sound_Queue::init( long sample_rate, int chan_count )
   if ( !free_sem )
     return sdl_error( "Couldn't create semaphore" );
 
-  SDL_AudioSpec as;
-  as.freq = sample_rate;
-  as.format = AUDIO_S16SYS;
-  as.channels = chan_count;
-  as.silence = 0;
-  as.samples = buf_size;
-  as.size = 0;
-  as.callback = fill_buffer_;
-  as.userdata = this;
-  if ( SDL_OpenAudio( &as, NULL ) < 0 )
-    return sdl_error( "Couldn't open SDL audio" );
-  SDL_PauseAudio( false );
-  sound_open = true;
+  SDL_AudioSpec desired;
+  SDL_zero( desired );
+  desired.freq = sample_rate;
+  desired.format = AUDIO_S16SYS;
+  desired.channels = (Uint8) chan_count;
+  desired.samples = buf_size;
+  desired.callback = fill_buffer_;
+  desired.userdata = this;
 
+  SDL_AudioSpec obtained;
+  device_id = SDL_OpenAudioDevice( NULL, 0, &desired, &obtained, SDL_AUDIO_ALLOW_ANY_CHANGE );
+  std::cout << "SDL actually opened audio at " << obtained.freq << " Hz\n";
+  if ( device_id == 0 ) {
+    return sdl_error( "Couldn't open SDL audio" );
+  }
+  SDL_PauseAudioDevice( device_id, 0 );
   return NULL;
 }
 
