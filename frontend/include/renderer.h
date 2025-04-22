@@ -124,9 +124,22 @@ public:
   std::vector<std::string> testRoms = { ROM( "palette.nes" ),    ROM( "color_test.nes" ),  ROM( "nestest.nes" ),
                                         ROM( "mario.nes" ),      ROM( "custom.nes" ),      ROM( "scanline.nes" ),
                                         ROM( "dk.nes" ),         ROM( "ice_climber.nes" ), ROM( "instr_test-v5.nes" ),
-                                        ROM( "bomberman2.nes" ), ROM( "metroid.nes" ) };
-  enum RomSelected : u8 { PALETTE, COLOR_TEST, NESTEST, MARIO, CUSTOM, SCANLINE, DK, ICE_CLIMBER, V5, BM2, METROID };
-  u8 romSelected = RomSelected::BM2;
+                                        ROM( "bomberman2.nes" ), ROM( "metroid.nes" ),     ROM( "amagon.nes" ) };
+  enum RomSelected : u8 {
+    PALETTE,
+    COLOR_TEST,
+    NESTEST,
+    MARIO,
+    CUSTOM,
+    SCANLINE,
+    DK,
+    ICE_CLIMBER,
+    V5,
+    BM2,
+    METROID,
+    AMAGON
+  };
+  u8 romSelected = RomSelected::MARIO;
 
   /*
   ################################
