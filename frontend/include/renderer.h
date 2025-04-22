@@ -4,6 +4,7 @@
 #include <SDL_error.h>
 #include <SDL_hints.h>
 #include <SDL_events.h>
+#include <algorithm>
 #include <array>
 #include <cstdlib>
 #include <glad/glad.h>
@@ -21,7 +22,9 @@
 #include <fmt/core.h>
 #include <iostream>
 #include <csignal>
+#include <numeric>
 #include <string>
+#include <thread>
 #include "theme.h"
 #include "chrono"
 #include "paths.h"
@@ -94,8 +97,6 @@ public:
   */
   bool running = true;
   bool paused = false;
-  u16  fps = 0;
-  u64  frameCount = 0;
 
   bool updatePatternTables = false;
   bool updateNametables = false;
@@ -109,6 +110,13 @@ public:
   std::array<u32, 61440> nametable2Buffer{};
   std::array<u32, 61440> nametable3Buffer{};
   std::array<u32, 4096>  oamBuffer{};
+
+  // Sampling metrics
+  std::vector<double>            frameTimes;
+  std::vector<double>            cpuCycles;
+  u64                            lastSampleCycles = 0;
+  Clock::time_point              lastSampleTime = Clock::now();
+  std::chrono::time_point<Clock> lastFrameTime = Clock::now();
 
 #define ROM( x ) ( std::string( paths::roms() ) + "/" + ( x ) )
   std::vector<std::string> testRoms = { ROM( "palette.nes" ), ROM( "color_test.nes" ),  ROM( "nestest.nes" ),
@@ -176,7 +184,6 @@ public:
     bus.cartridge.LoadRom( newRomFile );
     bus.DebugReset();
     currentFrame = ppu.frame;
-    frameCount = 0;
   }
 
   bool Setup()
@@ -255,7 +262,7 @@ public:
       std::cerr << "Failed to initialize GLAD" << '\n';
       return false;
     }
-    SDL_GL_SetSwapInterval( 1 ); // Enable vsync
+    SDL_GL_SetSwapInterval( 0 ); // disable vsync
 
     /*
     ################################
@@ -376,19 +383,16 @@ public:
   #                              #
   ################################
   */
+
   void Run()
   {
-    std::signal( SIGSEGV, SignalHandler );
-
-    // Target frame time in milliseconds (~16.67ms for 60 FPS)
-    const double targetFrameTimeMs = 1000.0 / 60.0;
-    const u64    freq = SDL_GetPerformanceFrequency();
-    u64          secondStart = SDL_GetPerformanceCounter();
+    // Compute exact NES frame interval (~16.6366 ms).
+    constexpr double nesHz = ( 1789772.5 * 3 ) / ( 341.0 * 262.0 - 0.5 );
+    auto             frameInterval = std::chrono::duration<double, std::milli>( 1000.0 / nesHz );
+    auto             nextFrame = Clock::now() + frameInterval;
 
     while ( running ) {
-      frameStart = Clock::now();
-      u64 const frameStart = SDL_GetPerformanceCounter();
-
+      // 1) Do all emulation for one video frame.
       ExecuteFrame();
       PollEvents();
       RenderFrame();
@@ -396,31 +400,101 @@ public:
       UpdateOamTextures();
       UpdateNametableTextures();
 
-      u64 const    frameEnd = SDL_GetPerformanceCounter();
-      double const frameTimeMs =
-          ( static_cast<double>( frameEnd - frameStart ) ) * 1000.0 / static_cast<double>( freq );
+      // 2) Wait until our precise target time.
+      std::this_thread::sleep_until( nextFrame );
 
-      // Calculate the remaining time for this frame.
-      double const delayTimeMs = targetFrameTimeMs - frameTimeMs;
-      if ( delayTimeMs > 0 ) {
-        // If there's more than ~1ms left, sleep for most of it.
-        if ( delayTimeMs > 1.0 ) {
-          SDL_Delay( static_cast<Uint32>( delayTimeMs - 1.0 ) );
-        }
-        // Busy-wait until the target frame time has elapsed.
-        while ( ( ( static_cast<double>( SDL_GetPerformanceCounter() - frameStart ) ) * 1000.0 /
-                  static_cast<double>( freq ) ) < targetFrameTimeMs ) {
-        }
+      // 3) Advance the next‐frame marker by exactly one interval.
+      nextFrame += frameInterval;
+
+      // 4) If we ever fall behind by more than a frame, catch up:
+      auto now = Clock::now();
+      if ( now > nextFrame + frameInterval ) {
+        nextFrame = now + frameInterval;
       }
 
-      // FPS reporting every second.
-      u64 const    now = SDL_GetPerformanceCounter();
-      double const secondElapsed = ( static_cast<double>( now - secondStart ) ) * 1000.0 / static_cast<double>( freq );
-      if ( secondElapsed >= 1000.0 ) {
-        CalculateFps();
-        secondStart = SDL_GetPerformanceCounter();
+      SampleMetrics();
+
+      if ( now - lastFrameTime > std::chrono::seconds( 1 ) ) {
+        lastFrameTime = now;
+        DebugCyclesPerSecond();
+        DebugFps();
       }
     }
+  }
+
+  void SampleMetrics()
+  {
+    auto now = Clock::now();
+    auto delta = std::chrono::duration<double, std::milli>( now - lastSampleTime ).count();
+
+    u64    nowCycles = cpu.GetCycles();
+    double deltaCycles = (double) nowCycles - (double) lastSampleCycles;
+
+    // sample frame times
+    frameTimes.push_back( delta );
+    if ( frameTimes.size() > 10 ) {
+      frameTimes.erase( frameTimes.begin() );
+    }
+    lastSampleTime = now;
+
+    // sample CPU cycles diffs
+    cpuCycles.push_back( deltaCycles );
+    if ( cpuCycles.size() > 10 ) {
+      cpuCycles.erase( cpuCycles.begin() );
+    }
+    lastSampleCycles = nowCycles;
+  }
+
+  float GetAvgFps()
+  {
+    int    n = (int) frameTimes.size();
+    double sum = std::accumulate( frameTimes.begin(), frameTimes.end(), 0.0 );
+    double mean = sum / n;
+    return static_cast<float>( 1000.0 / mean );
+  }
+
+  float GetCyclesPerSecond() const
+  {
+    int    n = (int) frameTimes.size();
+    double sum = std::accumulate( cpuCycles.begin(), cpuCycles.end(), 0.0 );
+    double mean = sum / n;
+    return static_cast<float>( mean * 60.0988 );
+  }
+
+  void DebugCyclesPerSecond() const
+  {
+    float cyclesPerSecond = GetCyclesPerSecond();
+    fmt::print( "Cycles per second: {:.2f}\n", cyclesPerSecond );
+  }
+
+  void DebugFps()
+  {
+    if ( frameTimes.empty() ) {
+      return;
+    }
+
+    int    n = (int) frameTimes.size();
+    double sum = std::accumulate( frameTimes.begin(), frameTimes.end(), 0.0 );
+    double mean = sum / n;
+
+    auto [minIt, maxIt] = std::ranges::minmax_element( frameTimes );
+    double mn = *minIt;
+    double mx = *maxIt;
+
+    // population standard deviation
+    double sqsum = 0.0;
+    for ( double d : frameTimes ) {
+      double diff = d - mean;
+      sqsum += diff * diff;
+    }
+    double stdev = std::sqrt( sqsum / n );
+
+    // Print to console – you can swap to fmt::print if you prefer
+    std::cout << "--- FrameTiming (ms) over " << n << " samples ---\n"
+              << "  mean:  " << mean << "\n"
+              << "  min:   " << mn << "\n"
+              << "  max:   " << mx << "\n"
+              << "  stdev: " << stdev << "\n\n";
   }
 
   /*
@@ -705,16 +779,6 @@ public:
     glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, nesWidth, nesHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer );
     glBindTexture( GL_TEXTURE_2D, 0 );
   }
-
-  void CalculateFps()
-  {
-    u64 const framesRendered = ppu.frame;
-    u16 const framesThisSecond = framesRendered - frameCount;
-    frameCount = framesRendered;
-    fps = framesThisSecond;
-  }
-
-  void PrintFps() { fmt::print( "FPS: {}\n", fps ); }
 
   static GLuint CreateTexture( int width, int height )
   {

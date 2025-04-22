@@ -86,7 +86,6 @@ const char *Sound_Queue::init( long sample_rate, int chan_count )
 
   SDL_AudioSpec obtained;
   device_id = SDL_OpenAudioDevice( NULL, 0, &desired, &obtained, SDL_AUDIO_ALLOW_ANY_CHANGE );
-  std::cout << "SDL actually opened audio at " << obtained.freq << " Hz\n";
   if ( device_id == 0 ) {
     return sdl_error( "Couldn't open SDL audio" );
   }
