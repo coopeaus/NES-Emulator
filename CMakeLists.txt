@@ -104,6 +104,10 @@ copy_asset(${TESTS_S}    ${TESTS_D})
 add_custom_target(copied_assets ALL DEPENDS emu_core)
 add_dependencies(copied_assets emu_core)
 
+# User directory
+add_custom_target(user_dir ALL
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/user)
+
 #[[
 ################################################
 ||                                            ||

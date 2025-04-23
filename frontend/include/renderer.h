@@ -129,6 +129,7 @@ public:
       ROM( "palette.nes" ), ROM( "scanline.nes" ),   ROM( "instr_test-v5.nes" ),
   };
   std::deque<std::string> recentRoms;
+  std::string             recentRomDir;
   enum RomSelected : u8 { CUSTOM, COLOR_TEST, NESTEST, PALETTE, SCANLINE, V5 };
   u8 romSelected = RomSelected::CUSTOM;
 
@@ -160,6 +161,7 @@ public:
     ppu.onFrameReady = [this]( const u32 *frameBuffer ) { this->ProcessPpuFrameBuffer( frameBuffer ); };
     currentFrame = ppu.frame;
     recentRoms = LoadRecentROMs();
+    recentRomDir = LoadRecentRomDir();
   }
 
   void LoadNewCartridge( const std::string &newRomFile )
@@ -172,13 +174,18 @@ public:
   void OpenRomFileDialog()
   {
     const char *filters[] = { "*.nes" };
-    const char *filePath = tinyfd_openFileDialog( "Choose a ROM", paths::roms().c_str(), 1, filters, "NES ROMs", 0 );
+    const char *filePath = tinyfd_openFileDialog( "Choose a ROM", recentRomDir.c_str(), 1, filters, "NES ROMs", 0 );
 
     if ( filePath ) {
       fmt::print( "Selected ROM: {}\n", filePath );
 
       // Load the selected ROM
       LoadNewCartridge( filePath );
+
+      // Remember the rom directory
+      auto romDir = std::filesystem::path( filePath );
+      recentRomDir = romDir.string();
+      SaveRecentRomDir( romDir.string() );
 
       // Add to recently used roms
       AddToRecentROMs( filePath );
@@ -206,6 +213,31 @@ public:
     }
 
     return list;
+  }
+
+  static std::string LoadRecentRomDir()
+  {
+    namespace fs = std::filesystem;
+    fs::path      romDir = fs::path( paths::user() ) / "roms_dir";
+    std::ifstream in( romDir );
+    if ( !in.is_open() )
+      paths::roms();
+
+    std::string dir;
+    std::getline( in, dir );
+    return dir.empty() ? paths::roms() : dir;
+  }
+
+  static void SaveRecentRomDir( const std::string &dir )
+  {
+    namespace fs = std::filesystem;
+    fs::path      romDir = fs::path( paths::user() ) / "roms_dir";
+    std::ofstream out( romDir );
+    if ( !out.is_open() ) {
+      std::cerr << "Failed to open recent ROMs directory file for writing.\n";
+      return;
+    }
+    out << dir;
   }
 
   static void SaveRecentROMs( const std::deque<std::string> &list )
