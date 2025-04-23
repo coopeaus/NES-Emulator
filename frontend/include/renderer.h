@@ -121,11 +121,8 @@ public:
 #define ROM( x ) ( std::string( paths::roms() ) + "/" + ( x ) )
   std::vector<std::string> testRoms = {
 
-      ROM( "palette.nes" ), ROM( "color_test.nes" ),  ROM( "nestest.nes" ),
-      // ROM( "mario.nes" ),
-      ROM( "custom.nes" ),      ROM( "scanline.nes" ),
-      // ROM( "dk.nes" ),      ROM( "ice_climber.nes" ),
-      ROM( "instr_test-v5.nes" ),
+      ROM( "palette.nes" ), ROM( "color_test.nes" ), ROM( "nestest.nes" ),
+      ROM( "custom.nes" ),  ROM( "scanline.nes" ),   ROM( "instr_test-v5.nes" ),
   };
   enum RomSelected : u8 { PALETTE, COLOR_TEST, NESTEST, MARIO, CUSTOM, SCANLINE, DK, ICE_CLIMBER, V5 };
   u8 romSelected = RomSelected::MARIO;
@@ -167,18 +164,17 @@ public:
   }
 
   void OpenRomFileDialog()
-    {
-        const char *filters[] = {"*.nes"};
-        const char *filePath = tinyfd_openFileDialog("Choose a ROM", paths::roms().c_str(), 1, filters, "NES ROMs", 0);
+  {
+    const char *filters[] = { "*.nes" };
+    const char *filePath = tinyfd_openFileDialog( "Choose a ROM", paths::roms().c_str(), 1, filters, "NES ROMs", 0 );
 
-        if (filePath)
-        {
-            fmt::print("Selected ROM: {}\n", filePath);
+    if ( filePath ) {
+      fmt::print( "Selected ROM: {}\n", filePath );
 
-            // Load the selected ROM
-            LoadNewCartridge(filePath);
-        }
+      // Load the selected ROM
+      LoadNewCartridge( filePath );
     }
+  }
 
   bool Setup()
   {
