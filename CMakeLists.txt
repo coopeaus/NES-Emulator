@@ -30,9 +30,13 @@ set(TEST_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
 
 #[[
 ################################################
+||                                            ||
 ||                  Emu Core                  ||
+||                                            ||
 ################################################
 ]]
+
+# All emulation functionality is built as a static library.
 file(GLOB CORE_SOURCES "core/*.cpp" "core/mappers/*.cpp")
 add_library(emu_core STATIC ${CORE_SOURCES})
 
@@ -41,12 +45,15 @@ target_include_directories(emu_core PUBLIC
   ${CORE_INCLUDES}
 )
 
+# Fmt library
 find_package(fmt CONFIG REQUIRED)
 target_link_libraries(emu_core PRIVATE fmt::fmt)
 
 #[[
 ################################################
+||                                            ||
 ||           tinyfiledialogs support          ||
+||                                            ||
 ################################################
 ]]
 set(TINYFILEDIALOGS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/frontend/external/tinyfiledialogs)
@@ -57,7 +64,9 @@ target_include_directories(tinyfiledialogs PUBLIC ${TINYFILEDIALOGS_DIR})
 
 #[[
 ################################################
+||                                            ||
 ||               Asset Handling               ||
+||                                            ||
 ################################################
 ]]
 set(ROOT "${CMAKE_SOURCE_DIR}")
@@ -97,7 +106,9 @@ add_dependencies(copied_assets emu_core)
 
 #[[
 ################################################
+||                                            ||
 ||         Optional Python CLI Tool           ||
+||                                            ||
 ################################################
 ]]
 if(PYTHON_BINDINGS)
@@ -106,7 +117,9 @@ endif()
 
 #[[
 ################################################
+||                                            ||
 ||             Emulator Executable            ||
+||                                            ||
 ################################################
 ]]
 if(BUILD_FRONTEND)
@@ -157,20 +170,29 @@ endif()
 
 #[[
 ################################################
+||                                            ||
 ||              Test Executables              ||
+||                                            ||
 ################################################
 ]]
 if(BUILD_TESTS)
+  # Enable testing framework
   enable_testing()
+
+  # Find the GTest package
   find_package(GTest CONFIG REQUIRED)
+
+  # Include the GoogleTest module for gtest_discover_tests()
   include(GoogleTest)
 
+  # Define include directories for your project
   set(ALL_INCLUDES
     ${GENERAL_INCLUDES}
     ${CORE_INCLUDES}
     ${TEST_INCLUDES}
   )
 
+  # Function to add test executables
   function(add_test_executable TARGET_NAME SOURCE_FILE)
     add_executable(${TARGET_NAME} ${SOURCE_FILE})
     target_include_directories(${TARGET_NAME} PRIVATE ${ALL_INCLUDES})
@@ -179,6 +201,7 @@ if(BUILD_TESTS)
     gtest_discover_tests(${TARGET_NAME} PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endfunction()
 
+  # Add your test executables
   add_test_executable(cpu_test tests/cpu_test.cpp)
   add_test_executable(rom_test tests/rom_test.cpp)
   add_test_executable(ppu_test tests/ppu_test.cpp)
