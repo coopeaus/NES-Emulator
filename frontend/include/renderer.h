@@ -166,6 +166,10 @@ public:
 
   void LoadNewCartridge( const std::string &newRomFile )
   {
+    if ( !bus.cartridge.IsRomValid( newRomFile ) ) {
+      fmt::print( "Invalid ROM file: {}\n", newRomFile );
+      return;
+    }
     bus.cartridge.LoadRom( newRomFile );
     bus.DebugReset();
     currentFrame = ppu.frame;
@@ -256,6 +260,10 @@ public:
 
   void AddToRecentROMs( const std::string &filePath )
   {
+    if ( !bus.cartridge.IsRomValid( filePath ) ) {
+      return;
+    }
+
     auto recent = LoadRecentROMs();
 
     // Push the rom path to the front
@@ -681,6 +689,12 @@ public:
             bus.DebugReset();
           }
         }
+      } else if ( event.type == SDL_DROPFILE ) {
+        char *droppedFile = event.drop.file;
+        // load & track the dropped ROM:
+        LoadNewCartridge( droppedFile );
+        AddToRecentROMs( droppedFile );
+        SDL_free( droppedFile );
       }
       const Uint8 *keystate = SDL_GetKeyboardState( nullptr );
 
