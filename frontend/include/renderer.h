@@ -1,31 +1,36 @@
 #pragma once
 
-#include <SDL_video.h>
-#include <SDL_error.h>
-#include <SDL_hints.h>
-#include <SDL_events.h>
-#include <array>
-#include <cstdlib>
-#include <glad/glad.h>
 #include <SDL2/SDL.h>
-#include <imgui.h>
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_opengl3.h"
-#include "bus.h"
-#include "cartridge.h"
-#include "ui-component.h"
-#include "ui-manager.h"
+#include <SDL_error.h>
+#include <SDL_events.h>
+#include <SDL_hints.h>
 #include <SDL_stdinc.h>
 #include <SDL_timer.h>
-#include <cstdint>
+#include <SDL_video.h>
 #include <fmt/base.h>
 #include <fmt/core.h>
-#include <iostream>
+#include <glad/glad.h>
+#include <imgui.h>
+
+#include <algorithm>
+#include <array>
 #include <csignal>
+#include <cstdint>
+#include <cstdlib>
+#include <iostream>
+#include <numeric>
 #include <string>
-#include "theme.h"
+#include <thread>
+
+#include "bus.h"
+#include "cartridge.h"
 #include "chrono"
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_sdl2.h"
 #include "paths.h"
+#include "theme.h"
+#include "ui-component.h"
+#include "ui-manager.h"
 
 using u32 = uint32_t;
 using u64 = uint64_t;
@@ -45,6 +50,8 @@ public:
   int         windowHeight = nesHeight * 2;
   int         bufferSize = nesWidth * nesHeight;
   std::string windowTitle = "NES Emulator";
+
+  SDL_GameController *gamepad{};
 
   /*
   ################################
@@ -78,13 +85,17 @@ public:
 
   /*
   ################################
+  ||       Audio Variables      ||
+  ################################
+  */
+
+  /*
+  ################################
   #       global variables       #
   ################################
   */
   bool running = true;
   bool paused = false;
-  u16  fps = 0;
-  u64  frameCount = 0;
 
   bool updatePatternTables = false;
   bool updateNametables = false;
@@ -99,26 +110,21 @@ public:
   std::array<u32, 61440> nametable3Buffer{};
   std::array<u32, 4096>  oamBuffer{};
 
-#define ROM( x ) ( std::string( paths::roms() ) + "/" + ( x ) )
-  std::vector<std::string> testRoms = { ROM( "palette.nes" ), ROM( "color_test.nes" ),  ROM( "nestest.nes" ),
-                                        ROM( "mario.nes" ),   ROM( "custom.nes" ),      ROM( "scanline.nes" ),
-                                        ROM( "dk.nes" ),      ROM( "ice_climber.nes" ), ROM( "instr_test-v5.nes" ),
-                                        ROM( "solomon.nes" ), ROM( "arkanoid.nes" ) };
+  // Sampling metrics
+  std::vector<double>            frameTimes;
+  std::vector<double>            cpuCycles;
+  u64                            lastSampleCycles = 0;
+  Clock::time_point              lastSampleTime = Clock::now();
+  std::chrono::time_point<Clock> lastFrameTime = Clock::now();
 
-  enum RomSelected : u8 {
-    PALETTE,
-    COLOR_TEST,
-    NESTEST,
-    MARIO,
-    CUSTOM,
-    SCANLINE,
-    DK,
-    ICE_CLIMBER,
-    V5,
-    SOLOMON,
-    ARKANOID
+#define ROM( x ) ( std::string( paths::roms() ) + "/" + ( x ) )
+  std::vector<std::string> testRoms = {
+      ROM( "palette.nes" ), ROM( "color_test.nes" ),  ROM( "nestest.nes" ),
+      ROM( "mario.nes" ),   ROM( "custom.nes" ),      ROM( "scanline.nes" ),
+      ROM( "dk.nes" ),      ROM( "ice_climber.nes" ), ROM( "instr_test-v5.nes" ),
   };
-  u8 romSelected = RomSelected::ARKANOID;
+  enum RomSelected : u8 { PALETTE, COLOR_TEST, NESTEST, MARIO, CUSTOM, SCANLINE, DK, ICE_CLIMBER, V5 };
+  u8 romSelected = RomSelected::MARIO;
 
   /*
   ################################
@@ -154,13 +160,11 @@ public:
     bus.cartridge.LoadRom( newRomFile );
     bus.DebugReset();
     currentFrame = ppu.frame;
-    frameCount = 0;
   }
 
   bool Setup()
   {
-    // Initialize SDL Video subsystem.
-    if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER ) != 0 ) {
+    if ( SDL_Init( SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER ) != 0 ) {
       std::cerr << "SDL_Init Error: " << SDL_GetError() << '\n';
       return false;
     }
@@ -234,7 +238,24 @@ public:
       std::cerr << "Failed to initialize GLAD" << '\n';
       return false;
     }
-    SDL_GL_SetSwapInterval( 1 ); // Enable vsync
+    SDL_GL_SetSwapInterval( 0 ); // disable vsync
+
+    /*
+    ################################
+    ||       Game Controller      ||
+    ################################
+    */
+    int num = SDL_NumJoysticks();
+    fmt::print( "SDL reports {} joystick(s)\n", num );
+    for ( int i = 0; i < num; i++ ) {
+      const char *name = SDL_JoystickNameForIndex( i );
+      if ( SDL_IsGameController( i ) ) {
+        gamepad = SDL_GameControllerOpen( i );
+        fmt::print( "  [{}] GameController: {}\n", i, SDL_GameControllerName( gamepad ) );
+      } else {
+        fmt::print( "  [{}] Joystick (unsupported mapping): {}\n", i, name );
+      }
+    }
 
     /*
     ################################
@@ -314,7 +335,8 @@ public:
     (void) io;
     io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-    io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport / Platform Windows
+    io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport / Platform
+                                                           // Windows
 
     // Font setup
     ImFontConfig fontConfig;
@@ -331,10 +353,10 @@ public:
     // Override specified settings, defined in theme.h
     CustomTheme::Style();
 
-    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical
-    // to regular ones.
-    // ImGuiStyle &style = ImGui::GetStyle();
-    // if ( io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable ) {
+    // When viewports are enabled we tweak WindowRounding/WindowBg so platform
+    // windows can look identical to regular ones. ImGuiStyle &style =
+    // ImGui::GetStyle(); if ( io->ConfigFlags &
+    // ImGuiConfigFlags_ViewportsEnable ) {
     //     // style.WindowRounding = 0.0F;
     //     style.Colors[ImGuiCol_WindowBg].w = 1.0F;
     // }
@@ -353,19 +375,16 @@ public:
   #                              #
   ################################
   */
+
   void Run()
   {
-    std::signal( SIGSEGV, SignalHandler );
-
-    // Target frame time in milliseconds (~16.67ms for 60 FPS)
-    const double targetFrameTimeMs = 1000.0 / 60.0;
-    const u64    freq = SDL_GetPerformanceFrequency();
-    u64          secondStart = SDL_GetPerformanceCounter();
+    // Compute exact NES frame interval
+    constexpr double nesHz = ( 1789772.5 * 3 ) / ( 341.0 * 262.0 - 0.5 );
+    auto             frameInterval = std::chrono::duration<double, std::milli>( 1000.0 / nesHz );
+    auto             nextFrame = Clock::now() + frameInterval;
 
     while ( running ) {
-      frameStart = Clock::now();
-      u64 const frameStart = SDL_GetPerformanceCounter();
-
+      // Emulation and updates
       ExecuteFrame();
       PollEvents();
       RenderFrame();
@@ -373,31 +392,101 @@ public:
       UpdateOamTextures();
       UpdateNametableTextures();
 
-      u64 const    frameEnd = SDL_GetPerformanceCounter();
-      double const frameTimeMs =
-          ( static_cast<double>( frameEnd - frameStart ) ) * 1000.0 / static_cast<double>( freq );
+      // Sleep until the next frame
+      std::this_thread::sleep_until( nextFrame );
 
-      // Calculate the remaining time for this frame.
-      double const delayTimeMs = targetFrameTimeMs - frameTimeMs;
-      if ( delayTimeMs > 0 ) {
-        // If there's more than ~1ms left, sleep for most of it.
-        if ( delayTimeMs > 1.0 ) {
-          SDL_Delay( static_cast<Uint32>( delayTimeMs - 1.0 ) );
-        }
-        // Busy-wait until the target frame time has elapsed.
-        while ( ( ( static_cast<double>( SDL_GetPerformanceCounter() - frameStart ) ) * 1000.0 /
-                  static_cast<double>( freq ) ) < targetFrameTimeMs ) {
-        }
+      // Adjust the next frame time
+      nextFrame += frameInterval;
+
+      // Catch up if behind
+      auto now = Clock::now();
+      if ( now > nextFrame + frameInterval ) {
+        nextFrame = now + frameInterval;
       }
 
-      // FPS reporting every second.
-      u64 const    now = SDL_GetPerformanceCounter();
-      double const secondElapsed = ( static_cast<double>( now - secondStart ) ) * 1000.0 / static_cast<double>( freq );
-      if ( secondElapsed >= 1000.0 ) {
-        CalculateFps();
-        secondStart = SDL_GetPerformanceCounter();
+      // Sample FPS, cycles per second, and other metrics as needed
+      SampleMetrics();
+
+      // Keep track of frame time
+      if ( now - lastFrameTime > std::chrono::seconds( 1 ) ) {
+        lastFrameTime = now;
       }
     }
+  }
+
+  void SampleMetrics()
+  {
+    auto now = Clock::now();
+    auto delta = std::chrono::duration<double, std::milli>( now - lastSampleTime ).count();
+
+    u64    nowCycles = cpu.GetCycles();
+    double deltaCycles = (double) nowCycles - (double) lastSampleCycles;
+
+    // sample frame times
+    frameTimes.push_back( delta );
+    if ( frameTimes.size() > 10 ) {
+      frameTimes.erase( frameTimes.begin() );
+    }
+    lastSampleTime = now;
+
+    // sample CPU cycles diffs
+    cpuCycles.push_back( deltaCycles );
+    if ( cpuCycles.size() > 10 ) {
+      cpuCycles.erase( cpuCycles.begin() );
+    }
+    lastSampleCycles = nowCycles;
+  }
+
+  float GetAvgFps()
+  {
+    int    n = (int) frameTimes.size();
+    double sum = std::accumulate( frameTimes.begin(), frameTimes.end(), 0.0 );
+    double mean = sum / n;
+    return static_cast<float>( 1000.0 / mean );
+  }
+
+  float GetCyclesPerSecond() const
+  {
+    int    n = (int) frameTimes.size();
+    double sum = std::accumulate( cpuCycles.begin(), cpuCycles.end(), 0.0 );
+    double mean = sum / n;
+    return static_cast<float>( mean * 60.0988 );
+  }
+
+  void DebugCyclesPerSecond() const
+  {
+    float cyclesPerSecond = GetCyclesPerSecond();
+    fmt::print( "Cycles per second: {:.2f}\n", cyclesPerSecond );
+  }
+
+  void DebugFps()
+  {
+    if ( frameTimes.empty() ) {
+      return;
+    }
+
+    int    n = (int) frameTimes.size();
+    double sum = std::accumulate( frameTimes.begin(), frameTimes.end(), 0.0 );
+    double mean = sum / n;
+
+    auto [minIt, maxIt] = std::ranges::minmax_element( frameTimes );
+    double mn = *minIt;
+    double mx = *maxIt;
+
+    // population standard deviation
+    double sqsum = 0.0;
+    for ( double d : frameTimes ) {
+      double diff = d - mean;
+      sqsum += diff * diff;
+    }
+    double stdev = std::sqrt( sqsum / n );
+
+    // Print to console – you can swap to fmt::print if you prefer
+    std::cout << "--- FrameTiming (ms) over " << n << " samples ---\n"
+              << "  mean:  " << mean << "\n"
+              << "  min:   " << mn << "\n"
+              << "  max:   " << mx << "\n"
+              << "  stdev: " << stdev << "\n\n";
   }
 
   /*
@@ -448,6 +537,7 @@ public:
   void PollEvents()
   {
     SDL_Event event;
+
     while ( SDL_PollEvent( &event ) ) {
       ImGui_ImplSDL2_ProcessEvent( &event );
       if ( event.type == SDL_QUIT ) {
@@ -477,19 +567,40 @@ public:
           }
         }
       }
-    }
-    bus.controller[0] = 0x00;
-    const Uint8 *keystate = SDL_GetKeyboardState( nullptr );
+      const Uint8 *keystate = SDL_GetKeyboardState( nullptr );
 
-    // Map keys to controller bits
-    bus.controller[0] |= keystate[SDL_SCANCODE_X] ? 0x80 : 0x00;     // A Button -> x
-    bus.controller[0] |= keystate[SDL_SCANCODE_Z] ? 0x40 : 0x00;     // B Button -> z
-    bus.controller[0] |= keystate[SDL_SCANCODE_A] ? 0x20 : 0x00;     // Select   -> a
-    bus.controller[0] |= keystate[SDL_SCANCODE_S] ? 0x10 : 0x00;     // Start    -> s
-    bus.controller[0] |= keystate[SDL_SCANCODE_UP] ? 0x08 : 0x00;    // Up       -> up
-    bus.controller[0] |= keystate[SDL_SCANCODE_DOWN] ? 0x04 : 0x00;  // Down     -> down
-    bus.controller[0] |= keystate[SDL_SCANCODE_LEFT] ? 0x02 : 0x00;  // Left     -> left
-    bus.controller[0] |= keystate[SDL_SCANCODE_RIGHT] ? 0x01 : 0x00; // Right    -> right
+      // Map keys to controller bits
+      bus.controller[0] = 0x00;
+
+      // keyboard
+      bus.controller[0] |= keystate[SDL_SCANCODE_Z] ? 0x80 : 0x00;      // A Button -> z
+      bus.controller[0] |= keystate[SDL_SCANCODE_X] ? 0x40 : 0x00;      // B Button -> x
+      bus.controller[0] |= keystate[SDL_SCANCODE_TAB] ? 0x20 : 0x00;    // Select   -> tab
+      bus.controller[0] |= keystate[SDL_SCANCODE_RETURN] ? 0x10 : 0x00; // Start    -> return
+      bus.controller[0] |= keystate[SDL_SCANCODE_UP] ? 0x08 : 0x00;     // Up -> up
+      bus.controller[0] |= keystate[SDL_SCANCODE_DOWN] ? 0x04 : 0x00;   // Down     -> down
+      bus.controller[0] |= keystate[SDL_SCANCODE_LEFT] ? 0x02 : 0x00;   // Left     -> left
+      bus.controller[0] |= keystate[SDL_SCANCODE_RIGHT] ? 0x01 : 0x00;  // Right    -> right
+    }
+
+    // controller
+    if ( SDL_GameControllerGetAttached( gamepad ) ) {
+      // clang-format off
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_B ) ? 0x80 : 0x00; // A Button (swapped for personal reasons)
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_A ) ? 0x40 : 0x00; // B Button ( -^)
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_BACK ) ? 0x20 : 0x00; // Select
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_START ) ? 0x10 : 0x00; // Start
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_DPAD_UP ) ? 0x08 : 0x00; // Up
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_DPAD_DOWN ) ? 0x04 : 0x00; // Down
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_DPAD_LEFT ) ? 0x02 : 0x00; // Left
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_DPAD_RIGHT ) ? 0x01 : 0x00; // Right
+        // analog sticks also work
+        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad, SDL_CONTROLLER_AXIS_LEFTX ) < -8000 ? 0x02 : 0x00; // Left
+        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad, SDL_CONTROLLER_AXIS_LEFTX ) > 8000 ? 0x01 : 0x00; // Right
+        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad, SDL_CONTROLLER_AXIS_LEFTY ) < -8000 ? 0x08 : 0x00; // Up
+        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad, SDL_CONTROLLER_AXIS_LEFTY ) > 8000 ? 0x04 : 0x00; // Down
+      // clang-format on
+    }
   }
 
   /*
@@ -502,7 +613,6 @@ public:
 
   void RenderFrame()
   {
-
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
@@ -585,6 +695,7 @@ public:
       }
       bus.Clock();
     }
+    // End of frame, set the current frame to the next one.
     currentFrame = ppu.frame;
   }
 
@@ -617,8 +728,8 @@ public:
   GLuint GrabPatternTableTextureHandle( int tableIdx )
   {
     /*
-       @brief: Updates pattern table textures, read by the cartridge from the PPU. Used by pattern table
-       debug window.
+       @brief: Updates pattern table textures, read by the cartridge from the
+       PPU. Used by pattern table debug window.
     */
 
     GLuint const            texture = tableIdx == 0 ? patternTable0Texture : patternTable1Texture;
@@ -635,7 +746,8 @@ public:
   GLuint GrabOamTextureHandle()
   {
     /*
-       @brief: Updates OAM texture, read by the cartridge from the PPU. Used by sprite debug window.
+       @brief: Updates OAM texture, read by the cartridge from the PPU. Used by
+       sprite debug window.
     */
     glBindTexture( GL_TEXTURE_2D, oamTexture );
     glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
@@ -647,8 +759,8 @@ public:
   GLuint GrabNametableTextureHandle( int tableIdx )
   {
     /*
-       @brief: Updates nametable textures, read by the cartridge from the PPU. Used by nametable debug
-       window.
+       @brief: Updates nametable textures, read by the cartridge from the PPU.
+       Used by nametable debug window.
     */
     GLuint const texture = tableIdx == 0   ? nametable0Texture
                            : tableIdx == 1 ? nametable1Texture
@@ -675,16 +787,6 @@ public:
     glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, nesWidth, nesHeight, GL_RGBA, GL_UNSIGNED_BYTE, frameBuffer );
     glBindTexture( GL_TEXTURE_2D, 0 );
   }
-
-  void CalculateFps()
-  {
-    u64 const framesRendered = ppu.frame;
-    u16 const framesThisSecond = framesRendered - frameCount;
-    frameCount = framesRendered;
-    fps = framesThisSecond;
-  }
-
-  void PrintFps() { fmt::print( "FPS: {}\n", fps ); }
 
   static GLuint CreateTexture( int width, int height )
   {
@@ -821,7 +923,6 @@ public:
 
   static void CheckShaderCompileError( GLuint shader )
   {
-
     GLint success = 0;
     glGetShaderiv( shader, GL_COMPILE_STATUS, &success );
     if ( !success ) {
