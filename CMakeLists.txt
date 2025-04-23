@@ -39,9 +39,17 @@ set(TEST_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
 file(GLOB CORE_SOURCES "core/*.cpp" "core/mappers/*.cpp")
 add_library(emu_core STATIC ${CORE_SOURCES})
 
+# Add the tinyfiledialogs include directory
+set(TINYFILEDIALOGS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/frontend/external/tinyfiledialogs)
+
+# Add the tinyfiledialogs source file
+set(TINYFILEDIALOGS_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/frontend/external/tinyfiledialogs/tinyfiledialogs.c)
+
+# Add the include directory to emu_core
 target_include_directories(emu_core PUBLIC
   ${GENERAL_INCLUDES}
   ${CORE_INCLUDES}
+  ${TINYFILEDIALOGS_INCLUDE_DIR}
 )
 
 # Fmt library
@@ -106,6 +114,7 @@ endif()
 ||                                            ||
 ################################################
 ]]
+# Add the include directory to the emulator executable
 if(BUILD_FRONTEND)
   message(STATUS "BUILD_FRONTEND is enabled. Configuring frontend...")
 
@@ -119,7 +128,12 @@ if(BUILD_FRONTEND)
     ${CORE_INCLUDES}
     ${FRONTEND_INCLUDES}
     ${UI_INCLUDES}
+    ${TINYFILEDIALOGS_INCLUDE_DIR} # Include tinyfiledialogs.h
   )
+
+  # Add tinyfiledialogs.c to the sources
+  target_sources(emu PRIVATE ${TINYFILEDIALOGS_SOURCE})
+
   target_link_libraries(emu PRIVATE emu_core)
 
   # SDL
