@@ -58,6 +58,7 @@ public:
   */
   MirrorMode GetMirrorMode();
   void       LoadRom( const std::string &filePath );
+  bool       IsRomValid( const std::string &filePath );
 
   /*
   ################################

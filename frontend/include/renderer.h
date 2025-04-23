@@ -11,6 +11,7 @@
 #include <fmt/core.h>
 #include <glad/glad.h>
 #include <imgui.h>
+#include "tinyfiledialogs.h"
 
 #include <algorithm>
 #include <array>
@@ -21,6 +22,9 @@
 #include <numeric>
 #include <string>
 #include <thread>
+#include <deque>
+#include <filesystem>
+#include <fstream>
 
 #include "bus.h"
 #include "cartridge.h"
@@ -119,12 +123,14 @@ public:
 
 #define ROM( x ) ( std::string( paths::roms() ) + "/" + ( x ) )
   std::vector<std::string> testRoms = {
-      ROM( "palette.nes" ), ROM( "color_test.nes" ),  ROM( "nestest.nes" ),
-      ROM( "mario.nes" ),   ROM( "custom.nes" ),      ROM( "scanline.nes" ),
-      ROM( "dk.nes" ),      ROM( "ice_climber.nes" ), ROM( "instr_test-v5.nes" ),
+
+      ROM( "custom.nes" ),  ROM( "color_test.nes" ), ROM( "nestest.nes" ),
+      ROM( "palette.nes" ), ROM( "scanline.nes" ),   ROM( "instr_test-v5.nes" ),
   };
-  enum RomSelected : u8 { PALETTE, COLOR_TEST, NESTEST, MARIO, CUSTOM, SCANLINE, DK, ICE_CLIMBER, V5 };
-  u8 romSelected = RomSelected::MARIO;
+  std::deque<std::string> recentRoms;
+  std::string             recentRomDir;
+  enum RomSelected : u8 { CUSTOM, COLOR_TEST, NESTEST, PALETTE, SCANLINE, V5 };
+  u8 romSelected = RomSelected::CUSTOM;
 
   /*
   ################################
@@ -153,13 +159,129 @@ public:
     cpu.Reset();
     ppu.onFrameReady = [this]( const u32 *frameBuffer ) { this->ProcessPpuFrameBuffer( frameBuffer ); };
     currentFrame = ppu.frame;
+    recentRoms = LoadRecentROMs();
+    recentRomDir = LoadRecentRomDir();
   }
 
   void LoadNewCartridge( const std::string &newRomFile )
   {
+    if ( !bus.cartridge.IsRomValid( newRomFile ) ) {
+      fmt::print( "Invalid ROM file: {}\n", newRomFile );
+      return;
+    }
     bus.cartridge.LoadRom( newRomFile );
     bus.DebugReset();
     currentFrame = ppu.frame;
+  }
+
+  void OpenRomFileDialog()
+  {
+    const char *filters[] = { "*.nes" };
+    const char *filePath = tinyfd_openFileDialog( "Choose a ROM", recentRomDir.c_str(), 1, filters, "NES ROMs", 0 );
+
+    if ( filePath ) {
+      fmt::print( "Selected ROM: {}\n", filePath );
+
+      // Load the selected ROM
+      LoadNewCartridge( filePath );
+
+      // Remember the rom directory
+      auto romDir = std::filesystem::path( filePath );
+      recentRomDir = romDir.string();
+      SaveRecentRomDir( romDir.string() );
+
+      // Add to recently used roms
+      AddToRecentROMs( filePath );
+    }
+  }
+
+  static std::deque<std::string> LoadRecentROMs()
+  {
+    namespace fs = std::filesystem;
+    std::deque<std::string> list;
+    fs::path                recentPath = fs::path( paths::user() ) / "recent";
+
+    std::ifstream in( recentPath );
+    if ( !in.is_open() )
+      return list; // Nothing, return empty list
+
+    std::string line;
+    while ( std::getline( in, line ) ) {
+      if ( line.empty() )
+        continue;
+      // Make sure ROM still exists
+      if ( fs::exists( line ) ) {
+        list.push_back( line );
+      }
+    }
+
+    return list;
+  }
+
+  static std::string LoadRecentRomDir()
+  {
+    namespace fs = std::filesystem;
+    fs::path      romDir = fs::path( paths::user() ) / "roms_dir";
+    std::ifstream in( romDir );
+    if ( !in.is_open() )
+      paths::roms();
+
+    std::string dir;
+    std::getline( in, dir );
+    return dir.empty() ? paths::roms() : dir;
+  }
+
+  static void SaveRecentRomDir( const std::string &dir )
+  {
+    namespace fs = std::filesystem;
+    fs::path      romDir = fs::path( paths::user() ) / "roms_dir";
+    std::ofstream out( romDir );
+    if ( !out.is_open() ) {
+      std::cerr << "Failed to open recent ROMs directory file for writing.\n";
+      return;
+    }
+    out << dir;
+  }
+
+  static void SaveRecentROMs( const std::deque<std::string> &list )
+  {
+    namespace fs = std::filesystem;
+    fs::path      recentPath = fs::path( paths::user() ) / "recent";
+    std::ofstream out( recentPath );
+    if ( !out.is_open() ) {
+      std::cerr << "Failed to open recent ROMs file for writing.\n";
+      return;
+    }
+    for ( const auto &line : list ) {
+      out << line << '\n';
+    }
+  }
+
+  void AddToRecentROMs( const std::string &filePath )
+  {
+    if ( !bus.cartridge.IsRomValid( filePath ) ) {
+      return;
+    }
+
+    auto recent = LoadRecentROMs();
+
+    // Push the rom path to the front
+    recent.erase( std::ranges::remove( recent, filePath ).begin(), recent.end() );
+    recent.push_front( filePath );
+
+    // Keep no more than 10 entries
+    if ( recent.size() > 10 )
+      recent.resize( 10 );
+
+    // Save back to file
+    SaveRecentROMs( recent );
+    recentRoms = recent;
+  }
+
+  void ClearRecentROMs()
+  {
+    recentRoms.clear();
+    SaveRecentROMs( recentRoms );
   }
 
   bool Setup()
@@ -566,6 +688,12 @@ public:
             bus.DebugReset();
           }
         }
+      } else if ( event.type == SDL_DROPFILE ) {
+        char *droppedFile = event.drop.file;
+        // load & track the dropped ROM:
+        LoadNewCartridge( droppedFile );
+        AddToRecentROMs( droppedFile );
+        SDL_free( droppedFile );
       }
       const Uint8 *keystate = SDL_GetKeyboardState( nullptr );
 
