@@ -30,12 +30,9 @@ set(TEST_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
 
 #[[
 ################################################
-||                                            ||
 ||                  Emu Core                  ||
-||                                            ||
 ################################################
 ]]
-# All emulation functionality is built as a static library.
 file(GLOB CORE_SOURCES "core/*.cpp" "core/mappers/*.cpp")
 add_library(emu_core STATIC ${CORE_SOURCES})
 
@@ -44,19 +41,31 @@ target_include_directories(emu_core PUBLIC
   ${CORE_INCLUDES}
 )
 
-# Fmt library
 find_package(fmt CONFIG REQUIRED)
 target_link_libraries(emu_core PRIVATE fmt::fmt)
 
-# Build asset directories
-# --copy source
+#[[
+################################################
+||           tinyfiledialogs support          ||
+################################################
+]]
+set(TINYFILEDIALOGS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/frontend/external/tinyfiledialogs)
+add_library(tinyfiledialogs STATIC
+  ${TINYFILEDIALOGS_DIR}/tinyfiledialogs.cpp
+)
+target_include_directories(tinyfiledialogs PUBLIC ${TINYFILEDIALOGS_DIR})
+
+#[[
+################################################
+||               Asset Handling               ||
+################################################
+]]
 set(ROOT "${CMAKE_SOURCE_DIR}")
 set(ROM_S "${ROOT}/roms")
 set(TESTS_S "${ROOT}/tests")
 set(FONTS_S "${ROOT}/fonts")
 set(PALETTES_S "${ROOT}/palettes")
 
-# --copy dest
 set(ASSETS "${CMAKE_BINARY_DIR}/assets")
 set(TESTS_D "${CMAKE_BINARY_DIR}/tests")
 set(ROMS_D "${ASSETS}/roms")
@@ -83,27 +92,21 @@ copy_asset(${FONTS_S}    ${FONTS_D})
 copy_asset(${ROM_S}      ${ROMS_D})
 copy_asset(${TESTS_S}    ${TESTS_D})
 
-# Force assets to copy by adding a target
 add_custom_target(copied_assets ALL DEPENDS emu_core)
 add_dependencies(copied_assets emu_core)
 
 #[[
-#######################################
-||                                   ||
-||  Interactive CLI Tool (optional)  ||
-||                                   ||
-#######################################
+################################################
+||         Optional Python CLI Tool           ||
+################################################
 ]]
 if(PYTHON_BINDINGS)
   add_subdirectory(tools/python)
 endif()
 
-
 #[[
 ################################################
-||                                            ||
 ||             Emulator Executable            ||
-||                                            ||
 ################################################
 ]]
 if(BUILD_FRONTEND)
@@ -119,8 +122,13 @@ if(BUILD_FRONTEND)
     ${CORE_INCLUDES}
     ${FRONTEND_INCLUDES}
     ${UI_INCLUDES}
+    ${TINYFILEDIALOGS_DIR}
   )
-  target_link_libraries(emu PRIVATE emu_core)
+
+  target_link_libraries(emu PRIVATE
+    emu_core
+    tinyfiledialogs
+  )
 
   # SDL
   find_package(SDL2 CONFIG REQUIRED)
@@ -149,29 +157,20 @@ endif()
 
 #[[
 ################################################
-||                                            ||
 ||              Test Executables              ||
-||                                            ||
 ################################################
 ]]
 if(BUILD_TESTS)
-  # Enable testing framework
   enable_testing()
-
-  # Find the GTest package
   find_package(GTest CONFIG REQUIRED)
-
-  # Include the GoogleTest module for gtest_discover_tests()
   include(GoogleTest)
 
-  # Define include directories for your project
   set(ALL_INCLUDES
     ${GENERAL_INCLUDES}
     ${CORE_INCLUDES}
     ${TEST_INCLUDES}
   )
 
-  # Function to add test executables
   function(add_test_executable TARGET_NAME SOURCE_FILE)
     add_executable(${TARGET_NAME} ${SOURCE_FILE})
     target_include_directories(${TARGET_NAME} PRIVATE ${ALL_INCLUDES})
@@ -180,11 +179,9 @@ if(BUILD_TESTS)
     gtest_discover_tests(${TARGET_NAME} PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endfunction()
 
-  # Add your test executables
   add_test_executable(cpu_test tests/cpu_test.cpp)
   add_test_executable(rom_test tests/rom_test.cpp)
   add_test_executable(ppu_test tests/ppu_test.cpp)
   add_test_executable(apu_test tests/apu_test.cpp)
   add_test_executable(cart_test tests/cart_test.cpp)
 endif()
-

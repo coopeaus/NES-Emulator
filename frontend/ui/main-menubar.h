@@ -31,7 +31,9 @@ public:
   {
     if ( ImGui::BeginMainMenuBar() ) {
       if ( ImGui::BeginMenu( "File" ) ) {
-
+        if ( ImGui::MenuItem( "Load ROM" ) ) {
+          renderer->OpenRomFileDialog();
+        }
         if ( ImGui::BeginMenu( "Test Roms" ) ) {
           auto testRoms = renderer->testRoms;
           for ( auto &romPath : testRoms ) {
