@@ -22,6 +22,10 @@
 #include <numeric>
 #include <string>
 #include <thread>
+#include <deque>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 
 #include "bus.h"
 #include "cartridge.h"
@@ -121,11 +125,12 @@ public:
 #define ROM( x ) ( std::string( paths::roms() ) + "/" + ( x ) )
   std::vector<std::string> testRoms = {
 
-      ROM( "palette.nes" ), ROM( "color_test.nes" ), ROM( "nestest.nes" ),
-      ROM( "custom.nes" ),  ROM( "scanline.nes" ),   ROM( "instr_test-v5.nes" ),
+      ROM( "custom.nes" ),  ROM( "color_test.nes" ), ROM( "nestest.nes" ),
+      ROM( "palette.nes" ), ROM( "scanline.nes" ),   ROM( "instr_test-v5.nes" ),
   };
-  enum RomSelected : u8 { PALETTE, COLOR_TEST, NESTEST, MARIO, CUSTOM, SCANLINE, DK, ICE_CLIMBER, V5 };
-  u8 romSelected = RomSelected::MARIO;
+  std::deque<std::string> recentRoms;
+  enum RomSelected : u8 { CUSTOM, COLOR_TEST, NESTEST, PALETTE, SCANLINE, V5 };
+  u8 romSelected = RomSelected::CUSTOM;
 
   /*
   ################################
@@ -154,6 +159,7 @@ public:
     cpu.Reset();
     ppu.onFrameReady = [this]( const u32 *frameBuffer ) { this->ProcessPpuFrameBuffer( frameBuffer ); };
     currentFrame = ppu.frame;
+    recentRoms = LoadRecentROMs();
   }
 
   void LoadNewCartridge( const std::string &newRomFile )
@@ -173,7 +179,64 @@ public:
 
       // Load the selected ROM
       LoadNewCartridge( filePath );
+
+      // Add to recently used roms
+      AddToRecentROMs( filePath );
     }
+  }
+
+  static std::deque<std::string> LoadRecentROMs()
+  {
+    namespace fs = std::filesystem;
+    std::deque<std::string> list;
+    fs::path                recentPath = fs::path( paths::user() ) / "recent";
+
+    std::ifstream in( recentPath );
+    if ( !in.is_open() )
+      return list; // Nothing, return empty list
+
+    std::string line;
+    while ( std::getline( in, line ) ) {
+      if ( line.empty() )
+        continue;
+      // Make sure ROM still exists
+      if ( fs::exists( line ) ) {
+        list.push_back( line );
+      }
+    }
+
+    return list;
+  }
+
+  static void SaveRecentROMs( const std::deque<std::string> &list )
+  {
+    namespace fs = std::filesystem;
+    fs::path      recentPath = fs::path( paths::user() ) / "recent";
+    std::ofstream out( recentPath );
+    if ( !out.is_open() ) {
+      std::cerr << "Failed to open recent ROMs file for writing.\n";
+      return;
+    }
+    for ( const auto &line : list ) {
+      out << line << '\n';
+    }
+  }
+
+  void AddToRecentROMs( const std::string &filePath )
+  {
+    auto recent = LoadRecentROMs();
+
+    // Push the rom path to the front
+    recent.erase( std::ranges::remove( recent, filePath ).begin(), recent.end() );
+    recent.push_front( filePath );
+
+    // Keep no more than 10 entries
+    if ( recent.size() > 10 )
+      recent.resize( 10 );
+
+    // Save back to file
+    SaveRecentROMs( recent );
+    recentRoms = recent;
   }
 
   bool Setup()

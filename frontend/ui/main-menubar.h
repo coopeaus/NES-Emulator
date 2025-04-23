@@ -31,12 +31,25 @@ public:
   {
     if ( ImGui::BeginMainMenuBar() ) {
       if ( ImGui::BeginMenu( "File" ) ) {
-        if ( ImGui::MenuItem( "Load ROM" ) ) {
+        if ( ImGui::MenuItem( "Open" ) ) {
           renderer->OpenRomFileDialog();
         }
         if ( ImGui::BeginMenu( "Test Roms" ) ) {
           auto testRoms = renderer->testRoms;
           for ( auto &romPath : testRoms ) {
+            if ( ImGui::MenuItem( romPath.c_str() ) ) {
+              renderer->LoadNewCartridge( romPath );
+            }
+          }
+          ImGui::EndMenu();
+        }
+
+        auto recentRoms = renderer->recentRoms;
+        bool recentRomsEmpty = recentRoms.empty();
+        if ( recentRomsEmpty ) {
+          ImGui::TextDisabled( "Recent Files" );
+        } else if ( ImGui::BeginMenu( "Recent Files" ) ) {
+          for ( auto &romPath : recentRoms ) {
             if ( ImGui::MenuItem( romPath.c_str() ) ) {
               renderer->LoadNewCartridge( romPath );
             }
