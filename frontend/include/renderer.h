@@ -239,6 +239,12 @@ public:
     recentRoms = recent;
   }
 
+  void ClearRecentROMs()
+  {
+    recentRoms.clear();
+    SaveRecentROMs( recentRoms );
+  }
+
   bool Setup()
   {
     if ( SDL_Init( SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER ) != 0 ) {
