@@ -16,7 +16,6 @@
 #include "sprites.h"
 #include "nametable.h"
 #include "cartridge-info.h"
-#include <nlohmann/json.hpp>
 
 class MainMenuBar : public UIComponent
 {
@@ -130,15 +129,14 @@ public:
         ImGui::EndMenu();
       }
 
-      static char jsonPath[512] = "Your/save/or/load/state/path.json";
       // save State Button
       if ( ImGui::BeginMenu( "States" ) ) {
-        if ( ImGui::MenuItem( "Save Current State As" ) ) {
-          renderer->SaveCurrentStateFileDialog();
+        if ( ImGui::MenuItem( "Save" ) ) {
+          // TODO: save state
         }
         // load state button
         if ( ImGui::MenuItem( "Load State" ) ) {
-          renderer->OpenStateFileDialog();
+          // TODO: load state
         }
 
         ImGui::EndMenu();

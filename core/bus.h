@@ -6,7 +6,6 @@
 #include "apu.h"
 #include <array>
 #include <cstdint>
-#include <nlohmann/json.hpp>
 
 class Cartridge;
 class CPU;
@@ -44,9 +43,8 @@ public:
   ||    State Serialization     ||
   ################################
   */
-  bool LoadStateFromJson( const nlohmann::json &jsonData, const std::string &state );
-  bool LoadStateFromFile( const std::string &romPathWithExtension );
-  bool SaveStateToJson( const std::string &path, const std::string &state );
+  Bus  LoadState( const std::string &path );
+  void SaveState( const Bus &bus, const std::string &path );
 
   /*
   ################################
