@@ -2,7 +2,6 @@
 #include "cartridge.h"
 #include "global-types.h"
 #include <iostream>
-
 #include "utils.h"
 
 // Constructor to initialize the bus with a flat memory model
@@ -162,4 +161,131 @@ void Bus::DebugReset()
   cpu.SetCycles( 0 );
   cpu.Reset();
   ppu.Reset();
+}
+
+
+bool Bus::LoadStateFromJson(const nlohmann::json &jsonData, const std::string &state)
+{
+
+  cpu.SetProgramCounter(jsonData[state]["cpu"]["pc"]);
+  cpu.SetAccumulator(jsonData[state]["cpu"]["a"]);
+  cpu.SetXRegister(jsonData[state]["cpu"]["x"]);
+  cpu.SetYRegister(jsonData[state]["cpu"]["y"]);
+  cpu.SetStackPointer(jsonData[state]["cpu"]["s"]);
+  cpu.SetStatusRegister(jsonData[state]["cpu"]["p"]);
+  cpu.SetCycles(jsonData[state]["cpu"]["cycles"]);
+
+  auto& cartData = jsonData[state]["cartridge"];
+  std::string expectedRom = cartData["romName"];
+
+  //check if is the currently loaded ROM
+  if (cartridge.GetRomName() != expectedRom) {
+    std::filesystem::path romPath = std::filesystem::current_path() / "roms" / expectedRom;
+
+    if (std::filesystem::exists(romPath)) {
+      try {
+        cartridge.LoadRom(romPath.string());
+      } catch (const std::exception& e) {
+        std::cerr << "Failed to load correct ROM for selected load state: " << e.what() << std::endl;
+        return false;
+      }
+    }
+  }
+  //cartridge load
+  std::string romPath = paths::roms() + "/" + jsonData[state]["cartridge"]["romName"].get<std::string>();
+  cartridge.LoadRom(romPath);
+  for (const auto &entry : jsonData[state]["cartridge"]["prgRam"]) {
+    cartridge.WritePrgRAM(entry[0], entry[1]);
+  }
+
+  //CPU load
+  for (const auto &ramEntry : jsonData[state]["cpu"]["ram"]) {
+    uint16_t address = ramEntry[0];
+    uint8_t value = ramEntry[1];
+    cpu.Write(address, value);
+  }
+
+  //PPU
+  ppu.scanline = jsonData[state]["ppu"]["scanline"];
+  ppu.cycle = jsonData[state]["ppu"]["cycle"];
+  ppu.ppuCtrl.value = jsonData[state]["ppu"]["ctrl"];
+  ppu.ppuMask.value = jsonData[state]["ppu"]["mask"];
+  ppu.ppuStatus.value = jsonData[state]["ppu"]["status"];
+  ppu.oamAddr = jsonData[state]["ppu"]["oamAddr"];
+  ppu.ppuScroll = jsonData[state]["ppu"]["scroll"];
+  ppu.ppuAddr = jsonData[state]["ppu"]["addr"];
+  ppu.ppuData = jsonData[state]["ppu"]["data"];
+  ppu.vramAddr.value = jsonData[state]["ppu"]["vramAddr"];
+  ppu.tempAddr.value = jsonData[state]["ppu"]["tempAddr"];
+  ppu.fineX = jsonData[state]["ppu"]["fineX"];
+  ppu.addrLatch = jsonData[state]["ppu"]["addrLatch"];
+
+  //PPU load
+  for (const auto& entry : jsonData[state]["ppu"]["vram"]) {
+    u16 addr = entry[0];
+    u8 val = entry[1];
+    ppu.WriteVram(addr, val);
+  }
+
+  return true;
+}
+
+bool Bus::SaveStateToJson(const std::string& relativePath, const std::string& state)
+{
+  nlohmann::json jsonData;
+
+  //CPU values
+  jsonData[state]["cpu"] = {
+    {"a", cpu.GetAccumulator()},
+    {"x", cpu.GetXRegister()},
+    {"y", cpu.GetYRegister()},
+    {"p", cpu.GetStatusRegister()},
+    {"s", cpu.GetStackPointer()},
+    {"pc", cpu.GetProgramCounter()},
+    {"cycles", cpu.GetCycles()}
+  };
+
+  //CPU ram dump
+  jsonData[state]["cpu"]["ram"] = nlohmann::json::array();
+  for (u16 addr = 0; addr < 0x0800; ++addr) {
+    jsonData[state]["cpu"]["ram"].push_back({addr, cpu.Read(addr)});
+  }
+
+  //PPU values
+  jsonData[state]["ppu"] = {
+    {"ctrl", ppu.ppuCtrl.value},
+    {"mask", ppu.ppuMask.value},
+    {"status", ppu.ppuStatus.value},
+    {"oamAddr", ppu.oamAddr},
+    {"scroll", ppu.ppuScroll},
+    {"addr", ppu.ppuAddr},
+    {"data", ppu.ppuData},
+    {"vramAddr", ppu.vramAddr.value},
+    {"tempAddr", ppu.tempAddr.value},
+    {"fineX", ppu.fineX},
+    {"addrLatch", ppu.addrLatch},
+    {"scanline", ppu.scanline},
+    {"cycle", ppu.cycle}
+  };
+
+  //PPU dump
+  jsonData[state]["ppu"]["vram"] = nlohmann::json::array();
+  for (u16 addr = 0; addr < 0x4000; ++addr) {
+    jsonData[state]["ppu"]["vram"].push_back({addr, ppu.ReadVram(addr)});
+  }
+
+  //cartridge dump
+  jsonData[state]["cartridge"]["romName"] = cartridge.GetRomName();
+  jsonData[state]["cartridge"]["prgRam"] = nlohmann::json::array();
+  for (u16 addr = 0; addr < cartridge.GetPrgRamSize(); ++addr) {
+    jsonData[state]["cartridge"]["prgRam"].push_back({addr, cartridge.ReadPrgRAM(addr)});
+  }
+
+  //save to file
+  std::filesystem::path path = std::filesystem::current_path() / relativePath;
+  std::ofstream file(path);
+  if (!file.is_open()) return false;
+
+  file << std::setw(2) << jsonData;
+  return true;
 }

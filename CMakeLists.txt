@@ -119,6 +119,14 @@ if(BUILD_FRONTEND)
   file(GLOB FRONTEND_SOURCES "frontend/*.cpp" "frontend/ui/*.cpp")
   add_executable(emu ${FRONTEND_SOURCES})
 
+  #increase stack size for windows
+  if(WIN32)
+    target_link_options(emu PRIVATE "-Wl,/STACK:8388608")
+  endif()
+  find_package(nlohmann_json CONFIG REQUIRED)
+
+  target_link_libraries(emu_core PRIVATE nlohmann_json::nlohmann_json)
+
   target_compile_definitions(emu PRIVATE NOMINMAX)
 
   target_include_directories(emu PRIVATE

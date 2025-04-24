@@ -6,6 +6,7 @@
 #include "apu.h"
 #include <array>
 #include <cstdint>
+#include <nlohmann/json.hpp>
 
 class Cartridge;
 class CPU;
@@ -37,6 +38,15 @@ public:
   void Write( u16 address, u8 data );
   void Clock();
   void ProcessDma();
+
+  /*
+  ################################
+  ||    State Serialization     ||
+  ################################
+  */
+  bool LoadStateFromJson(const nlohmann::json &jsonData, const std::string &state);
+  bool LoadStateFromFile(const std::string &romPathWithExtension);
+  bool SaveStateToJson(const std::string& path, const std::string& state);
 
   /*
   ################################
