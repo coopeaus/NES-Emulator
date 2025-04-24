@@ -30,7 +30,7 @@ public:
 #define IndY( op ) Instruction { &CPU::op, &CPU::INDY }
 #define Rel( op )  Instruction { &CPU::op, &CPU::REL }
 
-        _opcodeTable = {
+        opcodeTable = {
           //0        1          2          3          4           5          6          7          8         9          A         B          C           D          E          F
     /*0*/ Imp(BRK),  IndX(ORA), Imp(JAM),  IndX(SLO), Zpg(NOP2),  Zpg(ORA),  Zpg(ASL),  Zpg(SLO),  Imp(PHP), Imm(ORA),  Imp(ASL), Imm(ANC),  Abs(NOP2),  Abs(ORA),  Abs(ASL),  Abs(SLO),
     /*1*/ Rel(BPL),  IndY(ORA), Imp(JAM),  IndY(SLO), ZpgX(NOP2), ZpgX(ORA), ZpgX(ASL), ZpgX(SLO), Imp(CLC), AbsY(ORA), Imp(NOP), AbsY(SLO), AbsX(NOP2), AbsX(ORA), AbsX(ASL), AbsX(SLO),
@@ -57,37 +57,37 @@ public:
   ||           Getters          ||
   ################################
   */
-  u8   GetAccumulator() const { return _a; }
-  u8   GetXRegister() const { return _x; }
-  u8   GetYRegister() const { return _y; }
-  u8   GetStatusRegister() const { return _p; }
-  u16  GetProgramCounter() const { return _pc; }
-  u8   GetStackPointer() const { return _s; }
-  u64  GetCycles() const { return _cycles; }
-  bool IsReading2002() const { return _reading2002; }
+  u8   GetAccumulator() const { return a; }
+  u8   GetXRegister() const { return x; }
+  u8   GetYRegister() const { return y; }
+  u8   GetStatusRegister() const { return p; }
+  u16  GetProgramCounter() const { return pc; }
+  u8   GetStackPointer() const { return s; }
+  u64  GetCycles() const { return cycles; }
+  bool IsReading2002() const { return reading2002; }
 
   // status getters
-  u8 GetCarryFlag() const { return ( _p & Carry ) >> 0; }
-  u8 GetZeroFlag() const { return ( _p & Zero ) >> 1; }
-  u8 GetInterruptDisableFlag() const { return ( _p & InterruptDisable ) >> 2; }
-  u8 GetDecimalFlag() const { return ( _p & Decimal ) >> 3; }
-  u8 GetBreakFlag() const { return ( _p & Break ) >> 4; }
-  u8 GetOverflowFlag() const { return ( _p & Overflow ) >> 6; }
-  u8 GetNegativeFlag() const { return ( _p & Negative ) >> 7; }
+  u8 GetCarryFlag() const { return ( p & Carry ) >> 0; }
+  u8 GetZeroFlag() const { return ( p & Zero ) >> 1; }
+  u8 GetInterruptDisableFlag() const { return ( p & InterruptDisable ) >> 2; }
+  u8 GetDecimalFlag() const { return ( p & Decimal ) >> 3; }
+  u8 GetBreakFlag() const { return ( p & Break ) >> 4; }
+  u8 GetOverflowFlag() const { return ( p & Overflow ) >> 6; }
+  u8 GetNegativeFlag() const { return ( p & Negative ) >> 7; }
 
   /*
   ################################
   ||           Setters          ||
   ################################
   */
-  void SetAccumulator( u8 value ) { _a = value; }
-  void SetXRegister( u8 value ) { _x = value; }
-  void SetYRegister( u8 value ) { _y = value; }
-  void SetStatusRegister( u8 value ) { _p = value; }
-  void SetProgramCounter( u16 value ) { _pc = value; }
-  void SetStackPointer( u8 value ) { _s = value; }
-  void SetCycles( u64 value ) { _cycles = value; }
-  void SetReading2002( bool value ) { _reading2002 = value; };
+  void SetAccumulator( u8 value ) { a = value; }
+  void SetXRegister( u8 value ) { x = value; }
+  void SetYRegister( u8 value ) { y = value; }
+  void SetStatusRegister( u8 value ) { p = value; }
+  void SetProgramCounter( u16 value ) { pc = value; }
+  void SetStackPointer( u8 value ) { s = value; }
+  void SetCycles( u64 value ) { cycles = value; }
+  void SetReading2002( bool value ) { reading2002 = value; };
 
   // status setters
   void SetCarryFlag( bool value ) { value ? SetFlags( Carry ) : ClearFlags( Carry ); }
@@ -123,11 +123,11 @@ public:
     Tick();
 
     // 2) Push PC high, then PC low
-    StackPush( ( _pc >> 8 ) & 0xFF );
-    StackPush( _pc & 0xFF );
+    StackPush( ( pc >> 8 ) & 0xFF );
+    StackPush( pc & 0xFF );
 
     // 3) Push status register with B=0; bit 5 (Unused) = 1
-    u8 const pushedStatus = ( _p & ~Break ) | Unused;
+    u8 const pushedStatus = ( p & ~Break ) | Unused;
     StackPush( pushedStatus );
 
     // 4) Fetch low byte of NMI vector ($FFFA)
@@ -140,7 +140,7 @@ public:
     u8 const high = ReadAndTick( 0xFFFB );
 
     // 7) Update PC
-    _pc = static_cast<u16>( high ) << 8 | low;
+    pc = static_cast<u16>( high ) << 8 | low;
   }
 
   void IRQ()
@@ -148,19 +148,19 @@ public:
     /* @brief: IRQ, can be called when interrupt disable is turned off.
      * Uses 7 cycles
      */
-    if ( ( _p & InterruptDisable ) != 0 ) {
+    if ( ( p & InterruptDisable ) != 0 ) {
       return;
     }
     Tick();
     Tick();
-    StackPush( ( _pc >> 8 ) & 0xFF );
-    StackPush( _pc & 0xFF );
-    u8 const pushedStatus = ( _p & ~Break ) | Unused;
+    StackPush( ( pc >> 8 ) & 0xFF );
+    StackPush( pc & 0xFF );
+    u8 const pushedStatus = ( p & ~Break ) | Unused;
     StackPush( pushedStatus );
     u8 const low = ReadAndTick( 0xFFFE );
     SetFlags( InterruptDisable );
     u8 const high = ReadAndTick( 0xFFFF );
-    _pc = static_cast<u16>( high ) << 8 | low;
+    pc = static_cast<u16>( high ) << 8 | low;
   }
 
   /*
@@ -169,46 +169,46 @@ public:
   ################################
   */
   std::string             LogLineAtPC( bool verbose = true );
-  std::deque<std::string> GetTracelog() const { return _traceLog; }
-  std::deque<std::string> GetMesenFormatTracelog() const { return _mesenFormatTraceLog; }
+  std::deque<std::string> GetTracelog() const { return traceLog; }
+  std::deque<std::string> GetMesenFormatTracelog() const { return mesenFormatTraceLog; }
   void                    EnableTracelog()
   {
-    _traceEnabled = true;
-    _mesenFormatTraceEnabled = false;
+    traceEnabled = true;
+    mesenFormatTraceEnabled = false;
   }
   void EnableMesenFormatTraceLog()
   {
-    _mesenFormatTraceEnabled = true;
-    _traceEnabled = false;
+    mesenFormatTraceEnabled = true;
+    traceEnabled = false;
   }
-  void DisableTracelog() { _traceEnabled = false; }
-  void DisableMesenFormatTraceLog() { _mesenFormatTraceEnabled = false; }
-  void EnableJsonTestMode() { _isTestMode = true; }
-  void DisableJsonTestMode() { _isTestMode = false; }
+  void DisableTracelog() { traceEnabled = false; }
+  void DisableMesenFormatTraceLog() { mesenFormatTraceEnabled = false; }
+  void EnableJsonTestMode() { isTestMode = true; }
+  void DisableJsonTestMode() { isTestMode = false; }
 
   size_t traceSize = 100;
   size_t mesenTraceSize = 100;
   void   SetMesenTraceSize( int size ) { mesenTraceSize = size; }
   void   AddTraceLog( const std::string &log )
   {
-    if ( _traceEnabled ) {
-      _traceLog.push_back( log + "\n" );
-      if ( _traceLog.size() > traceSize ) {
-        _traceLog.pop_front();
+    if ( traceEnabled ) {
+      traceLog.push_back( log + "\n" );
+      if ( traceLog.size() > traceSize ) {
+        traceLog.pop_front();
       }
     }
   }
-  void ClearTraceLog() { _traceLog.clear(); }
+  void ClearTraceLog() { traceLog.clear(); }
   void AddMesenTracelog( const std::string &log )
   {
-    if ( _mesenFormatTraceEnabled ) {
-      _mesenFormatTraceLog.push_back( log + "\n" );
-      if ( _mesenFormatTraceLog.size() > mesenTraceSize ) {
-        _mesenFormatTraceLog.pop_front();
+    if ( mesenFormatTraceEnabled ) {
+      mesenFormatTraceLog.push_back( log + "\n" );
+      if ( mesenFormatTraceLog.size() > mesenTraceSize ) {
+        mesenFormatTraceLog.pop_front();
       }
     }
   }
-  void ClearMesenTraceLog() { _mesenFormatTraceLog.clear(); }
+  void ClearMesenTraceLog() { mesenFormatTraceLog.clear(); }
 
   /*
   ################################
@@ -233,47 +233,44 @@ public:
   */
   Bus *bus;
 
-private:
-  friend class CpuTest; // Sometimes used for testing private methods
-
   /*
   ################################
   ||          Registers         ||
   ################################
   */
-  u16 _pc = 0x0000;       // Program counter (PC)
-  u8  _a = 0x00;          // Accumulator register (A)
-  u8  _x = 0x00;          // X register
-  u8  _y = 0x00;          // Y register
-  u8  _s = 0xFD;          // Stack pointer (SP)
-  u8  _p = 0x00 | Unused; // Status register (P), per the specs, the unused flag should always be set
-  u64 _cycles = 0;        // Number of cycles
+  u16 pc = 0x0000;       // Program counter (PC)
+  u8  a = 0x00;          // Accumulator register (A)
+  u8  x = 0x00;          // X register
+  u8  y = 0x00;          // Y register
+  u8  s = 0xFD;          // Stack pointer (SP)
+  u8  p = 0x00 | Unused; // Status register (P), per the specs, the unused flag should always be set
+  u64 cycles = 0;        // Number of cycles
 
   /*
   ################################
   ||  Private Global Variables  ||
   ################################
   */
-  bool        _didVblank = false;
-  bool        _pageCrossPenalty = true;
-  bool        _isWriteModify = false;
-  bool        _reading2002 = false;
-  std::string _instructionName;
-  std::string _addrMode;
-  u8          _opcode = 0x00;
+  bool        didVblank = false;
+  bool        pageCrossPenalty = true;
+  bool        writeModify = false;
+  bool        reading2002 = false;
+  std::string instructionName;
+  std::string addrMode;
+  u8          opcode = 0x00;
 
   /*
   ################################
   ||       Debug Variables      ||
   ################################
   */
-  bool _isTestMode = false;
-  bool _traceEnabled = false;
-  bool _mesenFormatTraceEnabled = false;
-  bool _didMesenTrace = false;
+  bool isTestMode = false;
+  bool traceEnabled = false;
+  bool mesenFormatTraceEnabled = false;
+  bool didMesenTrace = false;
 
-  std::deque<std::string> _traceLog;
-  std::deque<std::string> _mesenFormatTraceLog;
+  std::deque<std::string> traceLog;
+  std::deque<std::string> mesenFormatTraceLog;
 
   /*
   ################################
@@ -286,8 +283,8 @@ private:
   };
 
   // Opcode table
-  std::array<Instruction, 256> _opcodeTable;
-  Instruction                  GetInstruction( u8 opcode ) { return _opcodeTable[opcode]; }
+  std::array<Instruction, 256> opcodeTable;
+  Instruction                  GetInstruction( u8 opcode ) { return opcodeTable[opcode]; }
 
   /*
   ################################################################
@@ -331,7 +328,7 @@ private:
      * SetFlags( Status::Carry ); // Set one flag
      * SetFlags( Status::Carry | Status::Zero ); // Set multiple flags
      */
-    _p |= flag;
+    p |= flag;
   }
   void ClearFlags( const u8 flag )
   {
@@ -346,7 +343,7 @@ private:
      * ClearFlags( Status::Carry ); // Clear one flag
      * ClearFlags( Status::Carry | Status::Zero ); // Clear multiple flags
      */
-    _p &= ~flag;
+    p &= ~flag;
   }
   bool IsFlagSet( const u8 flag ) const
   {
@@ -362,7 +359,7 @@ private:
      *   // Do something
      * }
      */
-    return ( _p & flag ) == flag;
+    return ( p & flag ) == flag;
   }
 
   void SetZeroAndNegativeFlags( u8 value )
@@ -396,21 +393,21 @@ private:
      * BranchOnStatus( Status::Zero, false ); // Branch if zero flag is clear
      */
 
-    bool const willBranch = ( _p & flag ) == flag;
+    bool const willBranch = ( p & flag ) == flag;
 
     // Path will branch
     if ( willBranch == isSet ) {
       // Store previous program counter value, used to check boundary crossing
-      u16 const prevPc = _pc;
+      u16 const prevPc = pc;
 
-      // Set _pc to the offset address, calculated by REL addressing mode
-      _pc = offsetAddress;
+      // Set pc to the offset address, calculated by REL addressing mode
+      pc = offsetAddress;
 
       // +1 cycles because we're taking a branch
       Tick();
 
       // Add another cycle if page boundary is crossed
-      if ( ( _pc & 0xFF00 ) != ( prevPc & 0xFF00 ) ) {
+      if ( ( pc & 0xFF00 ) != ( prevPc & 0xFF00 ) ) {
         Tick();
       }
     }
@@ -425,7 +422,7 @@ private:
      */
 
     u8 value = 0;
-    if ( _instructionName == "*DCP" ) {
+    if ( instructionName == "*DCP" ) {
       value = Read( address ); // 0 cycles
     } else {
       value = ReadAndTick( address );
@@ -449,7 +446,7 @@ private:
      * The stack pointer is decremented and the value is written to the stack
      * Stack addresses are between 0x0100 and 0x01FF
      */
-    WriteAndTick( 0x0100 + _s--, value );
+    WriteAndTick( 0x0100 + s--, value );
   }
 
   u8 StackPop()
@@ -459,7 +456,7 @@ private:
      * The stack pointer is incremented and the value is read from the stack
      * Stack addresses are between 0x0100 and 0x01FF
      */
-    return ReadAndTick( 0x0100 + ++_s );
+    return ReadAndTick( 0x0100 + ++s );
   }
 
   /*
@@ -487,7 +484,7 @@ private:
      * The operand is a part of the instruction
      * The program counter is incremented to point to the operand
      */
-    return _pc++;
+    return pc++;
   }
 
   auto ZPG() -> u16
@@ -497,7 +494,7 @@ private:
      * Returns the address from the zero page (0x0000 - 0x00FF).
      * The value of the next byte is the address in the zero page.
      */
-    return ReadAndTick( _pc++ ) & 0x00FF;
+    return ReadAndTick( pc++ ) & 0x00FF;
   }
 
   auto ZPGX() -> u16
@@ -507,8 +504,8 @@ private:
      * Returns the address from the zero page (0x0000 - 0x00FF) + X register
      * The value of the next byte is the address in the zero page.
      */
-    u8 const  zeroPageAddress = ReadAndTick( _pc++ );
-    u16 const finalAddress = ( zeroPageAddress + _x ) & 0x00FF;
+    u8 const  zeroPageAddress = ReadAndTick( pc++ );
+    u16 const finalAddress = ( zeroPageAddress + x ) & 0x00FF;
     Tick(); // Account for calculating the final address
     return finalAddress;
   }
@@ -520,9 +517,9 @@ private:
      * Returns the address from the zero page (0x0000 - 0x00FF) + Y register
      * The value of the next byte is the address in the zero page.
      */
-    u8 const zeroPageAddress = ( ReadAndTick( _pc++ ) + _y ) & 0x00FF;
+    u8 const zeroPageAddress = ( ReadAndTick( pc++ ) + y ) & 0x00FF;
 
-    if ( _isWriteModify ) {
+    if ( writeModify ) {
       Tick();
     }
     return zeroPageAddress;
@@ -534,8 +531,8 @@ private:
      * @brief Absolute addressing mode
      * Constructs a 16-bit address from the next two bytes
      */
-    u16 const low = ReadAndTick( _pc++ );
-    u16 const high = ReadAndTick( _pc++ );
+    u16 const low = ReadAndTick( pc++ );
+    u16 const high = ReadAndTick( pc++ );
     return ( high << 8 ) | low;
   }
 
@@ -546,18 +543,18 @@ private:
      * Constructs a 16-bit address from the next two bytes and adds the X register to the final
      * address
      */
-    u16 const low = ReadAndTick( _pc++ );
-    u16 const high = ReadAndTick( _pc++ );
+    u16 const low = ReadAndTick( pc++ );
+    u16 const high = ReadAndTick( pc++ );
     u16 const address = ( high << 8 ) | low;
-    u16 const finalAddress = address + _x;
+    u16 const finalAddress = address + x;
 
     // If the final address crosses a page boundary, an additional cycle is required
     // Instructions that should ignore this: ASL, ROL, LSR, ROR, STA, DEC, INC
-    if ( _pageCrossPenalty && ( finalAddress & 0xFF00 ) != ( address & 0xFF00 ) ) {
+    if ( pageCrossPenalty && ( finalAddress & 0xFF00 ) != ( address & 0xFF00 ) ) {
       Tick();
     }
 
-    if ( _isWriteModify ) {
+    if ( writeModify ) {
       // Dummy read, in preparation to overwrite the address
       Tick();
     }
@@ -571,17 +568,17 @@ private:
      * Constructs a 16-bit address from the next two bytes and adds the Y register to the final
      * address
      */
-    u16 const low = ReadAndTick( _pc++ );
-    u16 const high = ReadAndTick( _pc++ );
+    u16 const low = ReadAndTick( pc++ );
+    u16 const high = ReadAndTick( pc++ );
     u16 const address = ( high << 8 ) | low;
-    u16 const finalAddress = address + _y;
+    u16 const finalAddress = address + y;
 
     // If the final address crosses a page boundary, an additional cycle is required
     // Instructions that should ignore this: STA
-    if ( _pageCrossPenalty && ( finalAddress & 0xFF00 ) != ( address & 0xFF00 ) ) {
+    if ( pageCrossPenalty && ( finalAddress & 0xFF00 ) != ( address & 0xFF00 ) ) {
       Tick();
     }
-    if ( _isWriteModify ) {
+    if ( writeModify ) {
       // Dummy read, in preparation to overwrite the address
       Tick();
     }
@@ -599,8 +596,8 @@ private:
      * There's a hardware bug that prevents the address from crossing a page boundary
      */
 
-    u16 const ptrLow = ReadAndTick( _pc++ );
-    u16 const ptrHigh = ReadAndTick( _pc++ );
+    u16 const ptrLow = ReadAndTick( pc++ );
+    u16 const ptrHigh = ReadAndTick( pc++ );
     u16 const ptr = ( ptrHigh << 8 ) | ptrLow;
 
     u8 const addressLow = ReadAndTick( ptr );
@@ -627,7 +624,7 @@ private:
      * Final address is the value stored at the POINTER address
      */
     Tick();                                                              // Account for operand fetch
-    u8 const  zeroPageAddress = ( ReadAndTick( _pc++ ) + _x ) & 0x00FF;  // 1 cycle
+    u8 const  zeroPageAddress = ( ReadAndTick( pc++ ) + x ) & 0x00FF;    // 1 cycle
     u16 const ptrLow = ReadAndTick( zeroPageAddress );                   // 1 cycle
     u16 const ptrHigh = ReadAndTick( ( zeroPageAddress + 1 ) & 0x00FF ); // 1 cycle
     return ( ptrHigh << 8 ) | ptrLow;
@@ -641,19 +638,19 @@ private:
      * The value stored at the zero-page address is the pointer address
      * The value in the Y register is added to the FINAL address
      */
-    u16 const zeroPageAddress = ReadAndTick( _pc++ );
+    u16 const zeroPageAddress = ReadAndTick( pc++ );
     u16 const ptrLow = ReadAndTick( zeroPageAddress );
     u16 const ptrHigh = ReadAndTick( ( zeroPageAddress + 1 ) & 0x00FF );
 
-    u16 const address = ( ( ptrHigh << 8 ) | ptrLow ) + _y;
+    u16 const address = ( ( ptrHigh << 8 ) | ptrLow ) + y;
 
     // If the final address crosses a page boundary, an additional cycle is required
     // Instructions that should ignore this: STA
-    if ( _pageCrossPenalty && ( address & 0xFF00 ) != ( ptrHigh << 8 ) ) {
+    if ( pageCrossPenalty && ( address & 0xFF00 ) != ( ptrHigh << 8 ) ) {
       Tick();
     }
 
-    if ( _isWriteModify ) {
+    if ( writeModify ) {
       // Dummy read, in preparation to overwrite the address
       Tick();
     }
@@ -667,8 +664,8 @@ private:
      * The next byte is a signed offset
      * Sets the program counter between -128 and +127 bytes from the current location
      */
-    s8 const  offset = static_cast<s8>( ReadAndTick( _pc++ ) );
-    u16 const address = _pc + offset;
+    s8 const  offset = static_cast<s8>( ReadAndTick( pc++ ) );
+    u16 const address = pc + offset;
     return address;
   }
 
@@ -738,7 +735,7 @@ private:
      * LDA Indirect Y: B1(5+)
      */
 
-    LoadRegister( address, _a );
+    LoadRegister( address, a );
   }
 
   void LDX( u16 address )
@@ -754,7 +751,7 @@ private:
      * LDX Absolute: AE(4)
      * LDX Absolute Y: BE(4+)
      */
-    LoadRegister( address, _x );
+    LoadRegister( address, x );
   }
 
   void LDY( u16 address )
@@ -770,7 +767,7 @@ private:
      * LDY Absolute: AC(4)
      * LDY Absolute X: BC(4+)
      */
-    LoadRegister( address, _y );
+    LoadRegister( address, y );
   }
 
   void STA( const u16 address ) // NOLINT
@@ -788,7 +785,7 @@ private:
      * STA Indirect X: 81(6)
      * STA Indirect Y: 91(6)
      */
-    StoreRegister( address, _a );
+    StoreRegister( address, a );
   }
 
   void STX( const u16 address ) // NOLINT
@@ -802,7 +799,7 @@ private:
      * STX Zero Page Y: 96(4)
      * STX Absolute: 8E(4)
      */
-    StoreRegister( address, _x );
+    StoreRegister( address, x );
   }
 
   void STY( const u16 address ) // NOLINT
@@ -816,7 +813,7 @@ private:
      * STY Zero Page X: 94(4)
      * STY Absolute: 8C(4)
      */
-    StoreRegister( address, _y );
+    StoreRegister( address, y );
   }
 
   void ADC( u16 address )
@@ -837,7 +834,7 @@ private:
      */
     u8 value = 0;
 
-    if ( _instructionName == "*RRA" ) {
+    if ( instructionName == "*RRA" ) {
       value = Read( address ); // No cycle spend
     } else {
       value = ReadAndTick( address );
@@ -845,7 +842,7 @@ private:
 
     // Store the sum in a 16-bit variable to check for overflow
     u8 const  carry = IsFlagSet( Status::Carry ) ? 1 : 0;
-    u16 const sum = _a + value + carry;
+    u16 const sum = a + value + carry;
 
     // Set the carry flag if sum > 255
     // this means that there will be an overflow
@@ -861,7 +858,7 @@ private:
     // ---------
     // 0000 0010   // << Sum: 2. Sign bit is different, result is positive but should be
     // negative
-    u8 const accumulatorSignBit = _a & 0b10000000;
+    u8 const accumulatorSignBit = a & 0b10000000;
     u8 const valueSignBit = value & 0b10000000;
     u8 const sumSignBit = sum & 0b10000000;
     ( accumulatorSignBit == valueSignBit && accumulatorSignBit != sumSignBit ) ? SetFlags( Status::Overflow )
@@ -871,7 +868,7 @@ private:
     ( sum & 0b10000000 ) != 0 ? SetFlags( Status::Negative ) : ClearFlags( Status::Negative );
 
     // Store the lower byte of the sum in the accumulator
-    _a = sum & 0xFF;
+    a = sum & 0xFF;
   }
 
   void SBC( u16 address )
@@ -894,7 +891,7 @@ private:
      */
 
     u8 value = 0;
-    if ( _instructionName == "*ISC" ) {
+    if ( instructionName == "*ISC" ) {
       value = Read( address ); // 0 cycles
     } else {
       value = ReadAndTick( address );
@@ -903,7 +900,7 @@ private:
 
     // Store diff in a 16-bit variable to check for overflow
     u8 const  carry = IsFlagSet( Status::Carry ) ? 0 : 1;
-    u16 const diff = _a - value - carry;
+    u16 const diff = a - value - carry;
 
     // Carry flag exists in the high byte?
     ( diff < 0x100 ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
@@ -917,7 +914,7 @@ private:
     // 0000 0010   // << Value: 2
     // ---------
     // 1111 1111   // << Diff: 127. Sign bit is different
-    u8 const accumulatorSignBit = _a & 0b10000000;
+    u8 const accumulatorSignBit = a & 0b10000000;
     u8 const valueSignBit = value & 0b10000000;
     u8 const diffSignBit = diff & 0b10000000;
     ( accumulatorSignBit != valueSignBit && accumulatorSignBit != diffSignBit ) ? SetFlags( Status::Overflow )
@@ -927,7 +924,7 @@ private:
     ( diff & 0b10000000 ) != 0 ? SetFlags( Status::Negative ) : ClearFlags( Status::Negative );
 
     // Store the lower byte of the diff in the accumulator
-    _a = diff & 0xFF;
+    a = diff & 0xFF;
   }
 
   void INC( u16 address )
@@ -959,8 +956,8 @@ private:
      * INX: E8(2)
      */
     (void) address;
-    _x++;
-    SetZeroAndNegativeFlags( _x );
+    x++;
+    SetZeroAndNegativeFlags( x );
   }
 
   void INY( u16 address )
@@ -973,8 +970,8 @@ private:
      * INY: C8(2)
      */
     (void) address;
-    _y++;
-    SetZeroAndNegativeFlags( _y );
+    y++;
+    SetZeroAndNegativeFlags( y );
   }
 
   void DEC( u16 address )
@@ -1006,8 +1003,8 @@ private:
      * DEX: CA(2)
      */
     (void) address;
-    _x--;
-    SetZeroAndNegativeFlags( _x );
+    x--;
+    SetZeroAndNegativeFlags( x );
   }
 
   void DEY( u16 address )
@@ -1020,8 +1017,8 @@ private:
      * DEY: 88(2)
      */
     (void) address;
-    _y--;
-    SetZeroAndNegativeFlags( _y );
+    y--;
+    SetZeroAndNegativeFlags( y );
   }
 
   void CLC( const u16 address )
@@ -1209,7 +1206,7 @@ private:
      *   CMP Indirect X: C1(6)
      *   CMP Indirect Y: D1(5+)
      */
-    CompareAddressWithRegister( address, _a );
+    CompareAddressWithRegister( address, a );
   }
 
   void CPX( u16 address )
@@ -1222,7 +1219,7 @@ private:
      *   CPX Zero Page: E4(3)
      *   CPX Absolute: EC(4)
      */
-    CompareAddressWithRegister( address, _x );
+    CompareAddressWithRegister( address, x );
   }
 
   void CPY( u16 address )
@@ -1235,7 +1232,7 @@ private:
      *   CPY Zero Page: C4(3)
      *   CPY Absolute: CC(4)
      */
-    CompareAddressWithRegister( address, _y );
+    CompareAddressWithRegister( address, y );
   }
 
   void PHA( const u16 address )
@@ -1297,7 +1294,7 @@ private:
     // Get the accumulator from the stack and set the zero and negative flags
     SetAccumulator( ReadAndTick( 0x100 + GetStackPointer() ) );
     Tick(); // Dummy read
-    SetZeroAndNegativeFlags( _a );
+    SetZeroAndNegativeFlags( a );
   }
 
   void PLP( const u16 address )
@@ -1357,7 +1354,7 @@ private:
      *   ASL Absolute X: 1E(7)
      */
 
-    if ( _addrMode == "IMP" ) {
+    if ( addrMode == "IMP" ) {
       u8 accumulator = GetAccumulator();
       // Set the carry flag if bit 7 is set
       ( accumulator & 0b10000000 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
@@ -1401,7 +1398,7 @@ private:
      *   LSR Absolute X: 5E(7)
      */
 
-    if ( _addrMode == "IMP" ) {
+    if ( addrMode == "IMP" ) {
       u8 accumulator = GetAccumulator();
       // Set the carry flag if bit 0 is set
       ( accumulator & 0b00000001 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
@@ -1445,7 +1442,7 @@ private:
      */
 
     const u8 carry = IsFlagSet( Status::Carry ) ? 1 : 0;
-    if ( _addrMode == "IMP" ) {
+    if ( addrMode == "IMP" ) {
       u8 accumulator = GetAccumulator();
 
       // Set the carry flag if bit 7 is set
@@ -1495,7 +1492,7 @@ private:
 
     const u8 carry = IsFlagSet( Status::Carry ) ? 1 : 0;
 
-    if ( _addrMode == "IMP" ) { // implied mode
+    if ( addrMode == "IMP" ) { // implied mode
       u8 accumulator = GetAccumulator();
 
       // Set the carry flag if bit 0 is set
@@ -1539,7 +1536,7 @@ private:
      *   JMP Absolute: 4C(3)
      *   JMP Indirect: 6C(5)
      */
-    _pc = address;
+    pc = address;
   }
 
   void JSR( u16 address )
@@ -1550,11 +1547,11 @@ private:
      *   Usage and cycles:
      *   JSR Absolute: 20(6)
      */
-    u16 const returnAddress = _pc - 1;
+    u16 const returnAddress = pc - 1;
     Tick(); // Additional read here, probably for timing purposes
     StackPush( ( returnAddress >> 8 ) & 0xFF );
     StackPush( returnAddress & 0xFF );
-    _pc = address;
+    pc = address;
   }
 
   void RTS( const u16 address )
@@ -1568,9 +1565,9 @@ private:
     (void) address;
     u16 const low = StackPop();
     u16 const high = StackPop();
-    _pc = ( high << 8 ) | low;
+    pc = ( high << 8 ) | low;
     Tick(); // Account for reading the new address
-    _pc++;
+    pc++;
     Tick(); // Account for reading the next pc value
   }
 
@@ -1586,11 +1583,11 @@ private:
     u8 const status = StackPop();
 
     // Ignore the break flag and ensure the unused flag (bit 5) is set
-    _p = ( status & ~Break ) | Unused;
+    p = ( status & ~Break ) | Unused;
 
     u16 const low = StackPop();
     u16 const high = StackPop();
-    _pc = ( high << 8 ) | low;
+    pc = ( high << 8 ) | low;
     Tick(); // Account for reading the new address
   }
 
@@ -1607,19 +1604,19 @@ private:
      *   Read vector low: 1, Read vector high: 1
      */
     (void) address;
-    _pc++; // padding byte
+    pc++; // padding byte
 
     // Push pc to the stack
-    StackPush( _pc >> 8 );     // 1 cycle
-    StackPush( _pc & 0x00FF ); // 1 cycle
+    StackPush( pc >> 8 );     // 1 cycle
+    StackPush( pc & 0x00FF ); // 1 cycle
 
     // Push status with break and unused flag set (ignored when popped)
-    StackPush( _p | Break | Unused );
+    StackPush( p | Break | Unused );
 
     // Set PC to the value at the interrupt vector (0xFFFE)
     u16 const low = ReadAndTick( 0xFFFE );
     u16 const high = ReadAndTick( 0xFFFF );
-    _pc = ( high << 8 ) | low;
+    pc = ( high << 8 ) | low;
 
     // Set the interrupt disable flag
     SetFlags( InterruptDisable );
@@ -1641,8 +1638,8 @@ private:
      *   AND Indirect Y: 31(5+)
      */
     u8 const value = ReadAndTick( address );
-    _a &= value;
-    SetZeroAndNegativeFlags( _a );
+    a &= value;
+    SetZeroAndNegativeFlags( a );
   }
 
   void ORA( const u16 address )
@@ -1662,8 +1659,8 @@ private:
      */
 
     u8 const value = ReadAndTick( address ); // 1 cycle
-    _a |= value;
-    SetZeroAndNegativeFlags( _a );
+    a |= value;
+    SetZeroAndNegativeFlags( a );
   }
 
   void EOR( const u16 address )
@@ -1682,8 +1679,8 @@ private:
      *   EOR Indirect Y: 51(5+)
      */
     u8 const value = ReadAndTick( address );
-    _a ^= value;
-    SetZeroAndNegativeFlags( _a );
+    a ^= value;
+    SetZeroAndNegativeFlags( a );
   }
 
   void BIT( const u16 address )
@@ -1698,7 +1695,7 @@ private:
      */
 
     u8 const value = ReadAndTick( address );
-    SetZeroAndNegativeFlags( _a & value );
+    SetZeroAndNegativeFlags( a & value );
 
     // Set overflow flag to bit 6 of value
     ( value & 0b01000000 ) != 0 ? SetFlags( Status::Overflow ) : ClearFlags( Status::Overflow );
@@ -1829,8 +1826,8 @@ private:
 
     // ORA is side effect, no cycles are spent
     u8 const value = Read( address ); // 0 cycle
-    _a |= value;
-    SetZeroAndNegativeFlags( _a );
+    a |= value;
+    SetZeroAndNegativeFlags( a );
   }
 
   void SAX( const u16 address ) // NOLINT
@@ -1844,7 +1841,7 @@ private:
      *   SAX Indirect X: 83(6)
      *   SAX Absolute: 8F(4)
      */
-    WriteAndTick( address, _a & _x );
+    WriteAndTick( address, a & x );
   }
 
   void LXA( const u16 address )
@@ -1859,10 +1856,10 @@ private:
     u8 const magicConstant = 0xEE;
     u8 const value = ReadAndTick( address );
 
-    u8 const result = ( ( _a | magicConstant ) & value );
-    _a = result;
-    _x = result;
-    SetZeroAndNegativeFlags( _a );
+    u8 const result = ( ( a | magicConstant ) & value );
+    a = result;
+    x = result;
+    SetZeroAndNegativeFlags( a );
   }
 
   void LAX( const u16 address )
@@ -1894,23 +1891,23 @@ private:
      */
 
     // A & operand
-    u8 value = _a & ReadAndTick( address );
+    u8 value = a & ReadAndTick( address );
 
     // ROR
     u8 const carryIn = IsFlagSet( Status::Carry ) ? 0x80 : 0x00;
     value = ( value >> 1 ) | carryIn;
 
-    _a = value;
+    a = value;
 
     // Set flags
-    SetZeroAndNegativeFlags( _a );
+    SetZeroAndNegativeFlags( a );
 
     // Adjust C and V flags according to the ARR rules
     // C = bit 6 of A
-    ( _a & 0x40 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
+    ( a & 0x40 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
 
     // V = bit 5 XOR bit 6
-    bool const isOverflow = ( ( _a & 0x40 ) != 0 ) ^ ( ( _a & 0x20 ) != 0 );
+    bool const isOverflow = ( ( a & 0x40 ) != 0 ) ^ ( ( a & 0x20 ) != 0 );
     ( isOverflow ) ? SetFlags( Status::Overflow ) : ClearFlags( Status::Overflow );
   }
 
@@ -1928,7 +1925,7 @@ private:
     ( value & 0b00000001 ) != 0 ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
     u8 const result = value >> 1;
     SetZeroAndNegativeFlags( result );
-    _a = result;
+    a = result;
   }
 
   void RRA( const u16 address )
@@ -1967,8 +1964,8 @@ private:
 
     // Free side effect
     u8 const value = Read( address ); // 0 cycle
-    _a ^= value;
-    SetZeroAndNegativeFlags( _a );
+    a ^= value;
+    SetZeroAndNegativeFlags( a );
   }
 
   void RLA( const u16 address )
@@ -1989,8 +1986,8 @@ private:
 
     // Free side effect
     u8 const value = Read( address ); // 0 cycle
-    _a &= value;
-    SetZeroAndNegativeFlags( _a );
+    a &= value;
+    SetZeroAndNegativeFlags( a );
   }
 
   void DCP( const u16 address )
@@ -2054,11 +2051,11 @@ private:
      *   SBX Immediate: CB (2 bytes, 2 cycles)
      */
     u8 const  operand = ReadAndTick( address );
-    u8 const  left = ( _a & _x );
+    u8 const  left = ( a & x );
     u16 const diff = static_cast<u16>( left ) - static_cast<u16>( operand );
-    _x = static_cast<u8>( diff & 0xFF );
+    x = static_cast<u8>( diff & 0xFF );
     ( ( diff & 0x100 ) == 0 ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
-    SetZeroAndNegativeFlags( _x );
+    SetZeroAndNegativeFlags( x );
   }
 
   void LAS( const u16 address )
@@ -2075,9 +2072,9 @@ private:
     u8 const sp = GetStackPointer();
     u8 const result = memVal & sp;
 
-    _a = result;
-    _x = result;
-    _s = result;
+    a = result;
+    x = result;
+    s = result;
 
     SetZeroAndNegativeFlags( result );
   }
@@ -2105,16 +2102,16 @@ private:
     u8 const constant = 0xEE;
 
     // Compute: (A OR constant) AND X AND operand.
-    u8 const result = ( _a | constant ) & _x & operand;
-    _a = result;
+    u8 const result = ( a | constant ) & x & operand;
+    a = result;
 
-    SetZeroAndNegativeFlags( _a );
+    SetZeroAndNegativeFlags( a );
   }
 
   void XXX( const u16 address ) // NOLINT
   {
     // unimplemented
     (void) address;
-    fmt::print( "Unimplemented opcode: {}", _opcode );
+    fmt::print( "Unimplemented opcode: {}", opcode );
   }
 };

@@ -32,6 +32,27 @@ TEST_F( StateTest, CpuState )
              _instructionName,addrMode, _opcode, _isTestMode, _traceEnabled, _mesenFormatTraceEnabled, _didMesenTrace,
              _traceLog, _mesenFormatTraceLog );
    */
+
+  auto pc = cpu.pc;
+  auto a = cpu.a;
+  auto x = cpu.x;
+  auto y = cpu.y;
+  auto s = cpu.s;
+  auto p = cpu.p;
+  auto cycles = cpu.cycles;
+  auto didVblank = cpu.didVblank;
+  auto pageCrossPenalty = cpu.pageCrossPenalty;
+  auto isWriteModify = cpu.writeModify;
+  auto reading2002 = cpu.reading2002;
+  auto instructionName = cpu.instructionName;
+  auto addrMode = cpu.addrMode;
+  auto opcode = cpu.opcode;
+  auto isTestMode = cpu.isTestMode;
+  auto traceEnabled = cpu.traceEnabled;
+  auto mesenFormatTraceEnabled = cpu.mesenFormatTraceEnabled;
+  auto didMesenTrace = cpu.didMesenTrace;
+  auto traceLog = cpu.traceLog;
+  auto mesenFormatTraceLog = cpu.mesenFormatTraceLog;
 }
 
 int main( int argc, char **argv )
