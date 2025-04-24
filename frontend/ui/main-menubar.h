@@ -16,6 +16,7 @@
 #include "sprites.h"
 #include "nametable.h"
 #include "cartridge-info.h"
+#include <nlohmann/json.hpp>
 
 class MainMenuBar : public UIComponent
 {
@@ -114,21 +115,60 @@ public:
 
         ImGui::EndMenu();
       }
-    }
-    if ( ImGui::BeginMenu( "Overlay" ) ) {
+      if ( ImGui::BeginMenu( "Overlay" ) ) {
 
-      if ( auto *overlayWindow = ui->GetComponent<OverlayWindow>() ) {
-        ImGui::MenuItem( "Enabled", nullptr, &overlayWindow->visible );
+        if ( auto *overlayWindow = ui->GetComponent<OverlayWindow>() ) {
+          ImGui::MenuItem( "Enabled", nullptr, &overlayWindow->visible );
+        }
+        ImGui::EndMenu();
       }
-      ImGui::EndMenu();
-    }
-    if ( ImGui::BeginMenu( "ImGui Demo" ) ) {
+      if ( ImGui::BeginMenu( "ImGui Demo" ) ) {
 
-      if ( auto *demoWindow = ui->GetComponent<DemoWindow>() ) {
-        ImGui::MenuItem( "Show", nullptr, &demoWindow->visible );
+        if ( auto *demoWindow = ui->GetComponent<DemoWindow>() ) {
+          ImGui::MenuItem( "Show", nullptr, &demoWindow->visible );
+        }
+        ImGui::EndMenu();
       }
-      ImGui::EndMenu();
-    }
-    ImGui::EndMainMenuBar();
+
+      static char jsonPath[512] = "Your/save/or/load/state/path.json";
+
+      if (ImGui::BeginMenu("States")) {
+        ImGui::InputText("Enter JSON Path", jsonPath, IM_ARRAYSIZE(jsonPath));
+
+        // Save State Button
+        if (ImGui::Button("Save State")) {
+          std::string path(jsonPath);
+          if (!renderer->bus.SaveStateToJson(path, "initial")) {
+            std::cerr << "Failed to save state to: " << path << std::endl;
+          } else {
+            std::cout << "State saved to: " << path << std::endl;
+          }
+        }
+        // load state button
+        if (ImGui::Button("Load State")) {
+          std::ifstream file(jsonPath);
+          if (!file.is_open()) {
+            std::cerr << "Failed to open load state file \"" << jsonPath << "\"" << std::endl;
+          } else {
+            try {
+              nlohmann::json jsonData;
+              file >> jsonData;
+              file.close();
+
+              if (!renderer->bus.LoadStateFromJson(jsonData, "initial")) {
+                std::cerr << "LoadStateFromJson failed for file: " << jsonPath << std::endl;
+              }
+            } catch (const std::exception& e) {
+              std::cerr << "Failed load state data: " << e.what() << std::endl;
+            }
+          }
+
+
+        }
+        ImGui::EndMenu();
+
+      }
+      ImGui::EndMainMenuBar();
+    };
   }
 };

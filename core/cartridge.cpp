@@ -9,6 +9,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <filesystem>
 
 // Mappers
 #include "global-types.h"
@@ -40,7 +41,7 @@ void Cartridge::LoadRom( const std::string &filePath )
   /** @brief Initiates a cartridge and loads a ROM from file
    */
   didMapperLoad = false;
-
+  _romPath = filePath;
   std::ifstream romFile( filePath, std::ios::binary );
   if ( !romFile.is_open() ) {
     throw std::runtime_error( "Failed to open ROM file: " + filePath );
@@ -401,6 +402,12 @@ void Cartridge::WriteExpansionRAM( u16 address, u8 data )
 ||                            ||
 ################################
 */
+std::string Cartridge::GetRomName() const {
+  return std::filesystem::path(_romPath).filename().string();
+}
+size_t Cartridge::GetPrgRamSize() const {
+  return _prgRam.size();
+}
 
 MirrorMode Cartridge::GetMirrorMode()
 {
