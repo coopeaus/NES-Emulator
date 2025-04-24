@@ -49,6 +49,10 @@ target_include_directories(emu_core PUBLIC
 find_package(fmt CONFIG REQUIRED)
 target_link_libraries(emu_core PRIVATE fmt::fmt)
 
+# cereal
+find_package(cereal CONFIG REQUIRED)
+target_link_libraries(emu_core PRIVATE cereal::cereal)
+
 #[[
 ################################################
 ||                                            ||

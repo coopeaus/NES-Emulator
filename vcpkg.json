@@ -19,6 +19,7 @@
       "version>=": "2022-12-04#3"
     },
     "sdl2",
-    "tinyfiledialogs"
+    "tinyfiledialogs",
+    "cereal"
   ]
 }
