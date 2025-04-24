@@ -6,6 +6,9 @@
 #include <fmt/base.h>
 #include <string>
 #include "global-types.h"
+#include <cereal/archives/binary.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/deque.hpp>
 
 // Forward declaration for reads and writes
 class Bus;
@@ -50,6 +53,17 @@ public:
     /*F*/ Rel(BEQ),  IndY(SBC), Imp(JAM),  IndY(ISC), ZpgX(NOP2), ZpgX(SBC), ZpgX(INC), ZpgX(ISC), Imp(SED), AbsY(SBC), Imp(NOP), AbsY(ISC), AbsX(NOP2), AbsX(SBC), AbsX(INC), AbsX(ISC)
         };
     // clang-format on
+  }
+
+  /*
+  ################################
+  ||          Serialize         ||
+  ################################
+  */
+  template <class Archive> void serialize( Archive &ar ) // NOLINT
+  {
+    ar( pc, a, x, y, s, p, cycles, didVblank, pageCrossPenalty, writeModify, reading2002, instructionName, addrMode,
+        opcode, isTestMode, traceEnabled, mesenFormatTraceEnabled, didMesenTrace, traceLog, mesenFormatTraceLog );
   }
 
   /*
@@ -160,7 +174,7 @@ public:
     u8 const low = ReadAndTick( 0xFFFE );
     SetFlags( InterruptDisable );
     u8 const high = ReadAndTick( 0xFFFF );
-    pc = static_cast<u16>( high ) << 8 | low;
+    pc            = static_cast<u16>( high ) << 8 | low;
   }
 
   /*
@@ -173,20 +187,20 @@ public:
   std::deque<std::string> GetMesenFormatTracelog() const { return mesenFormatTraceLog; }
   void                    EnableTracelog()
   {
-    traceEnabled = true;
+    traceEnabled            = true;
     mesenFormatTraceEnabled = false;
   }
   void EnableMesenFormatTraceLog()
   {
     mesenFormatTraceEnabled = true;
-    traceEnabled = false;
+    traceEnabled            = false;
   }
   void DisableTracelog() { traceEnabled = false; }
   void DisableMesenFormatTraceLog() { mesenFormatTraceEnabled = false; }
   void EnableJsonTestMode() { isTestMode = true; }
   void DisableJsonTestMode() { isTestMode = false; }
 
-  size_t traceSize = 100;
+  size_t traceSize      = 100;
   size_t mesenTraceSize = 100;
   void   SetMesenTraceSize( int size ) { mesenTraceSize = size; }
   void   AddTraceLog( const std::string &log )
@@ -216,14 +230,14 @@ public:
   ################################
   */
   enum Status : u8 {
-    Carry = 1 << 0,            // 0b00000001
-    Zero = 1 << 1,             // 0b00000010
+    Carry            = 1 << 0, // 0b00000001
+    Zero             = 1 << 1, // 0b00000010
     InterruptDisable = 1 << 2, // 0b00000100
-    Decimal = 1 << 3,          // 0b00001000
-    Break = 1 << 4,            // 0b00010000
-    Unused = 1 << 5,           // 0b00100000
-    Overflow = 1 << 6,         // 0b01000000
-    Negative = 1 << 7,         // 0b10000000
+    Decimal          = 1 << 3, // 0b00001000
+    Break            = 1 << 4, // 0b00010000
+    Unused           = 1 << 5, // 0b00100000
+    Overflow         = 1 << 6, // 0b01000000
+    Negative         = 1 << 7, // 0b10000000
   };
 
   /*
@@ -238,23 +252,23 @@ public:
   ||          Registers         ||
   ################################
   */
-  u16 pc = 0x0000;       // Program counter (PC)
-  u8  a = 0x00;          // Accumulator register (A)
-  u8  x = 0x00;          // X register
-  u8  y = 0x00;          // Y register
-  u8  s = 0xFD;          // Stack pointer (SP)
-  u8  p = 0x00 | Unused; // Status register (P), per the specs, the unused flag should always be set
-  u64 cycles = 0;        // Number of cycles
+  u16 pc     = 0x0000;        // Program counter (PC)
+  u8  a      = 0x00;          // Accumulator register (A)
+  u8  x      = 0x00;          // X register
+  u8  y      = 0x00;          // Y register
+  u8  s      = 0xFD;          // Stack pointer (SP)
+  u8  p      = 0x00 | Unused; // Status register (P), per the specs, the unused flag should always be set
+  u64 cycles = 0;             // Number of cycles
 
   /*
   ################################
   ||  Private Global Variables  ||
   ################################
   */
-  bool        didVblank = false;
+  bool        didVblank        = false;
   bool        pageCrossPenalty = true;
-  bool        writeModify = false;
-  bool        reading2002 = false;
+  bool        writeModify      = false;
+  bool        reading2002      = false;
   std::string instructionName;
   std::string addrMode;
   u8          opcode = 0x00;
@@ -264,10 +278,10 @@ public:
   ||       Debug Variables      ||
   ################################
   */
-  bool isTestMode = false;
-  bool traceEnabled = false;
+  bool isTestMode              = false;
+  bool traceEnabled            = false;
   bool mesenFormatTraceEnabled = false;
-  bool didMesenTrace = false;
+  bool didMesenTrace           = false;
 
   std::deque<std::string> traceLog;
   std::deque<std::string> mesenFormatTraceLog;
@@ -301,7 +315,7 @@ public:
      * Used by LDA, LDX, and LDY instructions
      */
     u8 const value = ReadAndTick( address );
-    reg = value;
+    reg            = value;
 
     // Set zero and negative flags
     SetZeroAndNegativeFlags( value );
@@ -505,7 +519,7 @@ public:
      * The value of the next byte is the address in the zero page.
      */
     u8 const  zeroPageAddress = ReadAndTick( pc++ );
-    u16 const finalAddress = ( zeroPageAddress + x ) & 0x00FF;
+    u16 const finalAddress    = ( zeroPageAddress + x ) & 0x00FF;
     Tick(); // Account for calculating the final address
     return finalAddress;
   }
@@ -531,7 +545,7 @@ public:
      * @brief Absolute addressing mode
      * Constructs a 16-bit address from the next two bytes
      */
-    u16 const low = ReadAndTick( pc++ );
+    u16 const low  = ReadAndTick( pc++ );
     u16 const high = ReadAndTick( pc++ );
     return ( high << 8 ) | low;
   }
@@ -543,9 +557,9 @@ public:
      * Constructs a 16-bit address from the next two bytes and adds the X register to the final
      * address
      */
-    u16 const low = ReadAndTick( pc++ );
-    u16 const high = ReadAndTick( pc++ );
-    u16 const address = ( high << 8 ) | low;
+    u16 const low          = ReadAndTick( pc++ );
+    u16 const high         = ReadAndTick( pc++ );
+    u16 const address      = ( high << 8 ) | low;
     u16 const finalAddress = address + x;
 
     // If the final address crosses a page boundary, an additional cycle is required
@@ -568,9 +582,9 @@ public:
      * Constructs a 16-bit address from the next two bytes and adds the Y register to the final
      * address
      */
-    u16 const low = ReadAndTick( pc++ );
-    u16 const high = ReadAndTick( pc++ );
-    u16 const address = ( high << 8 ) | low;
+    u16 const low          = ReadAndTick( pc++ );
+    u16 const high         = ReadAndTick( pc++ );
+    u16 const address      = ( high << 8 ) | low;
     u16 const finalAddress = address + y;
 
     // If the final address crosses a page boundary, an additional cycle is required
@@ -596,9 +610,9 @@ public:
      * There's a hardware bug that prevents the address from crossing a page boundary
      */
 
-    u16 const ptrLow = ReadAndTick( pc++ );
+    u16 const ptrLow  = ReadAndTick( pc++ );
     u16 const ptrHigh = ReadAndTick( pc++ );
-    u16 const ptr = ( ptrHigh << 8 ) | ptrLow;
+    u16 const ptr     = ( ptrHigh << 8 ) | ptrLow;
 
     u8 const addressLow = ReadAndTick( ptr );
     u8       address_high; // NOLINT
@@ -623,10 +637,10 @@ public:
      * X register is added to the zero-page address to get the pointer address
      * Final address is the value stored at the POINTER address
      */
-    Tick();                                                              // Account for operand fetch
-    u8 const  zeroPageAddress = ( ReadAndTick( pc++ ) + x ) & 0x00FF;    // 1 cycle
-    u16 const ptrLow = ReadAndTick( zeroPageAddress );                   // 1 cycle
-    u16 const ptrHigh = ReadAndTick( ( zeroPageAddress + 1 ) & 0x00FF ); // 1 cycle
+    Tick();                                                                      // Account for operand fetch
+    u8 const  zeroPageAddress = ( ReadAndTick( pc++ ) + x ) & 0x00FF;            // 1 cycle
+    u16 const ptrLow          = ReadAndTick( zeroPageAddress );                  // 1 cycle
+    u16 const ptrHigh         = ReadAndTick( ( zeroPageAddress + 1 ) & 0x00FF ); // 1 cycle
     return ( ptrHigh << 8 ) | ptrLow;
   }
 
@@ -639,8 +653,8 @@ public:
      * The value in the Y register is added to the FINAL address
      */
     u16 const zeroPageAddress = ReadAndTick( pc++ );
-    u16 const ptrLow = ReadAndTick( zeroPageAddress );
-    u16 const ptrHigh = ReadAndTick( ( zeroPageAddress + 1 ) & 0x00FF );
+    u16 const ptrLow          = ReadAndTick( zeroPageAddress );
+    u16 const ptrHigh         = ReadAndTick( ( zeroPageAddress + 1 ) & 0x00FF );
 
     u16 const address = ( ( ptrHigh << 8 ) | ptrLow ) + y;
 
@@ -664,7 +678,7 @@ public:
      * The next byte is a signed offset
      * Sets the program counter between -128 and +127 bytes from the current location
      */
-    s8 const  offset = static_cast<s8>( ReadAndTick( pc++ ) );
+    s8 const  offset  = static_cast<s8>( ReadAndTick( pc++ ) );
     u16 const address = pc + offset;
     return address;
   }
@@ -842,7 +856,7 @@ public:
 
     // Store the sum in a 16-bit variable to check for overflow
     u8 const  carry = IsFlagSet( Status::Carry ) ? 1 : 0;
-    u16 const sum = a + value + carry;
+    u16 const sum   = a + value + carry;
 
     // Set the carry flag if sum > 255
     // this means that there will be an overflow
@@ -859,10 +873,10 @@ public:
     // 0000 0010   // << Sum: 2. Sign bit is different, result is positive but should be
     // negative
     u8 const accumulatorSignBit = a & 0b10000000;
-    u8 const valueSignBit = value & 0b10000000;
-    u8 const sumSignBit = sum & 0b10000000;
+    u8 const valueSignBit       = value & 0b10000000;
+    u8 const sumSignBit         = sum & 0b10000000;
     ( accumulatorSignBit == valueSignBit && accumulatorSignBit != sumSignBit ) ? SetFlags( Status::Overflow )
-                                                                               : ClearFlags( Status::Overflow );
+                                                                                       : ClearFlags( Status::Overflow );
 
     // If bit 7 is set, set the negative flag
     ( sum & 0b10000000 ) != 0 ? SetFlags( Status::Negative ) : ClearFlags( Status::Negative );
@@ -900,7 +914,7 @@ public:
 
     // Store diff in a 16-bit variable to check for overflow
     u8 const  carry = IsFlagSet( Status::Carry ) ? 0 : 1;
-    u16 const diff = a - value - carry;
+    u16 const diff  = a - value - carry;
 
     // Carry flag exists in the high byte?
     ( diff < 0x100 ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
@@ -915,10 +929,10 @@ public:
     // ---------
     // 1111 1111   // << Diff: 127. Sign bit is different
     u8 const accumulatorSignBit = a & 0b10000000;
-    u8 const valueSignBit = value & 0b10000000;
-    u8 const diffSignBit = diff & 0b10000000;
+    u8 const valueSignBit       = value & 0b10000000;
+    u8 const diffSignBit        = diff & 0b10000000;
     ( accumulatorSignBit != valueSignBit && accumulatorSignBit != diffSignBit ) ? SetFlags( Status::Overflow )
-                                                                                : ClearFlags( Status::Overflow );
+                                                                                       : ClearFlags( Status::Overflow );
 
     // If bit 7 is set, set the negative flag
     ( diff & 0b10000000 ) != 0 ? SetFlags( Status::Negative ) : ClearFlags( Status::Negative );
@@ -1563,9 +1577,9 @@ public:
      *   RTS: 60(6)
      */
     (void) address;
-    u16 const low = StackPop();
+    u16 const low  = StackPop();
     u16 const high = StackPop();
-    pc = ( high << 8 ) | low;
+    pc             = ( high << 8 ) | low;
     Tick(); // Account for reading the new address
     pc++;
     Tick(); // Account for reading the next pc value
@@ -1585,9 +1599,9 @@ public:
     // Ignore the break flag and ensure the unused flag (bit 5) is set
     p = ( status & ~Break ) | Unused;
 
-    u16 const low = StackPop();
+    u16 const low  = StackPop();
     u16 const high = StackPop();
-    pc = ( high << 8 ) | low;
+    pc             = ( high << 8 ) | low;
     Tick(); // Account for reading the new address
   }
 
@@ -1614,9 +1628,9 @@ public:
     StackPush( p | Break | Unused );
 
     // Set PC to the value at the interrupt vector (0xFFFE)
-    u16 const low = ReadAndTick( 0xFFFE );
+    u16 const low  = ReadAndTick( 0xFFFE );
     u16 const high = ReadAndTick( 0xFFFF );
-    pc = ( high << 8 ) | low;
+    pc             = ( high << 8 ) | low;
 
     // Set the interrupt disable flag
     SetFlags( InterruptDisable );
@@ -1854,11 +1868,11 @@ public:
      */
 
     u8 const magicConstant = 0xEE;
-    u8 const value = ReadAndTick( address );
+    u8 const value         = ReadAndTick( address );
 
     u8 const result = ( ( a | magicConstant ) & value );
-    a = result;
-    x = result;
+    a               = result;
+    x               = result;
     SetZeroAndNegativeFlags( a );
   }
 
@@ -1895,7 +1909,7 @@ public:
 
     // ROR
     u8 const carryIn = IsFlagSet( Status::Carry ) ? 0x80 : 0x00;
-    value = ( value >> 1 ) | carryIn;
+    value            = ( value >> 1 ) | carryIn;
 
     a = value;
 
@@ -2051,9 +2065,9 @@ public:
      *   SBX Immediate: CB (2 bytes, 2 cycles)
      */
     u8 const  operand = ReadAndTick( address );
-    u8 const  left = ( a & x );
-    u16 const diff = static_cast<u16>( left ) - static_cast<u16>( operand );
-    x = static_cast<u8>( diff & 0xFF );
+    u8 const  left    = ( a & x );
+    u16 const diff    = static_cast<u16>( left ) - static_cast<u16>( operand );
+    x                 = static_cast<u8>( diff & 0xFF );
     ( ( diff & 0x100 ) == 0 ) ? SetFlags( Status::Carry ) : ClearFlags( Status::Carry );
     SetZeroAndNegativeFlags( x );
   }
@@ -2069,7 +2083,7 @@ public:
      *   LAS Absolute Y: BB(4+)
      */
     u8 const memVal = ReadAndTick( address );
-    u8 const sp = GetStackPointer();
+    u8 const sp     = GetStackPointer();
     u8 const result = memVal & sp;
 
     a = result;
@@ -2098,12 +2112,12 @@ public:
       Usage and cycles:
       * ANE Immediate: 8B(2)
     */
-    u8 const operand = ReadAndTick( address );
+    u8 const operand  = ReadAndTick( address );
     u8 const constant = 0xEE;
 
     // Compute: (A OR constant) AND X AND operand.
     u8 const result = ( a | constant ) & x & operand;
-    a = result;
+    a               = result;
 
     SetZeroAndNegativeFlags( a );
   }

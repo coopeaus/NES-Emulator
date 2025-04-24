@@ -131,12 +131,13 @@ public:
 
       // save State Button
       if ( ImGui::BeginMenu( "States" ) ) {
-        if ( ImGui::MenuItem( "Save" ) ) {
-          // TODO: save state
+        if ( ImGui::MenuItem( "Save Slot 0" ) ) {
+          renderer->bus.QuickSaveState( 0 );
         }
+        ImGui::Separator();
         // load state button
-        if ( ImGui::MenuItem( "Load State" ) ) {
-          // TODO: load state
+        if ( ImGui::MenuItem( "Load Slot 0" ) ) {
+          renderer->bus.QuickLoadState( 0 );
         }
 
         ImGui::EndMenu();

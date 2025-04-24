@@ -18,6 +18,12 @@ public:
   // Initialized with flat memory disabled by default. Enabled in json tests only
   Bus();
 
+  template <class Archive> void serialize( Archive &ar ) // NOLINT
+  {
+    ar( cpu, ppu, apu, cartridge, dmaInProgress, dmaAddr, dmaOffset, controllerState, controller, _ram, _useFlatMemory,
+        _flatMemory );
+  }
+
   /*
   ################################
   ||         Peripherals        ||
@@ -43,8 +49,10 @@ public:
   ||    State Serialization     ||
   ################################
   */
-  void LoadState( const std::string &path );
-  void SaveState( const std::string &path ) const;
+  void QuickLoadState( u8 idx = 0 );
+  void QuickSaveState( u8 idx = 0 );
+  void SaveState( const std::string &filename );
+  void LoadState( const std::string &filename );
 
   /*
   ################################
@@ -82,11 +90,4 @@ private:
   */
   bool                  _useFlatMemory{}; // For testing purposes
   std::array<u8, 65536> _flatMemory{};    // 64KB memory, for early testing
-
-  /*
-  ################################
-  ||       Temporary Stubs      ||
-  ################################
-  */
-  std::array<u8, 32>apuIoMemory{}; // 32 bytes APU and I/O registers
 };

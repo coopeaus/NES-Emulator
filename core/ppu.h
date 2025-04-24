@@ -20,6 +20,15 @@ public:
   PPU( Bus *bus );
   Bus *bus;
 
+  template <class Archive> void serialize( Archive &ar ) // NOLINT
+  {
+    ar( preventVBlank, nmiReady, systemPaletteIdx, scanline, cycle, frame, oamAddr, oamData, ppuScroll, ppuAddr,
+        ppuData, vramAddr, tempAddr, fineX, addrLatch, vramBuffer, nameTables, paletteMemory, oam, secondaryOam,
+        bgPatternShiftLow, bgPatternShiftHigh, bgAttributeShiftLow, bgAttributeShiftHigh, spriteShiftLow,
+        spriteShiftHigh, spritePattern0Byte, spritePattern1Byte, bSpriteZeroHitPossible, bSprite0Appeared, spriteCount,
+        nOamEntry, isDisabled );
+  }
+
   /*
   ################################
   ||      Helper Variables      ||
@@ -32,10 +41,10 @@ public:
   std::array<u32, 64> nesPaletteRgbValues{};
   u32                 GetMasterPaletteColor( u8 index ) const { return nesPaletteRgbValues.at( index ); }
 
-  bool preventVBlank = false;
-  bool nmiReady = false;
+  bool preventVBlank     = false;
+  bool nmiReady          = false;
   bool failedPaletteRead = false;
-  int  systemPaletteIdx = 0;
+  int  systemPaletteIdx  = 0;
   int  maxSystemPalettes = 3;
 
   /*
@@ -79,11 +88,11 @@ public:
   u8        GetStatusSpriteZeroHit() const { return ppuStatus.bit.spriteZeroHit; }
   u8        GetStatusVblank() const { return ppuStatus.bit.vBlank; }
 
-  u8 oamAddr = 0x00;   // $2003
-  u8 oamData = 0x00;   // $2004
+  u8 oamAddr   = 0x00; // $2003
+  u8 oamData   = 0x00; // $2004
   u8 ppuScroll = 0x00; // $2005
-  u8 ppuAddr = 0x00;   // $2006
-  u8 ppuData = 0x00;   // $2007
+  u8 ppuAddr   = 0x00; // $2006
+  u8 ppuData   = 0x00; // $2007
 
   LoopyRegister vramAddr;
   u16           GetVramAddr() const { return vramAddr.value; }
@@ -135,13 +144,13 @@ public:
   */
   static constexpr u16 gPrerenderScanline = 261;
 
-  u8  nametableByte = 0x00;
-  u8  attributeByte = 0x00;
-  u8  bgPattern0Byte = 0x00;
-  u8  bgPattern1Byte = 0x00;
-  u16 bgPatternShiftLow = 0x0000;  // holds bitplane 0 (low bits) of tile pixels
-  u16 bgPatternShiftHigh = 0x0000; // holds bitplane 1 (high bits) of tile pixels
-  u16 bgAttributeShiftLow = 0x00;
+  u8  nametableByte        = 0x00;
+  u8  attributeByte        = 0x00;
+  u8  bgPattern0Byte       = 0x00;
+  u8  bgPattern1Byte       = 0x00;
+  u16 bgPatternShiftLow    = 0x0000; // holds bitplane 0 (low bits) of tile pixels
+  u16 bgPatternShiftHigh   = 0x0000; // holds bitplane 1 (high bits) of tile pixels
+  u16 bgAttributeShiftLow  = 0x00;
   u16 bgAttributeShiftHigh = 0x00;
 
   std::array<u8, 8> spriteShiftLow{};  // low bitplane pattern data for each sprite
@@ -152,9 +161,9 @@ public:
 
   // Sprite helpers
   bool bSpriteZeroHitPossible = false;
-  bool bSprite0Appeared = false;
-  u8   spriteCount = 0;
-  u8   nOamEntry = 0;
+  bool bSprite0Appeared       = false;
+  u8   spriteCount            = 0;
+  u8   nOamEntry              = 0;
 
   // SDL callbacks
   std::function<void( const u32 * )> onFrameReady = nullptr;
@@ -201,15 +210,6 @@ public:
   bool InCycle( int left, int right ) const { return left <= cycle && cycle <= right; }
   bool InScanline( int left, int right ) const { return left <= scanline && scanline <= right; }
 
-  template <class Archive> void serialize( Archive &ar ) // NOLINT
-  {
-    ar( preventVBlank, nmiReady, failedPaletteRead, systemPaletteIdx, scanline, cycle, frame, ppuCtrl.value,
-        ppuMask.value, ppuStatus.value, oamAddr, oamData, ppuScroll, ppuAddr, ppuData, vramAddr, tempAddr, fineX,
-        addrLatch, vramBuffer, nameTables, paletteMemory, oam, secondaryOam, bgPatternShiftLow, bgPatternShiftHigh,
-        bgAttributeShiftLow, bgAttributeShiftHigh, spriteShiftLow, spriteShiftHigh, spritePattern0Byte,
-        spritePattern1Byte, bSpriteZeroHitPossible, bSprite0Appeared, spriteCount, nOamEntry, isDisabled );
-  }
-
   /*
   ################################################################
   ||                                                            ||
@@ -222,12 +222,12 @@ public:
   {
     /* @brief Loads the next background tile information (lower 8 bits) into the background shifters
      */
-    bgPatternShiftLow = ( bgPatternShiftLow & 0xFF00 ) | bgPattern0Byte;
-    bgPatternShiftHigh = ( bgPatternShiftHigh & 0xFF00 ) | bgPattern1Byte;
-    u8 const attrMaskLow = ( attributeByte & 0b01 ) ? 0xFF : 0x00;
+    bgPatternShiftLow     = ( bgPatternShiftLow & 0xFF00 ) | bgPattern0Byte;
+    bgPatternShiftHigh    = ( bgPatternShiftHigh & 0xFF00 ) | bgPattern1Byte;
+    u8 const attrMaskLow  = ( attributeByte & 0b01 ) ? 0xFF : 0x00;
     u8 const attrMaskHigh = ( attributeByte & 0b10 ) ? 0xFF : 0x00;
-    bgAttributeShiftLow = ( bgAttributeShiftLow & 0xFF00 ) | attrMaskLow;
-    bgAttributeShiftHigh = ( bgAttributeShiftHigh & 0xFF00 ) | attrMaskHigh;
+    bgAttributeShiftLow   = ( bgAttributeShiftLow & 0xFF00 ) | attrMaskLow;
+    bgAttributeShiftHigh  = ( bgAttributeShiftHigh & 0xFF00 ) | attrMaskHigh;
   }
 
   void UpdateShifters()
@@ -268,8 +268,8 @@ public:
 
     // Clear status to get ready for next frame
     if ( cycle == 1 ) {
-      ppuStatus.bit.vBlank = 0;
-      ppuStatus.bit.spriteZeroHit = 0;
+      ppuStatus.bit.vBlank         = 0;
+      ppuStatus.bit.spriteZeroHit  = 0;
       ppuStatus.bit.spriteOverflow = 0;
     }
 
@@ -345,14 +345,14 @@ public:
     std::memset( secondaryOam.data.data(), 0xFF, secondaryOam.data.size() );
     spriteCount = 0;
     for ( u8 i = 0; i < 8; i++ ) {
-      spriteShiftLow[i] = 0;
+      spriteShiftLow[i]  = 0;
       spriteShiftHigh[i] = 0;
     }
-    nOamEntry = 0;
+    nOamEntry              = 0;
     bSpriteZeroHitPossible = false;
 
     while ( nOamEntry < 64 && spriteCount < 9 ) {
-      auto const sprite = oam.entries.at( nOamEntry );
+      auto const sprite        = oam.entries.at( nOamEntry );
       bool const spriteInRange = IsSpriteInRange( scanline, sprite.y, (bool) ppuCtrl.bit.spriteSize );
 
       if ( spriteInRange ) {
@@ -387,11 +387,11 @@ public:
       u8         spritePattern1Byte = 0;
       u16        spritePattern0Addr = 0;
       u16        spritePattern1Addr = 0;
-      bool const isLarge = ppuCtrl.bit.spriteSize;
+      bool const isLarge            = ppuCtrl.bit.spriteSize;
 
-      u16 baseAddr = ppuCtrl.bit.patternSprite << 12; // 0x0000 or 0x1000 depending on ppuCtrl (for 8x8 sprites)
-      u8  tileIndex = sprite.tileIndex;               // 0 - 16
-      u8  rowOffset = scanline - sprite.y;            // 0 - 7
+      u16 baseAddr  = ppuCtrl.bit.patternSprite << 12; // 0x0000 or 0x1000 depending on ppuCtrl (for 8x8 sprites)
+      u8  tileIndex = sprite.tileIndex;                // 0 - 16
+      u8  rowOffset = scanline - sprite.y;             // 0 - 7
 
       // 8x8
       if ( !isLarge ) {
@@ -406,8 +406,8 @@ public:
       }
       // 8x16
       else {
-        baseAddr = ( sprite.tileIndex & 0x1 ) << 12; // offset depends on first bit of the tile index for 8x16 sprites
-        tileIndex = sprite.tileIndex & ~0x1;         // other bits of tile index determine the tileIndex
+        baseAddr  = ( sprite.tileIndex & 0x1 ) << 12; // offset depends on first bit of the tile index for 8x16 sprites
+        tileIndex = sprite.tileIndex & ~0x1;          // other bits of tile index determine the tileIndex
         rowOffset = ( scanline - sprite.y ) & 0x07;
 
         // Not vertically flipped
@@ -450,50 +450,50 @@ public:
         spritePattern1Byte = flipbyte( spritePattern1Byte );
       }
 
-      spriteShiftLow.at( i ) = spritePattern0Byte;
+      spriteShiftLow.at( i )  = spritePattern0Byte;
       spriteShiftHigh.at( i ) = spritePattern1Byte;
     }
   }
 
   u32 GetOutputPixel()
   {
-    u8 bgPixel = 0;
+    u8 bgPixel   = 0;
     u8 bgPalette = 0;
     FetchBackgroundPixel( bgPixel, bgPalette );
 
-    u8 fgPixel = 0;
-    u8 fgPalette = 0;
+    u8 fgPixel    = 0;
+    u8 fgPalette  = 0;
     u8 fgPriority = 0;
     FetchForegroundPixel( fgPixel, fgPalette, fgPriority );
 
-    u8 outPixel = 0x00;
+    u8 outPixel   = 0x00;
     u8 outPalette = 0x00;
 
     // Both background and foreground are transparent.
     if ( bgPixel == 0 && fgPixel == 0 ) {
-      outPixel = 0;
+      outPixel   = 0;
       outPalette = 0;
     }
 
     // Background transparent, foreground visible.
     else if ( bgPixel == 0 && fgPixel > 0 ) {
-      outPixel = fgPixel;
+      outPixel   = fgPixel;
       outPalette = fgPalette;
     }
 
     // Background visible, foreground transparent.
     else if ( bgPixel > 0 && fgPixel == 0 ) {
-      outPixel = bgPixel;
+      outPixel   = bgPixel;
       outPalette = bgPalette;
     }
 
     // Both are non-transparent. Sprite priority determines which one is visible.
     else if ( bgPixel > 0 && fgPixel > 0 ) {
       if ( fgPriority ) {
-        outPixel = fgPixel;
+        outPixel   = fgPixel;
         outPalette = fgPalette;
       } else {
-        outPixel = bgPixel;
+        outPixel   = bgPixel;
         outPalette = bgPalette;
       }
     }
@@ -515,8 +515,8 @@ public:
 
     // Write final color to framebuffer
     u16 const paletteAddr = 0x3F00 + ( outPalette << 2 ) + outPixel;
-    u8 const  paletteIdx = ReadVram( paletteAddr ) & 0x3F;
-    u32 const rgbColor = nesPaletteRgbValues.at( paletteIdx );
+    u8 const  paletteIdx  = ReadVram( paletteAddr ) & 0x3F;
+    u32 const rgbColor    = nesPaletteRgbValues.at( paletteIdx );
     return rgbColor;
 
     return 0;
@@ -530,12 +530,12 @@ public:
       // Extract the pixel bits from background shifters.
       u8 const p0Pixel = ( bgPatternShiftLow & bitMux ) ? 1 : 0;
       u8 const p1Pixel = ( bgPatternShiftHigh & bitMux ) ? 1 : 0;
-      pixel = ( p1Pixel << 1 ) | p0Pixel;
+      pixel            = ( p1Pixel << 1 ) | p0Pixel;
 
       // Extract the palette bits from attribute shifters.
       u8 const pal0 = ( bgAttributeShiftLow & bitMux ) ? 1 : 0;
       u8 const pal1 = ( bgAttributeShiftHigh & bitMux ) ? 1 : 0;
-      palette = ( pal1 << 1 ) | pal0;
+      palette       = ( pal1 << 1 ) | pal0;
     }
   }
 
@@ -551,9 +551,9 @@ public:
         if ( sprite.x == 0 ) {
           u8 const plane0Bit = ( spriteShiftLow[i] & 0x80 ) > 0;
           u8 const plane1Bit = ( spriteShiftHigh[i] & 0x80 ) > 0;
-          pixel = ( plane1Bit << 1 ) | plane0Bit;
-          palette = ( sprite.attribute.bit.palette ) + 0x04;
-          priority = sprite.attribute.bit.priority == 0;
+          pixel              = ( plane1Bit << 1 ) | plane0Bit;
+          palette            = ( sprite.attribute.bit.palette ) + 0x04;
+          priority           = sprite.attribute.bit.priority == 0;
 
           // As soon as we find a nontransparent sprite pixel, use it.
           if ( pixel != 0 ) {
@@ -570,10 +570,10 @@ public:
   void FetchAttributeByte()
   {
     u16 const nametableSelect = vramAddr.value & 0x0C00;
-    u8 const  attrX = vramAddr.bit.coarseX >> 2;
-    u8 const  attrY = ( vramAddr.bit.coarseY >> 2 ) << 3;
-    u16 const attrAddr = 0x23C0 | nametableSelect | attrY | attrX;
-    attributeByte = ReadVram( attrAddr );
+    u8 const  attrX           = vramAddr.bit.coarseX >> 2;
+    u8 const  attrY           = ( vramAddr.bit.coarseY >> 2 ) << 3;
+    u16 const attrAddr        = 0x23C0 | nametableSelect | attrY | attrX;
+    attributeByte             = ReadVram( attrAddr );
     if ( vramAddr.bit.coarseY & 0x02 )
       attributeByte >>= 4;
     if ( vramAddr.bit.coarseX & 0x02 )
@@ -586,17 +586,17 @@ public:
   void FetchBgPattern0Byte()
   {
     u16 const bgPatternOffset = ppuCtrl.bit.patternBackground << 12;
-    u16 const tileBase = nametableByte << 4;
-    u16 const rowOffset = vramAddr.bit.fineY;
-    bgPattern0Byte = ReadVram( bgPatternOffset | tileBase | rowOffset );
+    u16 const tileBase        = nametableByte << 4;
+    u16 const rowOffset       = vramAddr.bit.fineY;
+    bgPattern0Byte            = ReadVram( bgPatternOffset | tileBase | rowOffset );
   }
 
   void FetchBgPattern1Byte()
   {
     u16 const bgPatternOffset = ppuCtrl.bit.patternBackground << 12;
-    u16 const tileBase = nametableByte << 4;
-    u16 const rowOffset = vramAddr.bit.fineY;
-    bgPattern1Byte = ReadVram( ( bgPatternOffset | tileBase | rowOffset ) + 8 );
+    u16 const tileBase        = nametableByte << 4;
+    u16 const rowOffset       = vramAddr.bit.fineY;
+    bgPattern1Byte            = ReadVram( ( bgPatternOffset | tileBase | rowOffset ) + 8 );
   }
 
   void IncrementCoarseX()
@@ -606,7 +606,7 @@ public:
     }
 
     if ( vramAddr.bit.coarseX == 31 ) {
-      vramAddr.bit.coarseX = 0;
+      vramAddr.bit.coarseX    = 0;
       vramAddr.bit.nametableX = ~vramAddr.bit.nametableX;
     } else {
       vramAddr.bit.coarseX++;
@@ -623,7 +623,7 @@ public:
     } else {
       vramAddr.bit.fineY = 0;
       if ( vramAddr.bit.coarseY == 29 ) {
-        vramAddr.bit.coarseY = 0;
+        vramAddr.bit.coarseY    = 0;
         vramAddr.bit.nametableY = ~vramAddr.bit.nametableY;
       } else if ( vramAddr.bit.coarseY == 31 ) {
         vramAddr.bit.coarseY = 0;
@@ -656,38 +656,38 @@ public:
   {
     if ( IsRenderingEnabled() ) {
       vramAddr.bit.nametableX = tempAddr.bit.nametableX;
-      vramAddr.bit.coarseX = tempAddr.bit.coarseX;
+      vramAddr.bit.coarseX    = tempAddr.bit.coarseX;
     }
   }
 
   void TransferAddressY()
   {
     if ( IsRenderingEnabled() ) {
-      vramAddr.bit.fineY = tempAddr.bit.fineY;
+      vramAddr.bit.fineY      = tempAddr.bit.fineY;
       vramAddr.bit.nametableY = tempAddr.bit.nametableY;
-      vramAddr.bit.coarseY = tempAddr.bit.coarseY;
+      vramAddr.bit.coarseY    = tempAddr.bit.coarseY;
     }
   }
 
   void Reset()
   {
-    scanline = 0;
-    cycle = 0;
-    frame = 1;
-    preventVBlank = false;
-    ppuCtrl.value = 0x00;
-    ppuMask.value = 0x00;
+    scanline        = 0;
+    cycle           = 0;
+    frame           = 1;
+    preventVBlank   = false;
+    ppuCtrl.value   = 0x00;
+    ppuMask.value   = 0x00;
     ppuStatus.value = 0x00;
-    oamAddr = 0x00;
-    oamData = 0x00;
-    ppuScroll = 0x00;
-    ppuAddr = 0x00;
-    ppuData = 0x00;
-    addrLatch = false;
-    vramBuffer = 0x00;
-    vramAddr.value = 0x0000;
-    tempAddr.value = 0x0000;
-    fineX = 0x00;
+    oamAddr         = 0x00;
+    oamData         = 0x00;
+    ppuScroll       = 0x00;
+    ppuAddr         = 0x00;
+    ppuData         = 0x00;
+    addrLatch       = false;
+    vramBuffer      = 0x00;
+    vramAddr.value  = 0x0000;
+    tempAddr.value  = 0x0000;
+    fineX           = 0x00;
     for ( auto &table : nameTables ) {
       table.fill( 0x00 );
     }
@@ -720,7 +720,7 @@ public:
   void LoadSystemPalette( int paletteIdx = 0 )
   {
     std::string const palettePath = systemPalettePaths.at( paletteIdx );
-    nesPaletteRgbValues = ReadPalette( palettePath );
+    nesPaletteRgbValues           = ReadPalette( palettePath );
   }
 
   u8 GetPpuPaletteValue( u8 index ) { return paletteMemory.at( index ); }
@@ -764,13 +764,13 @@ public:
         for ( int bit = 7; bit >= 0; bit-- ) {
           u8 const plane0Bit = ( plane0Byte >> bit ) & 0x01;
           u8 const plane1Bit = ( plane1Byte >> bit ) & 0x01;
-          u8 const colorIdx = ( plane1Bit << 1 ) | plane0Bit;
+          u8 const colorIdx  = ( plane1Bit << 1 ) | plane0Bit;
 
           // Calculate the buffer index (pixel position)
-          int const localX = 7 - bit;
-          int const globalX = ( tileX * 8 ) + localX;
-          int const globalY = ( tileY * 8 ) + row;
-          int const bufferIdx = ( globalY * 128 ) + globalX;
+          int const localX       = 7 - bit;
+          int const globalX      = ( tileX * 8 ) + localX;
+          int const globalY      = ( tileY * 8 ) + row;
+          int const bufferIdx    = ( globalY * 128 ) + globalX;
           buffer.at( bufferIdx ) = GetPpuPaletteColor( colorIdx );
         }
       }
@@ -788,8 +788,8 @@ public:
     for ( int tileY = 0; tileY < 8; tileY++ ) {
       for ( int tileX = 0; tileX < 8; tileX++ ) {
         int const spriteIndex = ( tileY * 8 ) + tileX;
-        auto      entry = GetOamEntry( spriteIndex );
-        u16 const tileAddr = baseAddr | ( entry.tileIndex << 4 );
+        auto      entry       = GetOamEntry( spriteIndex );
+        u16 const tileAddr    = baseAddr | ( entry.tileIndex << 4 );
 
         for ( int row = 0; row < 8; row++ ) {
           u8 const plane0Byte = ReadVram( tileAddr + row );
@@ -797,18 +797,18 @@ public:
 
           for ( int bit = 7; bit >= 0; bit-- ) {
             // Calculate the pixel's position in the 64x64 output buffer.
-            int const localX = 7 - bit;
-            int const globalX = ( tileX * 8 ) + localX;
-            int const globalY = ( tileY * 8 ) + row;
+            int const localX    = 7 - bit;
+            int const globalX   = ( tileX * 8 ) + localX;
+            int const globalY   = ( tileY * 8 ) + row;
             int const bufferIdx = ( globalY * 64 ) + globalX;
 
             // Calculate pixel color
-            u8 const  plane0Bit = ( plane0Byte >> bit ) & 0x01;
-            u8 const  plane1Bit = ( plane1Byte >> bit ) & 0x01;
+            u8 const  plane0Bit   = ( plane0Byte >> bit ) & 0x01;
+            u8 const  plane1Bit   = ( plane1Byte >> bit ) & 0x01;
             u8 const  colorOffset = ( plane1Bit << 1 ) | plane0Bit;
             u8 const  paletteBase = 16 + ( entry.attribute.bit.palette * 4 );
-            u16 const vramAddr = 0x3F00 + paletteBase + colorOffset;
-            u8 const  paletteIdx = ReadVram( vramAddr );
+            u16 const vramAddr    = 0x3F00 + paletteBase + colorOffset;
+            u8 const  paletteIdx  = ReadVram( vramAddr );
 
             // Output
             buffer.at( bufferIdx ) = GetMasterPaletteColor( paletteIdx );
@@ -850,7 +850,7 @@ public:
     +++----------------- fine Y scroll
     */
 
-    u16 const vramEnd = vramStart + 960;
+    u16 const vramEnd  = vramStart + 960;
     u16 const attrBase = vramStart + 960;
 
     for ( int vramAddr = vramStart; vramAddr < vramEnd; vramAddr++ ) {
@@ -869,9 +869,9 @@ public:
       u16 const tileAddr = patternTableBaseAddr + ( tileIndex * 16 );
 
       // Grab the attribute byte, which covers a 32x32 area
-      u8 const  attrX = tileX / 4;
-      u8 const  attrY = tileY / 4;
-      u16 const attrAddr = attrBase + ( attrY * 8 ) + attrX;
+      u8 const  attrX         = tileX / 4;
+      u8 const  attrY         = tileY / 4;
+      u16 const attrAddr      = attrBase + ( attrY * 8 ) + attrX;
       u8 const  attributeByte = ReadVram( attrAddr );
 
       // Determine which 4x4 quadrant the tile is in
@@ -897,15 +897,15 @@ public:
         for ( int bit = 7; bit >= 0; bit-- ) {
           u8 const plane0Bit = ( plane0Byte >> bit ) & 0x01;
           u8 const plane1Bit = ( plane1Byte >> bit ) & 0x01;
-          u8 const colorIdx = ( plane1Bit << 1 ) | plane0Bit;
+          u8 const colorIdx  = ( plane1Bit << 1 ) | plane0Bit;
 
           // Calculate the buffer index (final pixel position)
-          int const tilePixelX = 7 - bit;
-          int const screenPixelX = ( tileX * 8 ) + tilePixelX;
-          int const screenPixelY = ( tileY * 8 ) + pixelRow;
-          int const bufferIdx = ( screenPixelY * 256 ) + screenPixelX;
+          int const tilePixelX    = 7 - bit;
+          int const screenPixelX  = ( tileX * 8 ) + tilePixelX;
+          int const screenPixelY  = ( tileY * 8 ) + pixelRow;
+          int const bufferIdx     = ( screenPixelY * 256 ) + screenPixelX;
           u8 const  finalColorIdx = ( paletteIdx * 4 ) + colorIdx;
-          buffer.at( bufferIdx ) = GetPpuPaletteColor( finalColorIdx );
+          buffer.at( bufferIdx )  = GetPpuPaletteColor( finalColorIdx );
         }
       }
     }
@@ -939,11 +939,11 @@ public:
 
     // Convert to 32-bit RGBA (SDL_PIXELFORMAT_RGBA32)
     for ( int i = 0; i < 64; ++i ) {
-      u8 const red = buffer[( i * 3 ) + 0];
+      u8 const red   = buffer[( i * 3 ) + 0];
       u8 const green = buffer[( i * 3 ) + 1];
-      u8 const blue = buffer[( i * 3 ) + 2];
+      u8 const blue  = buffer[( i * 3 ) + 2];
       u8 const alpha = 0xFF;
-      nesPalette[i] = ( alpha << 24 ) | ( blue << 16 ) | ( green << 8 ) | red;
+      nesPalette[i]  = ( alpha << 24 ) | ( blue << 16 ) | ( green << 8 ) | red;
     }
 
     return nesPalette;

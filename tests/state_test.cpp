@@ -4,6 +4,11 @@
 #include <fmt/base.h>
 #include <gtest/gtest.h>
 
+#include <cereal/cereal.hpp>
+#include <cereal/archives/binary.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/deque.hpp>
+
 class StateTest : public ::testing::Test
 {
 protected:
@@ -22,17 +27,11 @@ protected:
 
 TEST_F( StateTest, CpuState )
 {
-  // clock the bus a few times
-  for ( int i = 0; i < 10; ++i ) {
+  // ─── Run a few clock cycles ───────────────────────────────────────────────
+  for ( int i = 0; i < 10; ++i )
     bus.Clock();
-  }
 
-  /* these are the serialized values, we'll capture these as expcted values
-    archive( pc,a, _x, _y, _s, _p, _cycles, _didVblank, _pageCrossPenalty, _isWriteModify, _reading2002,
-             _instructionName,addrMode, _opcode, _isTestMode, _traceEnabled, _mesenFormatTraceEnabled, _didMesenTrace,
-             _traceLog, _mesenFormatTraceLog );
-   */
-
+  // ─── Capture "expected" state from cpu ────────────────────────────────────
   auto pc = cpu.pc;
   auto a = cpu.a;
   auto x = cpu.x;
@@ -42,7 +41,7 @@ TEST_F( StateTest, CpuState )
   auto cycles = cpu.cycles;
   auto didVblank = cpu.didVblank;
   auto pageCrossPenalty = cpu.pageCrossPenalty;
-  auto isWriteModify = cpu.writeModify;
+  auto writeModify = cpu.writeModify;
   auto reading2002 = cpu.reading2002;
   auto instructionName = cpu.instructionName;
   auto addrMode = cpu.addrMode;
@@ -53,6 +52,103 @@ TEST_F( StateTest, CpuState )
   auto didMesenTrace = cpu.didMesenTrace;
   auto traceLog = cpu.traceLog;
   auto mesenFormatTraceLog = cpu.mesenFormatTraceLog;
+
+  // ─── Serialize to an in‐memory buffer ──────────────────────────────────────
+  std::stringstream ss( std::ios::binary | std::ios::in | std::ios::out );
+  {
+    cereal::BinaryOutputArchive outArchive( ss );
+    outArchive( cpu );
+  }
+
+  // advance some more clocks to prove the archive really reset us
+  for ( int i = 0; i < 10; ++i )
+    bus.Clock();
+
+  // rewind & clear before reading
+  ss.clear();
+  ss.seekg( 0 );
+
+  {
+    cereal::BinaryInputArchive inArchive( ss );
+    inArchive( cpu );
+  }
+
+// ─── Macro to compare every field against the live 'cpu' ──────────────────
+#define CPU_FIELDS                                                                                                     \
+  X( pc )                                                                                                              \
+  X( a )                                                                                                               \
+  X( x )                                                                                                               \
+  X( y )                                                                                                               \
+  X( s )                                                                                                               \
+  X( p )                                                                                                               \
+  X( cycles )                                                                                                          \
+  X( didVblank )                                                                                                       \
+  X( pageCrossPenalty )                                                                                                \
+  X( writeModify )                                                                                                     \
+  X( reading2002 )                                                                                                     \
+  X( instructionName )                                                                                                 \
+  X( addrMode )                                                                                                        \
+  X( opcode )                                                                                                          \
+  X( isTestMode )                                                                                                      \
+  X( traceEnabled )                                                                                                    \
+  X( mesenFormatTraceEnabled )                                                                                         \
+  X( didMesenTrace )                                                                                                   \
+  X( traceLog )                                                                                                        \
+  X( mesenFormatTraceLog )
+
+#define X( field ) EXPECT_EQ( field, cpu.field );
+  CPU_FIELDS
+#undef X
+
+  // ─── Now deserialize into a fresh Bus/CPU ─────────────────────────────────
+  Bus  bus2;
+  CPU &cpu2 = bus2.cpu;
+
+  // reset buffer again
+  ss.clear();
+  ss.seekg( 0 );
+
+  {
+    cereal::BinaryInputArchive inArchive( ss );
+    inArchive( cpu2 );
+  }
+
+// compare into cpu2
+#define X( field ) EXPECT_EQ( field, cpu2.field );
+  CPU_FIELDS
+#undef X
+#undef CPU_FIELDS
+}
+
+TEST_F( StateTest, BusState )
+{
+  // ─── Run a few clock cycles ───────────────────────────────────────────────
+  for ( int i = 0; i < 10; ++i )
+    bus.Clock();
+
+  auto ppuCycle = ppu.cycle;
+  auto scanline = ppu.scanline;
+  auto cpuCycle = cpu.cycles;
+  auto vramAddrValue = ppu.vramAddr.value;
+  auto coarseX = ppu.vramAddr.bit.coarseX;
+  auto oamData = ppu.oam.data;
+  auto oamFirstEntryY = ppu.oam.entries.at( 0 ).y;
+
+  bus.QuickSaveState();
+
+  for ( int i = 0; i < 100000; ++i ) {
+    bus.Clock();
+  }
+
+  bus.QuickLoadState();
+
+  EXPECT_EQ( ppuCycle, ppu.cycle );
+  EXPECT_EQ( scanline, ppu.scanline );
+  EXPECT_EQ( cpuCycle, cpu.cycles );
+  EXPECT_EQ( vramAddrValue, ppu.vramAddr.value );
+  EXPECT_EQ( coarseX, ppu.vramAddr.bit.coarseX );
+  EXPECT_EQ( oamData, ppu.oam.data );
+  EXPECT_EQ( oamFirstEntryY, ppu.oam.entries.at( 0 ).y );
 }
 
 int main( int argc, char **argv )

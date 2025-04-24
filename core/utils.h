@@ -35,4 +35,11 @@ inline bool between( int value, int min, int max )
   return ( value >= min && value <= max );
 }
 
+inline std::string Sha256File( const std::string &path ) // NOLINT
+{
+  // for now, keep it simple, just return the path name.
+  (void) path;
+  return "rom_sha_placeholder";
+}
+
 } // namespace utils

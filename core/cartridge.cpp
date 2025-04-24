@@ -17,6 +17,7 @@
 #include "mappers/mapper0.h"
 #include "mappers/mapper1.h"
 #include "mappers/mapper3.h"
+#include "utils.h"
 
 Cartridge::Cartridge( Bus *bus ) : bus( bus )
 {
@@ -41,20 +42,11 @@ void Cartridge::LoadRom( const std::string &filePath )
   /** @brief Initiates a cartridge and loads a ROM from file
    */
   didMapperLoad = false;
-  _romPath = filePath;
+  _romPath      = filePath;
   std::ifstream romFile( filePath, std::ios::binary );
   if ( !romFile.is_open() ) {
     throw std::runtime_error( "Failed to open ROM file: " + filePath );
   }
-
-  // Bail if the ROM is larger than 5 MiB
-  constexpr size_t maxRomSize = static_cast<const size_t>( 5 * 1024 * 1024 );
-  romFile.seekg( 0, std::ios::end );
-  size_t const fileSize = static_cast<size_t>( romFile.tellg() );
-  if ( fileSize > maxRomSize ) {
-    throw std::runtime_error( "ROM file too large" );
-  }
-  romFile.seekg( 0, std::ios::beg );
 
   // Read in the iNES header
   std::array<char, 16> header{};
@@ -69,6 +61,9 @@ void Cartridge::LoadRom( const std::string &filePath )
       throw std::runtime_error( "Failed to read ROM header: Fatal I/O error." );
     }
   }
+
+  // Load in a unique rom hash
+  _romHash = utils::Sha256File( filePath );
 
   memcpy( iNes.header.value, header.data(), header.size() );
 
@@ -356,7 +351,7 @@ void Cartridge::WriteChrRAM( u16 address, u8 data )
       fmt::print( "Cartridge:WriteChrRAM:Mapper is null. Rom file was likely not loaded.\n" );
       return;
     }
-    u16 const translatedAddress = _mapper->TranslatePPUAddress( address );
+    u16 const translatedAddress              = _mapper->TranslatePPUAddress( address );
     _chrRam.at( translatedAddress & 0x1FFF ) = data;
   }
 }

@@ -1,9 +1,13 @@
 #include "bus.h"
 #include "cartridge.h"
-#include "global-types.h"
-#include <cereal/archives/binary.hpp>
-#include <iostream>
 #include "utils.h"
+#include "global-types.h"
+
+#include <iostream>
+#include <cereal/archives/binary.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/array.hpp>
+#include <cereal/types/memory.hpp>
 
 // Constructor to initialize the bus with a flat memory model
 Bus::Bus() : cpu( this ), ppu( this ), cartridge( this ), apu( this )
@@ -165,19 +169,60 @@ void Bus::DebugReset()
   ppu.Reset();
 }
 
-void Bus::SaveState( const std::string &path ) const
+void Bus::QuickSaveState( u8 idx )
 {
-  // std::ofstream               os( path, std::ios::binary );
-  // cereal::BinaryOutputArchive archive( os );
-  // archive( *this ); // ← walks cpu, ppu, apu, cartridge… in one shot
+  namespace fs = std::filesystem;
+  fs::path path = fs::path( paths::states() ) / cartridge.GetRomHash();
+
+  // if not, create the directory
+  if ( !fs::exists( path ) || !fs::is_directory( path ) )
+    fs::create_directories( path );
+
+  // filename format: save_slot0
+  std::string stateFilename = "save_slot" + std::to_string( idx );
+  fs::path    stateFilepath = path / stateFilename;
+  SaveState( stateFilepath.string() );
 }
 
-void Bus::LoadState( const std::string &path )
+void Bus::QuickLoadState( u8 idx )
 {
-  // std::ifstream              is( path, std::ios::binary );
-  // cereal::BinaryInputArchive archive( is );
-  // archive( *this );
-  // cpu.bus = this;
-  // ppu.bus = this;
-  // apu.bus = this;
+  namespace fs = std::filesystem;
+  fs::path path = fs::path( paths::states() ) / cartridge.GetRomHash();
+
+  if ( !fs::exists( path ) || !fs::is_directory( path ) )
+    fs::create_directories( path );
+
+  std::string stateFilename = "save_slot" + std::to_string( idx );
+  fs::path    stateFilepath = path / stateFilename;
+  LoadState( stateFilepath.string() );
+}
+
+void Bus::SaveState( const std::string &filename )
+{
+  try {
+    std::ofstream outStream( filename, std::ios::out | std::ios::binary | std::ios::trunc );
+    if ( !outStream ) {
+      throw std::runtime_error( "Could not open '" + filename + "' for writing" );
+    }
+
+    cereal::BinaryOutputArchive archive( outStream );
+    archive( *this );
+  } catch ( const std::exception &e ) {
+    std::cerr << "Error saving state: " << e.what() << "\n";
+  }
+}
+
+void Bus::LoadState( const std::string &filename )
+{
+  try {
+    std::ifstream inStream( filename, std::ios::in | std::ios::binary );
+    if ( !inStream ) {
+      throw std::runtime_error( "Could not open '" + filename + "' for reading" );
+    }
+
+    cereal::BinaryInputArchive archive( inStream );
+    archive( *this );
+  } catch ( const std::exception &e ) {
+    std::cerr << "Error loading state: " << e.what() << "\n";
+  }
 }

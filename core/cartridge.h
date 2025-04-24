@@ -18,16 +18,21 @@ public:
 
   Bus *bus;
 
+  template <class Archive> void serialize( Archive &ar ) // NOLINT
+  {
+    ar( _chrRam, _prgRam, _expansionMemory );
+  }
+
   /*
   ################################
   ||          Operators         ||
   ################################
   */
-  Cartridge( const Cartridge & ) = delete;
+  Cartridge( const Cartridge & )            = delete;
   Cartridge &operator=( const Cartridge & ) = delete;
-  Cartridge( Cartridge && ) = delete;
-  Cartridge &operator=( Cartridge && ) = delete;
-  ~Cartridge() = default;
+  Cartridge( Cartridge && )                 = delete;
+  Cartridge &operator=( Cartridge && )      = delete;
+  ~Cartridge()                              = default;
 
   /*
   ################################
@@ -62,6 +67,9 @@ public:
 
   std::string GetRomName() const;
   size_t      GetPrgRamSize() const;
+
+  std::string GetRomHash() const { return _romHash; }
+
   /*
   ################################
   ||        Debug Methods       ||
@@ -138,17 +146,11 @@ private:
   */
   std::shared_ptr<Mapper> _mapper;
   std::string             _romPath;
-  u8                      _mapperNumber = 0;
-  u8                      _hasBattery = 0;
+  u8                      _mapperNumber   = 0;
+  u8                      _hasBattery     = 0;
   bool                    _fourScreenMode = false;
-  MirrorMode              _mirrorMode = MirrorMode::Vertical;
-  bool                    _usesChrRam = false;
+  MirrorMode              _mirrorMode     = MirrorMode::Vertical;
+  bool                    _usesChrRam     = false;
 
-  // Serialize
-  template <class Archive> void serialize( Archive &ar ) // NOLINT
-  {
-    ar( iNes, _prgRom, _chrRom, _chrRam, _prgRam, _expansionMemory, _mapperNumber, _hasBattery, _fourScreenMode,
-        _mirrorMode, _usesChrRam );
-    // note: we skip 'bus' pointer, '_mapper' (requires custom LoadAndConstruct or post-load setup), and '_romPath'
-  }
+  std::string _romHash;
 };
