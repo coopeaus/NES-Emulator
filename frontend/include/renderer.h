@@ -201,7 +201,7 @@ public:
     const char *filters[] = { "*.json" };
     const char *filePath = tinyfd_openFileDialog("Choose a Save State", recentRomDir.c_str(), 1, filters, "JSON State Files", 0);
     if (filePath) {
-
+      fmt::print("Selected JSON save state: {}\n", filePath);
       std::ifstream file(filePath);
       try {
         nlohmann::json jsonData;
@@ -231,7 +231,7 @@ public:
     const char *filePath = tinyfd_saveFileDialog("Save State As", defaultName, 1, filters, "JSON State Files");
 
     if (filePath) {
-
+      fmt::print("Saving state to: {}\n", filePath);
       if (!bus.SaveStateToJson(filePath, "initial")) {
         std::cerr << "Failed to save state to: " << filePath << std::endl;
       } else {
@@ -346,18 +346,25 @@ public:
       file >> jsonData;
       file.close();
 
-      const std::string expectedRom = jsonData[stateKey]["cartridge"]["romName"];
-      const auto romPath = std::filesystem::current_path() / "roms" / expectedRom;
-      if (!std::filesystem::exists(romPath)) {
-        std::cerr << "ROM not found for state: " << romPath << std::endl;
+      //find expected rom
+      const std::string expectedRomName = jsonData[stateKey]["cartridge"]["romName"];
+      const std::filesystem::path fullRomPath = std::filesystem::current_path() / "roms" / expectedRomName;
+
+      if (!std::filesystem::exists(fullRomPath)) {
+        std::cerr << "ROM not found for save state: " << fullRomPath << std::endl;
         return false;
       }
 
-      //load new rom
-      LoadNewCartridge(romPath.string());
 
-      //load the rest of the state with JSON
+      if (bus.cartridge.GetRomName() != expectedRomName) {
+        fmt::print("Switching to ROM required by save state: {}\n", expectedRomName);
+        LoadNewCartridge(fullRomPath.string());
+      }
+      //load cartridge and ppu, and cpu
       return bus.LoadStateFromJson(jsonData, stateKey);
+
+
+      //bus continues rest
     } catch (const std::exception& e) {
       std::cerr << "Failed to load or parse state: " << e.what() << std::endl;
       return false;

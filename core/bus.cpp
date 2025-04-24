@@ -163,8 +163,10 @@ void Bus::DebugReset()
   ppu.Reset();
 }
 
-bool Bus::LoadStateFromJson(const nlohmann::json &jsonData, const std::string &state) {
-  // CPU
+
+bool Bus::LoadStateFromJson(const nlohmann::json &jsonData, const std::string &state)
+{
+
   cpu.SetProgramCounter(jsonData[state]["cpu"]["pc"]);
   cpu.SetAccumulator(jsonData[state]["cpu"]["a"]);
   cpu.SetXRegister(jsonData[state]["cpu"]["x"]);
@@ -173,19 +175,8 @@ bool Bus::LoadStateFromJson(const nlohmann::json &jsonData, const std::string &s
   cpu.SetStatusRegister(jsonData[state]["cpu"]["p"]);
   cpu.SetCycles(jsonData[state]["cpu"]["cycles"]);
 
-  //load CPU
-  for (const auto &entry : jsonData[state]["cpu"]["ram"]) {
-    u16 addr = entry[0];
-    u8 val = entry[1];
-    cpu.Write(addr, val);
-  }
 
-  //Cartridge
-  for (const auto &entry : jsonData[state]["cartridge"]["prgRam"]) {
-    cartridge.WritePrgRAM(entry[0], entry[1]);
-  }
-
-  // PPU
+  //PPU
   ppu.scanline = jsonData[state]["ppu"]["scanline"];
   ppu.cycle = jsonData[state]["ppu"]["cycle"];
   ppu.ppuCtrl.value = jsonData[state]["ppu"]["ctrl"];
@@ -200,12 +191,29 @@ bool Bus::LoadStateFromJson(const nlohmann::json &jsonData, const std::string &s
   ppu.fineX = jsonData[state]["ppu"]["fineX"];
   ppu.addrLatch = jsonData[state]["ppu"]["addrLatch"];
 
-  //VRAM dump
-  for (const auto &entry : jsonData[state]["ppu"]["vram"]) {
+  //cartridge load
+  std::string romPath = paths::roms() + "/" + jsonData[state]["cartridge"]["romName"].get<std::string>();
+  cartridge.LoadRom(romPath);
+  for (const auto &entry : jsonData[state]["cartridge"]["prgRam"]) {
+    cartridge.WritePrgRAM(entry[0], entry[1]);
+  }
+
+  //PPU load
+  for (const auto& entry : jsonData[state]["ppu"]["vram"]) {
     u16 addr = entry[0];
     u8 val = entry[1];
     ppu.WriteVram(addr, val);
   }
+
+
+
+  //CPU load
+  for (const auto &ramEntry : jsonData[state]["cpu"]["ram"]) {
+    uint16_t address = ramEntry[0];
+    uint8_t value = ramEntry[1];
+    cpu.Write(address, value);
+  }
+
 
   return true;
 }
@@ -225,7 +233,7 @@ bool Bus::SaveStateToJson(const std::string& relativePath, const std::string& st
     {"cycles", cpu.GetCycles()}
   };
 
-  //CPU dump
+  //CPU ram dump
   jsonData[state]["cpu"]["ram"] = nlohmann::json::array();
   for (u16 addr = 0; addr < 0x0800; ++addr) {
     jsonData[state]["cpu"]["ram"].push_back({addr, cpu.Read(addr)});
