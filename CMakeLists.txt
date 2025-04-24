@@ -52,19 +52,6 @@ target_link_libraries(emu_core PRIVATE fmt::fmt)
 #[[
 ################################################
 ||                                            ||
-||           tinyfiledialogs support          ||
-||                                            ||
-################################################
-]]
-set(TINYFILEDIALOGS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/frontend/external/tinyfiledialogs)
-add_library(tinyfiledialogs STATIC
-  ${TINYFILEDIALOGS_DIR}/tinyfiledialogs.cpp
-)
-target_include_directories(tinyfiledialogs PUBLIC ${TINYFILEDIALOGS_DIR})
-
-#[[
-################################################
-||                                            ||
 ||               Asset Handling               ||
 ||                                            ||
 ################################################
@@ -139,12 +126,10 @@ if(BUILD_FRONTEND)
     ${CORE_INCLUDES}
     ${FRONTEND_INCLUDES}
     ${UI_INCLUDES}
-    ${TINYFILEDIALOGS_DIR}
   )
 
   target_link_libraries(emu PRIVATE
     emu_core
-    tinyfiledialogs
   )
 
   # SDL
@@ -158,6 +143,10 @@ if(BUILD_FRONTEND)
   # Imgui
   find_package(imgui CONFIG REQUIRED)
   target_link_libraries(emu PRIVATE imgui::imgui)
+
+  # tinyfiledialogs
+  find_package(tinyfiledialogs CONFIG REQUIRED)
+  target_link_libraries(emu PRIVATE tinyfiledialogs::tinyfiledialogs)
 
   # OpenGL
   find_package(glad CONFIG REQUIRED)

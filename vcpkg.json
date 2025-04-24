@@ -8,12 +8,17 @@
     "gtest",
     {
       "name": "imgui",
-      "features": ["docking-experimental", "opengl3-binding", "sdl2-binding"]
+      "features": [
+        "docking-experimental",
+        "opengl3-binding",
+        "sdl2-binding"
+      ]
     },
     {
       "name": "opengl",
       "version>=": "2022-12-04#3"
     },
-    "sdl2"
+    "sdl2",
+    "tinyfiledialogs"
   ]
 }
