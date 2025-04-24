@@ -35,6 +35,7 @@ set(TEST_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
 ||                                            ||
 ################################################
 ]]
+
 # All emulation functionality is built as a static library.
 file(GLOB CORE_SOURCES "core/*.cpp" "core/mappers/*.cpp")
 add_library(emu_core STATIC ${CORE_SOURCES})
@@ -48,15 +49,19 @@ target_include_directories(emu_core PUBLIC
 find_package(fmt CONFIG REQUIRED)
 target_link_libraries(emu_core PRIVATE fmt::fmt)
 
-# Build asset directories
-# --copy source
+#[[
+################################################
+||                                            ||
+||               Asset Handling               ||
+||                                            ||
+################################################
+]]
 set(ROOT "${CMAKE_SOURCE_DIR}")
 set(ROM_S "${ROOT}/roms")
 set(TESTS_S "${ROOT}/tests")
 set(FONTS_S "${ROOT}/fonts")
 set(PALETTES_S "${ROOT}/palettes")
 
-# --copy dest
 set(ASSETS "${CMAKE_BINARY_DIR}/assets")
 set(TESTS_D "${CMAKE_BINARY_DIR}/tests")
 set(ROMS_D "${ASSETS}/roms")
@@ -83,21 +88,23 @@ copy_asset(${FONTS_S}    ${FONTS_D})
 copy_asset(${ROM_S}      ${ROMS_D})
 copy_asset(${TESTS_S}    ${TESTS_D})
 
-# Force assets to copy by adding a target
 add_custom_target(copied_assets ALL DEPENDS emu_core)
 add_dependencies(copied_assets emu_core)
 
+# User directory
+add_custom_target(user_dir ALL
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/user)
+
 #[[
-#######################################
-||                                   ||
-||  Interactive CLI Tool (optional)  ||
-||                                   ||
-#######################################
+################################################
+||                                            ||
+||         Optional Python CLI Tool           ||
+||                                            ||
+################################################
 ]]
 if(PYTHON_BINDINGS)
   add_subdirectory(tools/python)
 endif()
-
 
 #[[
 ################################################
@@ -120,7 +127,10 @@ if(BUILD_FRONTEND)
     ${FRONTEND_INCLUDES}
     ${UI_INCLUDES}
   )
-  target_link_libraries(emu PRIVATE emu_core)
+
+  target_link_libraries(emu PRIVATE
+    emu_core
+  )
 
   # SDL
   find_package(SDL2 CONFIG REQUIRED)
@@ -133,6 +143,10 @@ if(BUILD_FRONTEND)
   # Imgui
   find_package(imgui CONFIG REQUIRED)
   target_link_libraries(emu PRIVATE imgui::imgui)
+
+  # tinyfiledialogs
+  find_package(tinyfiledialogs CONFIG REQUIRED)
+  target_link_libraries(emu PRIVATE tinyfiledialogs::tinyfiledialogs)
 
   # OpenGL
   find_package(glad CONFIG REQUIRED)
@@ -187,4 +201,3 @@ if(BUILD_TESTS)
   add_test_executable(apu_test tests/apu_test.cpp)
   add_test_executable(cart_test tests/cart_test.cpp)
 endif()
-

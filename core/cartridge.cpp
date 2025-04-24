@@ -21,6 +21,20 @@ Cartridge::Cartridge( Bus *bus ) : bus( bus )
 {
 }
 
+bool Cartridge::IsRomValid( const std::string &filePath )
+{
+  std::ifstream romFile( filePath, std::ios::binary );
+  if ( !romFile.is_open() ) {
+    return false;
+  }
+  std::array<char, 16> header{};
+  if ( !romFile.read( header.data(), header.size() ) ) {
+    return false;
+  }
+  memcpy( iNes.header.value, header.data(), header.size() );
+  return iNes.GetIdentification() == "NES\x1A";
+}
+
 void Cartridge::LoadRom( const std::string &filePath )
 {
   /** @brief Initiates a cartridge and loads a ROM from file
