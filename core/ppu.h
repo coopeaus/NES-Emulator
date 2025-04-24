@@ -201,6 +201,15 @@ public:
   bool InCycle( int left, int right ) const { return left <= cycle && cycle <= right; }
   bool InScanline( int left, int right ) const { return left <= scanline && scanline <= right; }
 
+  template <class Archive> void serialize( Archive &ar ) // NOLINT
+  {
+    ar( preventVBlank, nmiReady, failedPaletteRead, systemPaletteIdx, scanline, cycle, frame, ppuCtrl.value,
+        ppuMask.value, ppuStatus.value, oamAddr, oamData, ppuScroll, ppuAddr, ppuData, vramAddr, tempAddr, fineX,
+        addrLatch, vramBuffer, nameTables, paletteMemory, oam, secondaryOam, bgPatternShiftLow, bgPatternShiftHigh,
+        bgAttributeShiftLow, bgAttributeShiftHigh, spriteShiftLow, spriteShiftHigh, spritePattern0Byte,
+        spritePattern1Byte, bSpriteZeroHitPossible, bSprite0Appeared, spriteCount, nOamEntry, isDisabled );
+  }
+
   /*
   ################################################################
   ||                                                            ||

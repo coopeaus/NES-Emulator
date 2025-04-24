@@ -143,4 +143,12 @@ private:
   bool                    _fourScreenMode = false;
   MirrorMode              _mirrorMode = MirrorMode::Vertical;
   bool                    _usesChrRam = false;
+
+  // Serialize
+  template <class Archive> void serialize( Archive &ar ) // NOLINT
+  {
+    ar( iNes, _prgRom, _chrRom, _chrRam, _prgRam, _expansionMemory, _mapperNumber, _hasBattery, _fourScreenMode,
+        _mirrorMode, _usesChrRam );
+    // note: we skip 'bus' pointer, '_mapper' (requires custom LoadAndConstruct or post-load setup), and '_romPath'
+  }
 };

@@ -130,12 +130,12 @@ std::string CPU::LogLineAtPC( bool verbose ) // NOLINT
 
   // Scanline num (V)
   if ( verbose ) {
-    std::string const scanlineStr = std::to_string( _bus->ppu.scanline );
+    std::string const scanlineStr = std::to_string( bus->ppu.scanline );
     // std::string scanline_str_adjusted = std::string( 4 - scanline_str.size(), ' ' );
     output += "  V: " + scanlineStr;
 
     // PPU cycles (H), pad for 3 characters + space
-    u16 const   ppuCycles = _bus->ppu.cycle;
+    u16 const   ppuCycles = bus->ppu.cycle;
     std::string ppuCyclesStr = std::to_string( ppuCycles );
     ppuCyclesStr += std::string( 4 - ppuCyclesStr.size(), ' ' );
     output += "  H: " + ppuCyclesStr; // PPU cycle
@@ -158,11 +158,11 @@ std::string CPU::LogLineAtPC( bool verbose ) // NOLINT
 // Pass off reads and writes to the bus
 auto CPU::Read( u16 address, bool debugMode ) const -> u8
 {
-  return _bus->Read( address, debugMode );
+  return bus->Read( address, debugMode );
 }
 void CPU::Write( u16 address, u8 data ) const
 {
-  _bus->Write( address, data );
+  bus->Write( address, data );
 }
 
 // Read with cycle spend
@@ -182,7 +182,7 @@ auto CPU::WriteAndTick( u16 address, u8 data ) -> void
   Tick();
 
   // Writing to PPUCTRL, PPUMASK, PPUSCROLL, and PPUADDR is ignored until after cycle ~29658
-  if ( !_bus->IsTestMode() && ( address == 0x2000 || address == 0x2001 || address == 0x2005 || address == 0x2006 ) ) {
+  if ( !bus->IsTestMode() && ( address == 0x2000 || address == 0x2001 || address == 0x2005 || address == 0x2006 ) ) {
     if ( _cycles < 29658 ) {
       return;
     }
@@ -203,8 +203,8 @@ void CPU::Tick()
 {
   // Increment the cycle count
   _cycles++;
-  _bus->ppu.Tick();
-  _bus->ppu.Tick();
+  bus->ppu.Tick();
+  bus->ppu.Tick();
 
   // Match mesen trace log, place logger here.
   if ( _mesenFormatTraceEnabled && !_didMesenTrace ) {
@@ -214,7 +214,7 @@ void CPU::Tick()
     _didMesenTrace = true;
   }
 
-  _bus->ppu.Tick();
+  bus->ppu.Tick();
 }
 
 void CPU::Reset()
@@ -230,7 +230,7 @@ void CPU::Reset()
   _pc = Read( 0xFFFD ) << 8 | Read( 0xFFFC );
 
   // Add 7 cycles
-  if ( !_bus->IsTestMode() ) {
+  if ( !bus->IsTestMode() ) {
 
     for ( u8 i = 0; i < 7; i++ ) {
       Tick();

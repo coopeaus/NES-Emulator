@@ -1,6 +1,7 @@
 #include "bus.h"
 #include "cartridge.h"
 #include "global-types.h"
+#include <cereal/archives/binary.hpp>
 #include <iostream>
 #include "utils.h"
 
@@ -156,6 +157,7 @@ void Bus::Clock()
 {
   return _useFlatMemory;
 }
+
 void Bus::DebugReset()
 {
   cpu.SetCycles( 0 );
@@ -163,10 +165,19 @@ void Bus::DebugReset()
   ppu.Reset();
 }
 
-Bus Bus::LoadState( const std::string &path )
+void Bus::SaveState( const std::string &path ) const
 {
+  // std::ofstream               os( path, std::ios::binary );
+  // cereal::BinaryOutputArchive archive( os );
+  // archive( *this ); // ← walks cpu, ppu, apu, cartridge… in one shot
 }
 
-void Bus::SaveState( const Bus &bus, const std::string &path )
+void Bus::LoadState( const std::string &path )
 {
+  // std::ifstream              is( path, std::ios::binary );
+  // cereal::BinaryInputArchive archive( is );
+  // archive( *this );
+  // cpu.bus = this;
+  // ppu.bus = this;
+  // apu.bus = this;
 }

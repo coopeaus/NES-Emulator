@@ -43,8 +43,8 @@ public:
   ||    State Serialization     ||
   ################################
   */
-  Bus  LoadState( const std::string &path );
-  void SaveState( const Bus &bus, const std::string &path );
+  void LoadState( const std::string &path );
+  void SaveState( const std::string &path ) const;
 
   /*
   ################################
@@ -88,5 +88,5 @@ private:
   ||       Temporary Stubs      ||
   ################################
   */
-  std::array<u8, 32> _apuIoMemory{}; // 32 bytes APU and I/O registers
+  std::array<u8, 32>apuIoMemory{}; // 32 bytes APU and I/O registers
 };

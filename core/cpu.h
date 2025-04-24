@@ -13,7 +13,7 @@ class Bus;
 class CPU
 {
 public:
-  explicit CPU( Bus *bus ) : _bus( bus )
+  explicit CPU( Bus *bus ) : bus( bus )
   {
 
     // clang-format off
@@ -226,6 +226,13 @@ public:
     Negative = 1 << 7,         // 0b10000000
   };
 
+  /*
+  ################################
+  ||         Peripherals        ||
+  ################################
+  */
+  Bus *bus;
+
 private:
   friend class CpuTest; // Sometimes used for testing private methods
 
@@ -267,13 +274,6 @@ private:
 
   std::deque<std::string> _traceLog;
   std::deque<std::string> _mesenFormatTraceLog;
-
-  /*
-  ################################
-  ||         Peripherals        ||
-  ################################
-  */
-  Bus *_bus;
 
   /*
   ################################
