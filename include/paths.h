@@ -67,4 +67,10 @@ inline std::string user()
   return path.string();
 }
 
+inline std::string states()
+{
+  auto path = root() / user() / "states";
+  return path.string();
+}
+
 } // namespace paths
