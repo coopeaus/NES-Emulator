@@ -12,6 +12,7 @@
 #include <glad/glad.h>
 #include <imgui.h>
 #include "tinyfiledialogs.h"
+#include <nlohmann/json.hpp>
 
 #include <algorithm>
 #include <array>
@@ -195,6 +196,55 @@ public:
     }
   }
 
+  void OpenStateFileDialog()
+  {
+    const char *filters[] = { "*.json" };
+    const char *filePath = tinyfd_openFileDialog("Choose a Save State", recentRomDir.c_str(), 1, filters, "JSON State Files", 0);
+    if (filePath) {
+
+      std::ifstream file(filePath);
+      try {
+        nlohmann::json jsonData;
+        file >> jsonData;
+        file.close();
+
+        if (!bus.LoadStateFromJson(jsonData, "initial")) {
+          std::cerr << "Failed to load state: " << filePath << std::endl;
+        } else {
+          fmt::print("State successfully loaded from: {}\n", filePath);
+        }
+      } catch (const std::exception &e) {
+        std::cerr << "failed to use state file: " << e.what() << std::endl;
+      }
+
+      //remember path
+      auto loadStateDir = std::filesystem::path(filePath).parent_path();
+      recentRomDir = loadStateDir.string();
+      SaveRecentRomDir(recentRomDir);
+    }
+  }
+
+  void SaveCurrentStateFileDialog()
+  {
+    const char *filters[] = { "*.json" };
+    const char *defaultName = "state.json";
+    const char *filePath = tinyfd_saveFileDialog("Save State As", defaultName, 1, filters, "JSON State Files");
+
+    if (filePath) {
+
+      if (!bus.SaveStateToJson(filePath, "initial")) {
+        std::cerr << "Failed to save state to: " << filePath << std::endl;
+      } else {
+        fmt::print("State successfully saved to: {}\n", filePath);
+      }
+
+      //remember save path
+      auto saveStateDir = std::filesystem::path(filePath).parent_path();
+      recentRomDir = saveStateDir.string();
+      SaveRecentRomDir(recentRomDir);
+    }
+  }
+
   static std::deque<std::string> LoadRecentROMs()
   {
     namespace fs = std::filesystem;
@@ -282,6 +332,36 @@ public:
   {
     recentRoms.clear();
     SaveRecentROMs( recentRoms );
+  }
+
+  bool LoadStateFromJsonFile(const std::string& path, const std::string& stateKey) {
+    std::ifstream file(path);
+    if (!file.is_open()) {
+      std::cerr << "Failed to open state file: " << path << std::endl;
+      return false;
+    }
+
+    try {
+      nlohmann::json jsonData;
+      file >> jsonData;
+      file.close();
+
+      const std::string expectedRom = jsonData[stateKey]["cartridge"]["romName"];
+      const auto romPath = std::filesystem::current_path() / "roms" / expectedRom;
+      if (!std::filesystem::exists(romPath)) {
+        std::cerr << "ROM not found for state: " << romPath << std::endl;
+        return false;
+      }
+
+      //load new rom
+      LoadNewCartridge(romPath.string());
+
+      //load the rest of the state with JSON
+      return bus.LoadStateFromJson(jsonData, stateKey);
+    } catch (const std::exception& e) {
+      std::cerr << "Failed to load or parse state: " << e.what() << std::endl;
+      return false;
+    }
   }
 
   bool Setup()

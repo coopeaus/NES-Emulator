@@ -131,40 +131,16 @@ public:
       }
 
       static char jsonPath[512] = "Your/save/or/load/state/path.json";
-
+      //save State Button
       if (ImGui::BeginMenu("States")) {
-        ImGui::InputText("Enter JSON Path", jsonPath, IM_ARRAYSIZE(jsonPath));
-
-        // Save State Button
-        if (ImGui::Button("Save State")) {
-          std::string path(jsonPath);
-          if (!renderer->bus.SaveStateToJson(path, "initial")) {
-            std::cerr << "Failed to save state to: " << path << std::endl;
-          } else {
-            std::cout << "State saved to: " << path << std::endl;
-          }
+        if (ImGui::MenuItem("Save Current State As")) {
+      renderer->SaveCurrentStateFileDialog();
+      }
+        //load state button
+        if (ImGui::MenuItem("Load State")) {
+          renderer->OpenStateFileDialog();
         }
-        // load state button
-        if (ImGui::Button("Load State")) {
-          std::ifstream file(jsonPath);
-          if (!file.is_open()) {
-            std::cerr << "Failed to open load state file \"" << jsonPath << "\"" << std::endl;
-          } else {
-            try {
-              nlohmann::json jsonData;
-              file >> jsonData;
-              file.close();
 
-              if (!renderer->bus.LoadStateFromJson(jsonData, "initial")) {
-                std::cerr << "LoadStateFromJson failed for file: " << jsonPath << std::endl;
-              }
-            } catch (const std::exception& e) {
-              std::cerr << "Failed load state data: " << e.what() << std::endl;
-            }
-          }
-
-
-        }
         ImGui::EndMenu();
 
       }
