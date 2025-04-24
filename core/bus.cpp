@@ -163,20 +163,18 @@ void Bus::DebugReset()
   ppu.Reset();
 }
 
-
-bool Bus::LoadStateFromJson(const nlohmann::json &jsonData, const std::string &state)
+bool Bus::LoadStateFromJson( const nlohmann::json &jsonData, const std::string &state )
 {
 
-  cpu.SetProgramCounter(jsonData[state]["cpu"]["pc"]);
-  cpu.SetAccumulator(jsonData[state]["cpu"]["a"]);
-  cpu.SetXRegister(jsonData[state]["cpu"]["x"]);
-  cpu.SetYRegister(jsonData[state]["cpu"]["y"]);
-  cpu.SetStackPointer(jsonData[state]["cpu"]["s"]);
-  cpu.SetStatusRegister(jsonData[state]["cpu"]["p"]);
-  cpu.SetCycles(jsonData[state]["cpu"]["cycles"]);
+  cpu.SetProgramCounter( jsonData[state]["cpu"]["pc"] );
+  cpu.SetAccumulator( jsonData[state]["cpu"]["a"] );
+  cpu.SetXRegister( jsonData[state]["cpu"]["x"] );
+  cpu.SetYRegister( jsonData[state]["cpu"]["y"] );
+  cpu.SetStackPointer( jsonData[state]["cpu"]["s"] );
+  cpu.SetStatusRegister( jsonData[state]["cpu"]["p"] );
+  cpu.SetCycles( jsonData[state]["cpu"]["cycles"] );
 
-
-  //PPU
+  // PPU
   ppu.scanline = jsonData[state]["ppu"]["scanline"];
   ppu.cycle = jsonData[state]["ppu"]["cycle"];
   ppu.ppuCtrl.value = jsonData[state]["ppu"]["ctrl"];
@@ -191,89 +189,73 @@ bool Bus::LoadStateFromJson(const nlohmann::json &jsonData, const std::string &s
   ppu.fineX = jsonData[state]["ppu"]["fineX"];
   ppu.addrLatch = jsonData[state]["ppu"]["addrLatch"];
 
-  //cartridge load
-  std::string romPath = paths::roms() + "/" + jsonData[state]["cartridge"]["romName"].get<std::string>();
-  cartridge.LoadRom(romPath);
-  for (const auto &entry : jsonData[state]["cartridge"]["prgRam"]) {
-    cartridge.WritePrgRAM(entry[0], entry[1]);
+  // cartridge load
+  const std::string romPath = paths::roms() + "/" + jsonData[state]["cartridge"]["romName"].get<std::string>();
+  cartridge.LoadRom( romPath );
+  for ( const auto &entry : jsonData[state]["cartridge"]["prgRam"] ) {
+    cartridge.WritePrgRAM( entry[0], entry[1] );
   }
 
-  //PPU load
-  for (const auto& entry : jsonData[state]["ppu"]["vram"]) {
+  // PPU load
+  for ( const auto &entry : jsonData[state]["ppu"]["vram"] ) {
     u16 addr = entry[0];
-    u8 val = entry[1];
-    ppu.WriteVram(addr, val);
+    u8  val = entry[1];
+    ppu.WriteVram( addr, val );
   }
 
-
-
-  //CPU load
-  for (const auto &ramEntry : jsonData[state]["cpu"]["ram"]) {
+  // CPU load
+  for ( const auto &ramEntry : jsonData[state]["cpu"]["ram"] ) {
     uint16_t address = ramEntry[0];
-    uint8_t value = ramEntry[1];
-    cpu.Write(address, value);
+    uint8_t  value = ramEntry[1];
+    cpu.Write( address, value );
   }
-
 
   return true;
 }
 
-bool Bus::SaveStateToJson(const std::string& relativePath, const std::string& state)
+bool Bus::SaveStateToJson( const std::string &relativePath, const std::string &state )
 {
   nlohmann::json jsonData;
 
-  //CPU values
-  jsonData[state]["cpu"] = {
-    {"a", cpu.GetAccumulator()},
-    {"x", cpu.GetXRegister()},
-    {"y", cpu.GetYRegister()},
-    {"p", cpu.GetStatusRegister()},
-    {"s", cpu.GetStackPointer()},
-    {"pc", cpu.GetProgramCounter()},
-    {"cycles", cpu.GetCycles()}
-  };
+  // CPU values
+  jsonData[state]["cpu"] = { { "a", cpu.GetAccumulator() },  { "x", cpu.GetXRegister() },
+                             { "y", cpu.GetYRegister() },    { "p", cpu.GetStatusRegister() },
+                             { "s", cpu.GetStackPointer() }, { "pc", cpu.GetProgramCounter() },
+                             { "cycles", cpu.GetCycles() } };
 
-  //CPU ram dump
+  // CPU ram dump
   jsonData[state]["cpu"]["ram"] = nlohmann::json::array();
-  for (u16 addr = 0; addr < 0x0800; ++addr) {
-    jsonData[state]["cpu"]["ram"].push_back({addr, cpu.Read(addr)});
+  for ( u16 addr = 0; addr < 0x0800; ++addr ) {
+    jsonData[state]["cpu"]["ram"].push_back( { addr, cpu.Read( addr ) } );
   }
 
-  //PPU values
+  // PPU values
   jsonData[state]["ppu"] = {
-    {"ctrl", ppu.ppuCtrl.value},
-    {"mask", ppu.ppuMask.value},
-    {"status", ppu.ppuStatus.value},
-    {"oamAddr", ppu.oamAddr},
-    {"scroll", ppu.ppuScroll},
-    {"addr", ppu.ppuAddr},
-    {"data", ppu.ppuData},
-    {"vramAddr", ppu.vramAddr.value},
-    {"tempAddr", ppu.tempAddr.value},
-    {"fineX", ppu.fineX},
-    {"addrLatch", ppu.addrLatch},
-    {"scanline", ppu.scanline},
-    {"cycle", ppu.cycle}
-  };
+      { "ctrl", ppu.ppuCtrl.value }, { "mask", ppu.ppuMask.value },      { "status", ppu.ppuStatus.value },
+      { "oamAddr", ppu.oamAddr },    { "scroll", ppu.ppuScroll },        { "addr", ppu.ppuAddr },
+      { "data", ppu.ppuData },       { "vramAddr", ppu.vramAddr.value }, { "tempAddr", ppu.tempAddr.value },
+      { "fineX", ppu.fineX },        { "addrLatch", ppu.addrLatch },     { "scanline", ppu.scanline },
+      { "cycle", ppu.cycle } };
 
-  //PPU dump
+  // PPU dump
   jsonData[state]["ppu"]["vram"] = nlohmann::json::array();
-  for (u16 addr = 0; addr < 0x4000; ++addr) {
-    jsonData[state]["ppu"]["vram"].push_back({addr, ppu.ReadVram(addr)});
+  for ( u16 addr = 0; addr < 0x4000; ++addr ) {
+    jsonData[state]["ppu"]["vram"].push_back( { addr, ppu.ReadVram( addr ) } );
   }
 
-  //cartridge dump
+  // cartridge dump
   jsonData[state]["cartridge"]["romName"] = cartridge.GetRomName();
   jsonData[state]["cartridge"]["prgRam"] = nlohmann::json::array();
-  for (u16 addr = 0; addr < cartridge.GetPrgRamSize(); ++addr) {
-    jsonData[state]["cartridge"]["prgRam"].push_back({addr, cartridge.ReadPrgRAM(addr)});
+  for ( u16 addr = 0; addr < cartridge.GetPrgRamSize(); ++addr ) {
+    jsonData[state]["cartridge"]["prgRam"].push_back( { addr, cartridge.ReadPrgRAM( addr ) } );
   }
 
-  //save to file
-  std::filesystem::path path = std::filesystem::current_path() / relativePath;
-  std::ofstream file(path);
-  if (!file.is_open()) return false;
+  // save to file
+  const std::filesystem::path path = std::filesystem::current_path() / relativePath;
+  std::ofstream         file( path );
+  if ( !file.is_open() )
+    return false;
 
-  file << std::setw(2) << jsonData;
+  file << std::setw( 2 ) << jsonData;
   return true;
 }

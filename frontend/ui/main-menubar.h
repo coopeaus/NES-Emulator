@@ -131,18 +131,17 @@ public:
       }
 
       static char jsonPath[512] = "Your/save/or/load/state/path.json";
-      //save State Button
-      if (ImGui::BeginMenu("States")) {
-        if (ImGui::MenuItem("Save Current State As")) {
-      renderer->SaveCurrentStateFileDialog();
-      }
-        //load state button
-        if (ImGui::MenuItem("Load State")) {
+      // save State Button
+      if ( ImGui::BeginMenu( "States" ) ) {
+        if ( ImGui::MenuItem( "Save Current State As" ) ) {
+          renderer->SaveCurrentStateFileDialog();
+        }
+        // load state button
+        if ( ImGui::MenuItem( "Load State" ) ) {
           renderer->OpenStateFileDialog();
         }
 
         ImGui::EndMenu();
-
       }
       ImGui::EndMainMenuBar();
     };

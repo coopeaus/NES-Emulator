@@ -61,7 +61,7 @@ public:
   bool       IsRomValid( const std::string &filePath );
 
   std::string GetRomName() const;
-  size_t GetPrgRamSize() const;
+  size_t      GetPrgRamSize() const;
   /*
   ################################
   ||        Debug Methods       ||
@@ -137,7 +137,7 @@ private:
   ################################
   */
   std::shared_ptr<Mapper> _mapper;
-  std::string _romPath;
+  std::string             _romPath;
   u8                      _mapperNumber = 0;
   u8                      _hasBattery = 0;
   bool                    _fourScreenMode = false;
