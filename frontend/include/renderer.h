@@ -199,28 +199,29 @@ public:
   void OpenStateFileDialog()
   {
     const char *filters[] = { "*.json" };
-    const char *filePath = tinyfd_openFileDialog("Choose a Save State", recentRomDir.c_str(), 1, filters, "JSON State Files", 0);
-    if (filePath) {
-      fmt::print("Selected JSON save state: {}\n", filePath);
-      std::ifstream file(filePath);
+    const char *filePath =
+        tinyfd_openFileDialog( "Choose a Save State", recentRomDir.c_str(), 1, filters, "JSON State Files", 0 );
+    if ( filePath ) {
+      fmt::print( "Selected JSON save state: {}\n", filePath );
+      std::ifstream file( filePath );
       try {
         nlohmann::json jsonData;
         file >> jsonData;
         file.close();
 
-        if (!bus.LoadStateFromJson(jsonData, "initial")) {
+        if ( !bus.LoadStateFromJson( jsonData, "initial" ) ) {
           std::cerr << "Failed to load state: " << filePath << std::endl;
         } else {
-          fmt::print("State successfully loaded from: {}\n", filePath);
+          fmt::print( "State successfully loaded from: {}\n", filePath );
         }
-      } catch (const std::exception &e) {
+      } catch ( const std::exception &e ) {
         std::cerr << "failed to use state file: " << e.what() << std::endl;
       }
 
-      //remember path
-      auto loadStateDir = std::filesystem::path(filePath).parent_path();
+      // remember path
+      auto loadStateDir = std::filesystem::path( filePath ).parent_path();
       recentRomDir = loadStateDir.string();
-      SaveRecentRomDir(recentRomDir);
+      SaveRecentRomDir( recentRomDir );
     }
   }
 
@@ -228,20 +229,20 @@ public:
   {
     const char *filters[] = { "*.json" };
     const char *defaultName = "state.json";
-    const char *filePath = tinyfd_saveFileDialog("Save State As", defaultName, 1, filters, "JSON State Files");
+    const char *filePath = tinyfd_saveFileDialog( "Save State As", defaultName, 1, filters, "JSON State Files" );
 
-    if (filePath) {
-      fmt::print("Saving state to: {}\n", filePath);
-      if (!bus.SaveStateToJson(filePath, "initial")) {
+    if ( filePath ) {
+      fmt::print( "Saving state to: {}\n", filePath );
+      if ( !bus.SaveStateToJson( filePath, "initial" ) ) {
         std::cerr << "Failed to save state to: " << filePath << std::endl;
       } else {
-        fmt::print("State successfully saved to: {}\n", filePath);
+        fmt::print( "State successfully saved to: {}\n", filePath );
       }
 
-      //remember save path
-      auto saveStateDir = std::filesystem::path(filePath).parent_path();
+      // remember save path
+      auto saveStateDir = std::filesystem::path( filePath ).parent_path();
       recentRomDir = saveStateDir.string();
-      SaveRecentRomDir(recentRomDir);
+      SaveRecentRomDir( recentRomDir );
     }
   }
 
@@ -334,9 +335,10 @@ public:
     SaveRecentROMs( recentRoms );
   }
 
-  bool LoadStateFromJsonFile(const std::string& path, const std::string& stateKey) {
-    std::ifstream file(path);
-    if (!file.is_open()) {
+  bool LoadStateFromJsonFile( const std::string &path, const std::string &stateKey )
+  {
+    std::ifstream file( path );
+    if ( !file.is_open() ) {
       std::cerr << "Failed to open state file: " << path << std::endl;
       return false;
     }
@@ -346,26 +348,24 @@ public:
       file >> jsonData;
       file.close();
 
-      //find expected rom
-      const std::string expectedRomName = jsonData[stateKey]["cartridge"]["romName"];
+      // find expected rom
+      const std::string           expectedRomName = jsonData[stateKey]["cartridge"]["romName"];
       const std::filesystem::path fullRomPath = std::filesystem::current_path() / "roms" / expectedRomName;
 
-      if (!std::filesystem::exists(fullRomPath)) {
+      if ( !std::filesystem::exists( fullRomPath ) ) {
         std::cerr << "ROM not found for save state: " << fullRomPath << std::endl;
         return false;
       }
 
-
-      if (bus.cartridge.GetRomName() != expectedRomName) {
-        fmt::print("Switching to ROM required by save state: {}\n", expectedRomName);
-        LoadNewCartridge(fullRomPath.string());
+      if ( bus.cartridge.GetRomName() != expectedRomName ) {
+        fmt::print( "Switching to ROM required by save state: {}\n", expectedRomName );
+        LoadNewCartridge( fullRomPath.string() );
       }
-      //load cartridge and ppu, and cpu
-      return bus.LoadStateFromJson(jsonData, stateKey);
+      // load cartridge and ppu, and cpu
+      return bus.LoadStateFromJson( jsonData, stateKey );
 
-
-      //bus continues rest
-    } catch (const std::exception& e) {
+      // bus continues rest
+    } catch ( const std::exception &e ) {
       std::cerr << "Failed to load or parse state: " << e.what() << std::endl;
       return false;
     }

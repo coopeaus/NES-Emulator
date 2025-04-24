@@ -402,10 +402,12 @@ void Cartridge::WriteExpansionRAM( u16 address, u8 data )
 ||                            ||
 ################################
 */
-std::string Cartridge::GetRomName() const {
-  return std::filesystem::path(_romPath).filename().string();
+std::string Cartridge::GetRomName() const
+{
+  return std::filesystem::path( _romPath ).filename().string();
 }
-size_t Cartridge::GetPrgRamSize() const {
+size_t Cartridge::GetPrgRamSize() const
+{
   return _prgRam.size();
 }
 

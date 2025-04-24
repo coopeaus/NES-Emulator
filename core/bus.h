@@ -44,9 +44,9 @@ public:
   ||    State Serialization     ||
   ################################
   */
-  bool LoadStateFromJson(const nlohmann::json &jsonData, const std::string &state);
-  bool LoadStateFromFile(const std::string &romPathWithExtension);
-  bool SaveStateToJson(const std::string& path, const std::string& state);
+  bool LoadStateFromJson( const nlohmann::json &jsonData, const std::string &state );
+  bool LoadStateFromFile( const std::string &romPathWithExtension );
+  bool SaveStateToJson( const std::string &path, const std::string &state );
 
   /*
   ################################
