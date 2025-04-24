@@ -53,6 +53,7 @@ public:
   void QuickSaveState( u8 idx = 0 );
   void SaveState( const std::string &filename );
   void LoadState( const std::string &filename );
+  bool DoesSaveStateExist() const;
 
   /*
   ################################

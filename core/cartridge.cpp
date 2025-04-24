@@ -63,7 +63,7 @@ void Cartridge::LoadRom( const std::string &filePath )
   }
 
   // Load in a unique rom hash
-  _romHash = utils::Sha256File( filePath );
+  _romHash = utils::GetRomHash( filePath );
 
   memcpy( iNes.header.value, header.data(), header.size() );
 

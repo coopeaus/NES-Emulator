@@ -687,6 +687,24 @@ public:
             paused = false;
             bus.DebugReset();
           }
+
+          // Cmd + S to save state to default slot (0)
+          if ( event.key.keysym.scancode == SDL_SCANCODE_S && ( SDL_GetModState() & KMOD_GUI ) ) {
+            fmt::print( "Save state\n" );
+            bus.QuickSaveState();
+          }
+
+          // Cmd + L to load state from default slot (0)
+          if ( event.key.keysym.scancode == SDL_SCANCODE_L && ( SDL_GetModState() & KMOD_GUI ) ) {
+            fmt::print( "Load state\n" );
+            bus.QuickLoadState();
+          }
+
+          // Cmd + O to open a ROM
+          if ( event.key.keysym.scancode == SDL_SCANCODE_O && ( SDL_GetModState() & KMOD_GUI ) ) {
+            fmt::print( "Open ROM\n" );
+            OpenRomFileDialog();
+          }
         }
       } else if ( event.type == SDL_DROPFILE ) {
         char *droppedFile = event.drop.file;

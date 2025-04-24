@@ -134,12 +134,31 @@ public:
         if ( ImGui::MenuItem( "Save Slot 0" ) ) {
           renderer->bus.QuickSaveState( 0 );
         }
-        ImGui::Separator();
-        // load state button
+        if ( ImGui::MenuItem( "Save Slot 1" ) ) {
+          renderer->bus.QuickSaveState( 1 );
+        }
+        if ( ImGui::MenuItem( "Save Slot 2" ) ) {
+          renderer->bus.QuickSaveState( 2 );
+        }
+        if ( ImGui::MenuItem( "Save Slot 3" ) ) {
+          renderer->bus.QuickSaveState( 2 );
+        }
+
+        bool doesSaveStateExist = renderer->bus.DoesSaveStateExist();
+        ImGui::BeginDisabled( !doesSaveStateExist );
         if ( ImGui::MenuItem( "Load Slot 0" ) ) {
           renderer->bus.QuickLoadState( 0 );
         }
-
+        if ( ImGui::MenuItem( "Load Slot 1" ) ) {
+          renderer->bus.QuickLoadState( 1 );
+        }
+        if ( ImGui::MenuItem( "Load Slot 2" ) ) {
+          renderer->bus.QuickLoadState( 2 );
+        }
+        if ( ImGui::MenuItem( "Load Slot 3" ) ) {
+          renderer->bus.QuickLoadState( 3 );
+        }
+        ImGui::EndDisabled();
         ImGui::EndMenu();
       }
       ImGui::EndMainMenuBar();

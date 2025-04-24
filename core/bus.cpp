@@ -174,7 +174,6 @@ void Bus::QuickSaveState( u8 idx )
   namespace fs = std::filesystem;
   fs::path path = fs::path( paths::states() ) / cartridge.GetRomHash();
 
-  // if not, create the directory
   if ( !fs::exists( path ) || !fs::is_directory( path ) )
     fs::create_directories( path );
 
@@ -225,4 +224,11 @@ void Bus::LoadState( const std::string &filename )
   } catch ( const std::exception &e ) {
     std::cerr << "Error loading state: " << e.what() << "\n";
   }
+}
+
+bool Bus::DoesSaveStateExist() const
+{
+  namespace fs = std::filesystem;
+  fs::path path = fs::path( paths::states() ) / cartridge.GetRomHash();
+  return fs::exists( path ) && fs::is_directory( path );
 }
