@@ -1,35 +1,39 @@
 #pragma once
 
-#include <SDL_video.h>
+// Graphics
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_opengl3.h"
 #include <SDL_error.h>
-#include <SDL_hints.h>
 #include <SDL_events.h>
+#include <SDL_hints.h>
+#include <SDL2/SDL.h>
+#include <SDL_video.h>
+#include <imgui.h>
+
+// Libraries
 #include <algorithm>
 #include <array>
 #include <cstdlib>
 #include <glad/glad.h>
-#include <SDL2/SDL.h>
-#include <imgui.h>
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_opengl3.h"
-#include "cartridge.h"
-#include "ui-component.h"
-#include "ui-manager.h"
-#include <SDL_stdinc.h>
-#include <SDL_timer.h>
-#include <cstdint>
-#include <fmt/base.h>
-#include <fmt/core.h>
-#include <iostream>
 #include <csignal>
 #include <numeric>
 #include <string>
 #include <thread>
-#include "theme.h"
-#include "chrono"
-#include "paths.h"
+#include <cstdint>
+#include <iostream>
+#include <deque>
+#include <filesystem>
+#include <fstream>
+#include <chrono>
+#include "tinyfiledialogs.h"
 
+// Ours
+#include "theme.h"
 #include "bus.h"
+#include "cartridge.h"
+#include "ui-component.h"
+#include "ui-manager.h"
+#include "paths.h"
 #include "Sound_Queue.h"
 
 using u32 = uint32_t;
@@ -97,6 +101,13 @@ public:
   #       global variables       #
   ################################
   */
+
+  // notification message
+  bool              messageShow = false;
+  std::string       message;
+  int               messageDuration = 3;
+  Clock::time_point messageStart;
+
   bool running = true;
   bool paused = false;
 
@@ -121,25 +132,16 @@ public:
   std::chrono::time_point<Clock> lastFrameTime = Clock::now();
 
 #define ROM( x ) ( std::string( paths::roms() ) + "/" + ( x ) )
-  std::vector<std::string> testRoms = { ROM( "palette.nes" ),    ROM( "color_test.nes" ),  ROM( "nestest.nes" ),
-                                        ROM( "mario.nes" ),      ROM( "custom.nes" ),      ROM( "scanline.nes" ),
-                                        ROM( "dk.nes" ),         ROM( "ice_climber.nes" ), ROM( "instr_test-v5.nes" ),
-                                        ROM( "bomberman2.nes" ), ROM( "metroid.nes" ),     ROM( "amagon.nes" ) };
-  enum RomSelected : u8 {
-    PALETTE,
-    COLOR_TEST,
-    NESTEST,
-    MARIO,
-    CUSTOM,
-    SCANLINE,
-    DK,
-    ICE_CLIMBER,
-    V5,
-    BM2,
-    METROID,
-    AMAGON
+  std::vector<std::string> testRoms = {
+
+      ROM( "custom.nes" ),  ROM( "color_test.nes" ), ROM( "nestest.nes" ),
+      ROM( "palette.nes" ), ROM( "scanline.nes" ),   ROM( "instr_test-v5.nes" ),
   };
-  u8 romSelected = RomSelected::MARIO;
+  std::deque<std::string> recentRoms;
+  std::string             recentRomDir;
+  std::string             recentStatefileDir;
+  enum RomSelected : u8 { CUSTOM, COLOR_TEST, NESTEST, PALETTE, SCANLINE, V5 };
+  u8 romSelected = RomSelected::CUSTOM;
 
   /*
   ################################
@@ -176,6 +178,7 @@ public:
       std::exit( EXIT_FAILURE );
     }
 
+    // Audio
 #ifdef SDL_INIT_AUDIO
     if ( SDL_Init( SDL_INIT_AUDIO ) < 0 )
       exit( EXIT_FAILURE );
@@ -190,16 +193,222 @@ public:
     if ( soundQueue->init( bus.sampleRate ) )
       exit( EXIT_FAILURE );
 #endif
-
-    // Set function for APU to read memory with (required for DMC samples to play properly)
     apu.dmc_reader( Bus::ReadDmc, &bus );
+
+    // Directories
+    recentRoms = LoadRecentROMs();
+    recentRomDir = LoadRecentRomDir();
+    recentStatefileDir = LoadRecentStatefileDir();
+
+    std::string msg = "Loaded ROM: " + std::string( romFile );
+    NotifyStart( msg );
   }
 
   void LoadNewCartridge( const std::string &newRomFile )
   {
+    if ( !bus.cartridge.IsRomValid( newRomFile ) ) {
+      fmt::print( "Invalid ROM file: {}\n", newRomFile );
+      return;
+    }
     bus.cartridge.LoadRom( newRomFile );
     bus.DebugReset();
     currentFrame = ppu.frame;
+
+    std::string msg = "Loaded ROM: " + std::string( newRomFile );
+    NotifyStart( msg );
+  }
+
+  void OpenRomFileDialog()
+  {
+    const char *filters[] = { "*.nes" };
+    const char *filePath = tinyfd_openFileDialog( "Choose a ROM", recentRomDir.c_str(), 1, filters, "NES ROMs", 0 );
+
+    if ( filePath ) {
+      fmt::print( "Selected ROM: {}\n", filePath );
+
+      // Load the selected ROM
+      LoadNewCartridge( filePath );
+
+      // Remember the rom directory
+      auto romDir = std::filesystem::path( filePath );
+      recentRomDir = romDir.string();
+      SaveRecentRomDir( romDir.string() );
+
+      // Add to recently used roms
+      AddToRecentROMs( filePath );
+    }
+  }
+
+  void SaveCurrentStateFileDialog()
+  {
+    namespace fs = std::filesystem;
+
+    std::string filename = "my_save" + bus.statefileExt;
+    fs::path    dir = fs::path( recentStatefileDir );
+    fs::path    filepath = dir / filename;
+
+    std::string filterPattern = "*" + bus.statefileExt;
+    const char *filters[] = { filterPattern.c_str() };
+    const char *filePath = tinyfd_saveFileDialog( "Save State As", filepath.c_str(), 1, filters, "NES state files" );
+
+    if ( filePath ) {
+      fmt::print( "Saving state to: {}\n", filePath );
+      bus.SaveState( filePath );
+
+      // remember the filestate directory
+      recentStatefileDir = filePath;
+      SaveRecentStatefileDir( recentStatefileDir );
+
+      NotifyStart( "State save success." );
+    }
+  }
+
+  bool LoadStateFileDialog()
+  {
+    namespace fs = std::filesystem;
+
+    std::string filename = "my_save" + bus.statefileExt;
+    fs::path    dir = fs::path( recentStatefileDir );
+    fs::path    filepath = dir / filename;
+
+    std::string filterPattern = "*" + bus.statefileExt;
+    const char *filters[] = { filterPattern.c_str() };
+    const char *filePath = tinyfd_openFileDialog( "Load State", filepath.c_str(), 1, filters, "NES state files", 0 );
+
+    if ( !filePath )
+      return false;
+
+    // verify rom signature is from the same game
+    if ( !bus.IsRomSignatureValid( filePath ) ) {
+      fmt::print( "Invalid state rom signature. Save state is likely from a different game." );
+      return false;
+    }
+
+    bus.LoadState( filePath );
+
+    recentStatefileDir = filePath;
+    SaveRecentStatefileDir( recentStatefileDir );
+
+    NotifyStart( "State load success." );
+    return true;
+  }
+
+  static std::deque<std::string> LoadRecentROMs()
+  {
+    namespace fs = std::filesystem;
+    std::deque<std::string> list;
+    fs::path                recentPath = fs::path( paths::user() ) / "recent";
+
+    std::ifstream in( recentPath );
+    if ( !in.is_open() )
+      return list; // Nothing, return empty list
+
+    std::string line;
+    while ( std::getline( in, line ) ) {
+      if ( line.empty() )
+        continue;
+      // Make sure ROM still exists
+      if ( fs::exists( line ) ) {
+        list.push_back( line );
+      }
+    }
+
+    return list;
+  }
+
+  static std::string LoadRecentRomDir()
+  {
+    namespace fs = std::filesystem;
+    fs::path      romDir = fs::path( paths::user() ) / "roms_dir";
+    std::ifstream in( romDir );
+    if ( !in.is_open() )
+      paths::roms();
+
+    std::string dir;
+    std::getline( in, dir );
+    return dir.empty() ? paths::roms() : dir;
+  }
+
+  std::string LoadRecentStatefileDir() const
+  {
+    namespace fs = std::filesystem;
+    fs::path      statesDir = fs::path( paths::user() ) / "states_dir";
+    std::ifstream in( statesDir );
+    if ( in.is_open() )
+      return statesDir.string();
+
+    // default path
+    fs::path path = fs::path( paths::states() ) / bus.cartridge.GetRomHash();
+    if ( !fs::exists( path ) || !fs::is_directory( path ) )
+      fs::create_directories( path );
+
+    return path.string();
+  }
+
+  static void SaveRecentRomDir( const std::string &dir )
+  {
+    namespace fs = std::filesystem;
+    fs::path      romDir = fs::path( paths::user() ) / "roms_dir";
+    std::ofstream out( romDir );
+    if ( !out.is_open() ) {
+      std::cerr << "Failed to open recent ROMs directory file for writing.\n";
+      return;
+    }
+    out << dir;
+  }
+
+  static void SaveRecentStatefileDir( const std::string &dir )
+  {
+    namespace fs = std::filesystem;
+    fs::path      statesDir = fs::path( paths::user() ) / "states_dir";
+    std::ofstream out( statesDir );
+    if ( !out.is_open() ) {
+      std::cerr << "Failed to open recent statefile directory file for writing.\n";
+      return;
+    }
+    out << dir;
+  }
+
+  static void SaveRecentROMs( const std::deque<std::string> &list )
+  {
+    namespace fs = std::filesystem;
+    fs::path      recentPath = fs::path( paths::user() ) / "recent";
+    std::ofstream out( recentPath );
+    if ( !out.is_open() ) {
+      std::cerr << "Failed to open recent ROMs file for writing.\n";
+      return;
+    }
+    for ( const auto &line : list ) {
+      out << line << '\n';
+    }
+  }
+
+  void AddToRecentROMs( const std::string &filePath )
+  {
+    if ( !bus.cartridge.IsRomValid( filePath ) ) {
+      return;
+    }
+
+    auto recent = LoadRecentROMs();
+
+    // Push the rom path to the front
+    recent.erase( std::ranges::remove( recent, filePath ).begin(), recent.end() );
+    recent.push_front( filePath );
+
+    // Keep no more than 10 entries
+    if ( recent.size() > 10 )
+      recent.resize( 10 );
+
+    // Save back to file
+    SaveRecentROMs( recent );
+    recentRoms = recent;
+  }
+
+  void ClearRecentROMs()
+  {
+    recentRoms.clear();
+    SaveRecentROMs( recentRoms );
+    NotifyStart( "Cleared recent ROMs." );
   }
 
   bool Setup()
@@ -375,7 +584,8 @@ public:
     (void) io;
     io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-    io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport / Platform Windows
+    io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport / Platform
+                                                           // Windows
 
     // Font setup
     ImFontConfig fontConfig;
@@ -392,10 +602,10 @@ public:
     // Override specified settings, defined in theme.h
     CustomTheme::Style();
 
-    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical
-    // to regular ones.
-    // ImGuiStyle &style = ImGui::GetStyle();
-    // if ( io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable ) {
+    // When viewports are enabled we tweak WindowRounding/WindowBg so platform
+    // windows can look identical to regular ones. ImGuiStyle &style =
+    // ImGui::GetStyle(); if ( io->ConfigFlags &
+    // ImGuiConfigFlags_ViewportsEnable ) {
     //     // style.WindowRounding = 0.0F;
     //     style.Colors[ImGuiCol_WindowBg].w = 1.0F;
     // }
@@ -452,6 +662,8 @@ public:
       if ( now - lastFrameTime > std::chrono::seconds( 1 ) ) {
         lastFrameTime = now;
       }
+
+      NotifyStop();
     }
   }
 
@@ -588,25 +800,64 @@ public:
                   event.window.windowID == SDL_GetWindowID( window ) ) {
         ui.willRender = false;
         running = false;
-      } else if ( event.type == SDL_KEYDOWN ) {
-        if ( event.key.repeat == 0 ) {
-          // Esc to pause and unpause (for debugging)
-          if ( event.key.keysym.scancode == SDL_SCANCODE_ESCAPE ) {
-            paused = !paused;
-            if ( paused ) {
-              fmt::print( "Paused\n" );
-            } else {
-              fmt::print( "Unpaused\n" );
-            }
-          }
+      } else if ( event.type == SDL_KEYDOWN && event.key.repeat == 0 ) {
+        const auto sc = event.key.keysym.scancode;
+        const auto mods = SDL_GetModState();
 
-          // Cmd + R to reset
-          if ( event.key.keysym.scancode == SDL_SCANCODE_R && ( SDL_GetModState() & KMOD_GUI ) ) {
-            fmt::print( "Reset\n" );
-            paused = false;
-            bus.DebugReset();
+        // GUI + shift
+        if ( ( mods & KMOD_GUI ) && ( mods & KMOD_SHIFT ) ) {
+          switch ( sc ) {
+            case SDL_SCANCODE_S:
+              fmt::print( "Save state to file\n" );
+              SaveCurrentStateFileDialog();
+              break;
+            case SDL_SCANCODE_L:
+              fmt::print( "Load state from file\n" );
+              if ( LoadStateFileDialog() )
+                fmt::print( "Loaded state\n" );
+              else
+                fmt::print( "Failed to load state\n" );
+              break;
+            default: break;
           }
         }
+        // GUI-only shortcuts
+        else if ( mods & KMOD_GUI ) {
+          switch ( sc ) {
+            case SDL_SCANCODE_R:
+              fmt::print( "Reset\n" );
+              paused = false;
+              bus.DebugReset();
+              NotifyStart( "Reset" );
+              break;
+            case SDL_SCANCODE_S:
+              fmt::print( "Save state\n" );
+              bus.QuickSaveState();
+              NotifyStart( "State saved to slot 0." );
+              break;
+            case SDL_SCANCODE_L:
+              fmt::print( "Load state\n" );
+              bus.QuickLoadState();
+              NotifyStart( "State loaded from slot 0." );
+              break;
+            case SDL_SCANCODE_O:
+              fmt::print( "Open ROM\n" );
+              OpenRomFileDialog();
+              break;
+            case SDL_SCANCODE_ESCAPE:
+              paused = !paused;
+              paused ? fmt::print( "Paused\n" ) : fmt::print( "Unpaused\n" );
+              NotifyStart( paused ? "Paused" : "Unpaused" );
+              break;
+            default: break;
+          }
+        }
+      } else if ( event.type == SDL_DROPFILE ) {
+        char *droppedFile = event.drop.file;
+        // load & track the dropped ROM:
+        LoadNewCartridge( droppedFile );
+        AddToRecentROMs( droppedFile );
+        SDL_free( droppedFile );
       }
       const Uint8 *keystate = SDL_GetKeyboardState( nullptr );
 
@@ -654,7 +905,6 @@ public:
 
   void RenderFrame()
   {
-
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
@@ -729,6 +979,23 @@ public:
   #                              #
   ################################
   */
+
+  void NotifyStart( const std::string &msg, int duration = 2 )
+  {
+    message = msg;
+    messageDuration = duration;
+    messageStart = Clock::now();
+    messageShow = true;
+  }
+
+  void NotifyStop()
+  {
+    auto now = Clock::now();
+    if ( now - messageStart > std::chrono::seconds( messageDuration ) ) {
+      messageShow = false;
+    }
+  }
+
   void ExecuteFrame()
   {
     while ( currentFrame == ppu.frame ) {
@@ -776,8 +1043,8 @@ public:
   GLuint GrabPatternTableTextureHandle( int tableIdx )
   {
     /*
-       @brief: Updates pattern table textures, read by the cartridge from the PPU. Used by pattern table
-       debug window.
+       @brief: Updates pattern table textures, read by the cartridge from the
+       PPU. Used by pattern table debug window.
     */
 
     GLuint const            texture = tableIdx == 0 ? patternTable0Texture : patternTable1Texture;
@@ -794,7 +1061,8 @@ public:
   GLuint GrabOamTextureHandle()
   {
     /*
-       @brief: Updates OAM texture, read by the cartridge from the PPU. Used by sprite debug window.
+       @brief: Updates OAM texture, read by the cartridge from the PPU. Used by
+       sprite debug window.
     */
     glBindTexture( GL_TEXTURE_2D, oamTexture );
     glPixelStorei( GL_UNPACK_ALIGNMENT, 4 );
@@ -806,8 +1074,8 @@ public:
   GLuint GrabNametableTextureHandle( int tableIdx )
   {
     /*
-       @brief: Updates nametable textures, read by the cartridge from the PPU. Used by nametable debug
-       window.
+       @brief: Updates nametable textures, read by the cartridge from the PPU.
+       Used by nametable debug window.
     */
     GLuint const texture = tableIdx == 0   ? nametable0Texture
                            : tableIdx == 1 ? nametable1Texture
@@ -970,7 +1238,6 @@ public:
 
   static void CheckShaderCompileError( GLuint shader )
   {
-
     GLint success = 0;
     glGetShaderiv( shader, GL_COMPILE_STATUS, &success );
     if ( !success ) {

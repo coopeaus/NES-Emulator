@@ -9,6 +9,7 @@
 
 #include <array>
 #include <cstdint>
+#include <string>
 
 class Cartridge;
 class CPU;
@@ -21,6 +22,12 @@ class Bus
 public:
   // Initialized with flat memory disabled by default. Enabled in json tests only
   Bus();
+
+  template <class Archive> void serialize( Archive &ar ) // NOLINT
+  {
+    ar( cpu, ppu, apu, cartridge, dmaInProgress, dmaAddr, dmaOffset, controllerState, controller, _ram, _useFlatMemory,
+        _flatMemory );
+  }
 
   /*
   ################################
@@ -44,14 +51,27 @@ public:
 
   /*
   ################################
+  ||    State Serialization     ||
+  ################################
+  */
+  void QuickLoadState( u8 idx = 0 );
+  void QuickSaveState( u8 idx = 0 );
+  void SaveState( const std::string &filename );
+  void LoadState( const std::string &filename );
+  bool DoesSaveSlotExist( int idx = 0 ) const;
+  bool IsRomSignatureValid( const std::string &stateFile );
+
+  /*
+  ################################
   ||      Global Variables      ||
   ################################
   */
-  bool dmaInProgress = false;
-  u16  dmaAddr = 0x00;
-  u16  dmaOffset = 0x00;
-  u8   controllerState[2]{};
-  u8   controller[2]{};
+  bool        dmaInProgress = false;
+  u16         dmaAddr = 0x00;
+  u16         dmaOffset = 0x00;
+  u8          controllerState[2]{};
+  u8          controller[2]{};
+  std::string statefileExt = ".nesstate";
 
   /*
   ################################

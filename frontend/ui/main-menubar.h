@@ -31,6 +31,28 @@ public:
   {
     if ( ImGui::BeginMainMenuBar() ) {
       if ( ImGui::BeginMenu( "File" ) ) {
+        if ( ImGui::MenuItem( "Open" ) ) {
+          renderer->OpenRomFileDialog();
+        }
+
+        auto &recentRoms = renderer->recentRoms;
+        bool  recentRomsEmpty = recentRoms.empty();
+        if ( recentRomsEmpty ) {
+          ImGui::TextDisabled( "Recent Files" );
+        } else if ( ImGui::BeginMenu( "Recent Files" ) ) {
+          for ( auto &romPath : recentRoms ) {
+            if ( ImGui::MenuItem( romPath.c_str() ) ) {
+              renderer->LoadNewCartridge( romPath );
+              renderer->AddToRecentROMs( romPath );
+            }
+          }
+          ImGui::Separator();
+          // button to clear recent roms
+          if ( ImGui::MenuItem( "Clear" ) ) {
+            renderer->ClearRecentROMs();
+          }
+          ImGui::EndMenu();
+        }
 
         if ( ImGui::BeginMenu( "Test Roms" ) ) {
           auto testRoms = renderer->testRoms;
@@ -92,21 +114,81 @@ public:
 
         ImGui::EndMenu();
       }
-    }
-    if ( ImGui::BeginMenu( "Overlay" ) ) {
+      if ( ImGui::BeginMenu( "Overlay" ) ) {
 
-      if ( auto *overlayWindow = ui->GetComponent<OverlayWindow>() ) {
-        ImGui::MenuItem( "Enabled", nullptr, &overlayWindow->visible );
+        if ( auto *overlayWindow = ui->GetComponent<OverlayWindow>() ) {
+          ImGui::MenuItem( "Enabled", nullptr, &overlayWindow->visible );
+        }
+        ImGui::EndMenu();
       }
-      ImGui::EndMenu();
-    }
-    if ( ImGui::BeginMenu( "ImGui Demo" ) ) {
+      if ( ImGui::BeginMenu( "ImGui Demo" ) ) {
 
-      if ( auto *demoWindow = ui->GetComponent<DemoWindow>() ) {
-        ImGui::MenuItem( "Show", nullptr, &demoWindow->visible );
+        if ( auto *demoWindow = ui->GetComponent<DemoWindow>() ) {
+          ImGui::MenuItem( "Show", nullptr, &demoWindow->visible );
+        }
+        ImGui::EndMenu();
       }
-      ImGui::EndMenu();
-    }
-    ImGui::EndMainMenuBar();
+
+      // save State Button
+      if ( ImGui::BeginMenu( "States" ) ) {
+        if ( ImGui::MenuItem( "Save Slot 0" ) ) {
+          renderer->bus.QuickSaveState( 0 );
+          renderer->NotifyStart( "Saved to slot 0." );
+        }
+        if ( ImGui::MenuItem( "Save Slot 1" ) ) {
+          renderer->bus.QuickSaveState( 1 );
+          renderer->NotifyStart( "Saved to slot 1." );
+        }
+        if ( ImGui::MenuItem( "Save Slot 2" ) ) {
+          renderer->bus.QuickSaveState( 2 );
+          renderer->NotifyStart( "Saved to slot 2." );
+        }
+        if ( ImGui::MenuItem( "Save Slot 3" ) ) {
+          renderer->bus.QuickSaveState( 2 );
+          renderer->NotifyStart( "Saved to slot 3." );
+        }
+
+        auto exists = [&]( int idx ) { return renderer->bus.DoesSaveSlotExist( idx ); };
+        ImGui::BeginDisabled( !exists( 0 ) );
+        if ( ImGui::MenuItem( "Load Slot 0" ) ) {
+          renderer->bus.QuickLoadState( 0 );
+          renderer->NotifyStart( "Loaded from slot 0." );
+        }
+        ImGui::EndDisabled();
+
+        ImGui::BeginDisabled( !exists( 1 ) );
+        if ( ImGui::MenuItem( "Load Slot 1" ) ) {
+          renderer->bus.QuickLoadState( 1 );
+          renderer->NotifyStart( "Loaded from slot 1." );
+        }
+        ImGui::EndDisabled();
+
+        ImGui::BeginDisabled( !exists( 2 ) );
+        if ( ImGui::MenuItem( "Load Slot 2" ) ) {
+          renderer->bus.QuickLoadState( 2 );
+          renderer->NotifyStart( "Loaded from slot 2." );
+        }
+        ImGui::EndDisabled();
+
+        ImGui::BeginDisabled( !exists( 3 ) );
+        if ( ImGui::MenuItem( "Load Slot 3" ) ) {
+          renderer->bus.QuickLoadState( 3 );
+          renderer->NotifyStart( "Loaded from slot 3." );
+        }
+        ImGui::EndDisabled();
+
+        ImGui::Separator();
+        if ( ImGui::MenuItem( "Save as" ) ) {
+          renderer->SaveCurrentStateFileDialog();
+        }
+        if ( ImGui::MenuItem( "Load from file" ) ) {
+          if ( !renderer->LoadStateFileDialog() ) {
+            fmt::print( "Failed to load state\n" );
+          }
+        }
+        ImGui::EndMenu();
+      }
+      ImGui::EndMainMenuBar();
+    };
   }
 };

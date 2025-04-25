@@ -60,4 +60,17 @@ inline std::string tests()
   auto path = root() / "tests";
   return path.string();
 }
+
+inline std::string user()
+{
+  auto path = root() / "user";
+  return path.string();
+}
+
+inline std::string states()
+{
+  auto path = root() / user() / "states";
+  return path.string();
+}
+
 } // namespace paths

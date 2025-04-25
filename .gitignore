@@ -1,6 +1,9 @@
 # Name of my executable
 emu
 
+# User supplied ROMs
+roms/user/*.nes
+
 # Env files
 .env
 

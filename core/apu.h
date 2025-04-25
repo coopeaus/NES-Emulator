@@ -9,6 +9,8 @@ public:
   APU( Bus *bus );
   Bus *bus;
 
+  template <class Archive> void serialize( Archive & /*ar*/ ) {} // NOLINT
+
   /*
   ################################
   ||        APU Variables       ||

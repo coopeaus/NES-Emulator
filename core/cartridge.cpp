@@ -9,15 +9,32 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <filesystem>
 
 // Mappers
 #include "global-types.h"
 #include "mappers/mapper-base.h"
 #include "mappers/mapper0.h"
 #include "mappers/mapper1.h"
+#include "mappers/mapper3.h"
+#include "utils.h"
 
 Cartridge::Cartridge( Bus *bus ) : bus( bus )
 {
+}
+
+bool Cartridge::IsRomValid( const std::string &filePath )
+{
+  std::ifstream romFile( filePath, std::ios::binary );
+  if ( !romFile.is_open() ) {
+    return false;
+  }
+  std::array<char, 16> header{};
+  if ( !romFile.read( header.data(), header.size() ) ) {
+    return false;
+  }
+  memcpy( iNes.header.value, header.data(), header.size() );
+  return iNes.GetIdentification() == "NES\x1A";
 }
 
 void Cartridge::LoadRom( const std::string &filePath )
@@ -25,20 +42,11 @@ void Cartridge::LoadRom( const std::string &filePath )
   /** @brief Initiates a cartridge and loads a ROM from file
    */
   didMapperLoad = false;
-
+  _romPath = filePath;
   std::ifstream romFile( filePath, std::ios::binary );
   if ( !romFile.is_open() ) {
     throw std::runtime_error( "Failed to open ROM file: " + filePath );
   }
-
-  // Bail if the ROM is larger than 5 MiB
-  constexpr size_t maxRomSize = static_cast<const size_t>( 5 * 1024 * 1024 );
-  romFile.seekg( 0, std::ios::end );
-  size_t const fileSize = static_cast<size_t>( romFile.tellg() );
-  if ( fileSize > maxRomSize ) {
-    throw std::runtime_error( "ROM file too large" );
-  }
-  romFile.seekg( 0, std::ios::beg );
 
   // Read in the iNES header
   std::array<char, 16> header{};
@@ -53,6 +61,9 @@ void Cartridge::LoadRom( const std::string &filePath )
       throw std::runtime_error( "Failed to read ROM header: Fatal I/O error." );
     }
   }
+
+  // Load in a unique rom hash
+  romHash = utils::GetRomHash( filePath );
 
   memcpy( iNes.header.value, header.data(), header.size() );
 
@@ -378,6 +389,14 @@ void Cartridge::WriteExpansionRAM( u16 address, u8 data )
 ||                            ||
 ################################
 */
+std::string Cartridge::GetRomName() const
+{
+  return std::filesystem::path( _romPath ).filename().string();
+}
+size_t Cartridge::GetPrgRamSize() const
+{
+  return _prgRam.size();
+}
 
 MirrorMode Cartridge::GetMirrorMode()
 {
