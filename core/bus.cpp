@@ -104,7 +104,7 @@ void Bus::Write( const u16 address, const u8 data )
   }
 
   // Controller input
-  if ( address >= 0x4016 ) {
+  if ( address >= 0x4016 && address <= 0x4017 ) { // FIX: 0x4017 for controllers or APU?
     controllerState[address & 0x0001] = controller[address & 0x0001];
     return;
   }
