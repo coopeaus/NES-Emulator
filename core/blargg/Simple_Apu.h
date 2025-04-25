@@ -16,6 +16,8 @@ public:
   Simple_Apu();
   ~Simple_Apu();
 
+  template <class Archive> void serialize( Archive & /*ar*/ ) {} // NOLINT
+
   // This simpler interface works well for most games. Some benefit from
   // the higher precision of the full Nes_Apu interface, which provides
   // clock-cycle accurate register read/write and IRQ timing functions.
