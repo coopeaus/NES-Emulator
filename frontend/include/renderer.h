@@ -98,6 +98,13 @@ public:
   #       global variables       #
   ################################
   */
+
+  // notification message
+  bool              messageShow = false;
+  std::string       message;
+  int               messageDuration = 3;
+  Clock::time_point messageStart;
+
   bool running = true;
   bool paused = false;
 
@@ -163,6 +170,9 @@ public:
     recentRoms = LoadRecentROMs();
     recentRomDir = LoadRecentRomDir();
     recentStatefileDir = LoadRecentStatefileDir();
+
+    std::string msg = "Loaded ROM: " + std::string( romFile );
+    NotifyStart( msg );
   }
 
   void LoadNewCartridge( const std::string &newRomFile )
@@ -174,6 +184,9 @@ public:
     bus.cartridge.LoadRom( newRomFile );
     bus.DebugReset();
     currentFrame = ppu.frame;
+
+    std::string msg = "Loaded ROM: " + std::string( newRomFile );
+    NotifyStart( msg );
   }
 
   void OpenRomFileDialog()
@@ -216,6 +229,8 @@ public:
       // remember the filestate directory
       recentStatefileDir = filePath;
       SaveRecentStatefileDir( recentStatefileDir );
+
+      NotifyStart( "State save success." );
     }
   }
 
@@ -245,6 +260,7 @@ public:
     recentStatefileDir = filePath;
     SaveRecentStatefileDir( recentStatefileDir );
 
+    NotifyStart( "State load success." );
     return true;
   }
 
@@ -363,6 +379,7 @@ public:
   {
     recentRoms.clear();
     SaveRecentROMs( recentRoms );
+    NotifyStart( "Cleared recent ROMs." );
   }
 
   bool Setup()
@@ -614,6 +631,8 @@ public:
       if ( now - lastFrameTime > std::chrono::seconds( 1 ) ) {
         lastFrameTime = now;
       }
+
+      NotifyStop();
     }
   }
 
@@ -779,14 +798,17 @@ public:
               fmt::print( "Reset\n" );
               paused = false;
               bus.DebugReset();
+              NotifyStart( "Reset" );
               break;
             case SDL_SCANCODE_S:
               fmt::print( "Save state\n" );
               bus.QuickSaveState();
+              NotifyStart( "State saved to slot 0." );
               break;
             case SDL_SCANCODE_L:
               fmt::print( "Load state\n" );
               bus.QuickLoadState();
+              NotifyStart( "State loaded from slot 0." );
               break;
             case SDL_SCANCODE_O:
               fmt::print( "Open ROM\n" );
@@ -795,6 +817,7 @@ public:
             case SDL_SCANCODE_ESCAPE:
               paused = !paused;
               paused ? fmt::print( "Paused\n" ) : fmt::print( "Unpaused\n" );
+              NotifyStart( paused ? "Paused" : "Unpaused" );
               break;
             default:
               break;
@@ -927,6 +950,23 @@ public:
   #                              #
   ################################
   */
+
+  void NotifyStart( const std::string &msg, int duration = 2 )
+  {
+    message = msg;
+    messageDuration = duration;
+    messageStart = Clock::now();
+    messageShow = true;
+  }
+
+  void NotifyStop()
+  {
+    auto now = Clock::now();
+    if ( now - messageStart > std::chrono::seconds( messageDuration ) ) {
+      messageShow = false;
+    }
+  }
+
   void ExecuteFrame()
   {
     while ( currentFrame == ppu.frame ) {
