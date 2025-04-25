@@ -178,7 +178,7 @@ void Bus::QuickSaveState( u8 idx )
     fs::create_directories( path );
 
   // filename format: save_slot0
-  std::string stateFilename = "save_slot" + std::to_string( idx );
+  std::string stateFilename = "save_slot" + std::to_string( idx ) + statefileExt;
   fs::path    stateFilepath = path / stateFilename;
   SaveState( stateFilepath.string() );
 }
@@ -191,7 +191,7 @@ void Bus::QuickLoadState( u8 idx )
   if ( !fs::exists( path ) || !fs::is_directory( path ) )
     fs::create_directories( path );
 
-  std::string stateFilename = "save_slot" + std::to_string( idx );
+  std::string stateFilename = "save_slot" + std::to_string( idx ) + statefileExt;
   fs::path    stateFilepath = path / stateFilename;
   LoadState( stateFilepath.string() );
 }
@@ -226,9 +226,39 @@ void Bus::LoadState( const std::string &filename )
   }
 }
 
-bool Bus::DoesSaveStateExist() const
+bool Bus::DoesSaveSlotExist( int idx ) const
 {
   namespace fs = std::filesystem;
-  fs::path path = fs::path( paths::states() ) / cartridge.GetRomHash();
-  return fs::exists( path ) && fs::is_directory( path );
+  fs::path hashDir = fs::path( paths::states() ) / cartridge.GetRomHash();
+  if ( !( fs::exists( hashDir ) && fs::is_directory( hashDir ) ) ) {
+    return false;
+  }
+
+  std::string stateFilename = "save_slot" + std::to_string( idx ) + statefileExt;
+  fs::path    stateFilepath = hashDir / stateFilename;
+
+  return fs::exists( stateFilepath ) && fs::is_regular_file( stateFilepath );
+}
+
+bool Bus::IsRomSignatureValid( const std::string &stateFile )
+{
+  namespace fs = std::filesystem;
+
+  // Save current running state into a temp file
+  fs::path tmp = fs::temp_directory_path() / ( "bus_check_" + std::to_string( std::hash<std::string>{}( stateFile ) ) );
+  SaveState( tmp.string() );
+
+  // Check hashes for current and statefile
+  const auto oldHash = cartridge.romHash;
+  LoadState( stateFile );
+  const auto newHash = cartridge.romHash;
+
+  // Restore the original state
+  LoadState( tmp.string() );
+
+  // Clean up
+  std::error_code ec;
+  fs::remove( tmp, ec );
+
+  return oldHash == newHash;
 }

@@ -129,6 +129,7 @@ public:
   };
   std::deque<std::string> recentRoms;
   std::string             recentRomDir;
+  std::string             recentStatefileDir;
   enum RomSelected : u8 { CUSTOM, COLOR_TEST, NESTEST, PALETTE, SCANLINE, V5 };
   u8 romSelected = RomSelected::CUSTOM;
 
@@ -161,6 +162,7 @@ public:
     currentFrame = ppu.frame;
     recentRoms = LoadRecentROMs();
     recentRomDir = LoadRecentRomDir();
+    recentStatefileDir = LoadRecentStatefileDir();
   }
 
   void LoadNewCartridge( const std::string &newRomFile )
@@ -193,6 +195,57 @@ public:
       // Add to recently used roms
       AddToRecentROMs( filePath );
     }
+  }
+
+  void SaveCurrentStateFileDialog()
+  {
+    namespace fs = std::filesystem;
+
+    std::string filename = "my_save" + bus.statefileExt;
+    fs::path    dir = fs::path( recentStatefileDir );
+    fs::path    filepath = dir / filename;
+
+    std::string filterPattern = "*" + bus.statefileExt;
+    const char *filters[] = { filterPattern.c_str() };
+    const char *filePath = tinyfd_saveFileDialog( "Save State As", filepath.c_str(), 1, filters, "NES state files" );
+
+    if ( filePath ) {
+      fmt::print( "Saving state to: {}\n", filePath );
+      bus.SaveState( filePath );
+
+      // remember the filestate directory
+      recentStatefileDir = filePath;
+      SaveRecentStatefileDir( recentStatefileDir );
+    }
+  }
+
+  bool LoadStateFileDialog()
+  {
+    namespace fs = std::filesystem;
+
+    std::string filename = "my_save" + bus.statefileExt;
+    fs::path    dir = fs::path( recentStatefileDir );
+    fs::path    filepath = dir / filename;
+
+    std::string filterPattern = "*" + bus.statefileExt;
+    const char *filters[] = { filterPattern.c_str() };
+    const char *filePath = tinyfd_openFileDialog( "Load State", filepath.c_str(), 1, filters, "NES state files", 0 );
+
+    if ( !filePath )
+      return false;
+
+    // verify rom signature is from the same game
+    if ( !bus.IsRomSignatureValid( filePath ) ) {
+      fmt::print( "Invalid state rom signature. Save state is likely from a different game." );
+      return false;
+    }
+
+    bus.LoadState( filePath );
+
+    recentStatefileDir = filePath;
+    SaveRecentStatefileDir( recentStatefileDir );
+
+    return true;
   }
 
   static std::deque<std::string> LoadRecentROMs()
@@ -231,6 +284,22 @@ public:
     return dir.empty() ? paths::roms() : dir;
   }
 
+  std::string LoadRecentStatefileDir() const
+  {
+    namespace fs = std::filesystem;
+    fs::path      statesDir = fs::path( paths::user() ) / "states_dir";
+    std::ifstream in( statesDir );
+    if ( in.is_open() )
+      return statesDir.string();
+
+    // default path
+    fs::path path = fs::path( paths::states() ) / bus.cartridge.GetRomHash();
+    if ( !fs::exists( path ) || !fs::is_directory( path ) )
+      fs::create_directories( path );
+
+    return path.string();
+  }
+
   static void SaveRecentRomDir( const std::string &dir )
   {
     namespace fs = std::filesystem;
@@ -238,6 +307,18 @@ public:
     std::ofstream out( romDir );
     if ( !out.is_open() ) {
       std::cerr << "Failed to open recent ROMs directory file for writing.\n";
+      return;
+    }
+    out << dir;
+  }
+
+  static void SaveRecentStatefileDir( const std::string &dir )
+  {
+    namespace fs = std::filesystem;
+    fs::path      statesDir = fs::path( paths::user() ) / "states_dir";
+    std::ofstream out( statesDir );
+    if ( !out.is_open() ) {
+      std::cerr << "Failed to open recent statefile directory file for writing.\n";
       return;
     }
     out << dir;
@@ -669,41 +750,54 @@ public:
                   event.window.windowID == SDL_GetWindowID( window ) ) {
         ui.willRender = false;
         running = false;
-      } else if ( event.type == SDL_KEYDOWN ) {
-        if ( event.key.repeat == 0 ) {
-          // Esc to pause and unpause (for debugging)
-          if ( event.key.keysym.scancode == SDL_SCANCODE_ESCAPE ) {
-            paused = !paused;
-            if ( paused ) {
-              fmt::print( "Paused\n" );
-            } else {
-              fmt::print( "Unpaused\n" );
-            }
-          }
+      } else if ( event.type == SDL_KEYDOWN && event.key.repeat == 0 ) {
+        const auto sc = event.key.keysym.scancode;
+        const auto mods = SDL_GetModState();
 
-          // Cmd + R to reset
-          if ( event.key.keysym.scancode == SDL_SCANCODE_R && ( SDL_GetModState() & KMOD_GUI ) ) {
-            fmt::print( "Reset\n" );
-            paused = false;
-            bus.DebugReset();
+        // GUI + shift
+        if ( ( mods & KMOD_GUI ) && ( mods & KMOD_SHIFT ) ) {
+          switch ( sc ) {
+            case SDL_SCANCODE_S:
+              fmt::print( "Save state to file\n" );
+              SaveCurrentStateFileDialog();
+              break;
+            case SDL_SCANCODE_L:
+              fmt::print( "Load state from file\n" );
+              if ( LoadStateFileDialog() )
+                fmt::print( "Loaded state\n" );
+              else
+                fmt::print( "Failed to load state\n" );
+              break;
+            default:
+              break;
           }
-
-          // Cmd + S to save state to default slot (0)
-          if ( event.key.keysym.scancode == SDL_SCANCODE_S && ( SDL_GetModState() & KMOD_GUI ) ) {
-            fmt::print( "Save state\n" );
-            bus.QuickSaveState();
-          }
-
-          // Cmd + L to load state from default slot (0)
-          if ( event.key.keysym.scancode == SDL_SCANCODE_L && ( SDL_GetModState() & KMOD_GUI ) ) {
-            fmt::print( "Load state\n" );
-            bus.QuickLoadState();
-          }
-
-          // Cmd + O to open a ROM
-          if ( event.key.keysym.scancode == SDL_SCANCODE_O && ( SDL_GetModState() & KMOD_GUI ) ) {
-            fmt::print( "Open ROM\n" );
-            OpenRomFileDialog();
+        }
+        // GUI-only shortcuts
+        else if ( mods & KMOD_GUI ) {
+          switch ( sc ) {
+            case SDL_SCANCODE_R:
+              fmt::print( "Reset\n" );
+              paused = false;
+              bus.DebugReset();
+              break;
+            case SDL_SCANCODE_S:
+              fmt::print( "Save state\n" );
+              bus.QuickSaveState();
+              break;
+            case SDL_SCANCODE_L:
+              fmt::print( "Load state\n" );
+              bus.QuickLoadState();
+              break;
+            case SDL_SCANCODE_O:
+              fmt::print( "Open ROM\n" );
+              OpenRomFileDialog();
+              break;
+            case SDL_SCANCODE_ESCAPE:
+              paused = !paused;
+              paused ? fmt::print( "Paused\n" ) : fmt::print( "Unpaused\n" );
+              break;
+            default:
+              break;
           }
         }
       } else if ( event.type == SDL_DROPFILE ) {

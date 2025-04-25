@@ -53,18 +53,20 @@ public:
   void QuickSaveState( u8 idx = 0 );
   void SaveState( const std::string &filename );
   void LoadState( const std::string &filename );
-  bool DoesSaveStateExist() const;
+  bool DoesSaveSlotExist( int idx = 0 ) const;
+  bool IsRomSignatureValid( const std::string &stateFile );
 
   /*
   ################################
   ||      Global Variables      ||
   ################################
   */
-  bool dmaInProgress = false;
-  u16  dmaAddr = 0x00;
-  u16  dmaOffset = 0x00;
-  u8   controllerState[2]{};
-  u8   controller[2]{};
+  bool        dmaInProgress = false;
+  u16         dmaAddr = 0x00;
+  u16         dmaOffset = 0x00;
+  u8          controllerState[2]{};
+  u8          controller[2]{};
+  std::string statefileExt = ".nesstate";
 
   /*
   ################################

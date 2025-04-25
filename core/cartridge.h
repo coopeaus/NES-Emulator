@@ -20,7 +20,7 @@ public:
 
   template <class Archive> void serialize( Archive &ar ) // NOLINT
   {
-    ar( _chrRam, _prgRam, _expansionMemory );
+    ar( _chrRam, _prgRam, _expansionMemory, romHash );
   }
 
   /*
@@ -28,11 +28,11 @@ public:
   ||          Operators         ||
   ################################
   */
-  Cartridge( const Cartridge & )            = delete;
+  Cartridge( const Cartridge & ) = delete;
   Cartridge &operator=( const Cartridge & ) = delete;
-  Cartridge( Cartridge && )                 = delete;
-  Cartridge &operator=( Cartridge && )      = delete;
-  ~Cartridge()                              = default;
+  Cartridge( Cartridge && ) = delete;
+  Cartridge &operator=( Cartridge && ) = delete;
+  ~Cartridge() = default;
 
   /*
   ################################
@@ -68,8 +68,6 @@ public:
   std::string GetRomName() const;
   size_t      GetPrgRamSize() const;
 
-  std::string GetRomHash() const { return _romHash; }
-
   /*
   ################################
   ||        Debug Methods       ||
@@ -85,6 +83,15 @@ public:
   ################################
   */
   bool didMapperLoad = false;
+
+  /*
+  ################################
+  ||      Public Variables      ||
+  ################################
+  */
+
+  std::string romHash;
+  std::string GetRomHash() const { return romHash; }
 
 private:
   /*
@@ -141,16 +148,14 @@ private:
 
   /*
   ################################
-  ||      Global Variables      ||
+  ||      Private Variables     ||
   ################################
   */
   std::shared_ptr<Mapper> _mapper;
   std::string             _romPath;
-  u8                      _mapperNumber   = 0;
-  u8                      _hasBattery     = 0;
+  u8                      _mapperNumber = 0;
+  u8                      _hasBattery = 0;
   bool                    _fourScreenMode = false;
-  MirrorMode              _mirrorMode     = MirrorMode::Vertical;
-  bool                    _usesChrRam     = false;
-
-  std::string _romHash;
+  MirrorMode              _mirrorMode = MirrorMode::Vertical;
+  bool                    _usesChrRam = false;
 };

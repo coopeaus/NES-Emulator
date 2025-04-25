@@ -144,21 +144,40 @@ public:
           renderer->bus.QuickSaveState( 2 );
         }
 
-        bool doesSaveStateExist = renderer->bus.DoesSaveStateExist();
-        ImGui::BeginDisabled( !doesSaveStateExist );
+        auto exists = [&]( int idx ) { return renderer->bus.DoesSaveSlotExist( idx ); };
+        ImGui::BeginDisabled( !exists( 0 ) );
         if ( ImGui::MenuItem( "Load Slot 0" ) ) {
           renderer->bus.QuickLoadState( 0 );
         }
+        ImGui::EndDisabled();
+
+        ImGui::BeginDisabled( !exists( 1 ) );
         if ( ImGui::MenuItem( "Load Slot 1" ) ) {
           renderer->bus.QuickLoadState( 1 );
         }
+        ImGui::EndDisabled();
+
+        ImGui::BeginDisabled( !exists( 2 ) );
         if ( ImGui::MenuItem( "Load Slot 2" ) ) {
           renderer->bus.QuickLoadState( 2 );
         }
+        ImGui::EndDisabled();
+
+        ImGui::BeginDisabled( !exists( 3 ) );
         if ( ImGui::MenuItem( "Load Slot 3" ) ) {
           renderer->bus.QuickLoadState( 3 );
         }
         ImGui::EndDisabled();
+
+        ImGui::Separator();
+        if ( ImGui::MenuItem( "Save as" ) ) {
+          renderer->SaveCurrentStateFileDialog();
+        }
+        if ( ImGui::MenuItem( "Load from file" ) ) {
+          if ( !renderer->LoadStateFileDialog() ) {
+            fmt::print( "Failed to load state\n" );
+          }
+        }
         ImGui::EndMenu();
       }
       ImGui::EndMainMenuBar();
