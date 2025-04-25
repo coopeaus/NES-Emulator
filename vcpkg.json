@@ -3,16 +3,13 @@
   "version": "0.0.1",
   "builtin-baseline": "d5ec528843d29e3a52d745a64b469f810b2cedbf",
   "dependencies": [
+    "cereal",
     "fmt",
     "glad",
     "gtest",
     {
       "name": "imgui",
-      "features": [
-        "docking-experimental",
-        "opengl3-binding",
-        "sdl2-binding"
-      ]
+      "features": ["docking-experimental", "opengl3-binding", "sdl2-binding"]
     },
     {
       "name": "opengl",

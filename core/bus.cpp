@@ -1,9 +1,23 @@
 #include "bus.h"
 #include "cartridge.h"
-#include "global-types.h"
-#include <iostream>
-
+#include "paths.h"
 #include "utils.h"
+#include "global-types.h"
+
+#include <filesystem>
+#include <fstream>
+#include <exception>
+#include <functional>
+#include <iostream>
+// NOLINTBEGIN
+#include <cereal/archives/binary.hpp>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/array.hpp>
+#include <cereal/types/memory.hpp>
+// NOLINTEND
+#include <string>
+#include <stdexcept>
+#include <system_error>
 
 // Constructor to initialize the bus with a flat memory model
 Bus::Bus() : cpu( this ), ppu( this ), cartridge( this ), apu( this )
@@ -157,9 +171,105 @@ void Bus::Clock()
 {
   return _useFlatMemory;
 }
+
 void Bus::DebugReset()
 {
   cpu.SetCycles( 0 );
   cpu.Reset();
   ppu.Reset();
+}
+
+void Bus::QuickSaveState( u8 idx )
+{
+  namespace fs = std::filesystem;
+  fs::path const path = fs::path( paths::states() ) / cartridge.GetRomHash();
+
+  if ( !fs::exists( path ) || !fs::is_directory( path ) )
+    fs::create_directories( path );
+
+  // filename format: save_slot0
+  std::string const stateFilename = "save_slot" + std::to_string( idx ) + statefileExt;
+  fs::path const    stateFilepath = path / stateFilename;
+  SaveState( stateFilepath.string() );
+}
+
+void Bus::QuickLoadState( u8 idx )
+{
+  namespace fs = std::filesystem;
+  fs::path const path = fs::path( paths::states() ) / cartridge.GetRomHash();
+
+  if ( !fs::exists( path ) || !fs::is_directory( path ) )
+    fs::create_directories( path );
+
+  std::string const stateFilename = "save_slot" + std::to_string( idx ) + statefileExt;
+  fs::path const    stateFilepath = path / stateFilename;
+  LoadState( stateFilepath.string() );
+}
+
+void Bus::SaveState( const std::string &filename )
+{
+  try {
+    std::ofstream outStream( filename, std::ios::out | std::ios::binary | std::ios::trunc );
+    if ( !outStream ) {
+      throw std::runtime_error( "Could not open '" + filename + "' for writing" );
+    }
+
+    cereal::BinaryOutputArchive archive( outStream );
+    archive( *this );
+  } catch ( const std::exception &e ) {
+    std::cerr << "Error saving state: " << e.what() << "\n";
+  }
+}
+
+void Bus::LoadState( const std::string &filename )
+{
+  try {
+    std::ifstream inStream( filename, std::ios::in | std::ios::binary );
+    if ( !inStream ) {
+      throw std::runtime_error( "Could not open '" + filename + "' for reading" );
+    }
+
+    cereal::BinaryInputArchive archive( inStream );
+    archive( *this );
+  } catch ( const std::exception &e ) {
+    std::cerr << "Error loading state: " << e.what() << "\n";
+  }
+}
+
+bool Bus::DoesSaveSlotExist( int idx ) const
+{
+  namespace fs = std::filesystem;
+  fs::path const hashDir = fs::path( paths::states() ) / cartridge.GetRomHash();
+  if ( !( fs::exists( hashDir ) && fs::is_directory( hashDir ) ) ) {
+    return false;
+  }
+
+  std::string const stateFilename = "save_slot" + std::to_string( idx ) + statefileExt;
+  fs::path const    stateFilepath = hashDir / stateFilename;
+
+  return fs::exists( stateFilepath ) && fs::is_regular_file( stateFilepath );
+}
+
+bool Bus::IsRomSignatureValid( const std::string &stateFile )
+{
+  namespace fs = std::filesystem;
+
+  // Save current running state into a temp file
+  fs::path const tmp =
+      fs::temp_directory_path() / ( "bus_check_" + std::to_string( std::hash<std::string>{}( stateFile ) ) );
+  SaveState( tmp.string() );
+
+  // Check hashes for current and statefile
+  const auto oldHash = cartridge.romHash;
+  LoadState( stateFile );
+  const auto newHash = cartridge.romHash;
+
+  // Restore the original state
+  LoadState( tmp.string() );
+
+  // Clean up
+  std::error_code ec;
+  fs::remove( tmp, ec );
+
+  return oldHash == newHash;
 }

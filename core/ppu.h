@@ -20,6 +20,15 @@ public:
   PPU( Bus *bus );
   Bus *bus;
 
+  template <class Archive> void serialize( Archive &ar ) // NOLINT
+  {
+    ar( preventVBlank, nmiReady, systemPaletteIdx, scanline, cycle, frame, oamAddr, oamData, ppuScroll, ppuAddr,
+        ppuData, vramAddr, tempAddr, fineX, addrLatch, vramBuffer, nameTables, paletteMemory, oam, secondaryOam,
+        bgPatternShiftLow, bgPatternShiftHigh, bgAttributeShiftLow, bgAttributeShiftHigh, spriteShiftLow,
+        spriteShiftHigh, spritePattern0Byte, spritePattern1Byte, bSpriteZeroHitPossible, bSprite0Appeared, spriteCount,
+        nOamEntry, isDisabled );
+  }
+
   /*
   ################################
   ||      Helper Variables      ||
