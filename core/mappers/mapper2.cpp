@@ -24,9 +24,7 @@ MirrorMode Mapper2::GetMirrorMode()
    * - select lower 16 KiB bank with _prg_bank_16_lo
    */
 
-  // More specific implementation details are available in the mapper1.cpp file
   if ( address >= 0x8000 && address <= 0xBFFF ) {
-    // Translate address for swappable lower 16KiB bank (0x8000-0xBFFF)
     u32 const bankOffset = _prgBank16Lo * 0x4000;
     return bankOffset + ( address & 0x3FFF );
   }

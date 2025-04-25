@@ -9,15 +9,16 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <filesystem>
+
+#include "global-types.h"
+#include "utils.h"
 
 // Mappers
-#include "global-types.h"
 #include "mappers/mapper-base.h"
 #include "mappers/mapper0.h"
 #include "mappers/mapper1.h"
+#include "mappers/mapper2.h"
 #include "mappers/mapper3.h"
-#include "utils.h"
 
 Cartridge::Cartridge( Bus *bus ) : bus( bus )
 {
@@ -70,28 +71,6 @@ void Cartridge::LoadRom( const std::string &filePath )
   if ( iNes.GetIdentification() != "NES\x1A" ) {
     throw std::runtime_error( "Invalid ROM file" );
   }
-
-  /*
-  ################################
-  ||                            ||
-  ||         Header Info        ||
-  ||                            ||
-  ################################
-  */
-
-  // Mirror mode
-  // Provided by the 0th bit of byte 6.
-  // u8 const mirrorMode = header[6] & 0b00000001;
-  u8 const mirrorMode = iNes.GetMirroring();
-  ( mirrorMode == 0 ) ? _mirrorMode = MirrorMode::Horizontal : _mirrorMode = MirrorMode::Vertical;
-
-  // Four screen mode
-  _fourScreenMode = iNes.GetFourScreenMode();
-  if ( _fourScreenMode ) {
-    _mirrorMode = MirrorMode::FourScreen;
-  }
-
-  _hasBattery = iNes.GetBatteryMode();
 
   /*
   ################################
@@ -152,6 +131,8 @@ void Cartridge::LoadRom( const std::string &filePath )
   switch ( mapperNumber ) {
     case 0 : _mapper = std::make_shared<Mapper0>( iNes ); break;
     case 1 : _mapper = std::make_shared<Mapper1>( iNes ); break;
+    case 2 : _mapper = std::make_shared<Mapper2>( iNes ); break;
+    case 3 : _mapper = std::make_shared<Mapper3>( iNes ); break;
     default: throw std::runtime_error( "Unsupported mapper: " + std::to_string( mapperNumber ) );
   };
 
@@ -389,39 +370,15 @@ void Cartridge::WriteExpansionRAM( u16 address, u8 data )
 ||                            ||
 ################################
 */
-std::string Cartridge::GetRomName() const
-{
-  return std::filesystem::path( _romPath ).filename().string();
-}
-size_t Cartridge::GetPrgRamSize() const
-{
-  return _prgRam.size();
-}
 
 MirrorMode Cartridge::GetMirrorMode()
 {
   /** @brief Returns the mirror mode of the cartridge
    * The mirror mode determines how the PPU should handle nametable mirroring.
-   *
-   * Mapper 0:
-   *   - Mirroring mode is statically defined in the iNES header (bit 0 of byte 6).
-   *   - It cannot change dynamically and is "soldered" for each specific game.
-   *
-   * Four-Screen Mode:
-   *   - Indicated by bit 3 of byte 6 in the iNES header.
-   *   - Overrides any mirroring mode (horizontal or vertical) defined in bit 0.
-   *   - This mode provides unique nametables for all four screens using extra cartridge VRAM.
-   *
-   * Other mappers:
-   *   - Mirroring mode is controlled dynamically via mapper logic.
-   *   - The specific mirroring configuration depends on the mapper implementation.
    */
-
-  // Mapper 0 or Four-Screen Mode: Static mirroring, determined by iNES header
-  if ( _mapperNumber == 0 || _fourScreenMode ) {
-    return _mirrorMode;
+  if ( _mapper == nullptr ) {
+    return MirrorMode::Vertical;
   }
 
-  // Other mappers: Dynamic mirroring, determined by mapper logic
   return _mapper->GetMirrorMode();
 }

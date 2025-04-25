@@ -16,26 +16,25 @@ public:
   // is fine. It also allows the debug window to modify the header in the cartridge header, just to see what
   // each bit does, without affecting emulation.
   iNes2Instance iNes;
-  Mapper( iNes2Instance iNesHeader ) : iNes( iNesHeader ) {}
+  MirrorMode    mirroring;
 
-  // Delete the copy constructor
-  // Prevents creating a new Mapper by copying an existing one
+  Mapper( iNes2Instance iNesHeader ) : iNes( iNesHeader )
+  {
+    // Get initial mirroring mode from header
+    u8 const mirrorMode = iNes.GetMirroring();
+    ( mirrorMode == 0 ) ? mirroring = MirrorMode::Horizontal : mirroring = MirrorMode::Vertical;
+
+    auto fourScreen = iNes.GetFourScreenMode();
+    if ( fourScreen ) {
+      mirroring = MirrorMode::FourScreen;
+    }
+  }
+
   Mapper( const Mapper & ) = delete;
-
-  // Delete the copy assignment operator
-  // Prevents assigning one Mapper to another by copy
   Mapper &operator=( const Mapper & ) = delete;
-
-  // Delete the move constructor
-  // Prevents creating a new Mapper by moving an existing one (std::move)
   Mapper( Mapper && ) = delete;
-
-  // Delete the move assignment operator
-  // Prevents assigning one Mapper to another by moving (std::move)
   Mapper &operator=( Mapper && ) = default;
 
-  // Virtual destructor and polymorphic cleanup
-  // Calls the derived class destructor when deleting a Mapper pointer
   virtual ~Mapper() = default;
 
   // Getters

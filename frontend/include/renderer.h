@@ -804,7 +804,7 @@ public:
         const auto sc = event.key.keysym.scancode;
         const auto mods = SDL_GetModState();
 
-        // GUI + shift
+        // cmd + shift + key
         if ( ( mods & KMOD_GUI ) && ( mods & KMOD_SHIFT ) ) {
           switch ( sc ) {
             case SDL_SCANCODE_S:
@@ -821,7 +821,7 @@ public:
             default: break;
           }
         }
-        // GUI-only shortcuts
+        // cmd + key
         else if ( mods & KMOD_GUI ) {
           switch ( sc ) {
             case SDL_SCANCODE_R:
@@ -844,6 +844,12 @@ public:
               fmt::print( "Open ROM\n" );
               OpenRomFileDialog();
               break;
+            default: break;
+          }
+        }
+        // just key
+        else {
+          switch ( sc ) {
             case SDL_SCANCODE_ESCAPE:
               paused = !paused;
               paused ? fmt::print( "Paused\n" ) : fmt::print( "Unpaused\n" );

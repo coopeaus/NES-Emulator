@@ -66,9 +66,6 @@ public:
   void       LoadRom( const std::string &filePath );
   bool       IsRomValid( const std::string &filePath );
 
-  std::string GetRomName() const;
-  size_t      GetPrgRamSize() const;
-
   /*
   ################################
   ||        Debug Methods       ||
@@ -77,7 +74,6 @@ public:
   bool DidMapperLoad() const { return didMapperLoad; }
   bool DoesMapperExist() const { return _mapper != nullptr; }
   void SetChrROM( u16 address, u8 data ) { _chrRom.at( address ) = data; }
-  void SetMirrorMode( MirrorMode mode ) { _mirrorMode = mode; }
   /*
   ################################
   ||       Debug Variables      ||
@@ -155,8 +151,5 @@ private:
   std::shared_ptr<Mapper> _mapper;
   std::string             _romPath;
   u8                      _mapperNumber = 0;
-  u8                      _hasBattery = 0;
-  bool                    _fourScreenMode = false;
-  MirrorMode              _mirrorMode = MirrorMode::Vertical;
   bool                    _usesChrRam = false;
 };

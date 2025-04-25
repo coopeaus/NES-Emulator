@@ -47,6 +47,5 @@ void Mapper3::HandleCPUWrite( u16 address, u8 data )
 
 MirrorMode Mapper3::GetMirrorMode()
 {
-  // Use mirroring from header
-  return static_cast<MirrorMode>( iNes.GetMirroring() );
+  return mirroring;
 }

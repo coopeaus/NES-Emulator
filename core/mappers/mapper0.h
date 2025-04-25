@@ -15,5 +15,5 @@ public:
   [[nodiscard]] bool HasExpansionRom() override { return false; }
   [[nodiscard]] bool HasExpansionRam() override { return false; }
 
-  [[nodiscard]] MirrorMode GetMirrorMode() override { return MirrorMode::Vertical; }
+  [[nodiscard]] MirrorMode GetMirrorMode() override { return mirroring; }
 };
