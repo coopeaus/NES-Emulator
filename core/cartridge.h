@@ -3,6 +3,7 @@
 #include "global-types.h"
 #include "mappers/mapper-base.h"
 #include <array>
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <memory>

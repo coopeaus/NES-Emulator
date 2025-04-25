@@ -1,13 +1,23 @@
 #include "bus.h"
 #include "cartridge.h"
+#include "paths.h"
 #include "utils.h"
 #include "global-types.h"
 
+#include <filesystem>
+#include <fstream>
+#include <exception>
+#include <functional>
 #include <iostream>
+// NOLINTBEGIN
 #include <cereal/archives/binary.hpp>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/array.hpp>
 #include <cereal/types/memory.hpp>
+// NOLINTEND
+#include <string>
+#include <stdexcept>
+#include <system_error>
 
 // Constructor to initialize the bus with a flat memory model
 Bus::Bus() : cpu( this ), ppu( this ), cartridge( this ), apu( this )
@@ -172,27 +182,27 @@ void Bus::DebugReset()
 void Bus::QuickSaveState( u8 idx )
 {
   namespace fs = std::filesystem;
-  fs::path path = fs::path( paths::states() ) / cartridge.GetRomHash();
+  fs::path const path = fs::path( paths::states() ) / cartridge.GetRomHash();
 
   if ( !fs::exists( path ) || !fs::is_directory( path ) )
     fs::create_directories( path );
 
   // filename format: save_slot0
-  std::string stateFilename = "save_slot" + std::to_string( idx ) + statefileExt;
-  fs::path    stateFilepath = path / stateFilename;
+  std::string const stateFilename = "save_slot" + std::to_string( idx ) + statefileExt;
+  fs::path const    stateFilepath = path / stateFilename;
   SaveState( stateFilepath.string() );
 }
 
 void Bus::QuickLoadState( u8 idx )
 {
   namespace fs = std::filesystem;
-  fs::path path = fs::path( paths::states() ) / cartridge.GetRomHash();
+  fs::path const path = fs::path( paths::states() ) / cartridge.GetRomHash();
 
   if ( !fs::exists( path ) || !fs::is_directory( path ) )
     fs::create_directories( path );
 
-  std::string stateFilename = "save_slot" + std::to_string( idx ) + statefileExt;
-  fs::path    stateFilepath = path / stateFilename;
+  std::string const stateFilename = "save_slot" + std::to_string( idx ) + statefileExt;
+  fs::path const    stateFilepath = path / stateFilename;
   LoadState( stateFilepath.string() );
 }
 
@@ -229,13 +239,13 @@ void Bus::LoadState( const std::string &filename )
 bool Bus::DoesSaveSlotExist( int idx ) const
 {
   namespace fs = std::filesystem;
-  fs::path hashDir = fs::path( paths::states() ) / cartridge.GetRomHash();
+  fs::path const hashDir = fs::path( paths::states() ) / cartridge.GetRomHash();
   if ( !( fs::exists( hashDir ) && fs::is_directory( hashDir ) ) ) {
     return false;
   }
 
-  std::string stateFilename = "save_slot" + std::to_string( idx ) + statefileExt;
-  fs::path    stateFilepath = hashDir / stateFilename;
+  std::string const stateFilename = "save_slot" + std::to_string( idx ) + statefileExt;
+  fs::path const    stateFilepath = hashDir / stateFilename;
 
   return fs::exists( stateFilepath ) && fs::is_regular_file( stateFilepath );
 }
@@ -245,7 +255,8 @@ bool Bus::IsRomSignatureValid( const std::string &stateFile )
   namespace fs = std::filesystem;
 
   // Save current running state into a temp file
-  fs::path tmp = fs::temp_directory_path() / ( "bus_check_" + std::to_string( std::hash<std::string>{}( stateFile ) ) );
+  fs::path const tmp =
+      fs::temp_directory_path() / ( "bus_check_" + std::to_string( std::hash<std::string>{}( stateFile ) ) );
   SaveState( tmp.string() );
 
   // Check hashes for current and statefile

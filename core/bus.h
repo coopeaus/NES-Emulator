@@ -6,6 +6,7 @@
 #include "apu.h"
 #include <array>
 #include <cstdint>
+#include <string>
 
 class Cartridge;
 class CPU;

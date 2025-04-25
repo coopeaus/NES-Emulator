@@ -42,7 +42,7 @@ void Cartridge::LoadRom( const std::string &filePath )
   /** @brief Initiates a cartridge and loads a ROM from file
    */
   didMapperLoad = false;
-  _romPath      = filePath;
+  _romPath = filePath;
   std::ifstream romFile( filePath, std::ios::binary );
   if ( !romFile.is_open() ) {
     throw std::runtime_error( "Failed to open ROM file: " + filePath );
@@ -351,7 +351,7 @@ void Cartridge::WriteChrRAM( u16 address, u8 data )
       fmt::print( "Cartridge:WriteChrRAM:Mapper is null. Rom file was likely not loaded.\n" );
       return;
     }
-    u16 const translatedAddress              = _mapper->TranslatePPUAddress( address );
+    u16 const translatedAddress = _mapper->TranslatePPUAddress( address );
     _chrRam.at( translatedAddress & 0x1FFF ) = data;
   }
 }

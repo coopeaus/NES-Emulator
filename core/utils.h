@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <ios>
 #include <string>
 #include <regex>
 #include <vector>
@@ -57,7 +58,7 @@ inline std::string GetRomHash( const std::string &path ) // NOLINT
   uint64_t hash = fnvOffsetBasis;
   char     buf[4096];
   while ( in.read( buf, sizeof( buf ) ) || in.gcount() ) {
-    std::streamsize n = in.gcount();
+    std::streamsize const n = in.gcount();
     for ( std::streamsize i = 0; i < n; ++i ) {
       hash ^= static_cast<u8>( buf[i] );
       hash *= fnvPrime;
