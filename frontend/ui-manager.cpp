@@ -17,6 +17,7 @@
 #include "sprites.h"
 #include "nametable.h"
 #include "cartridge-info.h"
+#include "notification.h"
 
 UIManager::UIManager( Renderer *renderer )
 {
@@ -33,6 +34,7 @@ UIManager::UIManager( Renderer *renderer )
   AddComponent<PpuViewerWindow>( renderer );
   AddComponent<NametableWindow>( renderer );
   AddComponent<CartridgeInfoWindow>( renderer );
+  AddComponent<Notification>( renderer );
 }
 
 void UIManager::Render()

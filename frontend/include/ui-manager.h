@@ -9,6 +9,7 @@ class OverlayWindow;
 class DemoWindow;
 class DebuggerWindow;
 class Renderer;
+class Notification;
 
 class UIManager
 {
