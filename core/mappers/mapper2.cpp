@@ -62,8 +62,7 @@ void Mapper2::HandleCPUWrite( u16 address, u8 data )
   if ( address >= 0x8000 && address <= 0xFFFF ) {
     // Set the lower 16 KiB bank
 
-    // UNROM only for now..
-    _prgBank16Lo = data & 0b00000111;
+    _prgBank16Lo = data % GetPrgBankCount();
   }
 }
 
