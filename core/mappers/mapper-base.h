@@ -42,8 +42,8 @@ public:
   int GetChrBankCount() const { return iNes.GetChrRomBanks(); }
 
   // Base methods
-  virtual u32  TranslateCPUAddress( u16 address ) = 0;
-  virtual u32  TranslatePPUAddress( u16 address ) = 0;
+  virtual u32  MapPrgOffset( u16 address ) = 0;
+  virtual u32  MapChrOffset( u16 address ) = 0;
   virtual void HandleCPUWrite( u16 address, u8 data ) = 0;
 
   [[nodiscard]] virtual bool SupportsPrgRam() = 0;

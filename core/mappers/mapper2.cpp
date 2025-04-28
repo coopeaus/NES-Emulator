@@ -15,7 +15,7 @@ MirrorMode Mapper2::GetMirrorMode()
 ||                            ||
 ################################
 */
-[[nodiscard]] u32 Mapper2::TranslateCPUAddress( u16 address )
+[[nodiscard]] u32 Mapper2::MapPrgOffset( u16 address )
 {
   /**
    * @details
@@ -36,7 +36,7 @@ MirrorMode Mapper2::GetMirrorMode()
   }
 
   // If out of PRG range
-  throw std::runtime_error( "Address out of range in TranslateCPUAddress" );
+  throw std::runtime_error( "Address out of range in MapPrgOffset" );
 }
 
 /*
@@ -61,7 +61,9 @@ void Mapper2::HandleCPUWrite( u16 address, u8 data )
 
   if ( address >= 0x8000 && address <= 0xFFFF ) {
     // Set the lower 16 KiB bank
-    _prgBank16Lo = data & 0b00001111;
+
+    // UNROM only for now..
+    _prgBank16Lo = data & 0b00000111;
   }
 }
 
@@ -72,7 +74,7 @@ void Mapper2::HandleCPUWrite( u16 address, u8 data )
 ||                            ||
 ################################
 */
-[[nodiscard]] u32 Mapper2::TranslatePPUAddress( u16 address )
+[[nodiscard]] u32 Mapper2::MapChrOffset( u16 address )
 {
   /**
    * @brief Translate PPU address. Mapper 2 only supports direct mapping

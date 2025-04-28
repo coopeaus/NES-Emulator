@@ -8,8 +8,8 @@ class Mapper1 : public Mapper
 
 public:
   Mapper1( iNes2Instance iNesHeader ) : Mapper( iNesHeader ), _prgBank16Hi( GetPrgBankCount() - 1 ) {}
-  auto TranslateCPUAddress( u16 address ) -> u32 override;
-  auto TranslatePPUAddress( u16 address ) -> u32 override;
+  auto MapPrgOffset( u16 address ) -> u32 override;
+  auto MapChrOffset( u16 address ) -> u32 override;
   void HandleCPUWrite( u16 address, u8 data ) override;
 
   [[nodiscard]] bool SupportsPrgRam() override { return true; }

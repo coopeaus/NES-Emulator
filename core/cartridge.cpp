@@ -90,16 +90,16 @@ void Cartridge::LoadRom( const std::string &filePath )
   int const chrRomSize = iNes.GetChrRomSizeBytes();
 
   // Set the PRG and CHR vector sizes
-  _usesChrRam = chrRomSize == 0;
   if ( prgRomSize > 0 ) {
     _prgRom.resize( prgRomSize );
   }
 
   // Sometimes, chr rom isn't provided. Some games use chr ram instead.
-  if ( !_usesChrRam ) {
-    if ( chrRomSize > 0 ) {
-      _chrRom.resize( chrRomSize );
-    }
+  _usesChrRam = chrRomSize == 0;
+  if ( _usesChrRam ) {
+    // _chrRam is already an 8 KiB array, so do nothing
+  } else {
+    _chrRom.resize( chrRomSize );
   }
 
   // Read data into the PRG and CHR ROM vectors
@@ -218,8 +218,8 @@ void Cartridge::Write( u16 address, u8 data )
       fmt::print( "Cartridge:ReadPrgROM:Mapper is null. Rom file was likely not loaded.\n" );
       return _prgRom.at( address & 0x3FFF );
     }
-    u32 const translatedAddress = _mapper->TranslateCPUAddress( address );
-    return _prgRom.at( translatedAddress );
+    u32 const prgOffset = _mapper->MapPrgOffset( address );
+    return _prgRom.at( prgOffset );
   }
   return 0xFF;
 }
@@ -229,15 +229,19 @@ void Cartridge::Write( u16 address, u8 data )
   /** @brief Reads from the CHR ROM, ranges from 0x0000 to 0x1FFF
    * CHR ROM is the character ROM, which contains the graphics data for the PPU
    */
-  if ( address >= 0x0000 && address <= 0x1FFF ) {
-    if ( _mapper == nullptr ) {
-      fmt::print( "Cartridge:ReadChrROM:Mapper is null. Rom file was likely not loaded.\n" );
-      return _chrRom.at( address & 0x1FFF );
-    }
-    u32 const translatedAddress = _mapper->TranslatePPUAddress( address );
-    return _chrRom.at( translatedAddress );
+  if ( address > 0x1FFF )
+    return 0xFF;
+
+  if ( _mapper == nullptr ) {
+    fmt::print( "Cartridge:ReadChrROM:Mapper is null. Rom file was likely not loaded.\n" );
+    return _chrRom.at( address & 0x1FFF );
   }
-  return 0xFF;
+
+  u32 const chrOffset = _mapper->MapChrOffset( address );
+  if ( _usesChrRam ) {
+    return _chrRam.at( chrOffset );
+  }
+  return _chrRom.at( chrOffset );
 }
 
 [[nodiscard]] u8 Cartridge::ReadPrgRAM( u16 address )
@@ -324,7 +328,7 @@ void Cartridge::WriteChrRAM( u16 address, u8 data )
       fmt::print( "Cartridge:WriteChrRAM:Mapper is null. Rom file was likely not loaded.\n" );
       return;
     }
-    u16 const translatedAddress = _mapper->TranslatePPUAddress( address );
+    u16 const translatedAddress = _mapper->MapChrOffset( address );
     _chrRam.at( translatedAddress & 0x1FFF ) = data;
   }
 }

@@ -15,7 +15,7 @@ MirrorMode Mapper1::GetMirrorMode()
 ||                            ||
 ################################
 */
-[[nodiscard]] u32 Mapper1::TranslateCPUAddress( u16 address )
+[[nodiscard]] u32 Mapper1::MapPrgOffset( u16 address )
 {
   /**
    * @details
@@ -219,7 +219,7 @@ void Mapper1::HandleCPUWrite( u16 address, u8 data )
 ||                            ||
 ################################
 */
-[[nodiscard]] u32 Mapper1::TranslatePPUAddress( u16 address )
+[[nodiscard]] u32 Mapper1::MapChrOffset( u16 address )
 {
   // If no chr rom banks, the address is directly mapped
   if ( GetChrBankCount() == 0 ) {

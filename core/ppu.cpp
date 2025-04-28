@@ -349,7 +349,6 @@ void PPU::WriteVram( u16 address, u8 data )
   /*@brief: Internal PPU reads to the cartridge
    */
 
-  (void) data;
   address &= 0x3FFF;
 
   if ( address >= 0x0000 && address <= 0x1FFF ) {

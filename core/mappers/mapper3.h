@@ -11,8 +11,8 @@ class Mapper3 : public Mapper
 {
 public:
   Mapper3( iNes2Instance iNesHeader );
-  u32  TranslateCPUAddress( u16 address ) override;
-  u32  TranslatePPUAddress( u16 address ) override;
+  u32  MapPrgOffset( u16 address ) override;
+  u32  MapChrOffset( u16 address ) override;
   void HandleCPUWrite( u16 address, u8 data ) override;
 
   [[nodiscard]] bool       SupportsPrgRam() override { return false; }

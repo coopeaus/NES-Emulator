@@ -7,8 +7,8 @@ class Mapper0 : public Mapper
 {
 public:
   Mapper0( iNes2Instance iNesHeader ) : Mapper( iNesHeader ) {}
-  auto TranslateCPUAddress( u16 address ) -> u32 override;
-  auto TranslatePPUAddress( u16 address ) -> u32 override;
+  auto MapPrgOffset( u16 address ) -> u32 override;
+  auto MapChrOffset( u16 address ) -> u32 override;
   void HandleCPUWrite( u16 address, u8 data ) override;
 
   [[nodiscard]] bool SupportsPrgRam() override { return false; }
