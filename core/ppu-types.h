@@ -14,6 +14,8 @@ union PPUCTRL {
     u8 nmiEnable : 1;
   } bit;
   u8 value = 0x00;
+
+  template <class Archive> void serialize( Archive &ar ) { ar( value ); } // NOLINT
 };
 union PPUMASK {
   struct {
@@ -27,6 +29,8 @@ union PPUMASK {
     u8 enhanceBlue : 1;
   } bit;
   u8 value = 0x00;
+
+  template <class Archive> void serialize( Archive &ar ) { ar( value ); } // NOLINT
 };
 union PPUSTATUS {
   struct {
@@ -36,6 +40,8 @@ union PPUSTATUS {
     u8 vBlank : 1;
   } bit;
   u8 value = 0x00;
+
+  template <class Archive> void serialize( Archive &ar ) { ar( value ); } // NOLINT
 };
 
 union LoopyRegister {
@@ -48,6 +54,8 @@ union LoopyRegister {
     u16 unused : 1;
   } bit;
   u16 value = 0x00;
+
+  template <class Archive> void serialize( Archive &ar ) { ar( value ); } // NOLINT
 };
 
 union SpriteAttribute {
@@ -59,6 +67,8 @@ union SpriteAttribute {
     u8 flipV : 1;
   } bit;
   u8 value = 0x00;
+
+  template <class Archive> void serialize( Archive &ar ) { ar( value ); } // NOLINT
 };
 
 struct SpriteEntry {
@@ -66,12 +76,18 @@ struct SpriteEntry {
   u8              tileIndex;
   SpriteAttribute attribute;
   u8              x;
+
+  template <class Archive> void serialize( Archive &ar ) { ar( y, tileIndex, attribute, x ); } // NOLINT
 };
 union OAM {
   std::array<u8, 256>         data{};
   std::array<SpriteEntry, 64> entries;
+
+  template <class Archive> void serialize( Archive &ar ) { ar( data ); } // NOLINT
 };
 union SecondaryOAM {
   std::array<u8, 32>         data{};
   std::array<SpriteEntry, 8> entries;
+
+  template <class Archive> void serialize( Archive &ar ) { ar( data ); } // NOLINT
 };

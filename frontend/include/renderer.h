@@ -98,6 +98,13 @@ public:
   #       global variables       #
   ################################
   */
+
+  // notification message
+  bool              messageShow = false;
+  std::string       message;
+  int               messageDuration = 3;
+  Clock::time_point messageStart;
+
   bool running = true;
   bool paused = false;
 
@@ -129,6 +136,7 @@ public:
   };
   std::deque<std::string> recentRoms;
   std::string             recentRomDir;
+  std::string             recentStatefileDir;
   enum RomSelected : u8 { CUSTOM, COLOR_TEST, NESTEST, PALETTE, SCANLINE, V5 };
   u8 romSelected = RomSelected::CUSTOM;
 
@@ -161,6 +169,10 @@ public:
     currentFrame = ppu.frame;
     recentRoms = LoadRecentROMs();
     recentRomDir = LoadRecentRomDir();
+    recentStatefileDir = LoadRecentStatefileDir();
+
+    std::string msg = "Loaded ROM: " + std::string( romFile );
+    NotifyStart( msg );
   }
 
   void LoadNewCartridge( const std::string &newRomFile )
@@ -172,6 +184,9 @@ public:
     bus.cartridge.LoadRom( newRomFile );
     bus.DebugReset();
     currentFrame = ppu.frame;
+
+    std::string msg = "Loaded ROM: " + std::string( newRomFile );
+    NotifyStart( msg );
   }
 
   void OpenRomFileDialog()
@@ -193,6 +208,67 @@ public:
       // Add to recently used roms
       AddToRecentROMs( filePath );
     }
+  }
+
+  void SaveCurrentStateFileDialog()
+  {
+    namespace fs = std::filesystem;
+
+    std::string filename = "my_save" + bus.statefileExt;
+    fs::path    dir = fs::path( recentStatefileDir );
+    fs::path    filepath = dir / filename;
+
+    std::string filterPattern = "*" + bus.statefileExt;
+    const char *filters[] = { filterPattern.c_str() };
+
+    // Use the string() method to get a narrow string
+    const char *filePath =
+        tinyfd_saveFileDialog( "Save State As", filepath.string().c_str(), 1, filters, "NES state files" );
+
+    if ( filePath ) {
+      fmt::print( "Saving state to: {}\n", filePath );
+      bus.SaveState( filePath );
+
+      // Remember the filestate directory
+      recentStatefileDir = filePath;
+      SaveRecentStatefileDir( recentStatefileDir );
+
+      NotifyStart( "State save success." );
+    }
+  }
+
+  bool LoadStateFileDialog()
+  {
+    namespace fs = std::filesystem;
+
+    std::string filename = "my_save" + bus.statefileExt;
+    fs::path    dir = fs::path( recentStatefileDir );
+    fs::path    filepath = dir / filename;
+
+    std::string filterPattern = "*" + bus.statefileExt;
+    const char *filters[] = { filterPattern.c_str() };
+
+    // Use the string() method to get a narrow string
+    const char *filePath =
+        tinyfd_openFileDialog( "Load State", filepath.string().c_str(), 1, filters, "NES state files", 0 );
+
+    if ( !filePath )
+      return false;
+
+    // Verify ROM signature is from the same game
+    if ( !bus.IsRomSignatureValid( filePath ) ) {
+      fmt::print( "Invalid state ROM signature. Save state is likely from a different game.\n" );
+      return false;
+    }
+
+    bus.LoadState( filePath );
+
+    // Remember the filestate directory
+    recentStatefileDir = filePath;
+    SaveRecentStatefileDir( recentStatefileDir );
+
+    NotifyStart( "State load success." );
+    return true;
   }
 
   static std::deque<std::string> LoadRecentROMs()
@@ -231,6 +307,22 @@ public:
     return dir.empty() ? paths::roms() : dir;
   }
 
+  std::string LoadRecentStatefileDir() const
+  {
+    namespace fs = std::filesystem;
+    fs::path      statesDir = fs::path( paths::user() ) / "states_dir";
+    std::ifstream in( statesDir );
+    if ( in.is_open() )
+      return statesDir.string();
+
+    // default path
+    fs::path path = fs::path( paths::states() ) / bus.cartridge.GetRomHash();
+    if ( !fs::exists( path ) || !fs::is_directory( path ) )
+      fs::create_directories( path );
+
+    return path.string();
+  }
+
   static void SaveRecentRomDir( const std::string &dir )
   {
     namespace fs = std::filesystem;
@@ -238,6 +330,18 @@ public:
     std::ofstream out( romDir );
     if ( !out.is_open() ) {
       std::cerr << "Failed to open recent ROMs directory file for writing.\n";
+      return;
+    }
+    out << dir;
+  }
+
+  static void SaveRecentStatefileDir( const std::string &dir )
+  {
+    namespace fs = std::filesystem;
+    fs::path      statesDir = fs::path( paths::user() ) / "states_dir";
+    std::ofstream out( statesDir );
+    if ( !out.is_open() ) {
+      std::cerr << "Failed to open recent statefile directory file for writing.\n";
       return;
     }
     out << dir;
@@ -282,6 +386,7 @@ public:
   {
     recentRoms.clear();
     SaveRecentROMs( recentRoms );
+    NotifyStart( "Cleared recent ROMs." );
   }
 
   bool Setup()
@@ -533,6 +638,8 @@ public:
       if ( now - lastFrameTime > std::chrono::seconds( 1 ) ) {
         lastFrameTime = now;
       }
+
+      NotifyStop();
     }
   }
 
@@ -669,23 +776,58 @@ public:
                   event.window.windowID == SDL_GetWindowID( window ) ) {
         ui.willRender = false;
         running = false;
-      } else if ( event.type == SDL_KEYDOWN ) {
-        if ( event.key.repeat == 0 ) {
-          // Esc to pause and unpause (for debugging)
-          if ( event.key.keysym.scancode == SDL_SCANCODE_ESCAPE ) {
-            paused = !paused;
-            if ( paused ) {
-              fmt::print( "Paused\n" );
-            } else {
-              fmt::print( "Unpaused\n" );
-            }
-          }
+      } else if ( event.type == SDL_KEYDOWN && event.key.repeat == 0 ) {
+        const auto sc = event.key.keysym.scancode;
+        const auto mods = SDL_GetModState();
 
-          // Cmd + R to reset
-          if ( event.key.keysym.scancode == SDL_SCANCODE_R && ( SDL_GetModState() & KMOD_GUI ) ) {
-            fmt::print( "Reset\n" );
-            paused = false;
-            bus.DebugReset();
+        // GUI + shift
+        if ( ( mods & KMOD_GUI ) && ( mods & KMOD_SHIFT ) ) {
+          switch ( sc ) {
+            case SDL_SCANCODE_S:
+              fmt::print( "Save state to file\n" );
+              SaveCurrentStateFileDialog();
+              break;
+            case SDL_SCANCODE_L:
+              fmt::print( "Load state from file\n" );
+              if ( LoadStateFileDialog() )
+                fmt::print( "Loaded state\n" );
+              else
+                fmt::print( "Failed to load state\n" );
+              break;
+            default:
+              break;
+          }
+        }
+        // GUI-only shortcuts
+        else if ( mods & KMOD_GUI ) {
+          switch ( sc ) {
+            case SDL_SCANCODE_R:
+              fmt::print( "Reset\n" );
+              paused = false;
+              bus.DebugReset();
+              NotifyStart( "Reset" );
+              break;
+            case SDL_SCANCODE_S:
+              fmt::print( "Save state\n" );
+              bus.QuickSaveState();
+              NotifyStart( "State saved to slot 0." );
+              break;
+            case SDL_SCANCODE_L:
+              fmt::print( "Load state\n" );
+              bus.QuickLoadState();
+              NotifyStart( "State loaded from slot 0." );
+              break;
+            case SDL_SCANCODE_O:
+              fmt::print( "Open ROM\n" );
+              OpenRomFileDialog();
+              break;
+            case SDL_SCANCODE_ESCAPE:
+              paused = !paused;
+              paused ? fmt::print( "Paused\n" ) : fmt::print( "Unpaused\n" );
+              NotifyStart( paused ? "Paused" : "Unpaused" );
+              break;
+            default:
+              break;
           }
         }
       } else if ( event.type == SDL_DROPFILE ) {
@@ -815,6 +957,23 @@ public:
   #                              #
   ################################
   */
+
+  void NotifyStart( const std::string &msg, int duration = 2 )
+  {
+    message = msg;
+    messageDuration = duration;
+    messageStart = Clock::now();
+    messageShow = true;
+  }
+
+  void NotifyStop()
+  {
+    auto now = Clock::now();
+    if ( now - messageStart > std::chrono::seconds( messageDuration ) ) {
+      messageShow = false;
+    }
+  }
+
   void ExecuteFrame()
   {
     while ( currentFrame == ppu.frame ) {

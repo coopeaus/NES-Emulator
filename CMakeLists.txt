@@ -49,6 +49,10 @@ target_include_directories(emu_core PUBLIC
 find_package(fmt CONFIG REQUIRED)
 target_link_libraries(emu_core PRIVATE fmt::fmt)
 
+# cereal
+find_package(cereal CONFIG REQUIRED)
+target_link_libraries(emu_core PRIVATE cereal::cereal)
+
 #[[
 ################################################
 ||                                            ||
@@ -94,6 +98,10 @@ add_dependencies(copied_assets emu_core)
 # User directory
 add_custom_target(user_dir ALL
   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/user)
+
+# States directory
+add_custom_target(user_states ALL
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/user/states)
 
 #[[
 ################################################
@@ -200,4 +208,5 @@ if(BUILD_TESTS)
   add_test_executable(ppu_test tests/ppu_test.cpp)
   add_test_executable(apu_test tests/apu_test.cpp)
   add_test_executable(cart_test tests/cart_test.cpp)
+  add_test_executable(state_test tests/state_test.cpp)
 endif()
