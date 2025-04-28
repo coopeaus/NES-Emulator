@@ -19,7 +19,5 @@ public:
   [[nodiscard]] bool       HasExpansionRom() override { return false; }
   [[nodiscard]] bool       HasExpansionRam() override { return false; }
   [[nodiscard]] MirrorMode GetMirrorMode() override;
-
-private:
-  u8 _chrBank = 0;
+  u8                       chrBank = 0;
 };

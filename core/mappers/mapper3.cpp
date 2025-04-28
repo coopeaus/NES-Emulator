@@ -28,7 +28,7 @@ u32 Mapper3::MapChrOffset( u16 address )
   // CNROM: CHR is banked in 8KB units
   if ( address < 0x2000 ) {
     u32 const chrBankCount = GetChrBankCount();
-    u32 const bank = _chrBank % chrBankCount;
+    u32 const bank = chrBank % chrBankCount;
     return ( bank * 0x2000 ) + address;
   }
   // Not CHR address
@@ -41,7 +41,7 @@ void Mapper3::HandleCPUWrite( u16 address, u8 data )
   if ( address >= 0x8000 && address <= 0xFFFF ) {
     // Use a mask based on available CHR banks (support up to 8 banks)
     u8 const mask = ( GetChrBankCount() > 0 ) ? ( GetChrBankCount() - 1 ) : 0x03;
-    _chrBank = data & mask;
+    chrBank = data & mask;
   }
 }
 

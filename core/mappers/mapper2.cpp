@@ -5,7 +5,7 @@
 
 MirrorMode Mapper2::GetMirrorMode()
 {
-  return _mirrorMode;
+  return mirrorMode;
 }
 
 /*
@@ -25,7 +25,7 @@ MirrorMode Mapper2::GetMirrorMode()
    */
 
   if ( address >= 0x8000 && address <= 0xBFFF ) {
-    u32 const bankOffset = _prgBank16Lo * 0x4000;
+    u32 const bankOffset = prgBank16Lo * 0x4000;
     return bankOffset + ( address & 0x3FFF );
   }
 
@@ -62,7 +62,7 @@ void Mapper2::HandleCPUWrite( u16 address, u8 data )
   if ( address >= 0x8000 && address <= 0xFFFF ) {
     // Set the lower 16 KiB bank
 
-    _prgBank16Lo = data % GetPrgBankCount();
+    prgBank16Lo = data % GetPrgBankCount();
   }
 }
 

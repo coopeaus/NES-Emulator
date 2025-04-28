@@ -18,7 +18,6 @@ public:
 
   [[nodiscard]] MirrorMode GetMirrorMode() override;
 
-private:
-  u8         _prgBank16Lo{ 0 };
-  MirrorMode _mirrorMode = MirrorMode::Vertical;
+  u8         prgBank16Lo{ 0 };
+  MirrorMode mirrorMode = MirrorMode::Vertical;
 };
