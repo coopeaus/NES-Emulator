@@ -818,6 +818,17 @@ public:
               else
                 fmt::print( "Failed to load state\n" );
               break;
+            case SDL_SCANCODE_O: {
+              if ( !recentRoms.empty() && bus.cartridge.IsRomValid( recentRoms.front() ) ) {
+                fmt::print( "Opening recent ROM: {}\n", recentRoms.front() );
+                auto recent = recentRoms.front();
+                fmt::print( "Opening recent ROM: {}\n", recent );
+                LoadNewCartridge( recent );
+                NotifyStart( "Opened recent ROM" );
+              } else {
+                NotifyStart( "No recent ROMs available." );
+              }
+            }
             default: break;
           }
         }

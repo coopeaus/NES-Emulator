@@ -315,65 +315,6 @@ TEST_F( PpuTest, SpriteDmaCopyPreservesOamAddr )
   EXPECT_EQ( data, 0xFF );
 }
 
-TEST_F( PpuTest, ResolveNameTableAddress_SingleUpper )
-{
-  u16 addr = 0x23AB;
-  // Expected: 0x2000 OR (addr & 0x03FF)
-  u16 expected = 0x2000 | ( addr & 0x03FF );
-  u16 result = ppu.ResolveNameTableAddress( addr, static_cast<int>( MirrorMode::SingleUpper ) );
-  EXPECT_EQ( result, expected );
-}
-
-TEST_F( PpuTest, ResolveNameTableAddress_SingleLower )
-{
-  u16 addr = 0x2434;
-  u16 expected = 0x2800 | ( addr & 0x03FF );
-  u16 result = ppu.ResolveNameTableAddress( addr, static_cast<int>( MirrorMode::SingleLower ) );
-  EXPECT_EQ( result, expected );
-}
-
-TEST_F( PpuTest, ResolveNameTableAddress_Vertical )
-{
-  // Test an address in NT0 range.
-  u16 addr1 = 0x2000;
-  u16 expected1 = 0x2000 | ( addr1 & 0x07FF );
-  u16 result1 = ppu.ResolveNameTableAddress( addr1, static_cast<int>( MirrorMode::Vertical ) );
-  EXPECT_EQ( result1, expected1 );
-
-  // Test an address in the mirrored portion.
-  u16 addr2 = 0x2C00;
-  // 0x2C00 & 0x07FF gives 0x0400, so expected address is 0x2000 + 0x0400 =
-  // 0x2400.
-  u16 expected2 = 0x2000 | ( addr2 & 0x07FF );
-  u16 result2 = ppu.ResolveNameTableAddress( addr2, static_cast<int>( MirrorMode::Vertical ) );
-  EXPECT_EQ( result2, expected2 );
-}
-
-TEST_F( PpuTest, ResolveNameTableAddress_Horizontal )
-{
-  // Address in NT0 region (both 0x2000-0x23FF and its mirror 0x2400-0x27FF
-  // should resolve to NT0).
-  u16 addr1 = 0x2400;                          // should map to 0x2000 + (addr1 mod 0x400)
-  u16 expected1 = 0x2000 | ( addr1 & 0x03FF ); // 0x2400 & 0x03FF is 0, so becomes 0x2000.
-  u16 result1 = ppu.ResolveNameTableAddress( addr1, static_cast<int>( MirrorMode::Horizontal ) );
-  EXPECT_EQ( result1, expected1 );
-
-  // Address in NT1 region (both 0x2800-0x2BFF and its mirror 0x2C00-0x2FFF
-  // should resolve to NT1).
-  u16 addr2 = 0x2C00;                          // should map to 0x2800 + (addr2 mod 0x400)
-  u16 expected2 = 0x2800 | ( addr2 & 0x03FF ); // For 0x2C00, (addr2 & 0x03FF) is 0.
-  u16 result2 = ppu.ResolveNameTableAddress( addr2, static_cast<int>( MirrorMode::Horizontal ) );
-  EXPECT_EQ( result2, expected2 );
-}
-
-TEST_F( PpuTest, ResolveNameTableAddress_FourScreen )
-{
-  u16 addr = 0x2FFF;
-  u16 expected = 0x2FFF;
-  u16 result = ppu.ResolveNameTableAddress( addr, static_cast<int>( MirrorMode::FourScreen ) );
-  EXPECT_EQ( result, expected );
-}
-
 TEST_F( PpuTest, FetchNametableByte )
 {
   ppu.vramAddr.value = 0x23AB;

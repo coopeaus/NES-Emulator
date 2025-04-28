@@ -7,16 +7,17 @@ class Mapper1 : public Mapper
 {
 
 public:
-  Mapper1( iNes2Instance iNesHeader ) : Mapper( iNesHeader ), _prgBank16Hi( GetPrgBankCount() - 1 ) {}
+  Mapper1( iNes2Instance iNesHeader ) : Mapper( iNesHeader ), _prgBank16Hi( GetPrgBankCount() - 1 ) { Reset(); }
   auto MapPrgOffset( u16 address ) -> u32 override;
   auto MapChrOffset( u16 address ) -> u32 override;
   void HandleCPUWrite( u16 address, u8 data ) override;
 
-  [[nodiscard]] bool SupportsPrgRam() override { return true; }
-  [[nodiscard]] bool HasExpansionRom() override { return false; }
-  [[nodiscard]] bool HasExpansionRam() override { return false; }
-
+  [[nodiscard]] bool       SupportsPrgRam() override { return true; }
+  [[nodiscard]] bool       HasExpansionRom() override { return false; }
+  [[nodiscard]] bool       HasExpansionRam() override { return false; }
   [[nodiscard]] MirrorMode GetMirrorMode() override;
+
+  void Reset();
 
 private:
   u8 _controlRegister{ 0x1C };
@@ -36,5 +37,5 @@ private:
   u8 _writeCount{ 0 };
 
   // Mirroring
-  MirrorMode _mirrorMode{ MirrorMode::Horizontal };
+  MirrorMode _mirrorMode{ MirrorMode::SingleLower };
 };

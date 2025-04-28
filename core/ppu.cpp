@@ -261,143 +261,107 @@ void PPU::CpuWrite( u16 address, u8 data )
 ################################
 */
 
-[[nodiscard]] u8 PPU::ReadVram( u16 address )
+//------------------------------------------------------------------------------
+// In your PPU class you still keep:
+//   std::array<std::array<u8,0x400>,4> nameTables;
+// but we will only ever use [0] and [1] in 2-table modes.
+//------------------------------------------------------------------------------
+
+u8 PPU::ReadVram( u16 address )
 {
-  /*@brief: Internal PPU reads to the cartridge
-   */
+  // Mask to 14-bit range
   address &= 0x3FFF;
 
-  // $0000-$1FFF: Pattern Tables
-  if ( address >= 0x0000 && address <= 0x1FFF ) {
-    /* Pattern table data is read from the cartridge */
+  // Pattern tables
+  if ( address <= 0x1FFF ) {
     return bus->cartridge.Read( address );
   }
 
-  // $2000-$3EFF: Name Tables
-  if ( address >= 0x2000 && address <= 0x3EFF ) {
-    /*
-       Name table data is read from nameTables
-      nameTables is a 2KiB array, with each name table taking up 1KiB
-      Appropriate mirroing logic is handled in ResolveNameTableAddress
+  // Nametables (0x2000–0x2FFF)
+  if ( address >= 0x2000 && address <= 0x2FFF ) {
+    // Mirror down into 0x000–0xFFF
+    u16  v = address & 0x0FFF;
+    u8   table = 0;
+    auto m = GetMirrorMode();
 
-      If the mirroring mode is four screen, that means 4 name tables are
-      used, each 1KiB in size. Since nameTables is only 2KiB, any address
-      above 0x2800 must be directed to the cartridge, which provides the
-      additional name table space. It's not necessary to emulate it this
-      way, but it's a more accurate paradigm because that's how the hardware
-      handles it.
-    */
-    address &= 0x2FFF; // 0x2FFF is the address limit for nametables
-
-    // // nametables 2 ($2800-$2BFF) and 3 ($2C00-$2FFF) are stored in the cartridge
-    // if ( GetMirrorMode() == MirrorMode::FourScreen && address >= 0x2800 ) {
-    //   return bus->cartridge.ReadCartridgeVRAM( address );
-    // }
-    //
-    // // nameTables 0 ($2000-$23FF) and 1 ($2400-$27FF) are stored in ppu memory
-    // u16 const nametableAddr = ResolveNameTableAddress( address );
-    // return nameTables.at( nametableAddr & 0x07FF );
-
-    u16 const nametableAddr = ResolveNameTableAddress( address );
-    u8 const  tableIndex = ( nametableAddr <= 0x23FF )   ? 0
-                           : ( nametableAddr <= 0x27FF ) ? 1
-                           : ( nametableAddr <= 0x2BFF ) ? 2
-                                                         : 3;
-    return nameTables.at( tableIndex ).at( nametableAddr & 0x03FF );
-  }
-
-  // $3F00-$3FFF: Palettes
-  if ( address >= 0x3F00 && address <= 0x3FFF ) {
-    /*
-    Background Palettes
-    Palette 0: $3F00 (bg color), $3F01, $3F02, $3F03.
-    Palette 1: $3F04 (bg color), $3F05, $3F06, $3F07.
-    Palette 2: $3F08 (bg color), $3F09, $3F0A, $3F0B.
-    Palette 3: $3F0C (bg color), $3F0D, $3F0E, $3F0F.
-
-    Sprite Palettes
-    Palette 4: $3F10 (mirrors 3F00), $3F11, $3F12, $3F13.
-    Palette 5: $3F14 (mirrors 3F04), $3F15, $3F16, $3F17.
-    Palette 6: $3F18 (mirrors 3F08), $3F19, $3F1A, $3F1B.
-    Palette 7: $3F1C (mirrors 3F0C), $3F1D, $3F1E, $3F1F.
-
-    The address is masked to 32 bytes.
-    Addresses 3F10, 3F14, 3F18 and 3F1C mirror 3F00, 3F04, 3F08 and 3F0C respectively
-    */
-    address &= 0x1F;
-
-    // Handle mirroring of 3F10, 3F14, 3F18, 3F1C to 3F00, 3F04, 3F08, 3F0C
-    if ( address >= 0x10 && ( address & 0x03 ) == 0 ) {
-      address &= 0x0F;
+    switch ( m ) {
+      case MirrorMode::Vertical:
+        //  0x000–0x3FF → NT0 0x400–0x7FF → NT1
+        //  0x800–0xBFF → NT0 0xC00–0xFFF → NT1
+        table = ( ( v >= 0x0000 && v <= 0x3FF ) || ( v >= 0x800 && v <= 0xBFF ) ) ? 0 : 1;
+        break;
+      case MirrorMode::Horizontal:
+        //  0x000–0x3FF → NT0 0x400–0x7FF → NT0
+        //  0x800–0xBFF → NT1 0xC00–0xFFF → NT1
+        table = ( v < 0x800 ) ? 0 : 1;
+        break;
+      case MirrorMode::SingleLower: table = 0; break;
+      case MirrorMode::SingleUpper: table = 1; break;
+      case MirrorMode::FourScreen:
+        // 0x000–0x3FF → NT0 0x400–0x7FF → NT1
+        // 0x800–0xBFF → NT2 0xC00–0xFFF → NT3
+        table = ( v / 0x400 ) & 0x03;
+        break;
     }
-
-    return paletteMemory.at( address ) & 0x3F;
+    return nameTables.at( table ).at( v & 0x03FF );
   }
 
+  // palettes
+  // clang-format off
+  if (address >= 0x3F00 && address <= 0x3FFF) {
+    u8 idx = address & 0x1F;
+    // Mirror the background palette entries
+    if (idx == 0x10) idx = 0x00;
+    if (idx == 0x14) idx = 0x04;
+    if (idx == 0x18) idx = 0x08;
+    if (idx == 0x1C) idx = 0x0C;
+    return paletteMemory[idx] & 0x3F;
+  }
+  // clang-format on
   return 0xFF;
 }
 
-/*
-################################
-||                            ||
-||          PPU Write         ||
-||                            ||
-################################
-*/
 void PPU::WriteVram( u16 address, u8 data )
 {
-  /*@brief: Internal PPU reads to the cartridge
-   */
-
   address &= 0x3FFF;
 
-  if ( address >= 0x0000 && address <= 0x1FFF ) {
-    /* Pattern table data is written to the cartridge */
+  // Pattern tables
+  if ( address <= 0x1FFF ) {
     bus->cartridge.Write( address, data );
     return;
   }
+
+  // Nametables
   if ( address >= 0x2000 && address <= 0x2FFF ) {
+    u16  v = address & 0x0FFF;
+    u8   table = 0;
+    auto m = GetMirrorMode();
 
-    /*
-       Name table data is written to nameTables
-      nameTables is a 2KiB array, with each name table taking up 1KiB
-      Appropriate mirroing logic is handled in ResolveNameTableAddress
-
-      If the mirroring mode is four screen, that means 4 name tables are
-      used, each 1KiB in size. Since nameTables is only 2KiB, any address
-      above 0x2800 must be directed to the cartridge, which provides the
-      additional name table space.
-    */
-
-    address &= 0x2FFF;
-    u16 const nametableAddr = ResolveNameTableAddress( address );
-    u8 const  tableIndex = ( nametableAddr <= 0x23FF )   ? 0
-                           : ( nametableAddr <= 0x27FF ) ? 1
-                           : ( nametableAddr <= 0x2BFF ) ? 2
-                                                         : 3;
-    nameTables.at( tableIndex ).at( nametableAddr & 0x03FF ) = data;
+    switch ( m ) {
+      case MirrorMode::Vertical:
+        table = ( ( v >= 0x0000 && v <= 0x3FF ) || ( v >= 0x800 && v <= 0xBFF ) ) ? 0 : 1;
+        break;
+      case MirrorMode::Horizontal : table = ( v < 0x800 ) ? 0 : 1; break;
+      case MirrorMode::SingleLower: table = 0; break;
+      case MirrorMode::SingleUpper: table = 1; break;
+      case MirrorMode::FourScreen : table = ( v / 0x400 ) & 0x03; break;
+    }
+    nameTables.at( table ).at( v & 0x03FF ) = data;
     return;
   }
 
-  // $3F00-$3FFF: Palettes
-  if ( address >= 0x3F00 && address <= 0x3FFF ) {
-
-    /* The address is masked to 32 bytes.
-    Addresses 3F10, 3F14, 3F18 and 3F1C mirror 3F00, 3F04, 3F08 and 3F0C respectively
-    */
-    address &= 0x1F;
-
-    // Handle mirroring of 3F10, 3F14, 3F18, 3F1C to 3F00, 3F04, 3F08, 3F0C
-    if ( ( address & 0x03 ) == 0 ) {
-      // write to both the mirrored and original address
-      address &= 0x0F;
-      paletteMemory.at( address ) = data;
-      paletteMemory.at( address + 0x10 ) = data;
-      return;
-    }
-
-    paletteMemory.at( address ) = data;
+  // Palette
+  // clang-format off
+  if (address >= 0x3F00 && address <= 0x3FFF) {
+    u8 idx = address & 0x1F;
+    if (idx == 0x10) idx = 0x00;
+    if (idx == 0x14) idx = 0x04;
+    if (idx == 0x18) idx = 0x08;
+    if (idx == 0x1C) idx = 0x0C;
+    paletteMemory[idx] = data;
+    return;
   }
+  // clang-format on
 }
 
 /*
@@ -431,66 +395,6 @@ void PPU::VBlank()
       preventVBlank = false;
     }
   }
-}
-
-u16 PPU::ResolveNameTableAddress( u16 addr, int testMirrorMode ) const
-{
-
-  MirrorMode mirrorMode = GetMirrorMode();
-
-  // override mirror mode for testing
-  if ( testMirrorMode != -1 ) {
-    mirrorMode = static_cast<MirrorMode>( testMirrorMode );
-  }
-
-  switch ( mirrorMode ) {
-    case MirrorMode::SingleUpper: // NOLINT
-      // All addresses fall within 2000-23FF, nametable 0
-      return 0x2000 | ( addr & 0x03FF );
-    case MirrorMode::SingleLower:
-      // All addresses fall within 2800-2BFF, nametable 2
-      return 0x2800 | ( addr & 0x03FF );
-    case MirrorMode::Vertical:
-      /* Vertical Mirroring
-        The two horizontal sections are unique, but the two vertical sections are mirrored
-        2800-2FFF is a mirror of 2000-27FF
-
-        2000 2400
-        ^    ^
-        v    v
-        2800 2C00
-
-        Horizontal scrolling games will use this mode. When screen data exceeds 27FF, it's
-        wrapped back to 2000.
-       */
-      return 0x2000 | ( addr & 0x07FF );
-    case MirrorMode::Horizontal:
-      /* Horizontal Mirroring
-        The two vertical sections are unique, but the two horizontal sections are mirrored
-        2400-27FF is a mirror of 2000-23FF
-        2C00-2FFF is a mirror of 2800-2BFF
-
-        2000 < > 2400
-        2800 < > 2C00
-
-        Horizontal mode is used for vertical scrolling games, like Kid Icarus.
-       */
-
-      if ( ( addr >= 0x2000 && addr <= 0x23FF ) || ( addr >= 0x2400 && addr <= 0x27FF ) )
-        return 0x2000 | ( addr & 0x03FF );
-      if ( ( addr >= 0x2800 && addr <= 0x2BFF ) || ( addr >= 0x2C00 && addr <= 0x2FFF ) )
-        return 0x2800 | ( addr & 0x03FF );
-
-    case MirrorMode::FourScreen:
-      /* Four-Screen Mirroring
-         All four nametables are unique and backed by cartridge VRAM. There's no mirroring.
-       */
-      return addr;
-    default:
-      // Default to vertical mirroring
-      return 0x2000 | ( addr & 0x07FF );
-  }
-  return 0xFF;
 }
 
 MirrorMode PPU::GetMirrorMode() const

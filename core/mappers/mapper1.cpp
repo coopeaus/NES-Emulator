@@ -1,6 +1,7 @@
 #include "mappers/mapper1.h"
 #include "global-types.h"
 #include "mappers/mapper-base.h"
+#include <fmt/base.h>
 #include <stdexcept>
 
 MirrorMode Mapper1::GetMirrorMode()
@@ -71,6 +72,20 @@ MirrorMode Mapper1::GetMirrorMode()
   return bankOffset + ( address & 0x7FFF );
 }
 
+void Mapper1::Reset()
+{
+  _controlRegister = 0x0C;
+  _shiftRegister = 0x10;
+  _writeCount = 0;
+  _prgBank16Lo = 0;
+  _prgBank16Hi = GetPrgBankCount() - 1;
+  _prgBank32 = 0;
+  _chrBank4Lo = 0;
+  _chrBank4Hi = 0;
+  _chrBank8 = 0;
+  _mirrorMode = MirrorMode::SingleLower;
+}
+
 /*
 ################################
 ||                            ||
@@ -87,10 +102,10 @@ void Mapper1::HandleCPUWrite( u16 address, u8 data )
    */
 
   // Reset state when data with the MSB set is written
-  if ( ( data & 0b10000000 ) != 0 ) {
-    _shiftRegister = 0x00;
+  if ( data & 0x80 ) {
+    _shiftRegister = 0x10;
     _writeCount = 0;
-    _controlRegister |= 0b00001100;
+    _controlRegister |= 0x0C;
     return;
   }
 
@@ -244,6 +259,5 @@ void Mapper1::HandleCPUWrite( u16 address, u8 data )
     return bankOffset + ( address & 0x1FFF );
   }
 
-  // Shouldn't make it here.
   return 0xFF;
 }
