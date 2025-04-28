@@ -220,13 +220,16 @@ public:
 
     std::string filterPattern = "*" + bus.statefileExt;
     const char *filters[] = { filterPattern.c_str() };
-    const char *filePath = tinyfd_saveFileDialog( "Save State As", filepath.c_str(), 1, filters, "NES state files" );
+
+    // Use the string() method to get a narrow string
+    const char *filePath =
+        tinyfd_saveFileDialog( "Save State As", filepath.string().c_str(), 1, filters, "NES state files" );
 
     if ( filePath ) {
       fmt::print( "Saving state to: {}\n", filePath );
       bus.SaveState( filePath );
 
-      // remember the filestate directory
+      // Remember the filestate directory
       recentStatefileDir = filePath;
       SaveRecentStatefileDir( recentStatefileDir );
 
@@ -244,19 +247,23 @@ public:
 
     std::string filterPattern = "*" + bus.statefileExt;
     const char *filters[] = { filterPattern.c_str() };
-    const char *filePath = tinyfd_openFileDialog( "Load State", filepath.c_str(), 1, filters, "NES state files", 0 );
+
+    // Use the string() method to get a narrow string
+    const char *filePath =
+        tinyfd_openFileDialog( "Load State", filepath.string().c_str(), 1, filters, "NES state files", 0 );
 
     if ( !filePath )
       return false;
 
-    // verify rom signature is from the same game
+    // Verify ROM signature is from the same game
     if ( !bus.IsRomSignatureValid( filePath ) ) {
-      fmt::print( "Invalid state rom signature. Save state is likely from a different game." );
+      fmt::print( "Invalid state ROM signature. Save state is likely from a different game.\n" );
       return false;
     }
 
     bus.LoadState( filePath );
 
+    // Remember the filestate directory
     recentStatefileDir = filePath;
     SaveRecentStatefileDir( recentStatefileDir );
 
