@@ -1,4 +1,4 @@
-
+// NOLINTBEGIN
 // Use Simple_Apu to play random tones. Write output to sound file "out.wav".
 
 #include "Simple_Apu.h"
@@ -127,3 +127,4 @@ static void play_samples( const blip_sample_t *samples, long count )
 }
 
 #endif
+// NOLINTEND

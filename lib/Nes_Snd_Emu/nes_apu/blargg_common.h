@@ -1,4 +1,4 @@
-// NOLINT BEGIN
+// NOLINTBEGIN
 
 // Sets up common environment for Shay Green's libraries.
 //

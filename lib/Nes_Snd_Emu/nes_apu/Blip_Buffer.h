@@ -253,4 +253,5 @@ typedef Blip_Buffer::resampled_time_t blip_resampled_time_t;
 #include "Blip_Synth.h"
 
 #endif
+
 // NOLINTEND

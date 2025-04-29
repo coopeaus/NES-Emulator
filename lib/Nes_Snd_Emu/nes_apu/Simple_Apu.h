@@ -57,4 +57,5 @@ private:
 };
 
 #endif
+
 // NOLINTEND

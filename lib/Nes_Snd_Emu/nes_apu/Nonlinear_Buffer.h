@@ -1,3 +1,4 @@
+// NOLINTBEGIN
 
 // NES non-linear audio output handling.
 
@@ -65,3 +66,5 @@ private:
 };
 
 #endif
+
+// NOLINTEND

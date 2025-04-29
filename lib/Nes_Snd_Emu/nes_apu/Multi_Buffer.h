@@ -1,3 +1,4 @@
+// NOLINTBEGIN
 
 // Multi-channel sound buffer interface, and basic mono and stereo buffers
 
@@ -199,3 +200,4 @@ inline long Mono_Buffer::samples_avail() const
 }
 
 #endif
+// NOLINTEND

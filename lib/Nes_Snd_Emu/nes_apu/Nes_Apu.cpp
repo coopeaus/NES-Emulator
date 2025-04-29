@@ -17,7 +17,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA */
 
 #include BLARGG_SOURCE_BEGIN
 
-Nes_Apu::Nes_Apu() {
+Nes_Apu::Nes_Apu()
+{
   dmc.apu = this;
   dmc.rom_reader = NULL;
   square1.synth = &square_synth;
@@ -30,21 +31,25 @@ Nes_Apu::Nes_Apu() {
   oscs[3] = &noise;
   oscs[4] = &dmc;
 
-  output(NULL);
-  volume(1.0);
-  reset(false);
+  output( NULL );
+  volume( 1.0 );
+  reset( false );
 }
 
-Nes_Apu::~Nes_Apu() {}
-
-void Nes_Apu::treble_eq(const blip_eq_t &eq) {
-  square_synth.treble_eq(eq);
-  triangle.synth.treble_eq(eq);
-  noise.synth.treble_eq(eq);
-  dmc.synth.treble_eq(eq);
+Nes_Apu::~Nes_Apu()
+{
 }
 
-void Nes_Apu::buffer_cleared() {
+void Nes_Apu::treble_eq( const blip_eq_t &eq )
+{
+  square_synth.treble_eq( eq );
+  triangle.synth.treble_eq( eq );
+  noise.synth.treble_eq( eq );
+  dmc.synth.treble_eq( eq );
+}
+
+void Nes_Apu::buffer_cleared()
+{
   square1.last_amp = 0;
   square2.last_amp = 0;
   triangle.last_amp = 0;
@@ -52,32 +57,36 @@ void Nes_Apu::buffer_cleared() {
   dmc.last_amp = 0;
 }
 
-void Nes_Apu::enable_nonlinear(double v) {
+void Nes_Apu::enable_nonlinear( double v )
+{
   dmc.nonlinear = true;
-  square_synth.volume(1.3 * 0.25751258 / 0.742467605 * 0.25 * v);
+  square_synth.volume( 1.3 * 0.25751258 / 0.742467605 * 0.25 * v );
 
   const double tnd = 0.75 / 202 * 0.48;
-  triangle.synth.volume_unit(3 * tnd);
-  noise.synth.volume_unit(2 * tnd);
-  dmc.synth.volume_unit(tnd);
+  triangle.synth.volume_unit( 3 * tnd );
+  noise.synth.volume_unit( 2 * tnd );
+  dmc.synth.volume_unit( tnd );
 
   buffer_cleared();
 }
 
-void Nes_Apu::volume(double v) {
+void Nes_Apu::volume( double v )
+{
   dmc.nonlinear = false;
-  square_synth.volume(0.1128 * v);
-  triangle.synth.volume(0.12765 * v);
-  noise.synth.volume(0.0741 * v);
-  dmc.synth.volume(0.42545 * v);
+  square_synth.volume( 0.1128 * v );
+  triangle.synth.volume( 0.12765 * v );
+  noise.synth.volume( 0.0741 * v );
+  dmc.synth.volume( 0.42545 * v );
 }
 
-void Nes_Apu::output(Blip_Buffer *buffer) {
-  for (int i = 0; i < osc_count; i++)
-    osc_output(i, buffer);
+void Nes_Apu::output( Blip_Buffer *buffer )
+{
+  for ( int i = 0; i < osc_count; i++ )
+    osc_output( i, buffer );
 }
 
-void Nes_Apu::reset(bool pal_mode, int initial_dmc_dac) {
+void Nes_Apu::reset( bool pal_mode, int initial_dmc_dac )
+{
   // to do: time pal frame periods exactly
   frame_period = pal_mode ? 8314 : 7458;
   dmc.pal_mode = pal_mode;
@@ -93,90 +102,92 @@ void Nes_Apu::reset(bool pal_mode, int initial_dmc_dac) {
   irq_flag = false;
   earliest_irq_ = no_irq;
   frame_delay = 1;
-  write_register(0, 0x4017, 0x00);
-  write_register(0, 0x4015, 0x00);
+  write_register( 0, 0x4017, 0x00 );
+  write_register( 0, 0x4015, 0x00 );
 
-  for (cpu_addr_t addr = start_addr; addr <= 0x4013; addr++)
-    write_register(0, addr, (addr & 3) ? 0x00 : 0x10);
+  for ( cpu_addr_t addr = start_addr; addr <= 0x4013; addr++ )
+    write_register( 0, addr, ( addr & 3 ) ? 0x00 : 0x10 );
 
   dmc.dac = initial_dmc_dac;
-  if (!dmc.nonlinear)
+  if ( !dmc.nonlinear )
     dmc.last_amp = initial_dmc_dac; // prevent output transition
 }
 
-void Nes_Apu::irq_changed() {
+void Nes_Apu::irq_changed()
+{
   cpu_time_t new_irq = dmc.next_irq;
-  if (dmc.irq_flag | irq_flag) {
+  if ( dmc.irq_flag | irq_flag ) {
     new_irq = 0;
-  } else if (new_irq > next_irq) {
+  } else if ( new_irq > next_irq ) {
     new_irq = next_irq;
   }
 
-  if (new_irq != earliest_irq_) {
+  if ( new_irq != earliest_irq_ ) {
     earliest_irq_ = new_irq;
-    if (irq_notifier_)
-      irq_notifier_(irq_data);
+    if ( irq_notifier_ )
+      irq_notifier_( irq_data );
   }
 }
 
 // frames
 
-void Nes_Apu::run_until(cpu_time_t end_time) {
-  require(end_time >= last_time);
+void Nes_Apu::run_until( cpu_time_t end_time )
+{
+  require( end_time >= last_time );
 
-  if (end_time == last_time)
+  if ( end_time == last_time )
     return;
 
-  while (true) {
+  while ( true ) {
     // earlier of next frame time or end time
     cpu_time_t time = last_time + frame_delay;
-    if (time > end_time)
+    if ( time > end_time )
       time = end_time;
     frame_delay -= time - last_time;
 
     // run oscs to present
-    square1.run(last_time, time);
-    square2.run(last_time, time);
-    triangle.run(last_time, time);
-    noise.run(last_time, time);
-    dmc.run(last_time, time);
+    square1.run( last_time, time );
+    square2.run( last_time, time );
+    triangle.run( last_time, time );
+    noise.run( last_time, time );
+    dmc.run( last_time, time );
     last_time = time;
 
-    if (time == end_time)
+    if ( time == end_time )
       break; // no more frames to run
 
     // take frame-specific actions
     frame_delay = frame_period;
-    switch (frame++) {
-    case 0:
-      if (!(frame_mode & 0xc0)) {
-        next_irq = time + frame_period * 4 + 1;
-        irq_flag = true;
-      }
-      // fall through
-    case 2:
-      // clock length and sweep on frames 0 and 2
-      square1.clock_length(0x20);
-      square2.clock_length(0x20);
-      noise.clock_length(0x20);
-      triangle.clock_length(0x80); // different bit for halt flag on triangle
+    switch ( frame++ ) {
+      case 0:
+        if ( !( frame_mode & 0xc0 ) ) {
+          next_irq = time + frame_period * 4 + 1;
+          irq_flag = true;
+        }
+        // fall through
+      case 2:
+        // clock length and sweep on frames 0 and 2
+        square1.clock_length( 0x20 );
+        square2.clock_length( 0x20 );
+        noise.clock_length( 0x20 );
+        triangle.clock_length( 0x80 ); // different bit for halt flag on triangle
 
-      square1.clock_sweep(-1);
-      square2.clock_sweep(0);
-      break;
+        square1.clock_sweep( -1 );
+        square2.clock_sweep( 0 );
+        break;
 
-    case 1:
-      // frame 1 is slightly shorter
-      frame_delay -= 2;
-      break;
+      case 1:
+        // frame 1 is slightly shorter
+        frame_delay -= 2;
+        break;
 
-    case 3:
-      frame = 0;
+      case 3:
+        frame = 0;
 
-      // frame 3 is almost twice as long in mode 1
-      if (frame_mode & 0x80)
-        frame_delay += frame_period - 6;
-      break;
+        // frame 3 is almost twice as long in mode 1
+        if ( frame_mode & 0x80 )
+          frame_delay += frame_period - 6;
+        break;
     }
 
     // clock envelopes and linear counter every frame
@@ -187,71 +198,72 @@ void Nes_Apu::run_until(cpu_time_t end_time) {
   }
 }
 
-void Nes_Apu::end_frame(cpu_time_t end_time) {
-  if (end_time > last_time)
-    run_until(end_time);
+void Nes_Apu::end_frame( cpu_time_t end_time )
+{
+  if ( end_time > last_time )
+    run_until( end_time );
 
   // make times relative to new frame
   last_time -= end_time;
-  require(last_time >= 0);
+  require( last_time >= 0 );
 
-  if (next_irq != no_irq) {
+  if ( next_irq != no_irq ) {
     next_irq -= end_time;
-    assert(next_irq >= 0);
+    assert( next_irq >= 0 );
   }
-  if (dmc.next_irq != no_irq) {
+  if ( dmc.next_irq != no_irq ) {
     dmc.next_irq -= end_time;
-    assert(dmc.next_irq >= 0);
+    assert( dmc.next_irq >= 0 );
   }
-  if (earliest_irq_ != no_irq) {
+  if ( earliest_irq_ != no_irq ) {
     earliest_irq_ -= end_time;
-    if (earliest_irq_ < 0)
+    if ( earliest_irq_ < 0 )
       earliest_irq_ = 0;
   }
 }
 
 // registers
 
-static const unsigned char length_table[0x20] = {
-    0x0A, 0xFE, 0x14, 0x02, 0x28, 0x04, 0x50, 0x06, 0xA0, 0x08, 0x3C,
-    0x0A, 0x0E, 0x0C, 0x1A, 0x0E, 0x0C, 0x10, 0x18, 0x12, 0x30, 0x14,
-    0x60, 0x16, 0xC0, 0x18, 0x48, 0x1A, 0x10, 0x1C, 0x20, 0x1E};
+static const unsigned char length_table[0x20] = { 0x0A, 0xFE, 0x14, 0x02, 0x28, 0x04, 0x50, 0x06, 0xA0, 0x08, 0x3C,
+                                                  0x0A, 0x0E, 0x0C, 0x1A, 0x0E, 0x0C, 0x10, 0x18, 0x12, 0x30, 0x14,
+                                                  0x60, 0x16, 0xC0, 0x18, 0x48, 0x1A, 0x10, 0x1C, 0x20, 0x1E };
 
-void Nes_Apu::write_register(cpu_time_t time, cpu_addr_t addr, int data) {
-  require(addr > 0x20); // addr must be actual address (i.e. 0x40xx)
-  require((unsigned)data <= 0xff);
+void Nes_Apu::write_register( cpu_time_t time, cpu_addr_t addr, int data )
+{
+  require( addr > 0x20 ); // addr must be actual address (i.e. 0x40xx)
+  require( (unsigned) data <= 0xff );
 
   // Ignore addresses outside range
-  if (addr < start_addr || end_addr < addr)
+  if ( addr < start_addr || end_addr < addr )
     return;
 
-  run_until(time);
+  run_until( time );
 
-  if (addr < 0x4014) {
+  if ( addr < 0x4014 ) {
     // Write to channel
-    int osc_index = (addr - start_addr) >> 2;
+    int      osc_index = ( addr - start_addr ) >> 2;
     Nes_Osc *osc = oscs[osc_index];
 
     int reg = addr & 3;
     osc->regs[reg] = data;
     osc->reg_written[reg] = true;
 
-    if (osc_index == 4) {
+    if ( osc_index == 4 ) {
       // handle DMC specially
-      dmc.write_register(reg, data);
-    } else if (reg == 3) {
+      dmc.write_register( reg, data );
+    } else if ( reg == 3 ) {
       // load length counter
-      if ((osc_enables >> osc_index) & 1)
-        osc->length_counter = length_table[(data >> 3) & 0x1f];
+      if ( ( osc_enables >> osc_index ) & 1 )
+        osc->length_counter = length_table[( data >> 3 ) & 0x1f];
 
       // reset square phase
-      if (osc_index < 2)
-        ((Nes_Square *)osc)->phase = Nes_Square::phase_range - 1;
+      if ( osc_index < 2 )
+        ( (Nes_Square *) osc )->phase = Nes_Square::phase_range - 1;
     }
-  } else if (addr == 0x4015) {
+  } else if ( addr == 0x4015 ) {
     // Channel enables
-    for (int i = osc_count; i--;)
-      if (!((data >> i) & 1))
+    for ( int i = osc_count; i--; )
+      if ( !( ( data >> i ) & 1 ) )
         oscs[i]->length_counter = 0;
 
     bool recalc_irq = dmc.irq_flag;
@@ -259,32 +271,32 @@ void Nes_Apu::write_register(cpu_time_t time, cpu_addr_t addr, int data) {
 
     int old_enables = osc_enables;
     osc_enables = data;
-    if (!(data & 0x10)) {
+    if ( !( data & 0x10 ) ) {
       dmc.next_irq = no_irq;
       recalc_irq = true;
-    } else if (!(old_enables & 0x10)) {
+    } else if ( !( old_enables & 0x10 ) ) {
       dmc.start(); // dmc just enabled
     }
 
-    if (recalc_irq)
+    if ( recalc_irq )
       irq_changed();
-  } else if (addr == 0x4017) {
+  } else if ( addr == 0x4017 ) {
     // Frame mode
     frame_mode = data;
 
-    bool irq_enabled = !(data & 0x40);
+    bool irq_enabled = !( data & 0x40 );
     irq_flag &= irq_enabled;
     next_irq = no_irq;
 
     // mode 1
-    frame_delay = (frame_delay & 1);
+    frame_delay = ( frame_delay & 1 );
     frame = 0;
 
-    if (!(data & 0x80)) {
+    if ( !( data & 0x80 ) ) {
       // mode 0
       frame = 1;
       frame_delay += frame_period;
-      if (irq_enabled)
+      if ( irq_enabled )
         next_irq = time + frame_delay + frame_period * 3;
     }
 
@@ -292,18 +304,19 @@ void Nes_Apu::write_register(cpu_time_t time, cpu_addr_t addr, int data) {
   }
 }
 
-int Nes_Apu::read_status(cpu_time_t time) {
-  run_until(time - 1);
+int Nes_Apu::read_status( cpu_time_t time )
+{
+  run_until( time - 1 );
 
-  int result = (dmc.irq_flag << 7) | (irq_flag << 6);
+  int result = ( dmc.irq_flag << 7 ) | ( irq_flag << 6 );
 
-  for (int i = 0; i < osc_count; i++)
-    if (oscs[i]->length_counter)
+  for ( int i = 0; i < osc_count; i++ )
+    if ( oscs[i]->length_counter )
       result |= 1 << i;
 
-  run_until(time);
+  run_until( time );
 
-  if (irq_flag) {
+  if ( irq_flag ) {
     irq_flag = false;
     irq_changed();
   }

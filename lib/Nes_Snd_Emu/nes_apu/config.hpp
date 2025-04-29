@@ -1,3 +1,4 @@
+// NOLINTBEGIN
 
 // Boost substitute. For full boost library see http://boost.org
 
@@ -11,3 +12,4 @@
 
 #endif
 
+// NOLINTEND
