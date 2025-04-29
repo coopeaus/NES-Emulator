@@ -121,14 +121,9 @@ public:
     ImGui::TableSetColumnIndex( 2 );
     auto incMode = renderer->bus.ppu.GetCtrlIncrementMode();
     switch ( incMode ) {
-      case 0:
-        ImGui::Text( "$%02X (1)", 0 );
-        break;
-      case 1:
-        ImGui::Text( "$%02X (32)", 1 );
-        break;
-      default:
-        break;
+      case 0 : ImGui::Text( "$%02X (1)", 0 ); break;
+      case 1 : ImGui::Text( "$%02X (32)", 1 ); break;
+      default: break;
     }
 
     ImGui::TableNextRow();

@@ -5,7 +5,7 @@
 
 MirrorMode Mapper2::GetMirrorMode()
 {
-  return _mirrorMode;
+  return mirrorMode;
 }
 
 /*
@@ -15,7 +15,7 @@ MirrorMode Mapper2::GetMirrorMode()
 ||                            ||
 ################################
 */
-[[nodiscard]] u32 Mapper2::TranslateCPUAddress( u16 address )
+[[nodiscard]] u32 Mapper2::MapPrgOffset( u16 address )
 {
   /**
    * @details
@@ -24,10 +24,8 @@ MirrorMode Mapper2::GetMirrorMode()
    * - select lower 16 KiB bank with _prg_bank_16_lo
    */
 
-  // More specific implementation details are available in the mapper1.cpp file
   if ( address >= 0x8000 && address <= 0xBFFF ) {
-    // Translate address for swappable lower 16KiB bank (0x8000-0xBFFF)
-    u32 const bankOffset = _prgBank16Lo * 0x4000;
+    u32 const bankOffset = prgBank16Lo * 0x4000;
     return bankOffset + ( address & 0x3FFF );
   }
 
@@ -38,7 +36,7 @@ MirrorMode Mapper2::GetMirrorMode()
   }
 
   // If out of PRG range
-  throw std::runtime_error( "Address out of range in TranslateCPUAddress" );
+  throw std::runtime_error( "Address out of range in MapPrgOffset" );
 }
 
 /*
@@ -63,7 +61,8 @@ void Mapper2::HandleCPUWrite( u16 address, u8 data )
 
   if ( address >= 0x8000 && address <= 0xFFFF ) {
     // Set the lower 16 KiB bank
-    _prgBank16Lo = data & 0b00001111;
+
+    prgBank16Lo = data % GetPrgBankCount();
   }
 }
 
@@ -74,7 +73,7 @@ void Mapper2::HandleCPUWrite( u16 address, u8 data )
 ||                            ||
 ################################
 */
-[[nodiscard]] u32 Mapper2::TranslatePPUAddress( u16 address )
+[[nodiscard]] u32 Mapper2::MapChrOffset( u16 address )
 {
   /**
    * @brief Translate PPU address. Mapper 2 only supports direct mapping

@@ -1,9 +1,13 @@
 #pragma once
+#include "Nes_Apu.h"
 #include "global-types.h"
 #include "cartridge.h"
 #include "cpu.h"
 #include "ppu.h"
-#include "apu.h"
+
+// Blargg's apu
+#include "Simple_Apu.h"
+
 #include <array>
 #include <cstdint>
 #include <string>
@@ -11,7 +15,8 @@
 class Cartridge;
 class CPU;
 class PPU;
-class APU;
+
+class Simple_Apu;
 
 class Bus
 {
@@ -30,10 +35,10 @@ public:
   ||         Peripherals        ||
   ################################
   */
-  CPU       cpu;
-  PPU       ppu;
-  APU       apu;
-  Cartridge cartridge;
+  CPU        cpu;
+  PPU        ppu;
+  Simple_Apu apu;
+  Cartridge  cartridge;
 
   /*
   ################################
@@ -78,6 +83,14 @@ public:
   void               DebugReset();
   void               EnableJsonTestMode() { _useFlatMemory = true; }
   void               DisableJsonTestMode() { _useFlatMemory = false; }
+
+  /*
+  ################################
+  ||  Blargg's APU Integration  ||
+  ################################
+  */
+  const long sampleRate = 44100;
+  static int ReadDmc( void *objPtr, cpu_addr_t addr );
 
 private:
   /*
