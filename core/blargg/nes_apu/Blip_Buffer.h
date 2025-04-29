@@ -102,7 +102,7 @@ private:
 
   // Don't use the following members. They are public only for technical reasons.
 public:
-  enum { widest_impulse_ = 24 };
+  static constexpr int    widest_impulse_ = 24;
   typedef BOOST::uint16_t buf_t_;
 
   unsigned long    factor_;

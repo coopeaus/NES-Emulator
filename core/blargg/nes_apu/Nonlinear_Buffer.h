@@ -26,9 +26,10 @@ public:
   long make_nonlinear( Blip_Buffer &, long count );
 
 private:
-  enum { shift = 5 };
-  enum { half = 0x8000 >> shift };
-  enum { entry_mask = half * 2 - 1 };
+  static constexpr int shift = 5;
+  static constexpr int half = 0x8000 >> shift;
+  static constexpr int entry_mask = half * 2 - 1;
+
   BOOST::uint16_t table[half * 2];
   long            accum;
   bool            nonlinear;

@@ -31,17 +31,17 @@ template<int quality,int range>
 class Blip_Synth {
 	BOOST_STATIC_ASSERT( 1 <= quality && quality <= 5 );
 	BOOST_STATIC_ASSERT( -32768 <= range && range <= 32767 );
-	enum {
-		abs_range = (range < 0) ? -range : range,
-		fine_mode = (range > 512 || range < 0),
-		width = (quality < 5 ? quality * 4 : Blip_Buffer::widest_impulse_),
-		res = 1 << blip_res_bits_,
-		impulse_size = width / 2 * (fine_mode + 1),
-		base_impulses_size = width / 2 * (res / 2 + 1),
-		fine_bits = (fine_mode ? (abs_range <= 64 ? 2 : abs_range <= 128 ? 3 :
-			abs_range <= 256 ? 4 : abs_range <= 512 ? 5 : abs_range <= 1024 ? 6 :
-			abs_range <= 2048 ? 7 : 8) : 0)
-	};
+
+  static constexpr int abs_range = (range < 0) ? -range : range;
+  static constexpr int fine_mode = (range > 512 || range < 0);
+  static constexpr int width = (quality < 5 ? quality * 4 : Blip_Buffer::widest_impulse_);
+  static constexpr int res = 1 << blip_res_bits_;
+  static constexpr int impulse_size = width / 2 * (fine_mode + 1);
+  static constexpr int base_impulses_size = width / 2 * (res / 2 + 1);
+  static constexpr int fine_bits = (fine_mode ? (abs_range <= 64 ? 2 : abs_range <= 128 ? 3 :
+        abs_range <= 256 ? 4 : abs_range <= 512 ? 5 : abs_range <= 1024 ? 6 :
+        abs_range <= 2048 ? 7 : 8) : 0);
+
 	blip_pair_t_  impulses [impulse_size * res * 2 + base_impulses_size];
 	Blip_Impulse_ impulse;
 public:

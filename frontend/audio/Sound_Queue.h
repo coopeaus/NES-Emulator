@@ -28,8 +28,8 @@ public:
   void          write( const sample_t *, int count );
 
 private:
-  enum { buf_size = 2048 };
-  enum { buf_count = 3 };
+  static constexpr int buf_size = 2048;
+  static constexpr int buf_count = 3;
   sample_t *volatile bufs;
   SDL_sem *volatile free_sem;
   int volatile read_buf;
