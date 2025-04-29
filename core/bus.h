@@ -5,7 +5,7 @@
 #include "ppu.h"
 
 // Blargg's apu
-#include "blargg/Simple_Apu.h"
+#include "Simple_Apu.h"
 
 #include <array>
 #include <cstdint>

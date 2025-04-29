@@ -22,11 +22,16 @@ set(CMAKE_OSX_SYSROOT /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk)
 project( nes_emu VERSION 0.1 LANGUAGES CXX )
 
 # Includes
-set(GENERAL_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(CORE_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/core)
-set(FRONTEND_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/frontend/include)
-set(UI_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/frontend/ui)
-set(AUDIO_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/frontend/audio)
+set(CORE_INCLUDES 
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/core
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/Nes_Snd_Emu/nes_apu
+)
+set(FRONTEND_INCLUDES 
+  ${CMAKE_CURRENT_SOURCE_DIR}/frontend/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/frontend/ui
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/Nes_Snd_Emu/sdl
+)
 set(TEST_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
 
 #[[
@@ -38,11 +43,13 @@ set(TEST_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/tests/include)
 ]]
 
 # All emulation functionality is built as a static library.
-file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "core/*.cpp")
+file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS 
+  "core/*.cpp"
+  "lib/Nes_Snd_Emu/nes_apu/*.cpp"
+)
 add_library(emu_core STATIC ${CORE_SOURCES})
 
 target_include_directories(emu_core PUBLIC
-  ${GENERAL_INCLUDES}
   ${CORE_INCLUDES}
 )
 
@@ -125,17 +132,14 @@ endif()
 if(BUILD_FRONTEND)
   message(STATUS "BUILD_FRONTEND is enabled. Configuring frontend...")
 
-  file(GLOB FRONTEND_SOURCES "frontend/*.cpp" "frontend/ui/*.cpp" "frontend/audio/*.cpp")
+  file(GLOB FRONTEND_SOURCES "frontend/*.cpp" "frontend/ui/*.cpp" "lib/Nes_Snd_Emu/sdl/*.cpp")
   add_executable(emu ${FRONTEND_SOURCES})
 
   target_compile_definitions(emu PRIVATE NOMINMAX)
 
   target_include_directories(emu PRIVATE
-    ${GENERAL_INCLUDES}
     ${CORE_INCLUDES}
     ${FRONTEND_INCLUDES}
-    ${UI_INCLUDES}
-    ${AUDIO_INCLUDES}
   )
 
   target_link_libraries(emu PRIVATE
@@ -190,7 +194,6 @@ if(BUILD_TESTS)
 
   # Define include directories for your project
   set(ALL_INCLUDES
-    ${GENERAL_INCLUDES}
     ${CORE_INCLUDES}
     ${TEST_INCLUDES}
   )

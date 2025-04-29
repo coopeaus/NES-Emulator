@@ -7,8 +7,8 @@
 #ifndef SIMPLE_APU_H
 #define SIMPLE_APU_H
 
-#include "nes_apu/Blip_Buffer.h"
-#include "nes_apu/Nes_Apu.h"
+#include "Blip_Buffer.h"
+#include "Nes_Apu.h"
 
 class Simple_Apu
 {
