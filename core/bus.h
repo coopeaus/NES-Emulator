@@ -1,4 +1,5 @@
 #pragma once
+#include "Nes_Apu.h"
 #include "global-types.h"
 #include "cartridge.h"
 #include "cpu.h"

@@ -3,7 +3,6 @@
 #include "global-types.h"
 #include "mappers/mapper-base.h"
 #include <array>
-#include <cstddef>
 #include <string>
 #include <vector>
 #include <memory>
@@ -25,7 +24,7 @@ public:
   template <class Archive> void save( Archive &ar ) const // NOLINT
   {
     ar( _chrRam, _prgRam, _expansionMemory, romHash );
-    int m = iNes.GetMapper();
+    int const m = iNes.GetMapper();
     ar( m );
     switch ( m ) {
       case 1: {

@@ -1,7 +1,6 @@
 #include "mappers/mapper1.h"
 #include "global-types.h"
 #include "mappers/mapper-base.h"
-#include <fmt/base.h>
 #include <stdexcept>
 
 MirrorMode Mapper1::GetMirrorMode()

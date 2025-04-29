@@ -1,4 +1,5 @@
 #include "bus.h"
+#include "Nes_Apu.h"
 #include "cartridge.h"
 #include "paths.h"
 #include "utils.h"

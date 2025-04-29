@@ -280,7 +280,7 @@ u8 PPU::ReadVram( u16 address )
   // Nametables (0x2000–0x2FFF)
   if ( address >= 0x2000 && address <= 0x2FFF ) {
     // Mirror down into 0x000–0xFFF
-    u16  v = address & 0x0FFF;
+    u16  const v = address & 0x0FFF;
     u8   table = 0;
     auto m = GetMirrorMode();
 
@@ -333,7 +333,7 @@ void PPU::WriteVram( u16 address, u8 data )
 
   // Nametables
   if ( address >= 0x2000 && address <= 0x2FFF ) {
-    u16  v = address & 0x0FFF;
+    u16  const v = address & 0x0FFF;
     u8   table = 0;
     auto m = GetMirrorMode();
 
