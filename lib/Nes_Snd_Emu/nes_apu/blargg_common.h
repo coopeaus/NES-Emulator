@@ -122,19 +122,20 @@ const bool false = 0;
 #define STD
 #endif
 
-// BOOST::uint8_t, BOOST::int16_t, etc.
-#include "cstdint.hpp"
-
 // BOOST_STATIC_ASSERT( expr )
 #include "static_assert.hpp"
 
 // Common standard headers
 #if BLARGG_COMPILER_HAS_NAMESPACE
 #include <cstddef>
+#include <cstdint>
 #include <cassert>
+#include <climits>
 #include <new>
 #else
 #include <stddef.h>
+#include <assert.h>
+#include <limits.h>
 #include <assert.h>
 #endif
 

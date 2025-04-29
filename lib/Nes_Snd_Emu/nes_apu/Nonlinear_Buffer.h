@@ -31,9 +31,9 @@ private:
   static constexpr int half = 0x8000 >> shift;
   static constexpr int entry_mask = half * 2 - 1;
 
-  BOOST::uint16_t table[half * 2];
-  long            accum;
-  bool            nonlinear;
+  uint16_t table[half * 2];
+  long     accum;
+  bool     nonlinear;
 };
 
 class Nonlinear_Buffer : public Multi_Buffer
