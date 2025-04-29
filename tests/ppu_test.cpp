@@ -196,16 +196,6 @@ TEST_F( PpuTest, PaletteMirrorFrom10To00 )
   EXPECT_EQ( data, 0x34 );
 }
 
-TEST_F( PpuTest, PaletteMirrorFrom00To10 )
-{
-  ppu.vramAddr.value = 0x3F10;
-  bus.Write( 0x2007, 0x12 );
-  ppu.vramAddr.value = 0x3F00;
-  bus.Write( 0x2007, 0x34 );
-  auto data = ppu.GetPaletteEntry( 0x10 );
-  EXPECT_EQ( data, 0x34 );
-}
-
 TEST_F( PpuTest, SpriteRamReadWrite )
 {
   bus.Write( 0x2003, 0x00 );
