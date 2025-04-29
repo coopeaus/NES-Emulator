@@ -5614,21 +5614,11 @@ struct MyItem {
       const ImGuiTableColumnSortSpecs *sort_spec = &s_current_sort_specs->Specs[n];
       int                              delta = 0;
       switch ( sort_spec->ColumnUserID ) {
-        case MyItemColumnID_ID:
-          delta = ( a->ID - b->ID );
-          break;
-        case MyItemColumnID_Name:
-          delta = ( strcmp( a->Name, b->Name ) );
-          break;
-        case MyItemColumnID_Quantity:
-          delta = ( a->Quantity - b->Quantity );
-          break;
-        case MyItemColumnID_Description:
-          delta = ( strcmp( a->Name, b->Name ) );
-          break;
-        default:
-          IM_ASSERT( 0 );
-          break;
+        case MyItemColumnID_ID         : delta = ( a->ID - b->ID ); break;
+        case MyItemColumnID_Name       : delta = ( strcmp( a->Name, b->Name ) ); break;
+        case MyItemColumnID_Quantity   : delta = ( a->Quantity - b->Quantity ); break;
+        case MyItemColumnID_Description: delta = ( strcmp( a->Name, b->Name ) ); break;
+        default                        : IM_ASSERT( 0 ); break;
       }
       if ( delta > 0 )
         return ( sort_spec->SortDirection == ImGuiSortDirection_Ascending ) ? +1 : -1;
@@ -6289,21 +6279,13 @@ static void ShowDemoWindowTables()
         static char text_buf[32] = "";
         sprintf( label, "Hello %d,%d", column, row );
         switch ( contents_type ) {
-          case CT_ShortText:
-            ImGui::TextUnformatted( label );
-            break;
+          case CT_ShortText: ImGui::TextUnformatted( label ); break;
           case CT_LongText:
             ImGui::Text( "Some %s text %d,%d\nOver two lines..", column == 0 ? "long" : "longeeer", column, row );
             break;
-          case CT_ShowWidth:
-            ImGui::Text( "W: %.1f", ImGui::GetContentRegionAvail().x );
-            break;
-          case CT_Button:
-            ImGui::Button( label );
-            break;
-          case CT_FillButton:
-            ImGui::Button( label, ImVec2( -FLT_MIN, 0.0f ) );
-            break;
+          case CT_ShowWidth : ImGui::Text( "W: %.1f", ImGui::GetContentRegionAvail().x ); break;
+          case CT_Button    : ImGui::Button( label ); break;
+          case CT_FillButton: ImGui::Button( label, ImVec2( -FLT_MIN, 0.0f ) ); break;
           case CT_InputText:
             ImGui::SetNextItemWidth( -FLT_MIN );
             ImGui::InputText( "##", text_buf, IM_ARRAYSIZE( text_buf ) );
@@ -8499,15 +8481,9 @@ bool ImGui::ShowStyleSelector( const char *label )
   static int style_idx = -1;
   if ( ImGui::Combo( label, &style_idx, "Dark\0Light\0Classic\0" ) ) {
     switch ( style_idx ) {
-      case 0:
-        ImGui::StyleColorsDark();
-        break;
-      case 1:
-        ImGui::StyleColorsLight();
-        break;
-      case 2:
-        ImGui::StyleColorsClassic();
-        break;
+      case 0: ImGui::StyleColorsDark(); break;
+      case 1: ImGui::StyleColorsLight(); break;
+      case 2: ImGui::StyleColorsClassic(); break;
     }
     return true;
   }
