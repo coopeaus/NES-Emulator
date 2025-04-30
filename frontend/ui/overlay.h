@@ -32,6 +32,7 @@ public:
       ImGui::PushFont( renderer->fontMono );
       ImGui::Text( "CPU Cycle: " U64_FORMAT_SPECIFIER, renderer->bus.cpu.GetCycles() );
       ImGui::Text( "FPS(%.1f FPS)", renderer->io->Framerate );
+      ImGui::Text( "Frame Count: " U64_FORMAT_SPECIFIER, renderer->bus.ppu.frame );
       ImGui::PopFont();
     }
     ImGui::End();
