@@ -126,6 +126,9 @@ if(BUILD_FRONTEND)
 
   file(GLOB FRONTEND_SOURCES "frontend/*.cpp" "frontend/ui/*.cpp")
   add_executable(emu ${FRONTEND_SOURCES})
+  if(WIN32)
+    target_link_options(emu PRIVATE "-Wl,/STACK:8388608")
+  endif()
 
   target_compile_definitions(emu PRIVATE NOMINMAX)
 
