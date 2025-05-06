@@ -2,7 +2,7 @@
 #include "global-types.h"
 #include <stdexcept>
 
-[[nodiscard]] u32 Mapper0::TranslateCPUAddress( u16 address )
+[[nodiscard]] u32 Mapper0::MapPrgOffset( u16 address )
 {
   /**
    * @brief Cartridges with Mapper 0 come in two fixed sizes: 16 KiB and 32 KiB
@@ -25,10 +25,10 @@
     // Unsupported PRG ROM size
     throw std::runtime_error( "Mapper0:Unsupported PRG ROM size for Mapper 0" );
   }
-  throw std::runtime_error( "Address out of range in TranslateCPUAddress" );
+  throw std::runtime_error( "Address out of range in MapPrgOffset" );
 }
 
-[[nodiscard]] auto Mapper0::TranslatePPUAddress( u16 address ) -> u32
+[[nodiscard]] auto Mapper0::MapChrOffset( u16 address ) -> u32
 {
   /**
    * @brief Translate PPU address. Mapper 0 doesn't redirect PPU address in any way

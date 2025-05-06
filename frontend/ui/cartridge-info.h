@@ -444,20 +444,11 @@ public:
       int         consoleType = iNes.GetConsoleType();
       const char *consoleStr = "Unknown";
       switch ( consoleType ) {
-        case 0:
-          consoleStr = "NES/Famicom";
-          break;
-        case 1:
-          consoleStr = "Vs. System";
-          break;
-        case 2:
-          consoleStr = "Playchoice 10";
-          break;
-        case 3:
-          consoleStr = "Extended";
-          break;
-        default:
-          break;
+        case 0 : consoleStr = "NES/Famicom"; break;
+        case 1 : consoleStr = "Vs. System"; break;
+        case 2 : consoleStr = "Playchoice 10"; break;
+        case 3 : consoleStr = "Extended"; break;
+        default: break;
       }
       ImGui::Text( "%s", consoleStr );
       ImGui::SameLine();
@@ -551,20 +542,11 @@ public:
       int         timing = iNes.GetCpuPpuTiming();
       const char *timingStr = "Unknown";
       switch ( timing ) {
-        case 0:
-          timingStr = "RP2C02 (NTSC)";
-          break;
-        case 1:
-          timingStr = "RP2C07 (PAL)";
-          break;
-        case 2:
-          timingStr = "Multiple-region";
-          break;
-        case 3:
-          timingStr = "UA6538 (Dendy)";
-          break;
-        default:
-          break;
+        case 0 : timingStr = "RP2C02 (NTSC)"; break;
+        case 1 : timingStr = "RP2C07 (PAL)"; break;
+        case 2 : timingStr = "Multiple-region"; break;
+        case 3 : timingStr = "UA6538 (Dendy)"; break;
+        default: break;
       }
       ImGui::Text( "%s", timingStr );
       ImGui::SameLine();
