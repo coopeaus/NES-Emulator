@@ -287,14 +287,12 @@ public:
     return Renderer::GetControllerKeyName( (SDL_GameControllerButton) current );
   }
 
-  static void TextCenter( const char *text, ... )
+  static void TextCenter( const char *text )
   {
-    va_list vaList = nullptr;
-    va_start( vaList, text );
-    float fontSize = ImGui::GetFontSize() * (float) strlen( text ) / 2;
-    ImGui::SameLine( ( ImGui::GetWindowSize().x / 4 ) - fontSize + ( fontSize / 2 ) );
-    ImGui::TextV( text, vaList );
-    va_end( vaList );
+    ImVec2 sz = ImGui::CalcTextSize( text );
+    float  avail = ImGui::GetContentRegionAvail().x;
+    ImGui::SetCursorPosX( ( avail - sz.x ) * 0.5f );
+    ImGui::TextUnformatted( text );
   }
 
   void RenderMenuBar()
