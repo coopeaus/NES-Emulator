@@ -28,6 +28,20 @@ public:
   // Render all UI elements
   void Render();
 
+  // Window toggles
+  void ToggleOverlay();
+  void ToggleDebuggerWindow();
+  void ToggleMemory();
+  void ToggleLog();
+  void ToggleCpu();
+  void TogglePpu();
+  void ToggleCartridge();
+  void TogglePalettes();
+  void TogglePatternTables();
+  void ToggleNametables();
+  void ToggleSprites();
+  void ToggleInput();
+
   // Templated accessor to retrieve a component of a given type.
   // Usage
   // if (auto demoWin = UIManagerInstance.GetComponent<DemoWindow>()) {}

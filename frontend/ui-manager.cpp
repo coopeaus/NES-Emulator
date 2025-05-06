@@ -18,6 +18,7 @@
 #include "nametable.h"
 #include "cartridge-info.h"
 #include "notification.h"
+#include "input.h"
 
 UIManager::UIManager( Renderer *renderer )
 {
@@ -35,6 +36,80 @@ UIManager::UIManager( Renderer *renderer )
   AddComponent<NametableWindow>( renderer );
   AddComponent<CartridgeInfoWindow>( renderer );
   AddComponent<Notification>( renderer );
+  AddComponent<InputWindow>( renderer );
+}
+
+void UIManager::ToggleOverlay()
+{
+  if ( auto *win = GetComponent<OverlayWindow>() ) {
+    win->visible = !win->visible;
+  }
+}
+void UIManager::ToggleDebuggerWindow()
+{
+  if ( auto *win = GetComponent<DebuggerWindow>() ) {
+    win->visible = !win->visible;
+  }
+}
+void UIManager::ToggleMemory()
+{
+  if ( auto *win = GetComponent<MemoryDisplayWindow>() ) {
+    win->visible = !win->visible;
+  }
+}
+void UIManager::ToggleLog()
+{
+  if ( auto *win = GetComponent<LogWindow>() ) {
+    win->visible = !win->visible;
+  }
+}
+void UIManager::ToggleCpu()
+{
+  if ( auto *win = GetComponent<CpuViewerWindow>() ) {
+    win->visible = !win->visible;
+  }
+}
+void UIManager::TogglePpu()
+{
+  if ( auto *win = GetComponent<PpuViewerWindow>() ) {
+    win->visible = !win->visible;
+  }
+}
+void UIManager::ToggleCartridge()
+{
+  if ( auto *win = GetComponent<CartridgeInfoWindow>() ) {
+    win->visible = !win->visible;
+  }
+}
+void UIManager::TogglePalettes()
+{
+  if ( auto *win = GetComponent<PaletteWindow>() ) {
+    win->visible = !win->visible;
+  }
+}
+void UIManager::TogglePatternTables()
+{
+  if ( auto *win = GetComponent<PatternTablesWindow>() ) {
+    win->visible = !win->visible;
+  }
+}
+void UIManager::ToggleNametables()
+{
+  if ( auto *win = GetComponent<NametableWindow>() ) {
+    win->visible = !win->visible;
+  }
+}
+void UIManager::ToggleSprites()
+{
+  if ( auto *win = GetComponent<SpritesWindow>() ) {
+    win->visible = !win->visible;
+  }
+}
+void UIManager::ToggleInput()
+{
+  if ( auto *win = GetComponent<InputWindow>() ) {
+    win->visible = !win->visible;
+  }
 }
 
 void UIManager::Render()
