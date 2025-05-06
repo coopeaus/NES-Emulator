@@ -198,7 +198,6 @@ public:
   void       CpuWrite( u16 address, u8 data );
   u8         ReadVram( u16 addr );
   void       WriteVram( u16 addr, u8 data );
-  u16        ResolveNameTableAddress( u16 addr, int testMirrorMode = -1 ) const;
   void       Tick();
   void       VBlank();
 
@@ -319,15 +318,9 @@ public:
         LoadBgShifters();
         FetchNametableByte();
         break;
-      case 2:
-        FetchAttributeByte();
-        break;
-      case 4:
-        FetchBgPattern0Byte();
-        break;
-      case 6:
-        FetchBgPattern1Byte();
-        break;
+      case 2: FetchAttributeByte(); break;
+      case 4: FetchBgPattern0Byte(); break;
+      case 6: FetchBgPattern1Byte(); break;
       case 7:
         IncrementCoarseX();
         if ( cycle == 256 )
@@ -826,20 +819,11 @@ public:
 
     u16 vramStart = 0x2000;
     switch ( nametableIdx ) {
-      case 0:
-        vramStart = 0x2000;
-        break;
-      case 1:
-        vramStart = 0x2400;
-        break;
-      case 2:
-        vramStart = 0x2800;
-        break;
-      case 3:
-        vramStart = 0x2C00;
-        break;
-      default:
-        break;
+      case 0 : vramStart = 0x2000; break;
+      case 1 : vramStart = 0x2400; break;
+      case 2 : vramStart = 0x2800; break;
+      case 3 : vramStart = 0x2C00; break;
+      default: break;
     }
 
     /* Vram Structure, for reference

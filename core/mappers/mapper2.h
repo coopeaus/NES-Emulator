@@ -7,9 +7,9 @@ class Mapper2 : public Mapper
 {
 
 public:
-  Mapper2( iNes2Instance iNes2Header, MirrorMode mirrorMode ) : Mapper( iNes2Header ), _mirrorMode( mirrorMode ) {}
-  auto TranslateCPUAddress( u16 address ) -> u32 override;
-  auto TranslatePPUAddress( u16 address ) -> u32 override;
+  Mapper2( iNes2Instance iNes2Header ) : Mapper( iNes2Header ) {}
+  auto MapPrgOffset( u16 address ) -> u32 override;
+  auto MapChrOffset( u16 address ) -> u32 override;
   void HandleCPUWrite( u16 address, u8 data ) override;
 
   [[nodiscard]] bool SupportsPrgRam() override { return false; }
@@ -18,9 +18,6 @@ public:
 
   [[nodiscard]] MirrorMode GetMirrorMode() override;
 
-private:
-  u8 _prgBank16Lo{ 0 };
-
-  // Mirroring mode (fixed)
-  MirrorMode _mirrorMode;
+  u8         prgBank16Lo{ 0 };
+  MirrorMode mirrorMode = MirrorMode::Vertical;
 };

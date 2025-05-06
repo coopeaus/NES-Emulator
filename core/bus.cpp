@@ -1,4 +1,5 @@
 #include "bus.h"
+#include "Nes_Apu.h"
 #include "cartridge.h"
 #include "paths.h"
 #include "utils.h"
@@ -20,7 +21,7 @@
 #include <system_error>
 
 // Constructor to initialize the bus with a flat memory model
-Bus::Bus() : cpu( this ), ppu( this ), cartridge( this ), apu( this )
+Bus::Bus() : cpu( this ), ppu( this ), cartridge( this )
 {
 }
 
@@ -48,12 +49,12 @@ u8 Bus::Read( const u16 address, bool debugMode )
   }
 
   // APU
-  if ( utils::between( address, 0x4000, 0x4013 ) || address == 0x4015 ) {
-    return apu.HandleCpuRead( address );
+  if ( address == 0x4015 ) {
+    return apu.read_status();
   }
 
   // Controller read
-  if ( address >= 0x4016 && address <= 0x4017 ) { // FIX: 0x4017 for controllers or for APU?
+  if ( address >= 0x4016 && address <= 0x4017 ) {
     auto data = ( controllerState[address & 0x0001] & 0x80 ) > 0;
     controllerState[address & 0x0001] <<= 1;
     return data;
@@ -110,8 +111,8 @@ void Bus::Write( const u16 address, const u8 data )
   }
 
   // APU
-  if ( utils::between( address, 0x4000, 0x4013 ) || address == 0x4015 ) {
-    apu.HandleCpuWrite( address, data );
+  if ( utils::between( address, 0x4000, 0x4013 ) || address == 0x4015 || address == 0x4017 ) {
+    apu.write_register( address, data );
     return;
   }
 
@@ -177,6 +178,18 @@ void Bus::DebugReset()
   cpu.SetCycles( 0 );
   cpu.Reset();
   ppu.Reset();
+}
+
+/*
+################################
+||  Blargg's APU Integration  ||
+################################
+*/
+
+int Bus::ReadDmc( void *objPtr, cpu_addr_t addr )
+{
+  Bus *self = static_cast<Bus *>( objPtr );
+  return self->Read( addr );
 }
 
 void Bus::QuickSaveState( u8 idx )

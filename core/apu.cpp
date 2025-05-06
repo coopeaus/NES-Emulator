@@ -1,3 +1,4 @@
+// NOTE: This APU is WIP, the APU that's being used is Blargg's, located in the lib directory
 #include "apu.h"
 #include "bus.h"
 
