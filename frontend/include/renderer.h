@@ -5,6 +5,7 @@
 #include "imgui_impl_opengl3.h"
 #include <SDL_error.h>
 #include <SDL_events.h>
+#include <SDL_gamecontroller.h>
 #include <SDL_hints.h>
 #include <SDL2/SDL.h>
 #include <SDL_video.h>
@@ -55,7 +56,45 @@ public:
   int         bufferSize = nesWidth * nesHeight;
   std::string windowTitle = "NES Emulator";
 
-  SDL_GameController *gamepad{};
+  // Control settings
+  std::array<SDL_Scancode, 8>             keyboardBinds{ SDL_SCANCODE_X,      SDL_SCANCODE_Z,    SDL_SCANCODE_TAB,
+                                             SDL_SCANCODE_RETURN, SDL_SCANCODE_UP,   SDL_SCANCODE_DOWN,
+                                             SDL_SCANCODE_LEFT,   SDL_SCANCODE_RIGHT };
+  std::array<SDL_GameControllerButton, 8> gamepad1Binds{
+      SDL_CONTROLLER_BUTTON_A,         SDL_CONTROLLER_BUTTON_B,         SDL_CONTROLLER_BUTTON_BACK,
+      SDL_CONTROLLER_BUTTON_START,     SDL_CONTROLLER_BUTTON_DPAD_UP,   SDL_CONTROLLER_BUTTON_DPAD_DOWN,
+      SDL_CONTROLLER_BUTTON_DPAD_LEFT, SDL_CONTROLLER_BUTTON_DPAD_RIGHT };
+  std::array<SDL_GameControllerButton, 8> gamepad2Binds{
+      SDL_CONTROLLER_BUTTON_A,         SDL_CONTROLLER_BUTTON_B,         SDL_CONTROLLER_BUTTON_BACK,
+      SDL_CONTROLLER_BUTTON_START,     SDL_CONTROLLER_BUTTON_DPAD_UP,   SDL_CONTROLLER_BUTTON_DPAD_DOWN,
+      SDL_CONTROLLER_BUTTON_DPAD_LEFT, SDL_CONTROLLER_BUTTON_DPAD_RIGHT };
+  SDL_GameController *gamepad1{};
+  SDL_GameController *gamepad2{};
+
+  bool                     isBindingKeyboard = false;
+  bool                     test = false;
+  bool                     isBindingGamepad1 = false;
+  bool                     isBindingGamepad2 = false;
+  SDL_Scancode             bindingCurrentKeyboardKey = SDL_SCANCODE_UNKNOWN;
+  SDL_GameControllerButton bindingCurrentGamepadKey = SDL_CONTROLLER_BUTTON_INVALID;
+
+  enum InputIndex : u8 { A, B, SELECT, START, UP, DOWN, LEFT, RIGHT, INPUT_NONE };
+  u8 keyboardIdx = INPUT_NONE;
+  u8 gamepad1Idx = INPUT_NONE;
+  u8 gamepad2Idx = INPUT_NONE;
+
+  static const char *GetScancodeName( SDL_Scancode scancode ) { return SDL_GetScancodeName( scancode ); }
+  static const char *GetControllerKeyName( SDL_GameControllerButton code )
+  {
+    return SDL_GameControllerGetStringForButton( code );
+  }
+  void PrintKeyboardBinds()
+  {
+    for ( auto &bind : keyboardBinds ) {
+      const auto *name = GetScancodeName( bind );
+      fmt::print( "Key: {}\n", name );
+    }
+  }
 
   /*
   ################################
@@ -110,6 +149,7 @@ public:
 
   bool running = true;
   bool paused = false;
+  void PauseToggle() { paused = !paused; }
 
   bool updatePatternTables = false;
   bool updateNametables = false;
@@ -199,6 +239,11 @@ public:
     recentRoms = LoadRecentROMs();
     recentRomDir = LoadRecentRomDir();
     recentStatefileDir = LoadRecentStatefileDir();
+
+    // Bindings
+    keyboardBinds = LoadKeyboardBindings();
+    gamepad1Binds = LoadGamepad1Bindings();
+    gamepad2Binds = LoadGamepad2Bindings();
 
     std::string msg = "Loaded ROM: " + std::string( romFile );
     NotifyStart( msg );
@@ -418,12 +463,188 @@ public:
     NotifyStart( "Cleared recent ROMs." );
   }
 
+  void SaveKeyboardBindings()
+  {
+    namespace fs = std::filesystem;
+    fs::path      keyboardFile = fs::path( paths::user() ) / "keyboard";
+    std::ofstream out( keyboardFile );
+
+    if ( !out.is_open() ) {
+      NotifyStart( "Failed to open keyboard settings file for writing." );
+      return;
+    }
+    // arr to string
+    std::string settings;
+    for ( auto control : keyboardBinds ) {
+      settings += std::to_string( control ) + " ";
+    }
+
+    out << settings;
+    NotifyStart( "Keyboard settings saved." );
+    std::cout << "Keyboard settings saved: " << settings << '\n';
+  }
+
+  void SaveGamepad1Bindings()
+  {
+    namespace fs = std::filesystem;
+    fs::path      gamepad1File = fs::path( paths::user() ) / "gamepad1";
+    std::ofstream out( gamepad1File );
+
+    if ( !out.is_open() ) {
+      NotifyStart( "Failed to open gamepad1 settings file for writing." );
+      return;
+    }
+    std::string settings;
+    for ( auto control : gamepad1Binds ) {
+      settings += std::to_string( control ) + " ";
+    }
+
+    out << settings;
+    NotifyStart( "Gamepad1 settings saved." );
+  }
+
+  void SaveGamepad2Bindings()
+  {
+    namespace fs = std::filesystem;
+    fs::path      gamepad2File = fs::path( paths::user() ) / "gamepad2";
+    std::ofstream out( gamepad2File );
+
+    if ( !out.is_open() ) {
+      NotifyStart( "Failed to open gamepad2 settings file for writing." );
+      return;
+    }
+    std::string settings;
+    for ( auto control : gamepad2Binds ) {
+      settings += std::to_string( control ) + " ";
+    }
+
+    out << settings;
+    NotifyStart( "Gamepad2 settings saved." );
+  }
+
+  void SaveAllBindings()
+  {
+    SaveKeyboardBindings();
+    SaveGamepad1Bindings();
+    SaveGamepad2Bindings();
+  }
+
+  void ResetDefaultBindings()
+  {
+    keyboardBinds = { SDL_SCANCODE_Z,  SDL_SCANCODE_X,    SDL_SCANCODE_TAB,  SDL_SCANCODE_RETURN,
+                      SDL_SCANCODE_UP, SDL_SCANCODE_DOWN, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT };
+    gamepad1Binds = { SDL_CONTROLLER_BUTTON_A,         SDL_CONTROLLER_BUTTON_B,         SDL_CONTROLLER_BUTTON_BACK,
+                      SDL_CONTROLLER_BUTTON_START,     SDL_CONTROLLER_BUTTON_DPAD_UP,   SDL_CONTROLLER_BUTTON_DPAD_DOWN,
+                      SDL_CONTROLLER_BUTTON_DPAD_LEFT, SDL_CONTROLLER_BUTTON_DPAD_RIGHT };
+    gamepad2Binds = { SDL_CONTROLLER_BUTTON_A,         SDL_CONTROLLER_BUTTON_B,         SDL_CONTROLLER_BUTTON_BACK,
+                      SDL_CONTROLLER_BUTTON_START,     SDL_CONTROLLER_BUTTON_DPAD_UP,   SDL_CONTROLLER_BUTTON_DPAD_DOWN,
+                      SDL_CONTROLLER_BUTTON_DPAD_LEFT, SDL_CONTROLLER_BUTTON_DPAD_RIGHT };
+    SaveAllBindings();
+    NotifyStart( "Input settings reset to default." );
+  }
+
+  std::array<SDL_Scancode, 8> LoadKeyboardBindings()
+  {
+    namespace fs = std::filesystem;
+    fs::path keyboardFile = fs::path( paths::user() ) / "keyboard";
+
+    std::array<SDL_Scancode, 8> defaultBinds{ SDL_SCANCODE_X,      SDL_SCANCODE_Z,    SDL_SCANCODE_TAB,
+                                              SDL_SCANCODE_RETURN, SDL_SCANCODE_UP,   SDL_SCANCODE_DOWN,
+                                              SDL_SCANCODE_LEFT,   SDL_SCANCODE_RIGHT };
+    std::ifstream               in( keyboardFile );
+    if ( !in.is_open() ) {
+      NotifyStart( "Failed to open keyboard settings file." );
+      return defaultBinds;
+    }
+
+    std::string settings;
+    std::getline( in, settings );
+
+    std::array<SDL_Scancode, 8> binds{};
+    std::istringstream          ss( settings );
+    for ( auto &bind : binds ) {
+      unsigned int tmp = 0;
+      if ( !( ss >> tmp ) ) {
+        NotifyStart( "Failed to load keyboard settings." );
+        return defaultBinds;
+      }
+      bind = static_cast<SDL_Scancode>( tmp );
+    }
+    NotifyStart( "Keyboard settings loaded." );
+    return binds;
+  }
+
+  std::array<SDL_GameControllerButton, 8> LoadGamepad1Bindings()
+  {
+    namespace fs = std::filesystem;
+    fs::path gamepad1File = fs::path( paths::user() ) / "gamepad1";
+
+    std::array<SDL_GameControllerButton, 8> defaultBinds{
+        SDL_CONTROLLER_BUTTON_A,         SDL_CONTROLLER_BUTTON_B,         SDL_CONTROLLER_BUTTON_BACK,
+        SDL_CONTROLLER_BUTTON_START,     SDL_CONTROLLER_BUTTON_DPAD_UP,   SDL_CONTROLLER_BUTTON_DPAD_DOWN,
+        SDL_CONTROLLER_BUTTON_DPAD_LEFT, SDL_CONTROLLER_BUTTON_DPAD_RIGHT };
+    std::ifstream in( gamepad1File );
+    if ( !in.is_open() ) {
+      NotifyStart( "Failed to open gamepad1 settings file." );
+      return defaultBinds;
+    }
+
+    std::string settings;
+    std::getline( in, settings );
+
+    std::array<SDL_GameControllerButton, 8> binds{};
+    std::istringstream                      ss( settings );
+    for ( auto &bind : binds ) {
+      unsigned int tmp = 0;
+      if ( !( ss >> tmp ) ) {
+        NotifyStart( "Failed to load gamepad1 settings." );
+        return defaultBinds;
+      }
+      bind = static_cast<SDL_GameControllerButton>( tmp );
+    }
+    NotifyStart( "Gamepad1 settings loaded." );
+    return binds;
+  }
+
+  std::array<SDL_GameControllerButton, 8> LoadGamepad2Bindings()
+  {
+    namespace fs = std::filesystem;
+    fs::path gamepad2File = fs::path( paths::user() ) / "gamepad2";
+
+    std::array<SDL_GameControllerButton, 8> defaultBinds{
+        SDL_CONTROLLER_BUTTON_A,         SDL_CONTROLLER_BUTTON_B,         SDL_CONTROLLER_BUTTON_BACK,
+        SDL_CONTROLLER_BUTTON_START,     SDL_CONTROLLER_BUTTON_DPAD_UP,   SDL_CONTROLLER_BUTTON_DPAD_DOWN,
+        SDL_CONTROLLER_BUTTON_DPAD_LEFT, SDL_CONTROLLER_BUTTON_DPAD_RIGHT };
+    std::ifstream in( gamepad2File );
+    if ( !in.is_open() ) {
+      NotifyStart( "Failed to open gamepad2 settings file." );
+      return defaultBinds;
+    }
+
+    std::string settings;
+    std::getline( in, settings );
+
+    std::array<SDL_GameControllerButton, 8> binds{};
+    std::istringstream                      ss( settings );
+    for ( auto &bind : binds ) {
+      unsigned int tmp = 0;
+      if ( !( ss >> tmp ) ) {
+        NotifyStart( "Failed to load gamepad2 settings." );
+        return defaultBinds;
+      }
+      bind = static_cast<SDL_GameControllerButton>( tmp );
+    }
+    NotifyStart( "Gamepad2 settings loaded." );
+    return binds;
+  }
+
   bool Setup()
   {
     if ( SDL_Init( SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER ) != 0 ) {
       std::cerr << "SDL_Init Error: " << SDL_GetError() << '\n';
       return false;
     }
+    SDL_GameControllerEventState( SDL_ENABLE );
 
     // Decide GL+GLSL versions
 #if defined( IMGUI_IMPL_OPENGL_ES2 )
@@ -506,8 +727,8 @@ public:
     for ( int i = 0; i < num; i++ ) {
       const char *name = SDL_JoystickNameForIndex( i );
       if ( SDL_IsGameController( i ) ) {
-        gamepad = SDL_GameControllerOpen( i );
-        fmt::print( "  [{}] GameController: {}\n", i, SDL_GameControllerName( gamepad ) );
+        gamepad1 = SDL_GameControllerOpen( i );
+        fmt::print( "  [{}] GameController: {}\n", i, SDL_GameControllerName( gamepad1 ) );
       } else {
         fmt::print( "  [{}] Joystick (unsupported mapping): {}\n", i, name );
       }
@@ -593,6 +814,8 @@ public:
     io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
     io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport / Platform
                                                            // Windows
+
+    io->ConfigFlags &= ~ImGuiConfigFlags_NavEnableGamepad;
 
     // Font setup
     ImFontConfig fontConfig;
@@ -794,6 +1017,13 @@ public:
   #                              #
   ################################
   */
+
+#if defined( __APPLE__ )
+#define MOD_COMMAND KMOD_GUI
+#else
+#define MOD_COMMAND KMOD_CTRL
+#endif
+
   void PollEvents()
   {
     SDL_Event event;
@@ -807,12 +1037,71 @@ public:
                   event.window.windowID == SDL_GetWindowID( window ) ) {
         ui.willRender = false;
         running = false;
-      } else if ( event.type == SDL_KEYDOWN && event.key.repeat == 0 ) {
+      }
+      // Gamepad1 bindings
+      else if ( event.type == SDL_CONTROLLERBUTTONDOWN && isBindingGamepad1 ) {
+        SDL_GameControllerButton btn = static_cast<SDL_GameControllerButton>( event.cbutton.button );
+        isBindingGamepad1 = false;
+
+        // avoid duplicates
+        for ( int i = 0; i < 8; ++i )
+          if ( gamepad1Binds[i] == btn && i != gamepad1Idx )
+            gamepad1Binds[i] = SDL_CONTROLLER_BUTTON_INVALID;
+        gamepad1Binds.at( gamepad1Idx ) = btn;
+        SaveGamepad1Bindings();
+        return;
+      }
+      // Gamepad2 bindings
+      else if ( event.type == SDL_CONTROLLERBUTTONDOWN && isBindingGamepad2 ) {
+        SDL_GameControllerButton btn = static_cast<SDL_GameControllerButton>( event.cbutton.button );
+        isBindingGamepad2 = false;
+        for ( int i = 0; i < 8; ++i )
+          if ( gamepad2Binds[i] == btn && i != gamepad2Idx )
+            gamepad2Binds[i] = SDL_CONTROLLER_BUTTON_INVALID;
+        gamepad2Binds.at( gamepad2Idx ) = btn;
+        SaveGamepad2Bindings();
+        return;
+      }
+      // Keydown events
+      else if ( event.type == SDL_KEYDOWN && event.key.repeat == 0 ) {
         const auto sc = event.key.keysym.scancode;
         const auto mods = SDL_GetModState();
 
-        // cmd + shift + key
-        if ( ( mods & KMOD_GUI ) && ( mods & KMOD_SHIFT ) ) {
+        // Listen for key binding event (for keyboard input)
+        if ( isBindingKeyboard ) {
+          if ( sc == SDL_SCANCODE_ESCAPE ) {
+            isBindingKeyboard = false;
+            return;
+          }
+
+          isBindingKeyboard = false;
+
+          // Avoid binding to keys that already do some other shortcut
+          // Doing this manually won't end well, but it's fine for now.
+          switch ( sc ) {
+            case SDL_SCANCODE_F1  : NotifyStart( "F1 is already bound to Overlay" ); return;
+            case SDL_SCANCODE_F2  : NotifyStart( "F2 is already bound to view Cartridge Info" ); return;
+            case SDL_SCANCODE_KP_1: NotifyStart( "Keypad 1 is already bound to save state 1" ); return;
+            case SDL_SCANCODE_KP_2: NotifyStart( "Keypad 2 is already bound to save state 2" ); return;
+            case SDL_SCANCODE_KP_3: NotifyStart( "Keypad 3 is already bound to save state 3" ); return;
+            default:
+          }
+
+          // Invalidate duplicates
+          for ( int i = 0; i < 8; i++ ) {
+            auto bind = keyboardBinds.at( i );
+            if ( bind == sc && i != gamepad1Idx ) {
+              keyboardBinds.at( i ) = SDL_SCANCODE_UNKNOWN;
+            }
+          }
+
+          keyboardBinds.at( keyboardIdx ) = sc;
+          SaveKeyboardBindings();
+          return;
+        }
+
+        // cmd/ctrl + shift + key
+        if ( ( mods & MOD_COMMAND ) && ( mods & KMOD_SHIFT ) ) {
           switch ( sc ) {
             case SDL_SCANCODE_S:
               fmt::print( "Save state to file\n" );
@@ -835,12 +1124,19 @@ public:
               } else {
                 NotifyStart( "No recent ROMs available." );
               }
+              break;
             }
-            default: break;
+            case SDL_SCANCODE_D: ui.ToggleDebuggerWindow(); break;
+            case SDL_SCANCODE_M: ui.ToggleMemory(); break;
+            case SDL_SCANCODE_T: ui.ToggleLog(); break;
+            case SDL_SCANCODE_C: ui.ToggleCpu(); break;
+            case SDL_SCANCODE_P: ui.TogglePpu(); break;
+            case SDL_SCANCODE_I: ui.ToggleInput(); break;
+            default            : break;
           }
         }
-        // cmd + key
-        else if ( mods & KMOD_GUI ) {
+        // cmd/ctrl + key
+        else if ( mods & MOD_COMMAND ) {
           switch ( sc ) {
             case SDL_SCANCODE_R:
               fmt::print( "Reset\n" );
@@ -862,16 +1158,48 @@ public:
               fmt::print( "Open ROM\n" );
               OpenRomFileDialog();
               break;
-            default: break;
+            case SDL_SCANCODE_KP_1:
+              bus.QuickLoadState( 1 );
+              NotifyStart( "State loaded from slot 1." );
+              break;
+            case SDL_SCANCODE_KP_2:
+              bus.QuickLoadState( 2 );
+              NotifyStart( "State loaded from slot 2." );
+              break;
+            case SDL_SCANCODE_KP_3:
+              bus.QuickLoadState( 3 );
+              NotifyStart( "State loaded from slot 3." );
+              break;
+
+            case SDL_SCANCODE_1: ui.TogglePalettes(); break;
+            case SDL_SCANCODE_2: ui.TogglePatternTables(); break;
+            case SDL_SCANCODE_3: ui.ToggleNametables(); break;
+            case SDL_SCANCODE_4: ui.ToggleSprites(); break;
+            default            : break;
           }
         }
         // just key
         else {
           switch ( sc ) {
+            case SDL_SCANCODE_F1: ui.ToggleOverlay(); break;
+            case SDL_SCANCODE_F2: ui.ToggleCartridge(); break;
+
             case SDL_SCANCODE_ESCAPE:
-              paused = !paused;
-              paused ? fmt::print( "Paused\n" ) : fmt::print( "Unpaused\n" );
+              PauseToggle();
               NotifyStart( paused ? "Paused" : "Unpaused" );
+              break;
+            // num keypad 1, 2, 3 save state to slot 1, 2, 3
+            case SDL_SCANCODE_KP_1:
+              bus.QuickSaveState( 1 );
+              NotifyStart( "State saved to slot 1." );
+              break;
+            case SDL_SCANCODE_KP_2:
+              bus.QuickSaveState( 2 );
+              NotifyStart( "State saved to slot 2." );
+              break;
+            case SDL_SCANCODE_KP_3:
+              bus.QuickSaveState( 3 );
+              NotifyStart( "State saved to slot 3." );
               break;
             default: break;
           }
@@ -883,38 +1211,68 @@ public:
         AddToRecentROMs( droppedFile );
         SDL_free( droppedFile );
       }
+
+      // Controller device added/removed
+      switch ( event.type ) { // NOLINT
+        case SDL_CONTROLLERDEVICEADDED: {
+          int joyIndex = event.cdevice.which;
+          if ( gamepad1 == nullptr && SDL_IsGameController( joyIndex ) ) {
+            gamepad1 = SDL_GameControllerOpen( joyIndex );
+            fmt::print( "Controller #1 connected: {}\n", SDL_GameControllerName( gamepad1 ) );
+          } else if ( gamepad2 == nullptr && SDL_IsGameController( joyIndex ) ) {
+            gamepad2 = SDL_GameControllerOpen( joyIndex );
+            fmt::print( "Controller #2 connected: {}\n", SDL_GameControllerName( gamepad2 ) );
+          }
+          break;
+        }
+
+        case SDL_CONTROLLERDEVICEREMOVED: {
+          SDL_JoystickID joyId = event.cdevice.which;
+          if ( gamepad1 && SDL_JoystickInstanceID( SDL_GameControllerGetJoystick( gamepad1 ) ) == joyId ) {
+            SDL_GameControllerClose( gamepad1 );
+            gamepad1 = nullptr;
+            fmt::print( "Controller #1 disconnected\n" );
+          } else if ( gamepad2 && SDL_JoystickInstanceID( SDL_GameControllerGetJoystick( gamepad2 ) ) == joyId ) {
+            SDL_GameControllerClose( gamepad2 );
+            gamepad2 = nullptr;
+            fmt::print( "Controller #2 disconnected\n" );
+          }
+          break;
+        }
+      }
       const Uint8 *keystate = SDL_GetKeyboardState( nullptr );
 
       // Map keys to controller bits
       bus.controller[0] = 0x00;
+      bus.controller[1] = 0x00;
 
       // keyboard
-      bus.controller[0] |= keystate[SDL_SCANCODE_Z] ? 0x80 : 0x00;      // A Button -> z
-      bus.controller[0] |= keystate[SDL_SCANCODE_X] ? 0x40 : 0x00;      // B Button -> x
-      bus.controller[0] |= keystate[SDL_SCANCODE_TAB] ? 0x20 : 0x00;    // Select   -> tab
-      bus.controller[0] |= keystate[SDL_SCANCODE_RETURN] ? 0x10 : 0x00; // Start    -> return
-      bus.controller[0] |= keystate[SDL_SCANCODE_UP] ? 0x08 : 0x00;     // Up       -> up
-      bus.controller[0] |= keystate[SDL_SCANCODE_DOWN] ? 0x04 : 0x00;   // Down     -> down
-      bus.controller[0] |= keystate[SDL_SCANCODE_LEFT] ? 0x02 : 0x00;   // Left     -> left
-      bus.controller[0] |= keystate[SDL_SCANCODE_RIGHT] ? 0x01 : 0x00;  // Right    -> right
+      bus.controller[0] |= keystate[keyboardBinds[0]] ? 0x80 : 0x00; // A Button
+      bus.controller[0] |= keystate[keyboardBinds[1]] ? 0x40 : 0x00; // B Button
+      bus.controller[0] |= keystate[keyboardBinds[2]] ? 0x20 : 0x00; // Select
+      bus.controller[0] |= keystate[keyboardBinds[3]] ? 0x10 : 0x00; // Start
+      bus.controller[0] |= keystate[keyboardBinds[4]] ? 0x08 : 0x00; // Up
+      bus.controller[0] |= keystate[keyboardBinds[5]] ? 0x04 : 0x00; // Down
+      bus.controller[0] |= keystate[keyboardBinds[6]] ? 0x02 : 0x00; // Lef
+      bus.controller[0] |= keystate[keyboardBinds[7]] ? 0x01 : 0x00; // Right
     }
 
-    // controller
-    if ( SDL_GameControllerGetAttached( gamepad ) ) {
+    // gamepad 1
+    if ( SDL_GameControllerGetAttached( gamepad1 ) ) {
       // clang-format off
-        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_B ) ? 0x80 : 0x00; // A Button (swapped for personal reasons)
-        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_A ) ? 0x40 : 0x00; // B Button ( -^)
-        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_BACK ) ? 0x20 : 0x00; // Select
-        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_START ) ? 0x10 : 0x00; // Start
-        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_DPAD_UP ) ? 0x08 : 0x00; // Up
-        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_DPAD_DOWN ) ? 0x04 : 0x00; // Down
-        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_DPAD_LEFT ) ? 0x02 : 0x00; // Left
-        bus.controller[0] |= SDL_GameControllerGetButton( gamepad, SDL_CONTROLLER_BUTTON_DPAD_RIGHT ) ? 0x01 : 0x00; // Right
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad1, gamepad1Binds[0] ) ? 0x80 : 0x00; // A Button 
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad1, gamepad1Binds[1] ) ? 0x40 : 0x00; // B Button
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad1, gamepad1Binds[2] ) ? 0x20 : 0x00; // Select
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad1, gamepad1Binds[3] ) ? 0x10 : 0x00; // Start
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad1, gamepad1Binds[4] ) ? 0x08 : 0x00; // Up
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad1, gamepad1Binds[5] ) ? 0x04 : 0x00; // Down
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad1, gamepad1Binds[6] ) ? 0x02 : 0x00; // Left
+        bus.controller[0] |= SDL_GameControllerGetButton( gamepad1, gamepad1Binds[7] ) ? 0x01 : 0x00; // Right
         // analog sticks also work
-        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad, SDL_CONTROLLER_AXIS_LEFTX ) < -8000 ? 0x02 : 0x00; // Left
-        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad, SDL_CONTROLLER_AXIS_LEFTX ) > 8000 ? 0x01 : 0x00; // Right
-        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad, SDL_CONTROLLER_AXIS_LEFTY ) < -8000 ? 0x08 : 0x00; // Up
-        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad, SDL_CONTROLLER_AXIS_LEFTY ) > 8000 ? 0x04 : 0x00; // Down
+        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad1, SDL_CONTROLLER_AXIS_LEFTX ) < -8000 ? 0x02 : 0x00; // Left analog
+        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad1, SDL_CONTROLLER_AXIS_LEFTX ) > 8000 ? 0x01 : 0x00; // Right analog
+        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad1, SDL_CONTROLLER_AXIS_LEFTY ) < -8000 ? 0x08 : 0x00; // Up analog
+        bus.controller[0] |= SDL_GameControllerGetAxis( gamepad1, SDL_CONTROLLER_AXIS_LEFTY ) > 8000 ? 0x04 : 0x00; // Down analog
       // clang-format on
     }
   }
