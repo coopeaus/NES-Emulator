@@ -26,7 +26,6 @@ public:
   Bus  bus;
   CPU &cpu = bus.cpu;
   PPU &ppu = bus.ppu;
-  APU &apu = bus.apu;
 
   CpuTest() = default;
   void LoadTestCartridge()

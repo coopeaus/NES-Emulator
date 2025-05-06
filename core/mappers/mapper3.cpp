@@ -7,7 +7,7 @@ Mapper3::Mapper3( iNes2Instance iNesHeader ) : Mapper( iNesHeader )
 {
 }
 
-u32 Mapper3::TranslateCPUAddress( u16 address )
+u32 Mapper3::MapPrgOffset( u16 address )
 {
   // CNROM: PRG is fixed, typically 32KB at $8000-$FFFF
   // Map $8000-$FFFF to PRG-ROM directly
@@ -23,12 +23,12 @@ u32 Mapper3::TranslateCPUAddress( u16 address )
   return 0;
 }
 
-u32 Mapper3::TranslatePPUAddress( u16 address )
+u32 Mapper3::MapChrOffset( u16 address )
 {
   // CNROM: CHR is banked in 8KB units
   if ( address < 0x2000 ) {
     u32 const chrBankCount = GetChrBankCount();
-    u32 const bank = _chrBank % chrBankCount;
+    u32 const bank = chrBank % chrBankCount;
     return ( bank * 0x2000 ) + address;
   }
   // Not CHR address
@@ -41,12 +41,11 @@ void Mapper3::HandleCPUWrite( u16 address, u8 data )
   if ( address >= 0x8000 && address <= 0xFFFF ) {
     // Use a mask based on available CHR banks (support up to 8 banks)
     u8 const mask = ( GetChrBankCount() > 0 ) ? ( GetChrBankCount() - 1 ) : 0x03;
-    _chrBank = data & mask;
+    chrBank = data & mask;
   }
 }
 
 MirrorMode Mapper3::GetMirrorMode()
 {
-  // Use mirroring from header
-  return static_cast<MirrorMode>( iNes.GetMirroring() );
+  return mirroring;
 }

@@ -1,40 +1,40 @@
 #pragma once
 
-#include <SDL2/SDL.h>
+// Graphics
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_opengl3.h"
 #include <SDL_error.h>
 #include <SDL_events.h>
 #include <SDL_hints.h>
-#include <SDL_stdinc.h>
-#include <SDL_timer.h>
+#include <SDL2/SDL.h>
 #include <SDL_video.h>
-#include <fmt/base.h>
-#include <fmt/core.h>
-#include <glad/glad.h>
 #include <imgui.h>
-#include "tinyfiledialogs.h"
 
+// Libraries
 #include <algorithm>
 #include <array>
-#include <csignal>
-#include <cstdint>
 #include <cstdlib>
-#include <iostream>
+#include <glad/glad.h>
+#include <csignal>
 #include <numeric>
 #include <string>
 #include <thread>
+#include <cstdint>
+#include <iostream>
 #include <deque>
 #include <filesystem>
 #include <fstream>
+#include <chrono>
+#include "tinyfiledialogs.h"
 
+// Ours
+#include "theme.h"
 #include "bus.h"
 #include "cartridge.h"
-#include "chrono"
-#include "imgui_impl_opengl3.h"
-#include "imgui_impl_sdl2.h"
-#include "paths.h"
-#include "theme.h"
 #include "ui-component.h"
 #include "ui-manager.h"
+#include "paths.h"
+#include "Sound_Queue.h"
 
 using u32 = uint32_t;
 using u64 = uint64_t;
@@ -92,6 +92,9 @@ public:
   ||       Audio Variables      ||
   ################################
   */
+  std::unique_ptr<Sound_Queue> soundQueue;
+  static int const             audioBufferSize = 2048;
+  blip_sample_t                audioBuffer[audioBufferSize]{};
 
   /*
   ################################
@@ -145,10 +148,11 @@ public:
   #          peripherals         #
   ################################
   */
-  UIManager ui;
-  Bus       bus;
-  CPU      &cpu = bus.cpu;
-  PPU      &ppu = bus.ppu;
+  UIManager   ui;
+  Bus         bus;
+  CPU        &cpu = bus.cpu;
+  PPU        &ppu = bus.ppu;
+  Simple_Apu &apu = bus.apu;
 
   Renderer() : ui( this ) { InitEmulator(); }
 
@@ -167,6 +171,31 @@ public:
     cpu.Reset();
     ppu.onFrameReady = [this]( const u32 *frameBuffer ) { this->ProcessPpuFrameBuffer( frameBuffer ); };
     currentFrame = ppu.frame;
+
+    // Set sample rate and check for out of memory error
+    if ( apu.sample_rate( bus.sampleRate ) ) {
+      std::cerr << "Failed to initialize APU\n";
+      std::exit( EXIT_FAILURE );
+    }
+
+    // Audio
+#ifdef SDL_INIT_AUDIO
+    if ( SDL_Init( SDL_INIT_AUDIO ) < 0 )
+      exit( EXIT_FAILURE );
+
+    atexit( SDL_Quit );
+
+    soundQueue = std::make_unique<Sound_Queue>();
+
+    if ( !soundQueue )
+      exit( EXIT_FAILURE );
+
+    if ( soundQueue->init( bus.sampleRate ) )
+      exit( EXIT_FAILURE );
+#endif
+    apu.dmc_reader( Bus::ReadDmc, &bus );
+
+    // Directories
     recentRoms = LoadRecentROMs();
     recentRomDir = LoadRecentRomDir();
     recentStatefileDir = LoadRecentStatefileDir();
@@ -595,6 +624,8 @@ public:
     return true;
   }
 
+  void PlaySamples( const blip_sample_t *samples, long count ) const { soundQueue->write( samples, count ); }
+
   /*
   ################################
   #                              #
@@ -780,7 +811,7 @@ public:
         const auto sc = event.key.keysym.scancode;
         const auto mods = SDL_GetModState();
 
-        // GUI + shift
+        // cmd + shift + key
         if ( ( mods & KMOD_GUI ) && ( mods & KMOD_SHIFT ) ) {
           switch ( sc ) {
             case SDL_SCANCODE_S:
@@ -794,11 +825,21 @@ public:
               else
                 fmt::print( "Failed to load state\n" );
               break;
-            default:
-              break;
+            case SDL_SCANCODE_O: {
+              if ( !recentRoms.empty() && bus.cartridge.IsRomValid( recentRoms.front() ) ) {
+                fmt::print( "Opening recent ROM: {}\n", recentRoms.front() );
+                auto recent = recentRoms.front();
+                fmt::print( "Opening recent ROM: {}\n", recent );
+                LoadNewCartridge( recent );
+                NotifyStart( "Opened recent ROM" );
+              } else {
+                NotifyStart( "No recent ROMs available." );
+              }
+            }
+            default: break;
           }
         }
-        // GUI-only shortcuts
+        // cmd + key
         else if ( mods & KMOD_GUI ) {
           switch ( sc ) {
             case SDL_SCANCODE_R:
@@ -821,13 +862,18 @@ public:
               fmt::print( "Open ROM\n" );
               OpenRomFileDialog();
               break;
+            default: break;
+          }
+        }
+        // just key
+        else {
+          switch ( sc ) {
             case SDL_SCANCODE_ESCAPE:
               paused = !paused;
               paused ? fmt::print( "Paused\n" ) : fmt::print( "Unpaused\n" );
               NotifyStart( paused ? "Paused" : "Unpaused" );
               break;
-            default:
-              break;
+            default: break;
           }
         }
       } else if ( event.type == SDL_DROPFILE ) {
@@ -847,7 +893,7 @@ public:
       bus.controller[0] |= keystate[SDL_SCANCODE_X] ? 0x40 : 0x00;      // B Button -> x
       bus.controller[0] |= keystate[SDL_SCANCODE_TAB] ? 0x20 : 0x00;    // Select   -> tab
       bus.controller[0] |= keystate[SDL_SCANCODE_RETURN] ? 0x10 : 0x00; // Start    -> return
-      bus.controller[0] |= keystate[SDL_SCANCODE_UP] ? 0x08 : 0x00;     // Up -> up
+      bus.controller[0] |= keystate[SDL_SCANCODE_UP] ? 0x08 : 0x00;     // Up       -> up
       bus.controller[0] |= keystate[SDL_SCANCODE_DOWN] ? 0x04 : 0x00;   // Down     -> down
       bus.controller[0] |= keystate[SDL_SCANCODE_LEFT] ? 0x02 : 0x00;   // Left     -> left
       bus.controller[0] |= keystate[SDL_SCANCODE_RIGHT] ? 0x01 : 0x00;  // Right    -> right
@@ -984,6 +1030,12 @@ public:
     }
     // End of frame, set the current frame to the next one.
     currentFrame = ppu.frame;
+
+    // generate 1/60th second of sound into APU's sample buffer
+    apu.end_frame();
+
+    long count = apu.read_samples( audioBuffer, audioBufferSize );
+    PlaySamples( audioBuffer, count );
   }
 
   void UpdateUiWindows() {}

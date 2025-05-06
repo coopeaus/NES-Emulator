@@ -173,21 +173,11 @@ public:
     ImGui::Indent( indentSpacing );
     MirrorMode const mode = renderer->bus.ppu.GetMirrorMode();
     switch ( mode ) {
-      case MirrorMode::Horizontal:
-        ImGui::Text( "Horizontal" );
-        break;
-      case MirrorMode::Vertical:
-        ImGui::Text( "Vertical" );
-        break;
-      case MirrorMode::SingleLower:
-        ImGui::Text( "Single Lower" );
-        break;
-      case MirrorMode::SingleUpper:
-        ImGui::Text( "Single Upper" );
-        break;
-      case MirrorMode::FourScreen:
-        ImGui::Text( "Four Screen" );
-        break;
+      case MirrorMode::Horizontal : ImGui::Text( "Horizontal" ); break;
+      case MirrorMode::Vertical   : ImGui::Text( "Vertical" ); break;
+      case MirrorMode::SingleLower: ImGui::Text( "Single Lower" ); break;
+      case MirrorMode::SingleUpper: ImGui::Text( "Single Upper" ); break;
+      case MirrorMode::FourScreen : ImGui::Text( "Four Screen" ); break;
     }
 
     ImGui::EndGroup();
