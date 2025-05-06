@@ -53,15 +53,13 @@ ReflowComments: true
 # // automatically like this
 
 IndentCaseLabels: true
-# Example:
-# switch (value) {
-#     case 1:
-#         break;
-# }
-# versus
-# switch (value) {
-# case1:
-#   break;
+AllowShortCaseExpressionOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
+AlignConsecutiveShortCaseStatements:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: true
+  AlignCaseColons: true
 
 AlignAfterOpenBracket: Align
 # Aligns arguments if using line break

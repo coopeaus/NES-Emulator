@@ -7,34 +7,34 @@ class Mapper1 : public Mapper
 {
 
 public:
-  Mapper1( iNes2Instance iNesHeader ) : Mapper( iNesHeader ), _prgBank16Hi( GetPrgBankCount() - 1 ) {}
-  auto TranslateCPUAddress( u16 address ) -> u32 override;
-  auto TranslatePPUAddress( u16 address ) -> u32 override;
+  Mapper1( iNes2Instance iNesHeader ) : Mapper( iNesHeader ), prgBank16Hi( GetPrgBankCount() - 1 ) { Reset(); }
+  auto MapPrgOffset( u16 address ) -> u32 override;
+  auto MapChrOffset( u16 address ) -> u32 override;
   void HandleCPUWrite( u16 address, u8 data ) override;
 
-  [[nodiscard]] bool SupportsPrgRam() override { return true; }
-  [[nodiscard]] bool HasExpansionRom() override { return false; }
-  [[nodiscard]] bool HasExpansionRam() override { return false; }
-
+  [[nodiscard]] bool       SupportsPrgRam() override { return true; }
+  [[nodiscard]] bool       HasExpansionRom() override { return false; }
+  [[nodiscard]] bool       HasExpansionRam() override { return false; }
   [[nodiscard]] MirrorMode GetMirrorMode() override;
 
-private:
-  u8 _controlRegister{ 0x1C };
+  void Reset();
+
+  u8 controlRegister{ 0x1C };
 
   // PRG bank selectors.
-  u8 _prgBank16Lo{ 0 };
-  u8 _prgBank16Hi{};
-  u8 _prgBank32{ 0 };
+  u8 prgBank16Lo{ 0 };
+  u8 prgBank16Hi{};
+  u8 prgBank32{ 0 };
 
   // CHR bank selectors
-  u8 _chrBank4Lo{ 0 };
-  u8 _chrBank4Hi{ 0 };
-  u8 _chrBank8{ 0 };
+  u8 chrBank4Lo{ 0 };
+  u8 chrBank4Hi{ 0 };
+  u8 chrBank8{ 0 };
 
   // Serial loading mechanism
-  u8 _shiftRegister{ 0x10 };
-  u8 _writeCount{ 0 };
+  u8 shiftRegister{ 0x10 };
+  u8 writeCount{ 0 };
 
   // Mirroring
-  MirrorMode _mirrorMode{ MirrorMode::Horizontal };
+  MirrorMode mirrorMode{ MirrorMode::SingleLower };
 };

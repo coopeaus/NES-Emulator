@@ -3,11 +3,13 @@
 #include "global-types.h"
 #include "mappers/mapper-base.h"
 #include <array>
-#include <cstddef>
 #include <string>
 #include <vector>
 #include <memory>
 #include "cartridge-header.h"
+#include "mappers/mapper1.h"
+#include "mappers/mapper2.h"
+#include "mappers/mapper3.h"
 
 class Bus;
 
@@ -19,9 +21,58 @@ public:
 
   Bus *bus;
 
-  template <class Archive> void serialize( Archive &ar ) // NOLINT
+  template <class Archive> void save( Archive &ar ) const // NOLINT
   {
     ar( _chrRam, _prgRam, _expansionMemory, romHash );
+    int const m = iNes.GetMapper();
+    ar( m );
+    switch ( m ) {
+      case 1: {
+        auto m1 = std::static_pointer_cast<Mapper1>( _mapper );
+        ar( m1->controlRegister, m1->prgBank16Lo, m1->prgBank16Hi, m1->prgBank32, m1->chrBank4Lo, m1->chrBank4Hi,
+            m1->chrBank8, m1->shiftRegister, m1->writeCount, m1->mirrorMode );
+        break;
+      }
+      case 2: {
+        auto m2 = std::static_pointer_cast<Mapper2>( _mapper );
+        ar( m2->prgBank16Lo, m2->mirrorMode );
+        break;
+      }
+      case 3: {
+        auto m3 = std::static_pointer_cast<Mapper3>( _mapper );
+        ar( m3->chrBank );
+        break;
+      }
+      default:
+    }
+  }
+  template <class Archive> void load( Archive &ar ) // NOLINT
+  {
+    ar( _chrRam, _prgRam, _expansionMemory, romHash );
+    int m = 0;
+    ar( m );
+    switch ( m ) {
+      case 1: {
+        _mapper = std::make_shared<Mapper1>( iNes );
+        auto m1 = std::static_pointer_cast<Mapper1>( _mapper );
+        ar( m1->controlRegister, m1->prgBank16Lo, m1->prgBank16Hi, m1->prgBank32, m1->chrBank4Lo, m1->chrBank4Hi,
+            m1->chrBank8, m1->shiftRegister, m1->writeCount, m1->mirrorMode );
+        break;
+      }
+      case 2: {
+        _mapper = std::make_shared<Mapper2>( iNes );
+        auto m2 = std::static_pointer_cast<Mapper2>( _mapper );
+        ar( m2->prgBank16Lo, m2->mirrorMode );
+        break;
+      }
+      case 3: {
+        _mapper = std::make_shared<Mapper3>( iNes );
+        auto m3 = std::static_pointer_cast<Mapper3>( _mapper );
+        ar( m3->chrBank );
+        break;
+      }
+      default:
+    }
   }
 
   /*
@@ -66,9 +117,6 @@ public:
   void       LoadRom( const std::string &filePath );
   bool       IsRomValid( const std::string &filePath );
 
-  std::string GetRomName() const;
-  size_t      GetPrgRamSize() const;
-
   /*
   ################################
   ||        Debug Methods       ||
@@ -77,7 +125,6 @@ public:
   bool DidMapperLoad() const { return didMapperLoad; }
   bool DoesMapperExist() const { return _mapper != nullptr; }
   void SetChrROM( u16 address, u8 data ) { _chrRom.at( address ) = data; }
-  void SetMirrorMode( MirrorMode mode ) { _mirrorMode = mode; }
   /*
   ################################
   ||       Debug Variables      ||
@@ -155,8 +202,5 @@ private:
   std::shared_ptr<Mapper> _mapper;
   std::string             _romPath;
   u8                      _mapperNumber = 0;
-  u8                      _hasBattery = 0;
-  bool                    _fourScreenMode = false;
-  MirrorMode              _mirrorMode = MirrorMode::Vertical;
   bool                    _usesChrRam = false;
 };

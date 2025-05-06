@@ -1,6 +1,5 @@
 #include "cartridge.h"
 #include <array>
-#include <cstddef>
 #include <cstring>
 #include <fmt/base.h>
 #include <fstream>
@@ -9,15 +8,16 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <filesystem>
+
+#include "global-types.h"
+#include "utils.h"
 
 // Mappers
-#include "global-types.h"
 #include "mappers/mapper-base.h"
 #include "mappers/mapper0.h"
 #include "mappers/mapper1.h"
+#include "mappers/mapper2.h"
 #include "mappers/mapper3.h"
-#include "utils.h"
 
 Cartridge::Cartridge( Bus *bus ) : bus( bus )
 {
@@ -74,28 +74,6 @@ void Cartridge::LoadRom( const std::string &filePath )
   /*
   ################################
   ||                            ||
-  ||         Header Info        ||
-  ||                            ||
-  ################################
-  */
-
-  // Mirror mode
-  // Provided by the 0th bit of byte 6.
-  // u8 const mirrorMode = header[6] & 0b00000001;
-  u8 const mirrorMode = iNes.GetMirroring();
-  ( mirrorMode == 0 ) ? _mirrorMode = MirrorMode::Horizontal : _mirrorMode = MirrorMode::Vertical;
-
-  // Four screen mode
-  _fourScreenMode = iNes.GetFourScreenMode();
-  if ( _fourScreenMode ) {
-    _mirrorMode = MirrorMode::FourScreen;
-  }
-
-  _hasBattery = iNes.GetBatteryMode();
-
-  /*
-  ################################
-  ||                            ||
   ||    Read PRG and CHR ROMS   ||
   ||                            ||
   ################################
@@ -111,16 +89,16 @@ void Cartridge::LoadRom( const std::string &filePath )
   int const chrRomSize = iNes.GetChrRomSizeBytes();
 
   // Set the PRG and CHR vector sizes
-  _usesChrRam = chrRomSize == 0;
   if ( prgRomSize > 0 ) {
     _prgRom.resize( prgRomSize );
   }
 
   // Sometimes, chr rom isn't provided. Some games use chr ram instead.
-  if ( !_usesChrRam ) {
-    if ( chrRomSize > 0 ) {
-      _chrRom.resize( chrRomSize );
-    }
+  _usesChrRam = chrRomSize == 0;
+  if ( _usesChrRam ) {
+    // _chrRam is already an 8 KiB array, so do nothing
+  } else {
+    _chrRom.resize( chrRomSize );
   }
 
   // Read data into the PRG and CHR ROM vectors
@@ -150,17 +128,11 @@ void Cartridge::LoadRom( const std::string &filePath )
   */
   auto const mapperNumber = iNes.GetMapper();
   switch ( mapperNumber ) {
-    case 0:
-      _mapper = std::make_shared<Mapper0>( iNes );
-      break;
-    case 1:
-      _mapper = std::make_shared<Mapper1>( iNes );
-      break;
-    case 3:
-      _mapper = std::make_shared<Mapper3>( iNes );
-      break;
-    default:
-      throw std::runtime_error( "Unsupported mapper: " + std::to_string( mapperNumber ) );
+    case 0 : _mapper = std::make_shared<Mapper0>( iNes ); break;
+    case 1 : _mapper = std::make_shared<Mapper1>( iNes ); break;
+    case 2 : _mapper = std::make_shared<Mapper2>( iNes ); break;
+    case 3 : _mapper = std::make_shared<Mapper3>( iNes ); break;
+    default: throw std::runtime_error( "Unsupported mapper: " + std::to_string( mapperNumber ) );
   };
 
   if ( _mapper != nullptr ) {
@@ -245,8 +217,8 @@ void Cartridge::Write( u16 address, u8 data )
       fmt::print( "Cartridge:ReadPrgROM:Mapper is null. Rom file was likely not loaded.\n" );
       return _prgRom.at( address & 0x3FFF );
     }
-    u32 const translatedAddress = _mapper->TranslateCPUAddress( address );
-    return _prgRom.at( translatedAddress );
+    u32 const prgOffset = _mapper->MapPrgOffset( address );
+    return _prgRom.at( prgOffset );
   }
   return 0xFF;
 }
@@ -256,15 +228,19 @@ void Cartridge::Write( u16 address, u8 data )
   /** @brief Reads from the CHR ROM, ranges from 0x0000 to 0x1FFF
    * CHR ROM is the character ROM, which contains the graphics data for the PPU
    */
-  if ( address >= 0x0000 && address <= 0x1FFF ) {
-    if ( _mapper == nullptr ) {
-      fmt::print( "Cartridge:ReadChrROM:Mapper is null. Rom file was likely not loaded.\n" );
-      return _chrRom.at( address & 0x1FFF );
-    }
-    u32 const translatedAddress = _mapper->TranslatePPUAddress( address );
-    return _chrRom.at( translatedAddress );
+  if ( address > 0x1FFF )
+    return 0xFF;
+
+  if ( _mapper == nullptr ) {
+    fmt::print( "Cartridge:ReadChrROM:Mapper is null. Rom file was likely not loaded.\n" );
+    return _chrRom.at( address & 0x1FFF );
   }
-  return 0xFF;
+
+  u32 const chrOffset = _mapper->MapChrOffset( address );
+  if ( _usesChrRam ) {
+    return _chrRam.at( chrOffset );
+  }
+  return _chrRom.at( chrOffset );
 }
 
 [[nodiscard]] u8 Cartridge::ReadPrgRAM( u16 address )
@@ -351,7 +327,7 @@ void Cartridge::WriteChrRAM( u16 address, u8 data )
       fmt::print( "Cartridge:WriteChrRAM:Mapper is null. Rom file was likely not loaded.\n" );
       return;
     }
-    u16 const translatedAddress = _mapper->TranslatePPUAddress( address );
+    u16 const translatedAddress = _mapper->MapChrOffset( address );
     _chrRam.at( translatedAddress & 0x1FFF ) = data;
   }
 }
@@ -397,39 +373,15 @@ void Cartridge::WriteExpansionRAM( u16 address, u8 data )
 ||                            ||
 ################################
 */
-std::string Cartridge::GetRomName() const
-{
-  return std::filesystem::path( _romPath ).filename().string();
-}
-size_t Cartridge::GetPrgRamSize() const
-{
-  return _prgRam.size();
-}
 
 MirrorMode Cartridge::GetMirrorMode()
 {
   /** @brief Returns the mirror mode of the cartridge
    * The mirror mode determines how the PPU should handle nametable mirroring.
-   *
-   * Mapper 0:
-   *   - Mirroring mode is statically defined in the iNES header (bit 0 of byte 6).
-   *   - It cannot change dynamically and is "soldered" for each specific game.
-   *
-   * Four-Screen Mode:
-   *   - Indicated by bit 3 of byte 6 in the iNES header.
-   *   - Overrides any mirroring mode (horizontal or vertical) defined in bit 0.
-   *   - This mode provides unique nametables for all four screens using extra cartridge VRAM.
-   *
-   * Other mappers:
-   *   - Mirroring mode is controlled dynamically via mapper logic.
-   *   - The specific mirroring configuration depends on the mapper implementation.
    */
-
-  // Mapper 0 or Four-Screen Mode: Static mirroring, determined by iNES header
-  if ( _mapperNumber == 0 || _fourScreenMode ) {
-    return _mirrorMode;
+  if ( _mapper == nullptr ) {
+    return MirrorMode::Vertical;
   }
 
-  // Other mappers: Dynamic mirroring, determined by mapper logic
   return _mapper->GetMirrorMode();
 }

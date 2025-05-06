@@ -83,8 +83,7 @@ public:
           step = 16;
           readFunc = [&]( int address ) -> uint8_t { return renderer->bus.ppu.ReadVram( address ); };
           break;
-        default:
-          break;
+        default: break;
       }
 
       // Render the table using the above parameters
