@@ -9,6 +9,7 @@
 #define BLIP_BUFFER_H
 
 #include "blargg_common.h"
+#include <cstdint>
 
 class Blip_Reader;
 
