@@ -8,6 +8,7 @@
 #define APU_SNAPSHOT_H
 
 #include "blargg_common.h"
+#inlcude "cstdint"
 
 struct apu_snapshot_t {
   typedef uint8_t byte;
