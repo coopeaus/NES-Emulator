@@ -173,8 +173,7 @@ void UIComponent::DebugControls( const std::string &parentLabel )
           }
         }
         break;
-      default:
-        break;
+      default: break;
     }
   }
 

@@ -30,8 +30,9 @@ public:
 
     if ( ImGui::Begin( "Emulator Overlay", &visible, windowFlags ) ) {
       ImGui::PushFont( renderer->fontMono );
-      ImGui::Text( "CPU Cycle: " U64_FORMAT_SPECIFIER, renderer->bus.cpu.GetCycles() );
-      ImGui::Text( "FPS(%.1f FPS)", renderer->io->Framerate );
+      ImGui::Text( "Cycle: " U64_FORMAT_SPECIFIER, renderer->bus.cpu.GetCycles() );
+      ImGui::Text( "CyclePS: %.1f", renderer->GetCyclesPerSecond() );
+      ImGui::Text( "FPS: %.1f", renderer->GetAvgFps() );
       ImGui::Text( "Frame Count: " U64_FORMAT_SPECIFIER, renderer->bus.ppu.frame );
       ImGui::PopFont();
     }
