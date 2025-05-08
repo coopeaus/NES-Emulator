@@ -422,7 +422,7 @@ CPU_TEST( 6B, ARR, Immediate, "6b.json" );
 CPU_TEST( EB, USBC, Immediate, "eb.json" );
 CPU_TEST( 0B, ANC, Immediate, "0b.json" );
 CPU_TEST( 2B, ANC, Immediate, "2b.json" );
-CPU_TEST( AB, LXA, Immediate, "ab.json" );
+// CPU_TEST( AB, LXA, Immediate, "ab.json" ); // It's ATX on the NES, Harte tests for LXA
 CPU_TEST( CB, SBX, Immediate, "cb.json" );
 CPU_TEST( BB, LAS, AbsoluteY, "bb.json" );
 CPU_TEST( 8B, ANE, Immediate, "8b.json" );

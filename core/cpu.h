@@ -47,7 +47,7 @@ public:
     /*7*/ Rel(BVS),  IndY(ADC), Imp(JAM),  IndY(RRA), ZpgX(NOP2), ZpgX(ADC), ZpgX(ROR), ZpgX(RRA), Imp(SEI), AbsY(ADC), Imp(NOP), AbsY(RRA), AbsX(NOP2), AbsX(ADC), AbsX(ROR), AbsX(RRA),
     /*8*/ Imm(NOP2), IndX(STA), Imm(NOP2), IndX(SAX), Zpg(STY),   Zpg(STA),  Zpg(STX),  Zpg(SAX),  Imp(DEY), Imm(NOP2), Imp(TXA), Imm(ANE), Abs(STY),   Abs(STA),  Abs(STX),  Abs(SAX),
     /*9*/ Rel(BCC),  IndY(STA), Imp(JAM),  IndY(SHA), ZpgX(STY),  ZpgX(STA), ZpgY(STX), ZpgY(SAX), Imp(TYA), AbsY(STA), Imp(TXS), AbsY(TAS), AbsX(SHY),  AbsX(STA), AbsY(SHX), AbsY(SHA),
-    /*A*/ Imm(LDY),  IndX(LDA), Imm(LDX),  IndX(LAX), Zpg(LDY),   Zpg(LDA),  Zpg(LDX),  Zpg(LAX),  Imp(TAY), Imm(LDA),  Imp(TAX), Imm(LXA),  Abs(LDY),   Abs(LDA),  Abs(LDX),  Abs(LAX),
+    /*A*/ Imm(LDY),  IndX(LDA), Imm(LDX),  IndX(LAX), Zpg(LDY),   Zpg(LDA),  Zpg(LDX),  Zpg(LAX),  Imp(TAY), Imm(LDA),  Imp(TAX), Imm(ATX),  Abs(LDY),   Abs(LDA),  Abs(LDX),  Abs(LAX),
     /*B*/ Rel(BCS),  IndY(LDA), Imp(JAM),  IndY(LAX), ZpgX(LDY),  ZpgX(LDA), ZpgY(LDX), ZpgY(LAX), Imp(CLV), AbsY(LDA), Imp(TSX), AbsY(LAS), AbsX(LDY),  AbsX(LDA), AbsY(LDX), AbsY(LAX),
     /*C*/ Imm(CPY),  IndX(CMP), Imm(NOP2), IndX(DCP), Zpg(CPY),   Zpg(CMP),  Zpg(DEC),  Zpg(DCP),  Imp(INY), Imm(CMP),  Imp(DEX), Imm(SBX),  Abs(CPY),   Abs(CMP),  Abs(DEC),  Abs(DCP),
     /*D*/ Rel(BNE),  IndY(CMP), Imp(JAM),  IndY(DCP), ZpgX(NOP2), ZpgX(CMP), ZpgX(DEC), ZpgX(DCP), Imp(CLD), AbsY(CMP), Imp(NOP), AbsY(DCP), AbsX(NOP2), AbsX(CMP), AbsX(DEC), AbsX(DCP),
@@ -124,9 +124,9 @@ public:
   void DecodeExecute();
   void Tick();
   auto Read( u16 address, bool debugMode = false ) const -> u8;
-  auto ReadAndTick( u16 address ) -> u8;
+  auto ReadByte( u16 address ) -> u8;
   void Write( u16 address, u8 data ) const;
-  void WriteAndTick( u16 address, u8 data );
+  void WriteByte( u16 address, u8 data );
 
   void NMI()
   {
@@ -147,13 +147,13 @@ public:
     StackPush( pushedStatus );
 
     // 4) Fetch low byte of NMI vector ($FFFA)
-    u8 const low = ReadAndTick( 0xFFFA );
+    u8 const low = ReadByte( 0xFFFA );
 
     // 5) Set I flag
     SetFlags( InterruptDisable );
 
     // 6) Fetch high byte of NMI vector ($FFFB)
-    u8 const high = ReadAndTick( 0xFFFB );
+    u8 const high = ReadByte( 0xFFFB );
 
     // 7) Update PC
     pc = static_cast<u16>( high ) << 8 | low;
@@ -173,9 +173,9 @@ public:
     StackPush( pc & 0xFF );
     u8 const pushedStatus = ( p & ~Break ) | Unused;
     StackPush( pushedStatus );
-    u8 const low = ReadAndTick( 0xFFFE );
+    u8 const low = ReadByte( 0xFFFE );
     SetFlags( InterruptDisable );
-    u8 const high = ReadAndTick( 0xFFFF );
+    u8 const high = ReadByte( 0xFFFF );
     pc = static_cast<u16>( high ) << 8 | low;
   }
 
@@ -316,7 +316,7 @@ public:
      * @brief It loads a register with a value from memory
      * Used by LDA, LDX, and LDY instructions
      */
-    u8 const value = ReadAndTick( address );
+    u8 const value = ReadByte( address );
     reg = value;
 
     // Set zero and negative flags
@@ -329,7 +329,7 @@ public:
      * @brief It stores a register value in memory
      * Used by STA, STX, and STY instructions
      */
-    WriteAndTick( address, reg );
+    WriteByte( address, reg );
   };
 
   void SetFlags( const u8 flag )
@@ -441,7 +441,7 @@ public:
     if ( instructionName == "*DCP" ) {
       value = Read( address ); // 0 cycles
     } else {
-      value = ReadAndTick( address );
+      value = ReadByte( address );
     }
 
     // Set the zero flag if the values are equal
@@ -462,7 +462,7 @@ public:
      * The stack pointer is decremented and the value is written to the stack
      * Stack addresses are between 0x0100 and 0x01FF
      */
-    WriteAndTick( 0x0100 + s--, value );
+    WriteByte( 0x0100 + s--, value );
   }
 
   u8 StackPop()
@@ -472,7 +472,7 @@ public:
      * The stack pointer is incremented and the value is read from the stack
      * Stack addresses are between 0x0100 and 0x01FF
      */
-    return ReadAndTick( 0x0100 + ++s );
+    return ReadByte( 0x0100 + ++s );
   }
 
   /*
@@ -510,7 +510,7 @@ public:
      * Returns the address from the zero page (0x0000 - 0x00FF).
      * The value of the next byte is the address in the zero page.
      */
-    return ReadAndTick( pc++ ) & 0x00FF;
+    return ReadByte( pc++ ) & 0x00FF;
   }
 
   auto ZPGX() -> u16
@@ -520,7 +520,7 @@ public:
      * Returns the address from the zero page (0x0000 - 0x00FF) + X register
      * The value of the next byte is the address in the zero page.
      */
-    u8 const  zeroPageAddress = ReadAndTick( pc++ );
+    u8 const  zeroPageAddress = ReadByte( pc++ );
     u16 const finalAddress = ( zeroPageAddress + x ) & 0x00FF;
     Tick(); // Account for calculating the final address
     return finalAddress;
@@ -533,7 +533,7 @@ public:
      * Returns the address from the zero page (0x0000 - 0x00FF) + Y register
      * The value of the next byte is the address in the zero page.
      */
-    u8 const zeroPageAddress = ( ReadAndTick( pc++ ) + y ) & 0x00FF;
+    u8 const zeroPageAddress = ( ReadByte( pc++ ) + y ) & 0x00FF;
 
     if ( writeModify ) {
       Tick();
@@ -547,8 +547,8 @@ public:
      * @brief Absolute addressing mode
      * Constructs a 16-bit address from the next two bytes
      */
-    u16 const low = ReadAndTick( pc++ );
-    u16 const high = ReadAndTick( pc++ );
+    u16 const low = ReadByte( pc++ );
+    u16 const high = ReadByte( pc++ );
     return ( high << 8 ) | low;
   }
 
@@ -559,8 +559,8 @@ public:
      * Constructs a 16-bit address from the next two bytes and adds the X register to the final
      * address
      */
-    u16 const low = ReadAndTick( pc++ );
-    u16 const high = ReadAndTick( pc++ );
+    u16 const low = ReadByte( pc++ );
+    u16 const high = ReadByte( pc++ );
     u16 const address = ( high << 8 ) | low;
     u16 const finalAddress = address + x;
 
@@ -584,8 +584,8 @@ public:
      * Constructs a 16-bit address from the next two bytes and adds the Y register to the final
      * address
      */
-    u16 const low = ReadAndTick( pc++ );
-    u16 const high = ReadAndTick( pc++ );
+    u16 const low = ReadByte( pc++ );
+    u16 const high = ReadByte( pc++ );
     u16 const address = ( high << 8 ) | low;
     u16 const finalAddress = address + y;
 
@@ -612,20 +612,20 @@ public:
      * There's a hardware bug that prevents the address from crossing a page boundary
      */
 
-    u16 const ptrLow = ReadAndTick( pc++ );
-    u16 const ptrHigh = ReadAndTick( pc++ );
+    u16 const ptrLow = ReadByte( pc++ );
+    u16 const ptrHigh = ReadByte( pc++ );
     u16 const ptr = ( ptrHigh << 8 ) | ptrLow;
 
-    u8 const addressLow = ReadAndTick( ptr );
+    u8 const addressLow = ReadByte( ptr );
     u8       address_high; // NOLINT
 
     // 6502 Bug: If the pointer address wraps around a page boundary (e.g. 0x01FF),
     // the CPU reads the low byte from 0x01FF and the high byte from the start of
     // the same page (0x0100) instead of the start of the next page (0x0200).
     if ( ptrLow == 0xFF ) {
-      address_high = ReadAndTick( ptr & 0xFF00 );
+      address_high = ReadByte( ptr & 0xFF00 );
     } else {
-      address_high = ReadAndTick( ptr + 1 );
+      address_high = ReadByte( ptr + 1 );
     }
 
     return ( address_high << 8 ) | addressLow;
@@ -639,10 +639,10 @@ public:
      * X register is added to the zero-page address to get the pointer address
      * Final address is the value stored at the POINTER address
      */
-    Tick();                                                              // Account for operand fetch
-    u8 const  zeroPageAddress = ( ReadAndTick( pc++ ) + x ) & 0x00FF;    // 1 cycle
-    u16 const ptrLow = ReadAndTick( zeroPageAddress );                   // 1 cycle
-    u16 const ptrHigh = ReadAndTick( ( zeroPageAddress + 1 ) & 0x00FF ); // 1 cycle
+    Tick();                                                           // Account for operand fetch
+    u8 const  zeroPageAddress = ( ReadByte( pc++ ) + x ) & 0x00FF;    // 1 cycle
+    u16 const ptrLow = ReadByte( zeroPageAddress );                   // 1 cycle
+    u16 const ptrHigh = ReadByte( ( zeroPageAddress + 1 ) & 0x00FF ); // 1 cycle
     return ( ptrHigh << 8 ) | ptrLow;
   }
 
@@ -654,9 +654,9 @@ public:
      * The value stored at the zero-page address is the pointer address
      * The value in the Y register is added to the FINAL address
      */
-    u16 const zeroPageAddress = ReadAndTick( pc++ );
-    u16 const ptrLow = ReadAndTick( zeroPageAddress );
-    u16 const ptrHigh = ReadAndTick( ( zeroPageAddress + 1 ) & 0x00FF );
+    u16 const zeroPageAddress = ReadByte( pc++ );
+    u16 const ptrLow = ReadByte( zeroPageAddress );
+    u16 const ptrHigh = ReadByte( ( zeroPageAddress + 1 ) & 0x00FF );
 
     u16 const address = ( ( ptrHigh << 8 ) | ptrLow ) + y;
 
@@ -680,7 +680,7 @@ public:
      * The next byte is a signed offset
      * Sets the program counter between -128 and +127 bytes from the current location
      */
-    s8 const  offset = static_cast<s8>( ReadAndTick( pc++ ) );
+    s8 const  offset = static_cast<s8>( ReadByte( pc++ ) );
     u16 const address = pc + offset;
     return address;
   }
@@ -853,7 +853,7 @@ public:
     if ( instructionName == "*RRA" ) {
       value = Read( address ); // No cycle spend
     } else {
-      value = ReadAndTick( address );
+      value = ReadByte( address );
     }
 
     // Store the sum in a 16-bit variable to check for overflow
@@ -910,9 +910,9 @@ public:
     if ( instructionName == "*ISC" ) {
       value = Read( address ); // 0 cycles
     } else {
-      value = ReadAndTick( address );
+      value = ReadByte( address );
     }
-    // u8 const value = ReadAndTick( address );
+    // u8 const value = ReadByte( address );
 
     // Store diff in a 16-bit variable to check for overflow
     u8 const  carry = IsFlagSet( Status::Carry ) ? 0 : 1;
@@ -955,11 +955,11 @@ public:
      * INC Absolute: EE(6)
      * INC Absolute X: FE(7)
      */
-    u8 const value = ReadAndTick( address );
+    u8 const value = ReadByte( address );
     Tick(); // Dummy write
     u8 const result = value + 1;
     SetZeroAndNegativeFlags( result );
-    WriteAndTick( address, result );
+    WriteByte( address, result );
   }
 
   void INX( u16 address )
@@ -1002,11 +1002,11 @@ public:
      * DEC Absolute: CE(6)
      * DEC Absolute X: DE(7)
      */
-    u8 const value = ReadAndTick( address );
+    u8 const value = ReadByte( address );
     Tick(); // Dummy write
     u8 const result = value - 1;
     SetZeroAndNegativeFlags( result );
-    WriteAndTick( address, result );
+    WriteByte( address, result );
   }
 
   void DEX( u16 address )
@@ -1265,7 +1265,7 @@ public:
     const u8 stackPointer = GetStackPointer();
 
     // Push the accumulator onto the stack
-    WriteAndTick( 0x0100 + stackPointer, GetAccumulator() );
+    WriteByte( 0x0100 + stackPointer, GetAccumulator() );
 
     // Decrement the stack pointer
     SetStackPointer( stackPointer - 1 );
@@ -1289,7 +1289,7 @@ public:
     status |= Break;
 
     // Push the modified status register onto the stack
-    WriteAndTick( 0x0100 + stackPointer, status );
+    WriteByte( 0x0100 + stackPointer, status );
 
     SetStackPointer( stackPointer - 1 );
   }
@@ -1308,7 +1308,7 @@ public:
     SetStackPointer( GetStackPointer() + 1 );
 
     // Get the accumulator from the stack and set the zero and negative flags
-    SetAccumulator( ReadAndTick( 0x100 + GetStackPointer() ) );
+    SetAccumulator( ReadByte( 0x100 + GetStackPointer() ) );
     Tick(); // Dummy read
     SetZeroAndNegativeFlags( a );
   }
@@ -1326,7 +1326,7 @@ public:
     // Increment the stack pointer first
     SetStackPointer( GetStackPointer() + 1 );
 
-    SetStatusRegister( ReadAndTick( 0x100 + GetStackPointer() ) );
+    SetStatusRegister( ReadByte( 0x100 + GetStackPointer() ) );
     ClearFlags( Status::Break );
     Tick(); // Dummy read
     SetFlags( Status::Unused );
@@ -1384,7 +1384,7 @@ public:
       // Set the new accumulator value
       SetAccumulator( accumulator );
     } else {
-      u8 const value = ReadAndTick( address );
+      u8 const value = ReadByte( address );
 
       Tick(); // simulate dummy write
 
@@ -1397,7 +1397,7 @@ public:
       SetZeroAndNegativeFlags( result );
 
       // Write the result back to memory
-      WriteAndTick( address, result );
+      WriteByte( address, result );
     }
   }
 
@@ -1428,7 +1428,7 @@ public:
       // Set the new accumulator value
       SetAccumulator( accumulator );
     } else {
-      u8 const value = ReadAndTick( address );
+      u8 const value = ReadByte( address );
       Tick(); // simulate dummy write
 
       // Set the carry flag if bit 0 is set
@@ -1440,7 +1440,7 @@ public:
       SetZeroAndNegativeFlags( result );
 
       // Write the result back to memory
-      WriteAndTick( address, result );
+      WriteByte( address, result );
     }
   }
 
@@ -1476,7 +1476,7 @@ public:
       // Set the new accumulator value
       SetAccumulator( accumulator );
     } else {
-      u8 const value = ReadAndTick( address );
+      u8 const value = ReadByte( address );
       Tick(); // dummy write
 
       // Set the carry flag if bit 7 is set
@@ -1489,7 +1489,7 @@ public:
       SetZeroAndNegativeFlags( result );
 
       // Write the result back to memory
-      WriteAndTick( address, result );
+      WriteByte( address, result );
     }
   }
 
@@ -1526,7 +1526,7 @@ public:
       // Set the new accumulator value
       SetAccumulator( accumulator );
     } else { // Memory mode
-      u8 const value = ReadAndTick( address );
+      u8 const value = ReadByte( address );
       Tick(); // simulate dummy write
 
       // Set the carry flag if bit 0 is set
@@ -1539,7 +1539,7 @@ public:
       SetZeroAndNegativeFlags( result );
 
       // Write the result back to memory
-      WriteAndTick( address, result );
+      WriteByte( address, result );
     }
   }
 
@@ -1630,8 +1630,8 @@ public:
     StackPush( p | Break | Unused );
 
     // Set PC to the value at the interrupt vector (0xFFFE)
-    u16 const low = ReadAndTick( 0xFFFE );
-    u16 const high = ReadAndTick( 0xFFFF );
+    u16 const low = ReadByte( 0xFFFE );
+    u16 const high = ReadByte( 0xFFFF );
     pc = ( high << 8 ) | low;
 
     // Set the interrupt disable flag
@@ -1653,7 +1653,7 @@ public:
      *   AND Indirect X: 21(6)
      *   AND Indirect Y: 31(5+)
      */
-    u8 const value = ReadAndTick( address );
+    u8 const value = ReadByte( address );
     a &= value;
     SetZeroAndNegativeFlags( a );
   }
@@ -1674,7 +1674,7 @@ public:
      *   ORA Indirect Y: 11(5+)
      */
 
-    u8 const value = ReadAndTick( address ); // 1 cycle
+    u8 const value = ReadByte( address ); // 1 cycle
     a |= value;
     SetZeroAndNegativeFlags( a );
   }
@@ -1694,7 +1694,7 @@ public:
      *   EOR Indirect X: 41(6)
      *   EOR Indirect Y: 51(5+)
      */
-    u8 const value = ReadAndTick( address );
+    u8 const value = ReadByte( address );
     a ^= value;
     SetZeroAndNegativeFlags( a );
   }
@@ -1710,7 +1710,7 @@ public:
      *   BIT Absolute: 2C(4)
      */
 
-    u8 const value = ReadAndTick( address );
+    u8 const value = ReadByte( address );
     SetZeroAndNegativeFlags( a & value );
 
     // Set overflow flag to bit 6 of value
@@ -1857,7 +1857,7 @@ public:
      *   SAX Indirect X: 83(6)
      *   SAX Absolute: 8F(4)
      */
-    WriteAndTick( address, a & x );
+    WriteByte( address, a & x );
   }
 
   void LXA( const u16 address )
@@ -1866,15 +1866,24 @@ public:
      * N Z C I D V
      * + + - - - -
      *   Usage and cycles:
-     *   LXA Immediate: AB(2)
+     *   ATX Immediate: AB(2)
      */
 
     u8 const magicConstant = 0xEE;
-    u8 const value = ReadAndTick( address );
+    u8 const value = ReadByte( address );
 
     u8 const result = ( ( a | magicConstant ) & value );
     a = result;
     x = result;
+    SetZeroAndNegativeFlags( a );
+  }
+
+  void ATX( const u16 address )
+  {
+    // LDA & TAX
+    u8 value = ReadByte( address );
+    x = value;
+    a = value;
     SetZeroAndNegativeFlags( a );
   }
 
@@ -1891,7 +1900,7 @@ public:
      *   LAX Indirect X: A3(6)
      *   LAX Indirect Y: B3(5+)
      */
-    u8 const value = ReadAndTick( address );
+    u8 const value = ReadByte( address );
     SetAccumulator( value );
     SetXRegister( value );
     SetZeroAndNegativeFlags( value );
@@ -1907,7 +1916,7 @@ public:
      */
 
     // A & operand
-    u8 value = a & ReadAndTick( address );
+    u8 value = a & ReadByte( address );
 
     // ROR
     u8 const carryIn = IsFlagSet( Status::Carry ) ? 0x80 : 0x00;
@@ -2066,7 +2075,7 @@ public:
      * Usage and cycles:
      *   SBX Immediate: CB (2 bytes, 2 cycles)
      */
-    u8 const  operand = ReadAndTick( address );
+    u8 const  operand = ReadByte( address );
     u8 const  left = ( a & x );
     u16 const diff = static_cast<u16>( left ) - static_cast<u16>( operand );
     x = static_cast<u8>( diff & 0xFF );
@@ -2084,7 +2093,7 @@ public:
      *   Usage and cycles:
      *   LAS Absolute Y: BB(4+)
      */
-    u8 const memVal = ReadAndTick( address );
+    u8 const memVal = ReadByte( address );
     u8 const sp = GetStackPointer();
     u8 const result = memVal & sp;
 
@@ -2114,7 +2123,7 @@ public:
       Usage and cycles:
       * ANE Immediate: 8B(2)
     */
-    u8 const operand = ReadAndTick( address );
+    u8 const operand = ReadByte( address );
     u8 const constant = 0xEE;
 
     // Compute: (A OR constant) AND X AND operand.
@@ -2128,7 +2137,7 @@ public:
   {
     bool pageCrossed = ( ( baseAddr & 0xFF00 ) != ( ( baseAddr + indexReg ) & 0xFF00 ) );
     auto cyc = cycles;
-    ReadAndTick( baseAddr + indexReg - ( pageCrossed ? 0x100 : 0 ) );
+    ReadByte( baseAddr + indexReg - ( pageCrossed ? 0x100 : 0 ) );
     bool     hadDma = ( cycles - cyc ) > 1;
     uint16_t operand = baseAddr + indexReg;
     uint8_t  addrLow = uint8_t( operand & 0xFF );
@@ -2138,7 +2147,7 @@ public:
     }
     uint8_t toStore = hadDma ? valueReg : uint8_t( valueReg & uint8_t( ( baseAddr >> 8 ) + 1 ) );
 
-    WriteAndTick( uint16_t( addrHigh ) << 8 | addrLow, toStore );
+    WriteByte( uint16_t( addrHigh ) << 8 | addrLow, toStore );
   }
 
   void SHY( u16 address )
