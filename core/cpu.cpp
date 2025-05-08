@@ -189,7 +189,15 @@ auto CPU::WriteAndTick( u16 address, u8 data ) -> void
   }
   Write( address, data );
 }
-
+void CPU::TriggerIRQ() {
+  irqRequested = true;
+}
+bool CPU::IsIRQPending() const {
+  return irqRequested;
+}
+void CPU::ClearIRQ() {
+  irqRequested = false;
+}
 u8 CPU::Fetch()
 {
 
@@ -201,6 +209,10 @@ u8 CPU::Fetch()
 
 void CPU::Tick()
 {
+  if (irqRequested && !(p & InterruptDisable)) {
+    IsIRQPending();//IRQ placeholder todo
+    irqRequested = false;
+  }
   // Increment the cycle count
   cycles++;
   bus->ppu.Tick();

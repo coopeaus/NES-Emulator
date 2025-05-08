@@ -127,6 +127,10 @@ public:
   auto ReadAndTick( u16 address ) -> u8;
   void Write( u16 address, u8 data ) const;
   void WriteAndTick( u16 address, u8 data );
+  void TriggerIRQ();
+  bool IsIRQPending() const;
+  void ClearIRQ();
+  bool irqRequested = false;
 
   void NMI()
   {

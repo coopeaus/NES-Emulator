@@ -1,7 +1,8 @@
 #pragma once
 #include "cartridge-header.h"
 #include "global-types.h"
-
+//#include "bus.h"
+class Bus;
 enum class MirrorMode : u8 { Horizontal, Vertical, SingleLower, SingleUpper, FourScreen };
 
 class Mapper
@@ -18,7 +19,11 @@ public:
   iNes2Instance iNes;
   Mapper( iNes2Instance iNesHeader ) : iNes( iNesHeader ) {}
 
-  // Delete the copy constructor
+  //Mapper 4 temporary todo
+  virtual void SetBus(Bus* busPtr) { bus = busPtr; }
+  [[nodiscard]] virtual bool HasScanlineIRQ() const { return false; }
+  virtual void ClockIRQ(){}
+  virtual void TickScanlineCounter(uint16_t ppuAddress) {}
   // Prevents creating a new Mapper by copying an existing one
   Mapper( const Mapper & ) = delete;
 
@@ -53,5 +58,7 @@ public:
 
   [[nodiscard]] virtual MirrorMode GetMirrorMode() = 0;
 
+protected:
+  Bus* bus = nullptr; //evaluate
 private:
 };

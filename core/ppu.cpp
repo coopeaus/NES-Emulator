@@ -6,6 +6,7 @@
 #include <exception>
 #include <array>
 #include <iostream>
+class mapper;
 
 PPU::PPU( Bus *bus ) : bus( bus )
 {
@@ -271,7 +272,10 @@ void PPU::CpuWrite( u16 address, u8 data )
 
   // $0000-$1FFF: Pattern Tables
   if ( address >= 0x0000 && address <= 0x1FFF ) {
-    /* Pattern table data is read from the cartridge */
+    auto mapper = bus->cartridge.GetMapper();
+      if (mapper && mapper->HasScanlineIRQ() && scanline < 240 && cycle >= 1)   {
+        mapper->TickScanlineCounter(address);
+    }
     return bus->cartridge.Read( address );
   }
 

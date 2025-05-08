@@ -17,9 +17,9 @@
 #include "mappers/mapper0.h"
 #include "mappers/mapper1.h"
 #include "mappers/mapper3.h"
+#include "mappers/mapper4.h"
 #include "utils.h"
-
-Cartridge::Cartridge( Bus *bus ) : bus( bus )
+Cartridge::Cartridge( Bus *bus ) : iNes(), bus( bus )
 {
 }
 
@@ -159,6 +159,10 @@ void Cartridge::LoadRom( const std::string &filePath )
     case 3:
       _mapper = std::make_shared<Mapper3>( iNes );
       break;
+    case 4:
+      _mapper = std::make_shared<Mapper4>( iNes );
+    _mapper->SetBus(bus);  //for signal from IRQ to CPU
+    break;
     default:
       throw std::runtime_error( "Unsupported mapper: " + std::to_string( mapperNumber ) );
   };
@@ -169,7 +173,22 @@ void Cartridge::LoadRom( const std::string &filePath )
 
   romFile.close();
 }
+//todo: connect true 8 Kib chrRam
+uint8_t Cartridge::ReadCHR(uint32_t addr) const {
+  if (!_chrRAM.empty() && addr < _chrRAM.size()) {
+    return _chrRAM[addr];
+  }
+  if (!_chrRom.empty() && addr < _chrRom.size()) {
+    return _chrRom[addr];
+  }
+  return 0xFF;
+}
 
+void Cartridge::WriteCHR(uint32_t addr, uint8_t data) {
+  if (!_chrRAM.empty() && addr < _chrRAM.size()) {
+    _chrRAM[addr] = data;
+  }
+}
 /*
 ################################
 ||                            ||

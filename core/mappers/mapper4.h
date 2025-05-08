@@ -3,42 +3,65 @@
 #include "global-types.h"
 #include "mapper-base.h"
 
-/**
- * Mapper 4 NesDev(MMC) implementation
- */
-class Mapper4 : public Mapper
-{
+class Mapper4 : public Mapper {
 public:
   Mapper4(uint8_t prgBanks, uint8_t chrBanks);
+  Mapper4( iNes2Instance iNesHeader );
+  uint16_t MapReadPRG(uint16_t addr) ;
+  bool MapWritePRG(uint16_t addr, uint8_t data) ;
 
-  //TODO: Memory mapping
-  uint16_t MapReadPRG(uint16_t addr);// override;
-  uint16_t MapReadCHR(uint16_t addr);// override;
+  uint16_t MapReadCHR(uint16_t address) ;
+  bool MapWriteCHR(uint16_t addr, uint8_t data) ;
 
-  bool MapWritePRG(uint16_t addr, uint8_t data);// override;
-  bool MapWriteCHR(uint16_t addr, uint8_t data);// override;
+  void TickScanlineCounter(uint16_t ppuAddr) override;
+  void ClockIRQ() override;
+  void Reset();
 
-  //TODO: Clocking and Interupt
+  bool HasScanlineIRQ() const override { return true; }
 
-  //TODO:save/load
+  /*
+################################
+||        Mapper Methods      ||
+################################
+*/
+  u32  TranslateCPUAddress( u16 address ) override;
+  u32  TranslatePPUAddress( u16 address ) override;
+  void HandleCPUWrite( u16 address, u8 data ) override;
+
+  [[nodiscard]] bool       SupportsPrgRam() override { return false; }
+  [[nodiscard]] bool HasExpansionRom() override;
+  [[nodiscard]] MirrorMode GetMirrorMode() override;
+  [[nodiscard]] bool       HasExpansionRam() override { return false; }
+
+
 
 private:
-  //TODO:bank registers
-  uint8_t prgBankSelect[4]{};
-  uint8_t chrBankSelect[6]{};
-  uint8_t bankMode = 0;
-  uint8_t prgMode = 0;
-  uint8_t chrInversion = 0;
 
-  //TODO: Add Interupt request
+  /*
+################################
+||        Bank & IRQ logic    ||
+################################
+*/
+  void UpdateBanks();
+  void UpdateIRQ();
+
+  uint8_t bankSelect = 0;
+  uint8_t bankRegisters[8] = {};
+  bool prgMode = false;
+  bool chrMode = false;
+  bool IsIRQPending() const;
+
+  bool chrInversion = false;
+
   uint8_t irqLatch = 0;
   uint8_t irqCounter = 0;
+  bool irqReload = false;
+  bool irqEnable = false;
+  bool prevA12 = false;
 
-  //TODO:internal state for bank switching logic
-  uint8_t bankRegister = 0;
-  uint8_t lastWrite = 0;
+  u8 prgBanks[4] = {};  //8KB PRG banks
+  u8 chrBanks[8] = {};  //1KB CHR banks
 
-  //TODO: methods for bank switching
-  void PRGBankUpdate();
-  void CHRBankUpdate();
+  // Mirroring
+  MirrorMode mirror = MirrorMode::Horizontal;
 };

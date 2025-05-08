@@ -56,7 +56,6 @@ public:
   void WriteExpansionRAM( u16 address, u8 data ); // 0x4020 - 0x5FFF: CPU
   void WritePrgRAM( u16 address, u8 data );       // 0x6000 - 0x7FFF: CPU
   void WritePrgROM( u16 address, u8 data );       // 0x8000 - 0xFFFF: CPU
-
   /*
   ################################
   ||      Cartridge Methods     ||
@@ -78,6 +77,13 @@ public:
   bool DoesMapperExist() const { return _mapper != nullptr; }
   void SetChrROM( u16 address, u8 data ) { _chrRom.at( address ) = data; }
   void SetMirrorMode( MirrorMode mode ) { _mirrorMode = mode; }
+
+  //temporary todo
+  bool HasChrRAM() const { return !_chrRam.empty(); }
+  std::shared_ptr<Mapper>& GetMapper() { return _mapper; }
+  std::shared_ptr<Mapper>& mapper() { return _mapper; }
+  void WriteCHR(uint32_t addr, uint8_t data); //debug
+  uint8_t ReadCHR(uint32_t addr) const;
   /*
   ################################
   ||       Debug Variables      ||
@@ -100,6 +106,7 @@ private:
   ||      Memory Variables      ||
   ################################
   */
+  std::vector<uint8_t> _chrRAM; //TEMPORARY, connect later todo
 
   /* PRG ROM
     Program Read-Only Memory, stores the game's code
@@ -146,7 +153,6 @@ private:
   // Some cartridges provided 2Kib extra which allowed for four unique
   // nametables without mirroring. Nametables are documented in the PPU class.
   // array<u8, 2048> _cartridgeVram{}; // For simplicity, I've defined all nametables in the PPU class.
-
   /*
   ################################
   ||      Private Variables     ||
