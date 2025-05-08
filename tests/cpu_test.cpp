@@ -316,6 +316,10 @@ CPU_TEST( FD, SBC, AbsoluteX, "fd.json" );
 CPU_TEST( FE, INC, AbsoluteX, "fe.json" );
 CPU_TEST( F8, SED, Implied, "f8.json" );
 CPU_TEST( 9F, SHA, AbsoluteY, "9f.json" );
+CPU_TEST( 9C, SHY, AbsoluteX, "9c.json" );
+CPU_TEST( 9E, SHX, AbsoluteY, "9e.json" );
+CPU_TEST( 93, SHA, IndirectY, "93.json" );
+CPU_TEST( 9B, TAS, AbsoluteY, "9b.json" );
 
 /*
 ################################

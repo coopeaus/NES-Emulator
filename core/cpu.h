@@ -46,7 +46,7 @@ public:
     /*6*/ Imp(RTS),  IndX(ADC), Imp(JAM),  IndX(RRA), Zpg(NOP2),  Zpg(ADC),  Zpg(ROR),  Zpg(RRA),  Imp(PLA), Imm(ADC),  Imp(ROR), Imm(ARR),  Ind(JMP),   Abs(ADC),  Abs(ROR),  Abs(RRA),
     /*7*/ Rel(BVS),  IndY(ADC), Imp(JAM),  IndY(RRA), ZpgX(NOP2), ZpgX(ADC), ZpgX(ROR), ZpgX(RRA), Imp(SEI), AbsY(ADC), Imp(NOP), AbsY(RRA), AbsX(NOP2), AbsX(ADC), AbsX(ROR), AbsX(RRA),
     /*8*/ Imm(NOP2), IndX(STA), Imm(NOP2), IndX(SAX), Zpg(STY),   Zpg(STA),  Zpg(STX),  Zpg(SAX),  Imp(DEY), Imm(NOP2), Imp(TXA), Imm(ANE), Abs(STY),   Abs(STA),  Abs(STX),  Abs(SAX),
-    /*9*/ Rel(BCC),  IndY(STA), Imp(JAM),  IndY(XXX), ZpgX(STY),  ZpgX(STA), ZpgY(STX), ZpgY(SAX), Imp(TYA), AbsY(STA), Imp(TXS), AbsY(XXX), AbsX(XXX),  AbsX(STA), AbsY(XXX), AbsY(SHA),
+    /*9*/ Rel(BCC),  IndY(STA), Imp(JAM),  IndY(SHA), ZpgX(STY),  ZpgX(STA), ZpgY(STX), ZpgY(SAX), Imp(TYA), AbsY(STA), Imp(TXS), AbsY(TAS), AbsX(SHY),  AbsX(STA), AbsY(SHX), AbsY(SHA),
     /*A*/ Imm(LDY),  IndX(LDA), Imm(LDX),  IndX(LAX), Zpg(LDY),   Zpg(LDA),  Zpg(LDX),  Zpg(LAX),  Imp(TAY), Imm(LDA),  Imp(TAX), Imm(LXA),  Abs(LDY),   Abs(LDA),  Abs(LDX),  Abs(LAX),
     /*B*/ Rel(BCS),  IndY(LDA), Imp(JAM),  IndY(LAX), ZpgX(LDY),  ZpgX(LDA), ZpgY(LDX), ZpgY(LAX), Imp(CLV), AbsY(LDA), Imp(TSX), AbsY(LAS), AbsX(LDY),  AbsX(LDA), AbsY(LDX), AbsY(LAX),
     /*C*/ Imm(CPY),  IndX(CMP), Imm(NOP2), IndX(DCP), Zpg(CPY),   Zpg(CMP),  Zpg(DEC),  Zpg(DCP),  Imp(INY), Imm(CMP),  Imp(DEX), Imm(SBX),  Abs(CPY),   Abs(CMP),  Abs(DEC),  Abs(DCP),
@@ -2124,46 +2124,51 @@ public:
     SetZeroAndNegativeFlags( a );
   }
 
-  /*
-    Stores A AND X AND (high-byte of addr. + 1) at addr.
+  void SyaSxaAxa( uint16_t baseAddr, uint8_t indexReg, uint8_t valueReg )
+  {
+    bool pageCrossed = ( ( baseAddr & 0xFF00 ) != ( ( baseAddr + indexReg ) & 0xFF00 ) );
+    auto cyc = cycles;
+    ReadAndTick( baseAddr + indexReg - ( pageCrossed ? 0x100 : 0 ) );
+    bool     hadDma = ( cycles - cyc ) > 1;
+    uint16_t operand = baseAddr + indexReg;
+    uint8_t  addrLow = uint8_t( operand & 0xFF );
+    uint8_t  addrHigh = uint8_t( operand >> 8 );
+    if ( pageCrossed ) {
+      addrHigh &= valueReg;
+    }
+    uint8_t toStore = hadDma ? valueReg : uint8_t( valueReg & uint8_t( ( baseAddr >> 8 ) + 1 ) );
 
-    unstable: sometimes 'AND (H+1)' is dropped, page boundary crossings may not
-    work (with the high-byte of the value used as the high-byte of the address)
+    WriteAndTick( uint16_t( addrHigh ) << 8 | addrLow, toStore );
+  }
 
-    A AND X AND (H+1) -> M
-   */
+  void SHY( u16 address )
+  {
+    u8  indexReg = x;
+    u8  valueReg = y;
+    u16 baseAddr = address - indexReg;
+    SyaSxaAxa( baseAddr, indexReg, valueReg );
+  }
+
+  void SHX( u16 address )
+  {
+    u8  indexReg = y;
+    u8  valueReg = x;
+    u16 baseAddr = address - indexReg;
+    SyaSxaAxa( baseAddr, indexReg, valueReg );
+  }
 
   void SHA( const u16 address )
   {
-    // A AND X
-    u8 valueReg = x & a;
-    // index for ABS,Y or (IND),Y is Y
-    u8 indexReg = y;
-    // recover base address (before adding Y)
+    u8  valueReg = x & a;
+    u8  indexReg = y;
     u16 baseAddr = address - indexReg;
+    SyaSxaAxa( baseAddr, indexReg, valueReg );
+  }
 
-    // detect page crossing for dummy read
-    bool pageCrossed = ( ( baseAddr & 0xFF00 ) != ( ( baseAddr + indexReg ) & 0xFF00 ) );
-
-    // perform the dummy read and measure DMA interference
-    auto startCycles = cycles;
-    ReadAndTick( baseAddr + indexReg - ( pageCrossed ? 0x100 : 0 ) );
-    bool hadDma = ( cycles - startCycles ) > 1;
-
-    // compute final write address
-    u16 operand = baseAddr + indexReg;
-    u8  addrLow = operand & 0xFF;
-    u8  addrHigh = operand >> 8;
-    if ( pageCrossed ) {
-      // mask high byte by (A&X) on page‐cross
-      addrHigh &= valueReg;
-    }
-
-    // compute value to store: (H+1)&A&X, unless DMA stripped that
-    u8 toStore = hadDma ? valueReg : u8( valueReg & ( ( baseAddr >> 8 ) + 1 ) );
-
-    // write it back
-    WriteAndTick( ( u16( addrHigh ) << 8 ) | addrLow, toStore );
+  void TAS( const u16 address )
+  {
+    SHA( address );
+    SetStackPointer( a & x );
   }
 
   void XXX( const u16 address ) // NOLINT
