@@ -11,6 +11,7 @@
 
 #include "global-types.h"
 #include "utils.h"
+#include "paths.h"
 
 // Mappers
 #include "mappers/mapper-base.h"
@@ -18,6 +19,9 @@
 #include "mappers/mapper1.h"
 #include "mappers/mapper2.h"
 #include "mappers/mapper3.h"
+#include "mappers/mapper4.h"
+
+using utils::between;
 
 Cartridge::Cartridge( Bus *bus ) : bus( bus )
 {
@@ -132,6 +136,7 @@ void Cartridge::LoadRom( const std::string &filePath )
     case 1 : _mapper = std::make_shared<Mapper1>( iNes ); break;
     case 2 : _mapper = std::make_shared<Mapper2>( iNes ); break;
     case 3 : _mapper = std::make_shared<Mapper3>( iNes ); break;
+    case 4 : _mapper = std::make_shared<Mapper4>( iNes ); break;
     default: throw std::runtime_error( "Unsupported mapper: " + std::to_string( mapperNumber ) );
   };
 
@@ -140,6 +145,8 @@ void Cartridge::LoadRom( const std::string &filePath )
   }
 
   romFile.close();
+
+  LoadBatteryRam();
 }
 
 /*
@@ -149,52 +156,52 @@ void Cartridge::LoadRom( const std::string &filePath )
 ||                            ||
 ################################
 */
-[[nodiscard]] u8 Cartridge::Read( u16 address )
+[[nodiscard]] u8 Cartridge::Read( u16 addr )
 {
   /** @brief Reads from the cartridge
    * This function is called by the CPU and PPU to read data from the cartridge
    */
 
   // From the PPU
-  if ( address >= 0x0000 && address <= 0x1FFF ) {
-    return ReadChrROM( address );
+  if ( between( addr, 0x0000, 0x1FFF ) ) {
+    return ReadChrROM( addr );
   }
 
   // From the CPU
-  if ( address >= 0x4020 && address <= 0x5FFF ) {
-    return ReadExpansionROM( address );
+  if ( between( addr, 0x4020, 0x5FFF ) ) {
+    return ReadExpansionROM( addr );
   }
-  if ( address >= 0x6000 && address <= 0x7FFF ) {
-    return ReadPrgRAM( address );
+  if ( between( addr, 0x6000, 0x7FFF ) ) {
+    return ReadPrgRAM( addr );
   }
-  if ( address >= 0x8000 && address <= 0xFFFF ) {
-    return ReadPrgROM( address );
+  if ( between( addr, 0x8000, 0xFFFF ) ) {
+    return ReadPrgROM( addr );
   }
   return 0xFF;
 }
 
-void Cartridge::Write( u16 address, u8 data )
+void Cartridge::Write( u16 addr, u8 data )
 {
   /** @brief Writes to the cartridge
    * This function is called by the CPU and PPU to write data to the cartridge
    */
   // From the PPU
-  if ( address >= 0x0000 && address <= 0x1FFF ) {
-    WriteChrRAM( address, data );
+  if ( between( addr, 0x0000, 0x1FFF ) ) {
+    WriteChrRAM( addr, data );
     return;
   }
 
   // From the CPU
-  if ( address >= 0x4020 && address <= 0x5FFF ) {
-    WriteExpansionRAM( address, data );
+  if ( between( addr, 0x4020, 0x5FFF ) ) {
+    WriteExpansionRAM( addr, data );
     return;
   }
-  if ( address >= 0x6000 && address <= 0x7FFF ) {
-    WritePrgRAM( address, data );
+  if ( between( addr, 0x6000, 0x7FFF ) ) {
+    WritePrgRAM( addr, data );
     return;
   }
-  if ( address >= 0x8000 && address <= 0xFFFF ) {
-    WritePrgROM( address, data );
+  if ( between( addr, 0x8000, 0xFFFF ) ) {
+    WritePrgROM( addr, data );
     return;
   }
 }
@@ -207,43 +214,43 @@ void Cartridge::Write( u16 address, u8 data )
 ################################
 */
 
-[[nodiscard]] u8 Cartridge::ReadPrgROM( u16 address )
+[[nodiscard]] u8 Cartridge::ReadPrgROM( u16 addr )
 {
   /** @brief Reads from the PRG ROM, ranges from 0x8000 to 0xFFFF
    * PRG ROM is the program ROM, which contains the game code
    */
-  if ( address >= 0x8000 && address <= 0xFFFF ) {
+  if ( between( addr, 0x8000, 0xFFFF ) ) {
     if ( _mapper == nullptr ) {
       fmt::print( "Cartridge:ReadPrgROM:Mapper is null. Rom file was likely not loaded.\n" );
-      return _prgRom.at( address & 0x3FFF );
+      return _prgRom.at( addr & 0x3FFF );
     }
-    u32 const prgOffset = _mapper->MapPrgOffset( address );
+    u32 const prgOffset = _mapper->MapCpuAddr( addr );
     return _prgRom.at( prgOffset );
   }
   return 0xFF;
 }
 
-[[nodiscard]] u8 Cartridge::ReadChrROM( u16 address )
+[[nodiscard]] u8 Cartridge::ReadChrROM( u16 addr )
 {
   /** @brief Reads from the CHR ROM, ranges from 0x0000 to 0x1FFF
    * CHR ROM is the character ROM, which contains the graphics data for the PPU
    */
-  if ( address > 0x1FFF )
+  if ( addr > 0x1FFF )
     return 0xFF;
 
   if ( _mapper == nullptr ) {
     fmt::print( "Cartridge:ReadChrROM:Mapper is null. Rom file was likely not loaded.\n" );
-    return _chrRom.at( address & 0x1FFF );
+    return _chrRom.at( addr & 0x1FFF );
   }
 
-  u32 const chrOffset = _mapper->MapChrOffset( address );
+  u32 const chrOffset = _mapper->MapPpuAddr( addr );
   if ( _usesChrRam ) {
     return _chrRam.at( chrOffset );
   }
   return _chrRom.at( chrOffset );
 }
 
-[[nodiscard]] u8 Cartridge::ReadPrgRAM( u16 address )
+[[nodiscard]] u8 Cartridge::ReadPrgRAM( u16 addr )
 {
   /** @brief Reads from the PRG RAM, ranges from 0x6000 to 0x7FFF
    * This is usually used for save data, but any game that uses PRG RAM
@@ -253,26 +260,26 @@ void Cartridge::Write( u16 address, u8 data )
    */
   if ( _mapper == nullptr ) {
     fmt::print( "Cartridge:ReadPrgRAM:Mapper is null. Rom file was likely not loaded.\n" );
-    return _prgRam.at( address - 0x6000 );
+    return _prgRam.at( addr - 0x6000 );
   }
-  if ( address >= 0x6000 && address <= 0x7FFF && _mapper->SupportsPrgRam() ) {
-    return _prgRam.at( address - 0x6000 );
+  if ( between( addr, 0x6000, 0x7FFF ) && _mapper->SupportsPrgRam() ) {
+    return _prgRam.at( addr & 0x1FFF );
   }
   return 0xFF;
 }
 
-[[nodiscard]] u8 Cartridge::ReadExpansionROM( u16 address )
+[[nodiscard]] u8 Cartridge::ReadExpansionROM( u16 addr )
 {
   /** @brief Reads from the expansion ROM, ranges from 0x4020 to 0x5FFF
    * Expansion ROM is rarely used, but when it is, it's used for additional program data
    */
   if ( _mapper == nullptr ) {
     fmt::print( "Cartridge:ReadExpansionROM:Mapper is null. Rom file was likely not loaded.\n" );
-    return _expansionMemory.at( address - 0x4020 );
+    return _expansionMemory.at( addr - 0x4020 );
   }
 
-  if ( address >= 0x4020 && address <= 0x5FFF && _mapper->HasExpansionRom() ) {
-    return _expansionMemory.at( address - 0x4020 );
+  if ( between( addr, 0x4020, 0x5FFF ) && _mapper->HasExpansionRam() ) {
+    return _expansionMemory.at( addr - 0x4020 );
   }
   return 0xFF;
 }
@@ -284,7 +291,7 @@ void Cartridge::Write( u16 address, u8 data )
 ||                            ||
 ################################
 */
-void Cartridge::WritePrgROM( u16 address, u8 data )
+void Cartridge::WritePrgROM( u16 addr, u8 data )
 {
   /** @brief Writes to the PRG ROM, ranges from 0x8000 to 0xFFFF
    * PRG ROM is ready-only. However, many mappers use writes to the ROM
@@ -295,14 +302,16 @@ void Cartridge::WritePrgROM( u16 address, u8 data )
     return;
   }
 
-  if ( address >= 0x8000 && address <= 0xFFFF ) {
-    _mapper->HandleCPUWrite( address, data );
+  if ( between( addr, 0x8000, 0xFFFF ) ) {
+    _mapper->HandleCPUWrite( addr, data );
+  } else {
+    fmt::print( "Cartridge:WritePrgROM:Address out of range.\n" );
   }
 }
 
-void Cartridge::WriteChrRAM( u16 address, u8 data )
+void Cartridge::WriteChrRAM( u16 addr, u8 data )
 {
-  /** @brief Writes to the CHR memory (used for graphics), mapped to the PPU address space
+  /** @brief Writes to the CHR memory (used for graphics), mapped to the PPU addr space
    *
    * CHR RAM resides in the cartridge and is used by the PPU for graphics
    * This function is called by the PPU, not the CPU, to write data to CHR-RAM when the game
@@ -312,7 +321,7 @@ void Cartridge::WriteChrRAM( u16 address, u8 data )
    * $2007), and the PPU will call this method.
    *
    * Address Translation:
-   * - PPU provdes an address in its memory space ($0000 - $1FFF)
+   * - PPU provdes an addr in its memory space ($0000 - $1FFF)
    * - The assigned mapper handles the translation, and writes to the CHR-RAM array
    *
    * Write Logic:
@@ -322,17 +331,17 @@ void Cartridge::WriteChrRAM( u16 address, u8 data )
    * - Byte 5 provides the number of CHR-ROM banks. If 0, then that's a signal that a game
    * uses CHR RAM
    */
-  if ( _usesChrRam && address >= 0x0000 && address <= 0x1FFF ) {
+  if ( between( addr, 0x0000, 0x1FFF ) && _usesChrRam ) {
     if ( _mapper == nullptr ) {
       fmt::print( "Cartridge:WriteChrRAM:Mapper is null. Rom file was likely not loaded.\n" );
       return;
     }
-    u16 const translatedAddress = _mapper->MapChrOffset( address );
+    u16 const translatedAddress = _mapper->MapPpuAddr( addr );
     _chrRam.at( translatedAddress & 0x1FFF ) = data;
   }
 }
 
-void Cartridge::WritePrgRAM( u16 address, u8 data )
+void Cartridge::WritePrgRAM( u16 addr, u8 data )
 {
   /** @brief Writes to the PRG RAM, ranges from 0x6000 to 0x7FFF
    * This is usually used for save data, but any game that uses PRG RAM can use this
@@ -345,13 +354,12 @@ void Cartridge::WritePrgRAM( u16 address, u8 data )
     return;
   }
 
-  if ( address >= 0x6000 && address <= 0x7FFF && _mapper->SupportsPrgRam() ) {
-
-    _prgRam.at( address - 0x6000 ) = data;
+  if ( between( addr, 0x6000, 0x7FFF ) && _mapper->SupportsPrgRam() ) {
+    _prgRam.at( addr - 0x6000 ) = data;
   }
 }
 
-void Cartridge::WriteExpansionRAM( u16 address, u8 data )
+void Cartridge::WriteExpansionRAM( u16 addr, u8 data )
 {
   /** @brief Writes to the expansion ROM, ranges from 0x4020 to 0x5FFF
    * Expansion ROM is rarely used, but when it is, it's used for additional program data
@@ -361,8 +369,8 @@ void Cartridge::WriteExpansionRAM( u16 address, u8 data )
     return;
   }
 
-  if ( address >= 0x4020 && address <= 0x5FFF && _mapper->HasExpansionRam() ) {
-    _expansionMemory.at( address - 0x4020 ) = data;
+  if ( between( addr, 0x4020, 0x5FFF ) && _mapper->HasExpansionRam() ) {
+    _expansionMemory.at( addr - 0x4020 ) = data;
   }
 }
 
@@ -384,4 +392,51 @@ MirrorMode Cartridge::GetMirrorMode()
   }
 
   return _mapper->GetMirrorMode();
+}
+
+void Cartridge::Reset()
+{
+  if ( _mapper != nullptr ) {
+    _mapper->Reset();
+  }
+}
+
+void Cartridge::LoadBatteryRam()
+{
+  if ( iNes.GetBatteryMode() != 1 )
+    return;
+  namespace fs = std::filesystem;
+  fs::path dir = fs::path( paths::saves() );
+  if ( !fs::exists( dir ) )
+    fs::create_directories( dir );
+
+  fs::path      savePath = dir / GetRomHash();
+  std::ifstream in( savePath, std::ios::in | std::ios::binary );
+  if ( !in ) {
+    fmt::print( "No save file: {}\n", savePath.string() );
+    return;
+  }
+  in.read( reinterpret_cast<char *>( _prgRam.data() ), _prgRam.size() ); // NOLINT
+  if ( in.gcount() != static_cast<std::streamsize>( _prgRam.size() ) ) {
+    fmt::print( "Save file truncated: {}\n", savePath.string() );
+  }
+}
+
+void Cartridge::SaveBatteryRam()
+{
+  if ( iNes.GetBatteryMode() != 1 )
+    return;
+  namespace fs = std::filesystem;
+  fs::path dir = fs::path( paths::saves() );
+  if ( !fs::exists( dir ) )
+    fs::create_directories( dir );
+
+  fs::path      savePath = dir / GetRomHash();
+  std::ofstream out( savePath, std::ios::out | std::ios::binary | std::ios::trunc );
+  if ( !out ) {
+    fmt::print( "Failed to open save file for writing: {}\n", savePath.string() );
+    return;
+  }
+  out.write( reinterpret_cast<char *>( _prgRam.data() ), _prgRam.size() ); // NOLINT
+  out.flush();
 }

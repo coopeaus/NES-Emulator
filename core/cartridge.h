@@ -10,6 +10,7 @@
 #include "mappers/mapper1.h"
 #include "mappers/mapper2.h"
 #include "mappers/mapper3.h"
+#include "mappers/mapper4.h"
 
 class Bus;
 
@@ -30,17 +31,23 @@ public:
       case 1: {
         auto m1 = std::static_pointer_cast<Mapper1>( _mapper );
         ar( m1->controlRegister, m1->prgBank16Lo, m1->prgBank16Hi, m1->prgBank32, m1->chrBank4Lo, m1->chrBank4Hi,
-            m1->chrBank8, m1->shiftRegister, m1->writeCount, m1->mirrorMode );
+            m1->chrBank8, m1->shiftRegister, m1->writeCount, m1->mirroring );
         break;
       }
       case 2: {
         auto m2 = std::static_pointer_cast<Mapper2>( _mapper );
-        ar( m2->prgBank16Lo, m2->mirrorMode );
+        ar( m2->prgBank16Lo, m2->mirroring );
         break;
       }
       case 3: {
         auto m3 = std::static_pointer_cast<Mapper3>( _mapper );
-        ar( m3->chrBank );
+        ar( m3->chrBank, m3->mirroring );
+        break;
+      }
+      case 4: {
+        auto m4 = std::static_pointer_cast<Mapper4>( _mapper );
+        ar( m4->nTargetRegister, m4->bPrgBankMode, m4->bChrInversion, m4->pRegister, m4->pChrBank, m4->pPrgBank,
+            m4->bIsIrqRequested, m4->bIrqEnabled, m4->nIrqCounter, m4->nIrqReload, m4->mirroring );
         break;
       }
       default:
@@ -56,19 +63,26 @@ public:
         _mapper = std::make_shared<Mapper1>( iNes );
         auto m1 = std::static_pointer_cast<Mapper1>( _mapper );
         ar( m1->controlRegister, m1->prgBank16Lo, m1->prgBank16Hi, m1->prgBank32, m1->chrBank4Lo, m1->chrBank4Hi,
-            m1->chrBank8, m1->shiftRegister, m1->writeCount, m1->mirrorMode );
+            m1->chrBank8, m1->shiftRegister, m1->writeCount, m1->mirroring );
         break;
       }
       case 2: {
         _mapper = std::make_shared<Mapper2>( iNes );
         auto m2 = std::static_pointer_cast<Mapper2>( _mapper );
-        ar( m2->prgBank16Lo, m2->mirrorMode );
+        ar( m2->prgBank16Lo, m2->mirroring );
         break;
       }
       case 3: {
         _mapper = std::make_shared<Mapper3>( iNes );
         auto m3 = std::static_pointer_cast<Mapper3>( _mapper );
-        ar( m3->chrBank );
+        ar( m3->chrBank, m3->mirroring );
+        break;
+      }
+      case 4: {
+        _mapper = std::make_shared<Mapper4>( iNes );
+        auto m4 = std::static_pointer_cast<Mapper4>( _mapper );
+        ar( m4->nTargetRegister, m4->bPrgBankMode, m4->bChrInversion, m4->pRegister, m4->pChrBank, m4->pPrgBank,
+            m4->bIsIrqRequested, m4->bIrqEnabled, m4->nIrqCounter, m4->nIrqReload, m4->mirroring );
         break;
       }
       default:
@@ -117,6 +131,12 @@ public:
   void       LoadRom( const std::string &filePath );
   bool       IsRomValid( const std::string &filePath );
 
+  std::shared_ptr<Mapper> GetMapper() const { return _mapper; }
+  u8                      GetMapperNum() const { return _mapperNumber; }
+
+  void SaveBatteryRam();
+  void LoadBatteryRam();
+
   /*
   ################################
   ||        Debug Methods       ||
@@ -131,6 +151,7 @@ public:
   ################################
   */
   bool didMapperLoad = false;
+  void Reset();
 
   /*
   ################################
@@ -200,7 +221,7 @@ private:
   ################################
   */
   std::shared_ptr<Mapper> _mapper;
-  std::string             _romPath;
   u8                      _mapperNumber = 0;
+  std::string             _romPath;
   bool                    _usesChrRam = false;
 };

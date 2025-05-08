@@ -200,6 +200,7 @@ public:
   void       WriteVram( u16 addr, u8 data );
   void       Tick();
   void       VBlank();
+  void       VisibleScanline();
 
   /*
   ################################
@@ -277,33 +278,6 @@ public:
     // Transfer from temp to vramAddr on cycles 280-304
     if ( InCycle( 280, 304 ) ) {
       TransferAddressY();
-    }
-  }
-
-  void VisibleScanline()
-  {
-    if ( InCycle( 1, 256 ) ) {
-      FetchBgTileData();
-    }
-
-    if ( cycle == 257 ) {
-      LoadBgShifters();
-      TransferAddressX();
-      SpriteEval();
-    }
-
-    // Cycles 321-336 will fetch the first two tiles for the next scanline
-    if ( InCycle( 321, 336 ) ) {
-      FetchBgTileData();
-    }
-
-    // Unused fetches
-    if ( cycle == 338 || cycle == 340 ) {
-      FetchNametableByte();
-    }
-    // Fetch sprite data
-    if ( cycle == 340 ) {
-      FetchSpriteData();
     }
   }
 

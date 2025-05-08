@@ -57,11 +57,11 @@ private:
   int        addr_reg;
 
   enum { reg_count = 0x80 };
-  uint8_t                    reg[reg_count];
+  uint8_t                           reg[reg_count];
   Blip_Synth<blip_good_quality, 15> synth;
 
   uint8_t &access();
-  void            run_until( cpu_time_t );
+  void     run_until( cpu_time_t );
 };
 
 inline void Nes_Namco::volume( double v )

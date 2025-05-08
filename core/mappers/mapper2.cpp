@@ -5,7 +5,7 @@
 
 MirrorMode Mapper2::GetMirrorMode()
 {
-  return mirrorMode;
+  return mirroring;
 }
 
 /*
@@ -15,7 +15,7 @@ MirrorMode Mapper2::GetMirrorMode()
 ||                            ||
 ################################
 */
-[[nodiscard]] u32 Mapper2::MapPrgOffset( u16 address )
+[[nodiscard]] u32 Mapper2::MapCpuAddr( u16 address )
 {
   /**
    * @details
@@ -36,7 +36,7 @@ MirrorMode Mapper2::GetMirrorMode()
   }
 
   // If out of PRG range
-  throw std::runtime_error( "Address out of range in MapPrgOffset" );
+  throw std::runtime_error( "Address out of range in MapCpuAddr" );
 }
 
 /*
@@ -73,7 +73,7 @@ void Mapper2::HandleCPUWrite( u16 address, u8 data )
 ||                            ||
 ################################
 */
-[[nodiscard]] u32 Mapper2::MapChrOffset( u16 address )
+[[nodiscard]] u32 Mapper2::MapPpuAddr( u16 address )
 {
   /**
    * @brief Translate PPU address. Mapper 2 only supports direct mapping

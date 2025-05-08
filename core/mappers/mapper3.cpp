@@ -1,13 +1,8 @@
 #include "mapper3.h"
-#include "cartridge-header.h"
 #include "mappers/mapper-base.h"
 #include "global-types.h"
 
-Mapper3::Mapper3( iNes2Instance iNesHeader ) : Mapper( iNesHeader )
-{
-}
-
-u32 Mapper3::MapPrgOffset( u16 address )
+u32 Mapper3::MapCpuAddr( u16 address )
 {
   // CNROM: PRG is fixed, typically 32KB at $8000-$FFFF
   // Map $8000-$FFFF to PRG-ROM directly
@@ -23,7 +18,7 @@ u32 Mapper3::MapPrgOffset( u16 address )
   return 0;
 }
 
-u32 Mapper3::MapChrOffset( u16 address )
+u32 Mapper3::MapPpuAddr( u16 address )
 {
   // CNROM: CHR is banked in 8KB units
   if ( address < 0x2000 ) {
