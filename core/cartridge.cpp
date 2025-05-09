@@ -1,6 +1,7 @@
 #include "cartridge.h"
 #include <array>
 #include <cstring>
+#include <filesystem>
 #include <fmt/base.h>
 #include <fstream>
 #include <ios>
@@ -406,12 +407,12 @@ void Cartridge::LoadBatteryRam()
   if ( iNes.GetBatteryMode() != 1 )
     return;
   namespace fs = std::filesystem;
-  fs::path dir = fs::path( paths::saves() );
+  fs::path const dir = fs::path( paths::saves() );
   if ( !fs::exists( dir ) )
     fs::create_directories( dir );
 
-  fs::path      savePath = dir / GetRomHash();
-  std::ifstream in( savePath, std::ios::in | std::ios::binary );
+  fs::path const savePath = dir / GetRomHash();
+  std::ifstream  in( savePath, std::ios::in | std::ios::binary );
   if ( !in ) {
     fmt::print( "No save file: {}\n", savePath.string() );
     return;
@@ -427,12 +428,12 @@ void Cartridge::SaveBatteryRam()
   if ( iNes.GetBatteryMode() != 1 )
     return;
   namespace fs = std::filesystem;
-  fs::path dir = fs::path( paths::saves() );
+  fs::path const dir = fs::path( paths::saves() );
   if ( !fs::exists( dir ) )
     fs::create_directories( dir );
 
-  fs::path      savePath = dir / GetRomHash();
-  std::ofstream out( savePath, std::ios::out | std::ios::binary | std::ios::trunc );
+  fs::path const savePath = dir / GetRomHash();
+  std::ofstream  out( savePath, std::ios::out | std::ios::binary | std::ios::trunc );
   if ( !out ) {
     fmt::print( "Failed to open save file for writing: {}\n", savePath.string() );
     return;

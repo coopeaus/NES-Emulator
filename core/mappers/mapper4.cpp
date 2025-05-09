@@ -1,6 +1,7 @@
 // Implementation adopted from javidx9 NES series: https://youtu.be/AAcEk5pWXPY?si=HHJ8Tqm3iVRwWf9O
 
 #include "mapper4.h"
+#include "global-types.h"
 #include "mappers/mapper-base.h"
 #include "utils.h"
 using utils::between;

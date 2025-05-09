@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <fmt/base.h>
 #include <string>
@@ -1881,7 +1882,7 @@ public:
   void ATX( const u16 address )
   {
     // LDA & TAX
-    u8 value = ReadByte( address );
+    u8 const value = ReadByte( address );
     x = value;
     a = value;
     SetZeroAndNegativeFlags( a );
@@ -2135,42 +2136,42 @@ public:
 
   void SyaSxaAxa( uint16_t baseAddr, uint8_t indexReg, uint8_t valueReg )
   {
-    bool pageCrossed = ( ( baseAddr & 0xFF00 ) != ( ( baseAddr + indexReg ) & 0xFF00 ) );
-    auto cyc = cycles;
+    bool const pageCrossed = ( ( baseAddr & 0xFF00 ) != ( ( baseAddr + indexReg ) & 0xFF00 ) );
+    auto       cyc = cycles;
     ReadByte( baseAddr + indexReg - ( pageCrossed ? 0x100 : 0 ) );
-    bool     hadDma = ( cycles - cyc ) > 1;
-    uint16_t operand = baseAddr + indexReg;
-    uint8_t  addrLow = uint8_t( operand & 0xFF );
-    uint8_t  addrHigh = uint8_t( operand >> 8 );
+    bool const     hadDma = ( cycles - cyc ) > 1;
+    uint16_t const operand = baseAddr + indexReg;
+    uint8_t const  addrLow = uint8_t( operand & 0xFF );
+    uint8_t        addrHigh = uint8_t( operand >> 8 );
     if ( pageCrossed ) {
       addrHigh &= valueReg;
     }
-    uint8_t toStore = hadDma ? valueReg : uint8_t( valueReg & uint8_t( ( baseAddr >> 8 ) + 1 ) );
+    uint8_t const toStore = hadDma ? valueReg : uint8_t( valueReg & uint8_t( ( baseAddr >> 8 ) + 1 ) );
 
     WriteByte( uint16_t( addrHigh ) << 8 | addrLow, toStore );
   }
 
   void SHY( u16 address )
   {
-    u8  indexReg = x;
-    u8  valueReg = y;
-    u16 baseAddr = address - indexReg;
+    u8 const  indexReg = x;
+    u8 const  valueReg = y;
+    u16 const baseAddr = address - indexReg;
     SyaSxaAxa( baseAddr, indexReg, valueReg );
   }
 
   void SHX( u16 address )
   {
-    u8  indexReg = y;
-    u8  valueReg = x;
-    u16 baseAddr = address - indexReg;
+    u8 const  indexReg = y;
+    u8 const  valueReg = x;
+    u16 const baseAddr = address - indexReg;
     SyaSxaAxa( baseAddr, indexReg, valueReg );
   }
 
   void SHA( const u16 address )
   {
-    u8  valueReg = x & a;
-    u8  indexReg = y;
-    u16 baseAddr = address - indexReg;
+    u8 const  valueReg = x & a;
+    u8 const  indexReg = y;
+    u16 const baseAddr = address - indexReg;
     SyaSxaAxa( baseAddr, indexReg, valueReg );
   }
 
