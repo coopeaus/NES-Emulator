@@ -208,7 +208,7 @@ public:
   {
     auto romFile = testRoms.at( romSelected );
     bus.cartridge.LoadRom( romFile );
-    cpu.Reset();
+    bus.DebugReset();
     ppu.onFrameReady = [this]( const u32 *frameBuffer ) { this->ProcessPpuFrameBuffer( frameBuffer ); };
     currentFrame = ppu.frame;
 
@@ -981,6 +981,9 @@ public:
   */
   void Teardown()
   {
+    // save battery ram (if applicable)
+    bus.cartridge.SaveBatteryRam();
+
     // Cleanup ImGui
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();
@@ -1031,6 +1034,7 @@ public:
     while ( SDL_PollEvent( &event ) ) {
       ImGui_ImplSDL2_ProcessEvent( &event );
       if ( event.type == SDL_QUIT ) {
+        bus.cartridge.SaveBatteryRam();
         running = false;
         ui.willRender = false;
       } else if ( event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE &&

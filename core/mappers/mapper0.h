@@ -7,13 +7,18 @@ class Mapper0 : public Mapper
 {
 public:
   Mapper0( iNes2Instance iNesHeader ) : Mapper( iNesHeader ) {}
-  auto MapPrgOffset( u16 address ) -> u32 override;
-  auto MapChrOffset( u16 address ) -> u32 override;
+  auto MapCpuAddr( u16 address ) -> u32 override;
+  auto MapPpuAddr( u16 address ) -> u32 override;
   void HandleCPUWrite( u16 address, u8 data ) override;
 
-  [[nodiscard]] bool SupportsPrgRam() override { return false; }
-  [[nodiscard]] bool HasExpansionRom() override { return false; }
-  [[nodiscard]] bool HasExpansionRam() override { return false; }
+  void Reset() override {}
+  bool SupportsPrgRam() override { return iNes.GetBatteryMode(); }
+  bool HasExpansionRom() override { return false; }
+  bool HasExpansionRam() override { return false; }
 
-  [[nodiscard]] MirrorMode GetMirrorMode() override { return mirroring; }
+  bool IsIrqRequested() override { return false; }
+  void IrqClear() override {}
+  void CountScanline() override {}
+
+  MirrorMode GetMirrorMode() override { return mirroring; }
 };

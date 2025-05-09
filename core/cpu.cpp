@@ -166,7 +166,7 @@ void CPU::Write( u16 address, u8 data ) const
 }
 
 // Read with cycle spend
-auto CPU::ReadAndTick( u16 address ) -> u8
+auto CPU::ReadByte( u16 address ) -> u8
 {
   if ( address == 0x2002 ) {
     SetReading2002( true );
@@ -177,7 +177,7 @@ auto CPU::ReadAndTick( u16 address ) -> u8
 }
 
 // Write and spend a cycle
-auto CPU::WriteAndTick( u16 address, u8 data ) -> void
+auto CPU::WriteByte( u16 address, u8 data ) -> void
 {
   Tick();
 
@@ -195,7 +195,7 @@ u8 CPU::Fetch()
 
   // Read the current PC location and increment it
 
-  u8 const opcode = ReadAndTick( pc++ );
+  u8 const opcode = ReadByte( pc++ );
   return opcode;
 }
 

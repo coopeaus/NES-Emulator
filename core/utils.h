@@ -32,21 +32,21 @@ inline std::string toHex( u16 num, u8 width = 4 )
   return hexStr;
 }
 
+/*
+ * Check if value is between min and max, inclusive
+ */
 inline bool between( int value, int min, int max )
 {
-  /*
-   * @brief Check if a value is between min and max
-   */
   return ( value >= min && value <= max );
 }
 
+/**
+ * FNV-la computes a simple, non-cryptographic fingerprint of a file.
+ * A hash can be used to identify a file, which is used for save / load states.
+ * 2^64 possible values is enough to avoid collisions for every possible ROM.
+ */
 inline std::string GetRomHash( const std::string &path ) // NOLINT
 {
-  /**
-   * @brief   FNV-la computes a simple, non-cryptographic fingerprint of a file.
-   * A hash can be used to identify a file, which is used for save / load states.
-   * 2^64 possible values is enough to avoid collisions for every possible ROM.
-   */
   constexpr u64 fnvOffsetBasis = 0xcbf29ce484222325ULL;
   constexpr u64 fnvPrime = 0x00000100000001B3ULL;
 

@@ -67,7 +67,7 @@ u8 Bus::Read( const u16 address, bool debugMode )
 
   // Unhandled address ranges return open bus value
   std::cout << "Unhandled read from address: " << std::hex << address << "\n";
-  return 0xFF;
+  return 0x00;
 }
 
 /*
@@ -161,6 +161,12 @@ void Bus::Clock()
     ppu.nmiReady = false;
     cpu.NMI();
   }
+
+  // Mapper 4 cartridges request IRQs from the CPU
+  if ( cartridge.GetMapper()->IsIrqRequested() ) {
+    cartridge.GetMapper()->IrqClear();
+    cpu.IRQ();
+  }
 }
 
 /*
@@ -178,6 +184,7 @@ void Bus::DebugReset()
   cpu.SetCycles( 0 );
   cpu.Reset();
   ppu.Reset();
+  cartridge.Reset();
 }
 
 /*
@@ -192,6 +199,11 @@ int Bus::ReadDmc( void *objPtr, cpu_addr_t addr )
   return self->Read( addr );
 }
 
+/*
+################################
+||        Other Methods       ||
+################################
+*/
 void Bus::QuickSaveState( u8 idx )
 {
   namespace fs = std::filesystem;
@@ -285,4 +297,14 @@ bool Bus::IsRomSignatureValid( const std::string &stateFile )
   fs::remove( tmp, ec );
 
   return oldHash == newHash;
+}
+
+void Bus::PowerCycle()
+{
+  cartridge.SaveBatteryRam();
+  cartridge.Reset();
+  ppu.Reset();
+  apu.reset();
+  cpu.Reset();
+  cartridge.LoadBatteryRam();
 }

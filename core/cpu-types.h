@@ -91,7 +91,8 @@ inline const std::bitset<256> noPageCrossPenaltyOpcodes = []() {
     bs.set( 0x1E ); bs.set( 0x5E ); bs.set( 0x3E ); bs.set( 0x7E ); bs.set( 0x1F ); bs.set( 0x1B );
     bs.set( 0x13 ); bs.set( 0x3F ); bs.set( 0x3B ); bs.set( 0x33 ); bs.set( 0x5F ); bs.set( 0x5B );
     bs.set( 0x53 ); bs.set( 0x7F ); bs.set( 0x7B ); bs.set( 0x73 ); bs.set( 0xDF ); bs.set( 0xDB );
-    bs.set( 0xD3 ); bs.set( 0xFF ); bs.set( 0xFB ); bs.set( 0xF3 );
+    bs.set( 0xD3 ); bs.set( 0xFF ); bs.set( 0xFB ); bs.set( 0xF3 ); bs.set( 0x9F ); bs.set( 0x9C );
+    bs.set( 0x9E ); bs.set( 0x93 ); bs.set( 0x9B );
     return bs;
 }();
 
