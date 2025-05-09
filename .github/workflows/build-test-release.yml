@@ -22,111 +22,102 @@ on:
                 - 'major'
                 - 'minor'
                 - 'patch'
+
 jobs:
-    test:
-      uses: coopeaus/NES-Emulator/.github/workflows/lint-format-test.yml@main
-      with:
-        branch: ${{ github.event_name == 'pull_request' && github.head_ref || 'main' }}
-        commit: HEAD
+  test:
+    uses: coopeaus/NES-Emulator/.github/workflows/lint-format-test.yml@main
+    with:
+      branch: ${{ github.event_name == 'pull_request' && github.head_ref || 'main' }}
+      commit: HEAD
 
-    versioning:
-        needs: test
-        runs-on: ubuntu-latest
-        outputs:
-            version: ${{ steps.new_version.outputs.new_tag }}
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
+  build-linux:
+    uses: coopeaus/NES-Emulator/.github/workflows/build-linux.yml@main
+    with:
+      branch: ${{ github.head_ref || 'main' }}
+      commit: HEAD
 
-            - name: Get bump type
-              id: bump_type
-              run: |
-                if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.version_bump }}" != "" ]]; then
-                  echo "BUMP_TYPE=${{ github.event.inputs.version_bump }}" >> $GITHUB_ENV
-                else
-                  echo "BUMP_TYPE=patch" >> $GITHUB_ENV
-                fi
+  build-windows:
+    uses: coopeaus/NES-Emulator/.github/workflows/build-windows.yml@main
+    with:
+      branch: ${{ github.head_ref || 'main' }}
+      commit: HEAD
 
-            # Uses a handy marketplace action for bumping the version number
-            # using semantic versioning.
-            - name: auto-inc version
-              id: new_version
-              uses: anothrNick/github-tag-action@1.71.0
-              env: 
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  DEFAULT_BUMP: ${{ github.event.inputs.version_bump || 'patch' }}
-                  WITH_V: true
+  build-macos:
+    uses: coopeaus/NES-Emulator/.github/workflows/build-mac-arm.yml@main
+    with:
+      branch: ${{ github.head_ref || 'main' }}
+      commit: HEAD
 
-    build-linux:
-      needs: versioning
-      uses: coopeaus/NES-Emulator/.github/workflows/build-linux.yml@main
-      with:
-        branch: ${{ github.head_ref || 'main' }}
-        commit: HEAD
+  release:
+    needs: [build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    build-windows:
-      needs: versioning
-      uses: coopeaus/NES-Emulator/.github/workflows/build-windows.yml@main
-      with:
-        branch: ${{ github.head_ref || 'main' }}
-        commit: HEAD
-  
-    build-macos:
-      needs: versioning
-      uses: coopeaus/NES-Emulator/.github/workflows/build-mac-arm.yml@main
-      with:
-        branch: ${{ github.head_ref || 'main' }}
-        commit: HEAD
+      - name: Get bump type
+        id: bump_type
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.version_bump }}" != "" ]]; then
+            echo "BUMP_TYPE=${{ github.event.inputs.version_bump }}" >> $GITHUB_ENV
+          else
+            echo "BUMP_TYPE=patch" >> $GITHUB_ENV
+          fi
 
-
-    release:
-      needs: [build-windows, build-linux, build-macos, versioning]
-      runs-on: ubuntu-latest
-      steps:
-        - name: Get Windows artifact
-          uses: actions/download-artifact@v4
-          with:
-            name: Windows-x86-64
-            path: release/Windows
-        
-        - name: Get Linux artifact
-          uses: actions/download-artifact@v4
-          with:
-            name: Linux-x86-64
-            path: release/Linux
-
-        - name: Get MacOS artifact
-          uses: actions/download-artifact@v4
-          with:
-            name: macOS-arm64
-            path: release/MacOS
-
-        - name: Package Windows Build
-          run: |
-            cd release/Windows
-            zip -r ../../Windows-x64-${{ needs.versioning.outputs.version }}.zip .
-            cd ../..
-    
-        - name: Package Linux Build
-          run: |
-            cd release/Linux
-            tar -czvf ../../Linux-x64-${{ needs.versioning.outputs.version }}.tar.gz .
-            cd ../..
-    
-        - name: Package macOS Build
-          run: |
-            cd release/MacOS
-            zip -r ../../MacOS-arm64-${{ needs.versioning.outputs.version }}.zip .
-            cd ../..
-    
-        - name: Create GitHub Release
-          uses: softprops/action-gh-release@v2
-          with:
-            tag_name: ${{ needs.versioning.outputs.version }}
-            files: |
-              Windows-x64-${{ needs.versioning.outputs.version }}.zip
-              Linux-x64-${{ needs.versioning.outputs.version }}.tar.gz
-              MacOS-arm64-${{ needs.versioning.outputs.version }}.zip
-            body: "Release ${{ needs.versioning.outputs.version }}"
-          env:
+      # Uses a handy marketplace action for bumping the version number
+      # using semantic versioning.
+      - name: auto-inc version
+        id: new_version
+        uses: anothrNick/github-tag-action@1.71.0
+        env: 
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            DEFAULT_BUMP: ${{ github.event.inputs.version_bump || 'patch' }}
+            WITH_V: true
+
+      - name: Get Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Windows-x86-64
+          path: release/Windows
+      
+      - name: Get Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Linux-x86-64
+          path: release/Linux
+
+      - name: Get MacOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macOS-arm64
+          path: release/MacOS
+
+      - name: Package Windows Build
+        run: |
+          cd release/Windows
+          zip -r ../../Windows-x64-${{ steps.new_version.outputs.new_tag }}.zip .
+          cd ../..
+  
+      - name: Package Linux Build
+        run: |
+          cd release/Linux
+          tar -czvf ../../Linux-x64-${{ steps.new_version.outputs.new_tag }}.tar.gz .
+          cd ../..
+  
+      - name: Package macOS Build
+        run: |
+          cd release/MacOS
+          zip -r ../../MacOS-arm64-${{ steps.new_version.outputs.new_tag }}.zip .
+          cd ../..
+  
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.new_version.outputs.new_tag }}
+          files: |
+            Windows-x64-${{ steps.new_version.outputs.new_tag }}.zip
+            Linux-x64-${{ steps.new_version.outputs.new_tag }}.tar.gz
+            MacOS-arm64-${{ steps.new_version.outputs.new_tag }}.zip
+          body: "Release ${{ steps.new_version.outputs.new_tag }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
