@@ -42,12 +42,12 @@ private:
   Nes_Vrc6 &operator=( const Nes_Vrc6 & );
 
   struct Vrc6_Osc {
-    uint8_t regs[3];
-    Blip_Buffer   *output;
-    int            delay;
-    int            last_amp;
-    int            phase;
-    int            amp; // only used by saw
+    uint8_t      regs[3];
+    Blip_Buffer *output;
+    int          delay;
+    int          last_amp;
+    int          phase;
+    int          amp; // only used by saw
 
     int period() const { return ( regs[2] & 0x0f ) * 0x100L + regs[1] + 1; }
   };

@@ -77,13 +77,18 @@ public:
         ImGui::EndMenu();
       }
       if ( ImGui::BeginMenu( "Game" ) ) {
-        if ( ImGui::MenuItem( "Pause", "Esc", &renderer->paused ) ) {
+        if ( ImGui::MenuItem( "Pause", "Esc", renderer->paused ) ) {
           renderer->PauseToggle();
           renderer->NotifyStart( renderer->paused ? "Paused" : "Unpaused" );
         }
-        if ( ImGui::MenuItem( "Reset", CMD "+R" ) ) {
+        if ( ImGui::MenuItem( "Debug Reset", CMD "+R" ) ) {
           renderer->bus.DebugReset();
-          renderer->NotifyStart( "Reset" );
+          renderer->NotifyStart( "Debug Reset" );
+        }
+        ImGui::Separator();
+        if ( ImGui::MenuItem( "Hardware Reset" ) ) {
+          renderer->bus.PowerCycle();
+          renderer->NotifyStart( "Hardware Reset" );
         }
 
         ImGui::EndMenu();

@@ -5,7 +5,7 @@
 
 MirrorMode Mapper1::GetMirrorMode()
 {
-  return mirrorMode;
+  return mirroring;
 }
 
 /*
@@ -15,7 +15,7 @@ MirrorMode Mapper1::GetMirrorMode()
 ||                            ||
 ################################
 */
-[[nodiscard]] u32 Mapper1::MapPrgOffset( u16 address )
+[[nodiscard]] u32 Mapper1::MapCpuAddr( u16 address )
 {
   /**
    * @details
@@ -69,20 +69,6 @@ MirrorMode Mapper1::GetMirrorMode()
   // 32 KiB mode
   u32 const bankOffset = prgBank32 * 0x8000;
   return bankOffset + ( address & 0x7FFF );
-}
-
-void Mapper1::Reset()
-{
-  controlRegister = 0x0C;
-  shiftRegister = 0x10;
-  writeCount = 0;
-  prgBank16Lo = 0;
-  prgBank16Hi = GetPrgBankCount() - 1;
-  prgBank32 = 0;
-  chrBank4Lo = 0;
-  chrBank4Hi = 0;
-  chrBank8 = 0;
-  mirrorMode = MirrorMode::SingleLower;
 }
 
 /*
@@ -145,10 +131,10 @@ void Mapper1::HandleCPUWrite( u16 address, u8 data )
 
     // the lower 2 bits of the control register set the mirroring mode
     switch ( controlRegister & 0b00000011 ) {
-      case 0x00: mirrorMode = MirrorMode::SingleLower; break;
-      case 0x01: mirrorMode = MirrorMode::SingleUpper; break;
-      case 0x02: mirrorMode = MirrorMode::Vertical; break;
-      case 0x03: mirrorMode = MirrorMode::Horizontal; break;
+      case 0x00: mirroring = MirrorMode::SingleLower; break;
+      case 0x01: mirroring = MirrorMode::SingleUpper; break;
+      case 0x02: mirroring = MirrorMode::Vertical; break;
+      case 0x03: mirroring = MirrorMode::Horizontal; break;
       default  : throw std::runtime_error( "Invalid mirroring mode" );
     }
   }
@@ -233,7 +219,7 @@ void Mapper1::HandleCPUWrite( u16 address, u8 data )
 ||                            ||
 ################################
 */
-[[nodiscard]] u32 Mapper1::MapChrOffset( u16 address )
+[[nodiscard]] u32 Mapper1::MapPpuAddr( u16 address )
 {
   // If no chr rom banks, the address is directly mapped
   if ( GetChrBankCount() == 0 ) {

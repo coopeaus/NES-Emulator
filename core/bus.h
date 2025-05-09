@@ -49,6 +49,8 @@ public:
   void Write( u16 address, u8 data );
   void Clock();
   void ProcessDma();
+  void PowerCycle();
+  void PowerOff();
 
   /*
   ################################

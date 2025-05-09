@@ -73,4 +73,10 @@ inline std::string states()
   return path.string();
 }
 
+inline std::string saves()
+{
+  auto path = root() / user() / "saves";
+  return path.string();
+}
+
 } // namespace paths

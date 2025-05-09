@@ -42,15 +42,19 @@ public:
   int GetChrBankCount() const { return iNes.GetChrRomBanks(); }
 
   // Base methods
-  virtual u32  MapPrgOffset( u16 address ) = 0;
-  virtual u32  MapChrOffset( u16 address ) = 0;
+  virtual void Reset() = 0;
+  virtual u32  MapCpuAddr( u16 address ) = 0;
+  virtual u32  MapPpuAddr( u16 address ) = 0;
   virtual void HandleCPUWrite( u16 address, u8 data ) = 0;
 
-  [[nodiscard]] virtual bool SupportsPrgRam() = 0;
-  [[nodiscard]] virtual bool HasExpansionRom() = 0;
-  [[nodiscard]] virtual bool HasExpansionRam() = 0;
+  virtual bool       SupportsPrgRam() = 0;
+  virtual bool       HasExpansionRom() = 0;
+  virtual bool       HasExpansionRam() = 0;
+  virtual MirrorMode GetMirrorMode() = 0;
 
-  [[nodiscard]] virtual MirrorMode GetMirrorMode() = 0;
+  virtual bool IsIrqRequested() = 0;
+  virtual void IrqClear() = 0;
+  virtual void CountScanline() = 0;
 
 private:
 };

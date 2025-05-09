@@ -397,6 +397,37 @@ void PPU::VBlank()
   }
 }
 
+void PPU::VisibleScanline()
+{
+  if ( InCycle( 1, 256 ) ) {
+    FetchBgTileData();
+  }
+
+  if ( cycle == 257 ) {
+    LoadBgShifters();
+    TransferAddressX();
+    SpriteEval();
+  }
+
+  // Some mappers (i.e. mapper 4) keep track of scanlines
+  if ( cycle == 260 )
+    bus->cartridge.GetMapper()->CountScanline();
+
+  // Cycles 321-336 will fetch the first two tiles for the next scanline
+  if ( InCycle( 321, 336 ) ) {
+    FetchBgTileData();
+  }
+
+  // Unused fetches
+  if ( cycle == 338 || cycle == 340 ) {
+    FetchNametableByte();
+  }
+  // Fetch sprite data
+  if ( cycle == 340 ) {
+    FetchSpriteData();
+  }
+}
+
 MirrorMode PPU::GetMirrorMode() const
 {
   return bus->cartridge.GetMirrorMode();
