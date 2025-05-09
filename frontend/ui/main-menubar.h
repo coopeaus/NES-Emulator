@@ -77,7 +77,7 @@ public:
         ImGui::EndMenu();
       }
       if ( ImGui::BeginMenu( "Game" ) ) {
-        if ( ImGui::MenuItem( "Pause", "Esc", &renderer->paused ) ) {
+        if ( ImGui::MenuItem( "Pause", "Esc", renderer->paused ) ) {
           renderer->PauseToggle();
           renderer->NotifyStart( renderer->paused ? "Paused" : "Unpaused" );
         }
